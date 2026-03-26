@@ -9,10 +9,10 @@ Goal:
 
 ## Package Overview
 
-- Package root: scripts/ac-cli
+- Package root: scripts/reqmd
 - Source package: src/reqmd
 - Main CLI module: src/reqmd/cli.py
-- Entrypoint command: ac-cli
+- Entrypoint command: reqmd
 
 Core flow in `cli.py`:
 1. Discover requirement domain markdown files.
@@ -119,22 +119,22 @@ When adding statuses:
 After changes, run from this folder:
 
 1. Syntax/import check:
-- `uv run ac-cli --help`
+- `uv run reqmd --help`
 
 2. Summary consistency check against a target repo:
-- `uv run ac-cli --repo-root <project> --check --no-interactive`
+- `uv run reqmd --repo-root <project> --check --no-interactive`
 
 3. Non-interactive status mutation smoke test:
-- `uv run ac-cli --repo-root <project> --set R-EXAMPLE-001=implemented --no-interactive`
+- `uv run reqmd --repo-root <project> --set R-EXAMPLE-001=implemented --no-interactive`
 
 4. Filter/tree smoke test:
-- `uv run ac-cli --repo-root <project> --filter-status proposed --tree --no-interactive`
+- `uv run reqmd --repo-root <project> --filter-status proposed --tree --no-interactive`
 
 ## Packaging Notes
 
 Current package metadata is in `pyproject.toml`:
 - Name: `reqmd`
-- Entry point: `ac-cli = reqmd.cli:main`
+- Entry point: `reqmd = reqmd.cli:main`
 - Dependencies: `click`, `tabulate`
 
 Before publishing to PyPI, ensure:

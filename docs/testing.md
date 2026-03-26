@@ -4,7 +4,7 @@ This folder uses a pytest suite to validate implemented requirement behavior.
 
 ## Run Tests
 
-From scripts/ac-cli:
+From scripts/reqmd:
 
 ```bash
 uv run pytest -q

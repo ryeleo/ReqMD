@@ -52,7 +52,7 @@ Summary: 2💡 5🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 - **Status:** 💡 Proposed
 - Given teams want customizable status catalog metadata and colors
 - When status customization is enabled
-- Then the tool supports loading config from a project file at `.ac-cli/status-catalog.json` by default
+- Then the tool supports loading config from a project file at `.reqmd/status-catalog.json` by default
 - And the tool supports explicit override via `--status-config <path>`
 - And effective precedence is: CLI override file > project default file > built-in defaults
 - And JSON is required initially, with YAML support optional for future extension.

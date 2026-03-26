@@ -49,7 +49,7 @@ uv sync --extra dev
 Then run:
 
 ```bash
-uv run ac-cli --help
+uv run reqmd --help
 ```
 
 Module entrypoint:
@@ -63,55 +63,55 @@ uv run python -m reqmd --help
 Check summaries only:
 
 ```bash
-uv run ac-cli --check
+uv run reqmd --check
 ```
 
 Interactive mode:
 
 ```bash
-uv run ac-cli
+uv run reqmd
 ```
 
 Set one criterion non-interactively:
 
 ```bash
-uv run ac-cli --set-criterion-id AC-EXAMPLE-001 --set-status implemented
+uv run reqmd --set-criterion-id AC-EXAMPLE-001 --set-status implemented
 ```
 
 Use a different ID prefix:
 
 ```bash
-uv run ac-cli --id-prefix R --set-criterion-id R-EXAMPLE-001 --set-status implemented
+uv run reqmd --id-prefix R --set-criterion-id R-EXAMPLE-001 --set-status implemented
 ```
 
 Bulk set by repeated flags:
 
 ```bash
-uv run ac-cli --set AC-EXAMPLE-001=implemented --set AC-EXAMPLE-002=desktop-verified
+uv run reqmd --set AC-EXAMPLE-001=implemented --set AC-EXAMPLE-002=desktop-verified
 ```
 
 Batch set from file:
 
 ```bash
-uv run ac-cli --set-file tmp/ac-updates.jsonl
+uv run reqmd --set-file tmp/ac-updates.jsonl
 ```
 
 Allow custom prefixes such as `REQ-` in a repo:
 
 ```bash
-uv run ac-cli --id-prefix REQ --filter-status proposed --tree
+uv run reqmd --id-prefix REQ --filter-status proposed --tree
 ```
 
 Filter walk:
 
 ```bash
-uv run ac-cli --filter-status proposed
+uv run reqmd --filter-status proposed
 ```
 
 Filter tree only:
 
 ```bash
-uv run ac-cli --filter-status proposed --tree
+uv run reqmd --filter-status proposed --tree
 ```
 
 ## Tests
@@ -159,7 +159,7 @@ By default, the tool targets the current directory as repo root and reads from:
 You can override both:
 
 ```bash
-uv run ac-cli --repo-root /path/to/project --criteria-dir docs/requirements
+uv run reqmd --repo-root /path/to/project --criteria-dir docs/requirements
 ```
 
 `--criteria-dir` can be absolute or relative to `--repo-root`.
@@ -171,13 +171,13 @@ Requirement header prefixes are configurable with `--id-prefix`. By default the 
 1. Keep a top-level index doc (example: `docs/requirements.md`).
 2. Keep domain files in `docs/requirements/`.
 3. Ensure each requirement has exactly one status line directly under the `### <PREFIX>-...` header.
-4. Run `uv run ac-cli --check` in CI to prevent stale summary blocks.
+4. Run `uv run reqmd --check` in CI to prevent stale summary blocks.
 5. Use non-interactive `--set`/`--set-file` in automation.
 
 ## Packaging notes
 
 - Package name: `reqmd`
-- Console script entrypoint: `ac-cli`
+- Console script entrypoint: `reqmd`
 - Source package: `src/reqmd`
 
 When ready for PyPI:

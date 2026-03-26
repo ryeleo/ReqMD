@@ -16,7 +16,7 @@ Summary: 3💡 5🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 ### REQMD-PACKAGING-002: Console entrypoint
 - **Status:** 🔧 Implemented
 - Given package is installed
-- When user runs `ac-cli`
+- When user runs `reqmd`
 - Then command invokes package main CLI handler
 - And matches module behavior.
 

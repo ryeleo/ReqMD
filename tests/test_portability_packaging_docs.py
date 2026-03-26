@@ -109,12 +109,12 @@ def test_REQMD_packaging_001_to_005_metadata_and_layout() -> None:
     assert (project_root / "src" / "reqmd" / "__main__.py").exists()
 
     pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
-    assert "ac-cli = \"reqmd.cli:main\"" in pyproject
+    assert "reqmd = \"reqmd.cli:main\"" in pyproject
     assert "click>=8.1.0" in pyproject
     assert "tabulate>=0.9.0" in pyproject
 
     readme = (project_root / "README.md").read_text(encoding="utf-8")
-    assert "ac-cli --check" in readme
+    assert "reqmd --check" in readme
     assert "--repo-root" in readme
     assert "--criteria-dir" in readme
     assert "--id-prefix" in readme

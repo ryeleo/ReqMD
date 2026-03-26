@@ -40,19 +40,19 @@ Non-interactive usage:
 
 Examples:
 - Check only (no writes):
-    ac-cli --check
+    reqmd --check
 - Interactive mode with emoji headers:
-    ac-cli --emoji-columns
+    reqmd --emoji-columns
 - Non-interactive single update:
-    ac-cli \
+    reqmd \
             --set-criterion-id R-TELEMETRY-LOG-001 \
             --set-status implemented
 - Non-interactive bulk update:
-    ac-cli \
+    reqmd \
             --set R-STEELTARGET-AUDIO-004=implemented \
             --set R-STEELTARGET-AUDIO-005=desktop-verified
 - Non-interactive batch update from file:
-    ac-cli \
+    reqmd \
             --set-file tmp/ac-updates.jsonl
 
 Notes:

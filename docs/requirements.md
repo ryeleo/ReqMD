@@ -39,6 +39,6 @@ Status workflow:
 
 ## Tracking Rule
 
-- Run ac-cli --check to validate summaries.
-- Run ac-cli to update summaries and optionally edit requirement statuses interactively.
+- Run reqmd --check to validate summaries.
+- Run reqmd to update summaries and optionally edit requirement statuses interactively.
 - Use --id-prefix to limit or expand which header prefixes are recognized. Default: AC and R.

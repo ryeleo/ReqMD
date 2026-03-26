@@ -1,5 +1,5 @@
 name: core
-description: "Use when making multi-file Python CLI changes, repo-wide refactors, acceptance criteria updates, README/docs sync, or any ac-cli task that spans code, tests, and documentation."
+description: "Use when making multi-file Python CLI changes, repo-wide refactors, acceptance criteria updates, README/docs sync, or any reqmd task that spans code, tests, and documentation."
 tools: [read, search, edit, execute, todo, agent]
 agents: [Explore]
 argument-hint: "Describe the desired change, affected behavior, and whether acceptance criteria or README/docs should be updated too."
