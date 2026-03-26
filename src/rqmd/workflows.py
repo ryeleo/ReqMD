@@ -11,12 +11,13 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import DEFAULT_ID_PREFIXES, STATUS_ORDER
+from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
+                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT, STATUS_ORDER)
 from .criteria_parser import find_criterion_by_id, parse_criteria
 from .markdown_io import (display_name_from_h1, format_path_display,
                           iter_domain_files)
-from .menus import (file_sort_key_by_priority, right_align_menu_suffix,
-                    select_from_menu, truncate_text, visible_length)
+from .menus import (right_align_menu_suffix, select_from_menu,
+                    truncate_text, visible_length)
 from .status_model import (build_color_rollup_text, status_emoji,
                            style_status_label, style_status_line)
 from .status_update import (print_criterion_panel, prompt_for_blocked_reason,
@@ -24,6 +25,217 @@ from .status_update import (print_criterion_panel, prompt_for_blocked_reason,
                             update_criterion_status)
 from .summary import (collect_summary_rows, count_statuses,
                       print_summary_table, process_file)
+
+
+SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
+    "standard": {
+        "file_columns": [
+            ("name", "name"),
+            ("proposed", "P"),
+            ("implemented", "I"),
+            ("verified", "Ver"),
+            ("blocked_deprecated", "Blk/Dep"),
+        ],
+        "file_default_key": "name",
+        "file_default_ascending": False,
+        "criterion_columns": [
+            ("title", "title"),
+            ("id", "id"),
+            ("status", "status"),
+        ],
+        "criterion_default_key": None,
+        "criterion_default_ascending": False,
+        "criterion_cycle_wrap": False,
+    },
+    "status-focus": {
+        "file_columns": [
+            ("implemented", "I"),
+            ("verified", "Ver"),
+            ("proposed", "P"),
+            ("blocked_deprecated", "Blk/Dep"),
+            ("name", "name"),
+        ],
+        "file_default_key": "implemented",
+        "file_default_ascending": False,
+        "criterion_columns": [
+            ("status", "status"),
+            ("title", "title"),
+            ("id", "id"),
+        ],
+        "criterion_default_key": "status",
+        "criterion_default_ascending": False,
+        "criterion_cycle_wrap": True,
+    },
+    "alpha-asc": {
+        "file_columns": [
+            ("name", "name"),
+            ("proposed", "P"),
+            ("implemented", "I"),
+            ("verified", "Ver"),
+            ("blocked_deprecated", "Blk/Dep"),
+        ],
+        "file_default_key": "name",
+        "file_default_ascending": True,
+        "criterion_columns": [
+            ("title", "title"),
+            ("id", "id"),
+            ("status", "status"),
+        ],
+        "criterion_default_key": "title",
+        "criterion_default_ascending": True,
+        "criterion_cycle_wrap": True,
+    },
+}
+
+SORT_STRATEGY_NAMES = tuple(sorted(SORT_STRATEGY_SPECS.keys()))
+
+
+FILE_SORT_COLUMNS: list[tuple[str, str]] = [
+    ("name", "name"),
+    ("proposed", "P"),
+    ("implemented", "I"),
+    ("verified", "Ver"),
+    ("blocked_deprecated", "Blk/Dep"),
+]
+
+CRITERION_SORT_COLUMNS: list[tuple[str, str]] = [
+    ("title", "title"),
+    ("id", "id"),
+    ("status", "status"),
+]
+
+
+def _cycle_sort_key(
+    current_key: str | None,
+    columns: list[tuple[str, str]],
+    wrap_to_first: bool = False,
+) -> str | None:
+    keys = [key for key, _label in columns]
+    if current_key is None:
+        return keys[0] if keys else None
+    try:
+        index = keys.index(current_key)
+    except ValueError:
+        return keys[0] if keys else None
+    if index == len(keys) - 1:
+        return keys[0] if wrap_to_first and keys else None
+    return keys[index + 1]
+
+
+def _sort_indicator(ascending: bool) -> str:
+    return "↑" if ascending else "↓"
+
+
+def _format_sort_token(label: str, active: bool, ascending: bool) -> str:
+    text = f"{label} {_sort_indicator(ascending)}" if active else label
+    return click.style(text, bold=True) if active else text
+
+
+def _right_align_sort_token(text: str, width: int) -> str:
+    padding = max(0, width - visible_length(text))
+    return f"{' ' * padding}{text}"
+
+
+def _build_sort_title(base_title: str, default_label: str, columns: list[tuple[str, str]], active_key: str | None, ascending: bool) -> str:
+    tokens = [_format_sort_token(default_label, active_key is None, ascending)]
+    for key, label in columns:
+        tokens.append(_format_sort_token(label, active_key == key, ascending))
+    return f"{base_title}\nsort: {' | '.join(tokens)}"
+
+
+def _build_file_sort_title(
+    base_title: str,
+    active_key: str,
+    ascending: bool,
+    columns: list[tuple[str, str]],
+) -> str:
+    width_map = {
+        "name": 4,
+        "proposed": 3,
+        "implemented": 3,
+        "verified": 3,
+        "blocked_deprecated": 7,
+    }
+    tokens: list[str] = []
+    for key, label in columns:
+        token = _format_sort_token(label, active_key == key, ascending)
+        if key == "name":
+            tokens.append(token)
+            continue
+        width = max(width_map[key], visible_length(f"{label} {_sort_indicator(ascending)}") if active_key == key else width_map[key])
+        tokens.append(_right_align_sort_token(token, width))
+    return f"{base_title}\nsort: {' | '.join(tokens)}"
+
+
+def get_sort_strategy_spec(name: str) -> dict[str, object]:
+    key = (name or "standard").strip().lower()
+    if key not in SORT_STRATEGY_SPECS:
+        supported = ", ".join(SORT_STRATEGY_NAMES)
+        raise click.ClickException(f"Unknown sort strategy '{name}'. Supported values: {supported}")
+    return SORT_STRATEGY_SPECS[key]
+
+
+def _build_sort_footer(ascending: bool) -> str:
+    direction = "asc" if ascending else "dsc"
+    return (
+        f"keys: 1-9 select | n=next | p=prev | u=up | "
+        f"{MENU_TOGGLE_SORT}=sort | {MENU_TOGGLE_DIRECTION}=[{direction}] | {MENU_REFRESH}=rfrsh | q=quit"
+    )
+
+
+def _file_sort_value(counts: dict[str, int], sort_key: str) -> int | str:
+    if sort_key == "name":
+        raise ValueError("name sort should be handled separately")
+    if sort_key == "proposed":
+        return counts["💡 Proposed"]
+    if sort_key == "implemented":
+        return counts["🔧 Implemented"]
+    if sort_key == "verified":
+        return counts["✅ Verified"]
+    if sort_key == "blocked_deprecated":
+        return counts["⛔ Blocked"] + counts["🗑️ Deprecated"]
+    raise ValueError(f"Unknown file sort key: {sort_key}")
+
+
+def _sort_file_rows(
+    rows: list[tuple[Path, dict[str, int], str]],
+    sort_key: str | None,
+    ascending: bool,
+) -> list[tuple[Path, dict[str, int], str]]:
+    if sort_key is None:
+        return list(rows)
+    if sort_key == "name":
+        return sorted(rows, key=lambda row: (row[2].lower(), row[0].name.lower()), reverse=not ascending)
+    return sorted(
+        rows,
+        key=lambda row: (_file_sort_value(row[1], sort_key), row[2].lower(), row[0].name.lower()),
+        reverse=not ascending,
+    )
+
+
+def _criterion_status_rank(status: str) -> int:
+    status_priority = {label: i for i, (label, _slug) in enumerate(STATUS_ORDER)}
+    return status_priority.get(status, 99)
+
+
+def _sort_criteria(
+    criteria: list[dict[str, object]],
+    sort_key: str | None,
+    ascending: bool,
+) -> list[dict[str, object]]:
+    if sort_key is None:
+        return list(criteria)
+    if sort_key == "title":
+        return sorted(criteria, key=lambda item: (str(item["title"]).lower(), str(item["id"]).lower()), reverse=not ascending)
+    if sort_key == "id":
+        return sorted(criteria, key=lambda item: str(item["id"]).lower(), reverse=not ascending)
+    if sort_key == "status":
+        return sorted(
+            criteria,
+            key=lambda item: (_criterion_status_rank(str(item["status"])), str(item["title"]).lower(), str(item["id"]).lower()),
+            reverse=not ascending,
+        )
+    raise ValueError(f"Unknown criterion sort key: {sort_key}")
 
 
 def print_criteria_tree(repo_root: Path, criteria_by_file: dict[Path, list[dict[str, object]]], target_status: str) -> None:
@@ -123,10 +335,15 @@ def interactive_update_loop(
     domain_files: list[Path],
     emoji_columns: bool,
     sort_files: bool,
+    sort_strategy: str = "standard",
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     select_from_menu_fn=select_from_menu,
 ) -> int:
-    current_sort_files = sort_files
+    strategy = get_sort_strategy_spec(sort_strategy)
+    file_columns = list(strategy["file_columns"])
+    criterion_columns = list(strategy["criterion_columns"])
+    current_file_sort_key = str(strategy["file_default_key"])
+    current_file_sort_ascending = bool(strategy["file_default_ascending"])
     ordered_paths = [path.resolve() for path in domain_files]
     force_rescan = True
 
@@ -139,8 +356,11 @@ def interactive_update_loop(
                 label = display_name_from_h1(path)
                 file_rows_for_sort.append((path, counts, label))
 
-            if current_sort_files:
-                file_rows_for_sort.sort(key=lambda row: file_sort_key_by_priority(row[1], row[2]))
+            file_rows_for_sort = _sort_file_rows(
+                file_rows_for_sort,
+                current_file_sort_key,
+                current_file_sort_ascending,
+            )
 
             ordered_paths = [row[0] for row in file_rows_for_sort]
             force_rescan = False
@@ -162,34 +382,48 @@ def interactive_update_loop(
         ]
 
         file_choice = select_from_menu_fn(
-            "Select file",
+            _build_file_sort_title(
+                "Select file",
+                active_key=current_file_sort_key,
+                ascending=current_file_sort_ascending,
+                columns=file_columns,
+            ),
             file_options,
             repeat_choice_right=True,
             zebra=True,
-            extra_key="s",
-            extra_key_help="toggle-sort+rescan",
-            extra_key_return="toggle-sort",
+            extra_keys={
+                MENU_TOGGLE_SORT: "cycle-sort",
+                MENU_TOGGLE_DIRECTION: "toggle-direction",
+                MENU_REFRESH: "refresh",
+            },
+            footer_legend=_build_sort_footer(current_file_sort_ascending),
         )
         if file_choice is None:
             return 0
         if file_choice == "up":
             continue
-        if file_choice == "toggle-sort":
-            current_sort_files = not current_sort_files
+        if file_choice == "cycle-sort":
+            current_file_sort_key = _cycle_sort_key(current_file_sort_key, file_columns, wrap_to_first=True) or "name"
+            current_file_sort_ascending = False
             force_rescan = True
-            mode = "sorted" if current_sort_files else "unsorted"
-            click.echo(f"Select file mode: {mode} (rescanned)")
+            mode = current_file_sort_key
+            click.echo(f"Select file sort: {mode} ({'asc' if current_file_sort_ascending else 'dsc'})")
+            continue
+        if file_choice == "toggle-direction":
+            current_file_sort_ascending = not current_file_sort_ascending
+            force_rescan = True
+            click.echo(f"Select file direction: {'asc' if current_file_sort_ascending else 'dsc'}")
+            continue
+        if file_choice == "refresh":
+            force_rescan = True
+            click.echo("Select file refreshed.")
             continue
 
         selected_path = file_rows[int(file_choice)][0]
 
-        current_sort_criteria = current_sort_files
-
-        def sort_criteria(clist: list[dict[str, object]]) -> list[dict[str, object]]:
-            if not current_sort_criteria:
-                return clist
-            status_priority = {label: i for i, (label, _) in enumerate(STATUS_ORDER)}
-            return sorted(clist, key=lambda c: status_priority.get(str(c["status"]), 99))
+        criterion_default_key = strategy["criterion_default_key"]
+        current_criterion_sort_key: str | None = str(criterion_default_key) if criterion_default_key is not None else None
+        current_criterion_sort_ascending = bool(strategy["criterion_default_ascending"])
 
         history: list[int] = []
         history_pos = -1
@@ -197,7 +431,11 @@ def interactive_update_loop(
 
         while True:
             raw_criteria = parse_criteria(selected_path, id_prefixes=id_prefixes)
-            criteria = sort_criteria(raw_criteria)
+            criteria = _sort_criteria(
+                raw_criteria,
+                current_criterion_sort_key,
+                current_criterion_sort_ascending,
+            )
 
             if criterion_index is None:
                 term_width = shutil.get_terminal_size(fallback=(80, 24)).columns
@@ -210,21 +448,42 @@ def interactive_update_loop(
                     for c in criteria
                 ]
                 criterion_choice = select_from_menu_fn(
-                    f"Select requirement in {selected_path.relative_to(repo_root).as_posix()}",
+                    _build_sort_title(
+                        f"Select requirement in {selected_path.relative_to(repo_root).as_posix()}",
+                        default_label="document",
+                        columns=criterion_columns,
+                        active_key=current_criterion_sort_key,
+                        ascending=current_criterion_sort_ascending,
+                    ),
                     criterion_options,
                     zebra=True,
                     option_right_labels=criterion_right_labels,
-                    extra_key="s",
-                    extra_key_help="toggle-sort",
-                    extra_key_return="toggle-sort",
+                    extra_keys={
+                        MENU_TOGGLE_SORT: "cycle-sort",
+                        MENU_TOGGLE_DIRECTION: "toggle-direction",
+                        MENU_REFRESH: "refresh",
+                    },
+                    footer_legend=_build_sort_footer(current_criterion_sort_ascending),
                 )
                 if criterion_choice is None:
                     return 0
                 if criterion_choice == "up":
                     break
-                if criterion_choice == "toggle-sort":
-                    current_sort_criteria = not current_sort_criteria
-                    click.echo(f"Criterion sort: {'on' if current_sort_criteria else 'off'}")
+                if criterion_choice == "cycle-sort":
+                    current_criterion_sort_key = _cycle_sort_key(
+                        current_criterion_sort_key,
+                        criterion_columns,
+                        wrap_to_first=bool(strategy["criterion_cycle_wrap"]),
+                    )
+                    current_criterion_sort_ascending = False
+                    click.echo(f"Criterion sort: {current_criterion_sort_key or 'document'} (dsc)")
+                    continue
+                if criterion_choice == "toggle-direction":
+                    current_criterion_sort_ascending = not current_criterion_sort_ascending
+                    click.echo(f"Criterion direction: {'asc' if current_criterion_sort_ascending else 'dsc'}")
+                    continue
+                if criterion_choice == "refresh":
+                    click.echo("Criterion list refreshed.")
                     continue
 
                 criterion_index = int(criterion_choice)
@@ -312,7 +571,11 @@ def interactive_update_loop(
             print_summary_table(table_rows, emoji_columns=emoji_columns)
 
             raw_criteria_after = parse_criteria(selected_path, id_prefixes=id_prefixes)
-            criteria_after = sort_criteria(raw_criteria_after)
+            criteria_after = _sort_criteria(
+                raw_criteria_after,
+                current_criterion_sort_key,
+                current_criterion_sort_ascending,
+            )
             cur_id = str(selected_criterion["id"])
             new_idx = next((i for i, c in enumerate(criteria_after) if str(c["id"]) == cur_id), criterion_index)
             if new_idx < len(criteria_after) - 1:

@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 7💡 6🔧 0✅ 0⛔ 0🗑️
+Summary: 5💡 7🔧 0✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -67,7 +67,7 @@ Summary: 7💡 6🔧 0✅ 0⛔ 0🗑️
 - And rqmd reports which path was selected.
 
 ### RQMD-PORTABILITY-009: Graceful startup errors for docs availability and permissions
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - Given rqmd cannot open requirements docs because files are missing or inaccessible
 - When startup validation fails
 - Then rqmd exits with a clear, actionable error message
@@ -105,7 +105,8 @@ Summary: 7💡 6🔧 0✅ 0⛔ 0🗑️
 - And effective color settings are applied consistently in interactive and roll-up displays.
 
 ### RQMD-PORTABILITY-013: Project-configurable roll-up color knobs
-- **Status:** 💡 Proposed
+- **Status:** 🗑️ Deprecated
+- **Deprecated:** Superseded by RQMD-ROLLUP-007, which generalizes roll-up customization through declarative roll-up mappings/expressions and can represent color behavior within that model.
 - Given projects may want consistent roll-up coloring across team tools and dashboards
 - When a project-level status config file is present (e.g. `.rqmd/status-catalog.json`)
 - Then the project config can include explicit roll-up color knobs such as `rollup_mode` (values: `per_status`|`bucketed`|`monochrome`), `bucket_map` to map statuses to roll-up buckets, and optional per-bucket `color` overrides

@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session criterion status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 13🔧 0✅ 0⛔ 0🗑️
+Summary: 3💡 14🔧 0✅ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -109,7 +109,7 @@ Summary: 3💡 13🔧 0✅ 0⛔ 0🗑️
 - And interactive and non-interactive outputs both use the same configured status catalog.
 
 ### RQMD-INTERACTIVE-011: Preflight write-permission gate before interactive mode
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - Given interactive mode can modify markdown requirement files
 - When rqmd is about to open interactive menus
 - Then rqmd validates write permissions for target requirement files up front
@@ -123,3 +123,56 @@ Summary: 3💡 13🔧 0✅ 0⛔ 0🗑️
 - Then interactive list zebra striping uses configured accessible foreground/background pairs
 - And status text colors remain legible when combined with zebra backgrounds
 - And rqmd falls back to safe defaults when configured colors are invalid or unsupported by the terminal.
+
+### RQMD-INTERACTIVE-013: Terminal light/dark detection for automatic zebra adjustment
+- **Status:** 💡 Proposed
+- Given users benefit from automatic contrast-appropriate styling
+- When reqmd starts an interactive session
+- Then reqmd attempts to infer a light or dark display context using a best-effort detection strategy (in priority order):
+	- explicit CLI flag `--theme light|dark`
+	- project config / user config override
+	- macOS system appearance (`defaults read -g AppleInterfaceStyle`) when available
+	- common desktop environment settings (e.g., GNOME via `gsettings get org.gnome.desktop.interface color-scheme`) when available
+	- environment hints such as `TERM_PROGRAM` or terminal-specific profile hints (best-effort only)
+- And when detection yields `dark` or `light`, reqmd automatically selects zebra foreground/background pairs and contrast-safe status colors appropriate for the detected mode
+- And when detection is inconclusive, reqmd falls back to user/project config or accessibility-safe defaults and documents the chosen source used for the decision.
+
+- Implementation notes:
+	- Use platform probes cautiously and only as best-effort heuristics; preferred ordered probes: explicit CLI, project/user config, platform API, terminal hints.
+	- macOS probe example: `defaults read -g AppleInterfaceStyle` (returns `Dark` when dark mode enabled) — guard with platform checks and timeouts.
+	- Linux desktops: try `gsettings` for GNOME when available; otherwise treat as inconclusive.
+	- Windows detection requires registry/Win32 API access; implement as an optional probe behind a safe fallback.
+	- Always validate chosen colors with a contrast check (WCAG-like thresholds) and auto-adjust zebra pairs if contrast is insufficient.
+	- Do not block startup on probes; treat failures as "inconclusive" and continue with fallbacks.
+	- Log or surface the detection source (CLI, project, user, system probe, heuristic) in verbose output or UI footer for transparency.
+	- Add unit/integration tests that simulate each detection path and verify contrast-based fallbacks and final chosen colors.
+
+### RQMD-INTERACTIVE-014: Standardized footer legend and dynamic sort indicator
+- **Status:** 🗑️ Deprecated
+- **Deprecated:** Superseded by RQMD-SORTING-010, which owns the standardized interaction legend and dynamic sort-direction footer behavior.
+- Given interactive menus must show keyboard affordances consistently
+- When any interactive menu is shown
+- Then the footer displays a standardized legend in this exact order and compact format:
+- `keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[asc|dsc] | r=rfrsh | q=quit`
+- And the `d` token updates in-place to reflect the current sort direction (either `asc` or `dsc`)
+- And pressing `s` cycles the active sort column while `d` toggles direction and `r` triggers a full refresh/rescan using the current sort scheme.
+	- When the cycle advances past the last sortable column, pressing `s` again returns the view to the default filesystem ordering.
+
+### RQMD-INTERACTIVE-015: Bold active sort column and arrow direction indicator
+- **Status:** 🗑️ Deprecated
+- **Deprecated:** Superseded by RQMD-SORTING-011, which owns active sort-column emphasis and direction indicators across interactive views.
+- Given a sortable tabular or list view is displayed interactively
+- When a column is the current sort key
+- Then the column label is rendered in bold and an ASCII arrow (`↑` or `↓`) is shown adjacent to the label to indicate ascending or descending order
+- And the same visual indicator appears in the menu footer or header where space-constrained views cannot bold column headers directly
+- And these visual cues are applied consistently across file lists, criterion lists, and summary tables so users can always identify the active sort and its direction.
+ 
+
+# optional status color overrides (names or hex)
+colors:
+	proposed: cyan
+	in_progress: yellow
+	done: green
+	blocked: red
+	deprecated: grey
+```

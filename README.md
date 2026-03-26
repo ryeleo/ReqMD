@@ -72,6 +72,24 @@ Interactive mode:
 uv run rqmd
 ```
 
+Interactive file and requirement menus now support:
+
+- `s` to cycle sort columns
+- `d` to toggle ascending/descending
+- `r` to refresh/rescan while preserving the active sort
+
+File lists now default to the `name` sort in descending order.
+
+You can select a named sort strategy catalog for interactive mode:
+
+```bash
+uv run rqmd --sort-strategy standard
+uv run rqmd --sort-strategy status-focus
+uv run rqmd --sort-strategy alpha-asc
+```
+
+`--unsorted` is retained as a deprecated compatibility alias; a separate filesystem-only sort mode no longer exists.
+
 Initialize docs scaffold (index + starter domain file):
 
 ```bash
@@ -134,6 +152,13 @@ Summary/check/set JSON examples:
 uv run rqmd --json --no-interactive
 uv run rqmd --check --json --no-interactive
 uv run rqmd --set-criterion-id AC-EXAMPLE-001 --set-status verified --json
+uv run rqmd --rollup --json --no-interactive
+```
+
+Explicit global roll-up totals:
+
+```bash
+uv run rqmd --rollup --no-interactive
 ```
 
 ## Tests

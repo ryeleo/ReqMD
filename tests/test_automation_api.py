@@ -578,6 +578,64 @@ def test_RQMD_automation_008h_json_set_mode_reports_updates(repo_with_domain_doc
     assert payload["updates"][0]["status"] == "✅ Verified"
 
 
+def test_RQMD_rollup_005_text_mode_prints_global_totals(repo_with_domain_docs: Path) -> None:
+    domain = repo_with_domain_docs / "docs" / "requirements"
+    (domain / "extra.md").write_text(
+        """# Extra Acceptance Criteria
+
+Scope: extra.
+
+### AC-EXTRA-001: Extra criterion
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--rollup",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "All files" in result.output
+    assert "P" in result.output
+    assert "I" in result.output
+    assert "Demo Domain" not in result.output
+
+
+def test_RQMD_rollup_005_json_mode_reports_global_totals(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--rollup",
+            "--json",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "rollup"
+    assert payload["criteria_dir"] == "docs/requirements"
+    assert payload["file_count"] >= 1
+    assert payload["totals"]["🔧 Implemented"] >= 1
+
+
 def test_RQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(

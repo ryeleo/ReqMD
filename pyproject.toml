@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-rqmd = "reqmd.cli:main"
+rqmd = "rqmd.cli:main"
 
 [project.optional-dependencies]
 dev = [

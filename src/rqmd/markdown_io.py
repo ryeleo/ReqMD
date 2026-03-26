@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import re
 import sys
 from pathlib import Path
 
@@ -74,7 +76,98 @@ def iter_domain_files(repo_root: Path, criteria_dir_input: str) -> list[Path]:
     criteria_dir = Path(criteria_dir_input)
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
-    return sorted(path for path in criteria_dir.glob("*.md") if path.name != REQUIREMENTS_INDEX_NAME)
+
+    if not criteria_dir.exists():
+        raise click.ClickException(
+            f"Requirement docs directory not found: {format_path_display(criteria_dir, repo_root)}\n"
+            f"  Hint: run 'rqmd --init' to create a starter scaffold, or pass --criteria-dir to select a different location."
+        )
+
+    try:
+        return sorted(path for path in criteria_dir.glob("*.md") if path.name != REQUIREMENTS_INDEX_NAME)
+    except PermissionError:
+        raise click.ClickException(
+            f"Permission denied reading requirement docs directory: {format_path_display(criteria_dir, repo_root)}\n"
+            f"  Hint: check permissions with: ls -la \"{criteria_dir.parent}\""
+        )
+
+
+def validate_files_readable(domain_files: list[Path], repo_root: Path) -> None:
+    """Raise ClickException listing any domain files that cannot be read, distinguishing not-found from permission-denied."""
+    not_found: list[Path] = []
+    denied: list[Path] = []
+    for f in domain_files:
+        if not f.exists():
+            not_found.append(f)
+        elif not os.access(f, os.R_OK):
+            denied.append(f)
+    if not_found or denied:
+        lines = ["Startup validation failed — requirement files are inaccessible:"]
+        for f in not_found:
+            lines.append(f"  not found:         {format_path_display(f, repo_root)}")
+        for f in denied:
+            lines.append(f"  permission denied: {format_path_display(f, repo_root)}")
+        lines.append("  Hint: verify the files exist and are readable.")
+        raise click.ClickException("\n".join(lines))
+
+
+def check_files_writable(domain_files: list[Path], repo_root: Path) -> None:
+    """Exit with a per-file report if any domain file is not writable. Called before interactive mode."""
+    not_writable = [f for f in domain_files if not os.access(f, os.W_OK)]
+    if not_writable:
+        click.echo("Error: interactive mode requires write access to requirement files.", err=True)
+        click.echo("The following files are not writable:", err=True)
+        for f in not_writable:
+            click.echo(f"  {format_path_display(f, repo_root)}", err=True)
+        click.echo("  Hint: check file permissions (chmod u+w <file>) or run in non-interactive mode (--no-interactive).", err=True)
+        raise SystemExit(1)
+
+
+# ---------------------------------------------------------------------------
+# Index sync helpers (RQMD-CORE-013)
+# ---------------------------------------------------------------------------
+
+_MD_LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+\.md)\)")
+
+
+def parse_index_links(index_path: Path) -> list[str]:
+    """Return linked .md filenames extracted from relative links in the index (README)."""
+    try:
+        text = index_path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    links: list[str] = []
+    for _display, href in _MD_LINK_RE.findall(text):
+        # Only simple relative filenames — no subdirectory components or ../
+        if "/" not in href and not href.startswith(".."):
+            links.append(href)
+    return links
+
+
+def check_index_sync(criteria_dir: Path, index_path: Path) -> tuple[list[str], list[Path]]:
+    """Compare the requirements index against actual domain files.
+
+    Returns:
+        stale_links:  filenames referenced in the index that no longer exist on disk.
+        orphan_files: domain files present on disk but not referenced in the index.
+    """
+    linked_names = parse_index_links(index_path)
+
+    stale_links = [name for name in linked_names if not (criteria_dir / name).exists()]
+
+    try:
+        domain_names = {
+            p.name
+            for p in criteria_dir.glob("*.md")
+            if p.name != REQUIREMENTS_INDEX_NAME
+        }
+    except PermissionError:
+        domain_names = set()
+
+    referenced = set(linked_names)
+    orphan_files = sorted(criteria_dir / name for name in domain_names - referenced)
+
+    return stale_links, orphan_files
 
 
 def display_name_from_h1(path: Path) -> str:

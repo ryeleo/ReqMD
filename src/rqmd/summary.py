@@ -168,3 +168,11 @@ def print_summary_table(table_rows: list[list[object]], emoji_columns: bool) -> 
         styled_rows.append([row[0], *styled_counts])
 
     click.echo(tabulate(styled_rows, headers=headers, tablefmt="simple"))
+
+
+def build_global_rollup_row(totals: dict[str, int]) -> list[object]:
+    return ["All files"] + [totals[label] for label, _ in STATUS_ORDER]
+
+
+def print_global_rollup_table(totals: dict[str, int], emoji_columns: bool) -> None:
+    print_summary_table([build_global_rollup_row(totals)], emoji_columns=emoji_columns)
