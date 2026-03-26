@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and criterion discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 9🔧 5✅ 0⛔ 0🗑️
+Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -92,7 +92,7 @@ Summary: 1💡 9🔧 5✅ 0⛔ 0🗑️
 - And the sample clearly indicates it is a handoff placeholder for teams to replace.
 
 ### RQMD-CORE-013: Domain-sync maintenance over time
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - Given users add or evolve domain documentation over time
 - When sync/maintenance commands run
 - Then index and domain-document references are kept consistent with current domain files

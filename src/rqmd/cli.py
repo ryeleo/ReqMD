@@ -78,16 +78,20 @@ from . import workflows as workflows_mod
 from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
                            parse_batch_update_jsonl, parse_set_entry)
 from .constants import (DEFAULT_CRITERIA_DIR, DEFAULT_ID_PREFIXES,
-                        ID_PREFIX_PATTERN, STATUS_ORDER, SUMMARY_END,
+                        ID_PREFIX_PATTERN, MENU_REFRESH,
+                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
+                        STATUS_ORDER, SUMMARY_END,
                         SUMMARY_START)
 from .criteria_parser import (collect_criteria_by_status, find_criterion_by_id,
                               normalize_id_prefixes, parse_criteria,
                               resolve_id_prefixes)
-from .markdown_io import (auto_detect_criteria_dir, display_name_from_h1,
+from .markdown_io import (auto_detect_criteria_dir, check_files_writable,
+                          check_index_sync, display_name_from_h1,
                           format_path_display,
                           initialize_requirements_scaffold,
                           iter_criteria_search_roots, iter_domain_files,
-                          resolve_criteria_dir)
+                          parse_index_links, resolve_criteria_dir,
+                          validate_files_readable)
 from .menus import (apply_background_preserving_styles,
                     file_sort_key_by_priority, select_from_menu)
 from .status_model import (build_color_rollup_text, normalize_status_input,
@@ -99,7 +103,8 @@ from .status_update import (apply_status_change_by_id, print_criterion_panel,
 from .summary import (build_summary_block, build_summary_line,
                       build_summary_table, collect_summary_rows,
                       count_statuses, insert_or_replace_summary,
-                      normalize_status_lines, print_summary_table,
+                      normalize_status_lines, print_global_rollup_table,
+                      print_summary_table,
                       process_file)
 from .workflows import (build_filtered_criteria_payload, build_summary_payload,
                         print_criteria_tree)
@@ -125,6 +130,10 @@ __all__ = [
     "auto_detect_criteria_dir",
     "resolve_criteria_dir",
     "iter_domain_files",
+    "validate_files_readable",
+    "check_files_writable",
+    "parse_index_links",
+    "check_index_sync",
     "display_name_from_h1",
     "print_criterion_panel",
     "update_criterion_status",
@@ -157,6 +166,7 @@ def interactive_update_loop(
     domain_files: list[Path],
     emoji_columns: bool,
     sort_files: bool,
+    sort_strategy: str = "standard",
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> int:
     return workflows_mod.interactive_update_loop(
@@ -165,6 +175,7 @@ def interactive_update_loop(
         domain_files=domain_files,
         emoji_columns=emoji_columns,
         sort_files=sort_files,
+        sort_strategy=sort_strategy,
         id_prefixes=id_prefixes,
         select_from_menu_fn=select_from_menu,
     )
@@ -230,7 +241,7 @@ def lookup_criterion_interactive(
     "-u",
     "--unsorted",
     is_flag=True,
-    help="Keep Select file menu in filesystem order (disable default priority sorting).",
+    help="Deprecated compatibility alias; filesystem ordering is already the default for Select file.",
 )
 @click.option(
     "--set-criterion-id",
@@ -288,6 +299,19 @@ def lookup_criterion_interactive(
     help="Print the summary table output (disable in automation with --no-summary-table).",
 )
 @click.option(
+    "--sort-strategy",
+    type=click.Choice(workflows_mod.SORT_STRATEGY_NAMES, case_sensitive=False),
+    default="standard",
+    show_default=True,
+    help="Select a named interactive sort strategy catalog.",
+)
+@click.option(
+    "--rollup",
+    "rollup_mode",
+    is_flag=True,
+    help="Print aggregate status totals across all requirement files and exit.",
+)
+@click.option(
     "--json",
     "json_output",
     is_flag=True,
@@ -314,6 +338,12 @@ def lookup_criterion_interactive(
     help="Allowed header ID prefixes. Repeat or comma-separate values, for example --id-prefix R or --id-prefix AC,R.",
 )
 @click.option(
+    "--check-index",
+    "check_index",
+    is_flag=True,
+    help="Check that the requirements index (README.md) links match actual domain files; report stale links and orphan files.",
+)
+@click.option(
     "--init",
     "init_scaffold",
     is_flag=True,
@@ -335,19 +365,28 @@ def main(
     filter_status: str | None,
     tree: bool,
     summary_table: bool,
+    sort_strategy: str,
+    rollup_mode: bool,
     json_output: bool,
     repo_root: Path,
     criteria_dir: str | None,
     id_prefixes: tuple[str, ...],
+    check_index: bool,
     init_scaffold: bool,
     criterion_id: str | None,
 ) -> None:
     repo_root = repo_root.resolve()
 
+    if unsorted and not json_output:
+        click.echo(
+            "Warning: --unsorted is deprecated and now acts as a compatibility alias because filesystem ordering is already the default.",
+            err=True,
+        )
+
     if init_scaffold:
-        if check or filter_status or set_criterion_id or set_status or set_updates or set_file_input or set_file or tree or criterion_id:
+        if check or filter_status or set_criterion_id or set_status or set_updates or set_file_input or set_file or tree or rollup_mode or criterion_id:
             raise click.ClickException(
-                "--init cannot be combined with --check, positional ID, --filter-status/--tree, or --set-* options."
+                "--init cannot be combined with --check, --rollup, positional ID, --filter-status/--tree, or --set-* options."
             )
 
         try:
@@ -386,11 +425,36 @@ def main(
         print(f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}", file=sys.stderr)
         raise SystemExit(1)
 
+    # RQMD-PORTABILITY-009: validate files are readable before proceeding
+    validate_files_readable(domain_files, repo_root)
+
+    # RQMD-CORE-013: --check-index mode — compare index links with actual domain files
+    if check_index:
+        index_path = resolved_criteria_dir / "README.md"
+        if not index_path.exists():
+            click.echo(f"No requirements index found at: {format_path_display(index_path, repo_root)}", err=True)
+            click.echo("  Hint: run 'rqmd --init' to create a starter scaffold.", err=True)
+            raise SystemExit(1)
+        stale_links, orphan_files = check_index_sync(resolved_criteria_dir, index_path)
+        issues: list[str] = []
+        for name in stale_links:
+            issues.append(f"  stale link:   {name}  (referenced in index but file does not exist)")
+        for path in orphan_files:
+            issues.append(f"  orphan file:  {format_path_display(path, repo_root)}  (exists on disk but not in index)")
+        if issues:
+            click.echo(f"Index sync issues found in: {format_path_display(index_path, repo_root)}")
+            for line in issues:
+                click.echo(line)
+            click.echo(f"  Hint: update {format_path_display(index_path, repo_root)} to add missing links or remove stale ones.")
+            raise SystemExit(1)
+        click.echo(f"Index is in sync: {format_path_display(index_path, repo_root)}")
+        raise SystemExit(0)
+
     # Positional ID lookup: find the requirement, show panel + status menu, done.
     if criterion_id:
-        if check or filter_status or set_criterion_id or set_status or set_updates or set_file_input or set_file or tree:
+        if check or filter_status or set_criterion_id or set_status or set_updates or set_file_input or set_file or tree or rollup_mode:
             raise click.ClickException(
-                "Positional ID cannot be combined with --check, --filter-status, --tree, or --set-* options."
+                "Positional ID cannot be combined with --check, --rollup, --filter-status, --tree, or --set-* options."
             )
         raise SystemExit(
             lookup_criterion_interactive(
@@ -405,7 +469,7 @@ def main(
     changed_paths, table_rows = collect_summary_rows(domain_files, check_only=check, display_name_fn=display_name_from_h1)
     summary_payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, changed_paths)
 
-    if summary_table and verbose and not json_output:
+    if summary_table and verbose and not json_output and not rollup_mode:
         for row, path in zip(table_rows, domain_files):
             marker = "UPDATE" if path in changed_paths else "OK"
             parts = [
@@ -414,8 +478,23 @@ def main(
             ]
             summary = ", ".join(parts)
             click.echo(f"[{marker}] {path.relative_to(repo_root)} :: {summary}")
-    elif summary_table and not json_output:
+    elif summary_table and not json_output and not rollup_mode:
         print_summary_table(table_rows, emoji_columns=emoji_columns)
+
+    if rollup_mode:
+        if check or filter_status or set_criterion_id or set_status or set_updates or set_file_input or set_file or tree:
+            raise click.ClickException("--rollup cannot be combined with --check, --filter-status, --tree, or --set-* options.")
+        if json_output:
+            payload = {
+                "mode": "rollup",
+                "criteria_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "file_count": len(domain_files),
+                "totals": summary_payload["totals"],
+            }
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+        print_global_rollup_table(summary_payload["totals"], emoji_columns=emoji_columns)
+        raise SystemExit(0)
 
     if check and changed_paths:
         if json_output:
@@ -573,13 +652,16 @@ def main(
         raise SystemExit(0)
 
     if interactive and not check:
+        # RQMD-INTERACTIVE-011: preflight write-permission gate
+        check_files_writable(domain_files, repo_root)
         raise SystemExit(
             interactive_update_loop(
                 repo_root,
                 resolved_criteria_dir_input,
                 domain_files,
                 emoji_columns=emoji_columns,
-                sort_files=not unsorted,
+                sort_files=False,
+                sort_strategy=sort_strategy,
                 id_prefixes=id_prefixes,
             )
         )

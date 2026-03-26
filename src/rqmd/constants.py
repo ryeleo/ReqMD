@@ -29,6 +29,8 @@ MENU_QUIT = "q"
 MENU_NEXT = "n"
 MENU_PREV = "p"
 MENU_TOGGLE_SORT = "s"
+MENU_TOGGLE_DIRECTION = "d"
+MENU_REFRESH = "r"
 MENU_PAGE_SIZE = 9
 
 STATUS_PATTERN = re.compile(r"^- \*\*Status:\*\* (?P<status>.+?)\s*$", re.MULTILINE)
@@ -44,6 +46,6 @@ NON_ALNUM_PREFIX_PATTERN = re.compile(r"^[^a-zA-Z0-9]+")
 NON_ALNUM_PATTERN = re.compile(r"[^a-z0-9]+")
 
 ANSI_RESET = "\x1b[0m"
-ZEBRA_BG = "\x1b[48;5;236m"
+ZEBRA_BG = "\x1b[48;5;254m"
 # Fixed 256-color purple for Proposed status; avoids theme-dependent drift.
 PROPOSED_FG = "\x1b[38;5;135m"

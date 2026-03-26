@@ -99,6 +99,7 @@ def select_from_menu(
     extra_keys_help: dict[str, str] | None = None,
     selected_option_index: int | None = None,
     selected_option_bg: str | None = None,
+    footer_legend: str | None = None,
 ) -> int | str | None:
     if not options:
         click.echo("No options available.")
@@ -144,19 +145,22 @@ def select_from_menu(
 
             click.echo(line)
 
-        if allow_paging_nav:
-            keys_line = (
-                f"keys: 1-9 select | {MENU_PREV}=prev | {MENU_NEXT}=next | {MENU_UP}=up | {MENU_QUIT}=quit"
-            )
+        if footer_legend is not None:
+            keys_line = footer_legend
         else:
-            keys_line = f"keys: 1-9 select | {MENU_UP}=up | {MENU_QUIT}=quit"
-        if extra_key:
-            extra_help = extra_key_help if extra_key_help else "action"
-            keys_line = f"{keys_line} | {extra_key}={extra_help}"
-        if extra_keys:
-            for key, ret in extra_keys.items():
-                help_text = (extra_keys_help or {}).get(key, ret)
-                keys_line = f"{keys_line} | {key}={help_text}"
+            if allow_paging_nav:
+                keys_line = (
+                    f"keys: 1-9 select | {MENU_PREV}=prev | {MENU_NEXT}=next | {MENU_UP}=up | {MENU_QUIT}=quit"
+                )
+            else:
+                keys_line = f"keys: 1-9 select | {MENU_UP}=up | {MENU_QUIT}=quit"
+            if extra_key:
+                extra_help = extra_key_help if extra_key_help else "action"
+                keys_line = f"{keys_line} | {extra_key}={extra_help}"
+            if extra_keys:
+                for key, ret in extra_keys.items():
+                    help_text = (extra_keys_help or {}).get(key, ret)
+                    keys_line = f"{keys_line} | {key}={help_text}"
         click.echo(keys_line)
         click.echo("choice: ", nl=False)
         choice = click.getchar().strip().lower()
@@ -182,13 +186,6 @@ def select_from_menu(
             if page > 0:
                 page -= 1
             continue
-
-        if choice.isdigit():
-            local_index = int(choice) - 1
-            if 0 <= local_index < len(page_items):
-                return start + local_index
-
-        click.echo("Invalid input. Use number or navigation keys.")
 
         if choice.isdigit():
             local_index = int(choice) - 1
