@@ -267,7 +267,7 @@ def lookup_criterion_interactive(
     "--set-file",
     "set_file_input",
     type=str,
-    help="Non-interactive batch mode: path to .jsonl/.csv/.tsv with rows containing criterion_id/requirement_id/id/ac_id/r_id and status.",
+    help="Non-interactive batch mode: path to .jsonl/.csv/.tsv with rows containing criterion_id/requirement_id/id/req_id/r_id and status.",
 )
 @click.option(
     "--file",

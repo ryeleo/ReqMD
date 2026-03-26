@@ -89,6 +89,52 @@ Scope: demo.
     assert "- **Status:** ✅ Verified" in text
 
 
+def test_RQMD_core_014_auto_detected_prefix_supports_set_mode(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+
+    (domain / "README.md").write_text(
+        """# Requirements
+
+## Domain Documents
+
+- [Core](core.md)
+""",
+        encoding="utf-8",
+    )
+    (domain / "core.md").write_text(
+        """# Core Requirements
+
+Scope: core.
+
+### TEAM-CORE-001: Team custom requirement
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--set-requirement-id",
+            "TEAM-CORE-001",
+            "--set-status",
+            "Implemented",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    text = (domain / "core.md").read_text(encoding="utf-8")
+    assert "- **Status:** 🔧 Implemented" in text
+
+
 def test_RQMD_automation_003_repeatable_set_bulk_updates(repo_with_domain_docs: Path) -> None:
     domain = repo_with_domain_docs / "docs" / "requirements"
     (domain / "extra.md").write_text(
@@ -167,7 +213,7 @@ def test_RQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_do
     assert "**Blocked:** Pending" in text
 
 
-@pytest.mark.parametrize("key_name", ["criterion_id", "id", "ac_id", "requirement_id", "r_id"])
+@pytest.mark.parametrize("key_name", ["criterion_id", "id", "req_id", "requirement_id", "r_id"])
 def test_RQMD_automation_005b_set_file_accepts_all_id_alias_keys(
     repo_with_domain_docs: Path,
     tmp_path: Path,
@@ -634,6 +680,36 @@ def test_RQMD_rollup_005_json_mode_reports_global_totals(repo_with_domain_docs: 
     assert payload["criteria_dir"] == "docs/requirements"
     assert payload["file_count"] >= 1
     assert payload["totals"]["🔧 Implemented"] >= 1
+
+
+def test_RQMD_rollup_001_json_totals_match_live_file_counts(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--requirements-dir",
+            "docs/requirements",
+            "--rollup",
+            "--json",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+
+    files = cli.iter_domain_files(repo_with_domain_docs, "docs/requirements")
+    expected = {label: 0 for label, _ in cli.STATUS_ORDER}
+    for path in files:
+        counts = cli.count_statuses(path.read_text(encoding="utf-8"))
+        for label in expected:
+            expected[label] += counts[label]
+
+    assert payload["mode"] == "rollup"
+    assert payload["totals"] == expected
 
 
 def test_RQMD_rollup_007_cli_rollup_map_equations_apply_in_text_mode(repo_with_domain_docs: Path) -> None:

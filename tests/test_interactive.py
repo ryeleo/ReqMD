@@ -53,6 +53,75 @@ def test_RQMD_interactive_004_nav_shortcuts(monkeypatch) -> None:
     assert result == "nav-next"
 
 
+def test_RQMD_interactive_004a_next_prev_stack_semantics(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: One
+- **Status:** 💡 Proposed
+
+### AC-DEMO-002: Two
+- **Status:** 🔧 Implemented
+
+### AC-DEMO-003: Three
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+
+    status_visits: list[str] = []
+    status_actions = iter(["nav-next", "nav-next", "nav-prev", "nav-prev", "nav-next", "up"])
+    state = {"file_menu_calls": 0, "requirement_menu_calls": 0}
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Select file"):
+            state["file_menu_calls"] += 1
+            if state["file_menu_calls"] == 1:
+                return 0
+            return None
+
+        if title.startswith("Select requirement in"):
+            state["requirement_menu_calls"] += 1
+            if state["requirement_menu_calls"] == 1:
+                return 0
+            return "up"
+
+        if title.startswith("Set status for "):
+            status_visits.append(title.removeprefix("Set status for "))
+            return next(status_actions)
+
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert status_visits == [
+        "AC-DEMO-003",
+        "AC-DEMO-002",
+        "AC-DEMO-001",
+        "AC-DEMO-002",
+        "AC-DEMO-003",
+        "AC-DEMO-002",
+    ]
+
+
 def test_RQMD_interactive_005_sort_toggle_key(monkeypatch) -> None:
     keys = iter(["s"])
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
@@ -354,6 +423,105 @@ def test_RQMD_sorting_009_refresh_reopens_file_menu(monkeypatch, tmp_path: Path)
 
     assert result.exit_code == 0
     assert state["call"] == 2
+
+
+def test_RQMD_sorting_003_refresh_keeps_deterministic_file_order(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "README.md").write_text(
+        "# Requirements\n\n## Domain Documents\n\n- [A](a.md)\n- [B](b.md)\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "a.md").write_text(
+        "# Same Domain Requirement\n\nScope: same.\n\n### AC-A-001: A\n- **Status:** 🔧 Implemented\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "b.md").write_text(
+        "# Same Domain Requirement\n\nScope: same.\n\n### AC-B-001: B\n- **Status:** 🔧 Implemented\n",
+        encoding="utf-8",
+    )
+
+    state = {"call": 0}
+    snapshots: list[list[str]] = []
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Select file"):
+            snapshots.append(list(options))
+            state["call"] += 1
+            if state["call"] == 1:
+                return "refresh"
+            return None
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert len(snapshots) == 2
+    assert snapshots[0] == snapshots[1]
+
+
+def test_RQMD_sorting_004_refresh_preserves_selected_sort_mode(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "README.md").write_text(
+        "# Requirements\n\n## Domain Documents\n\n- [One](one.md)\n- [Two](two.md)\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "one.md").write_text(
+        "# One Domain Requirement\n\nScope: one.\n\n### AC-ONE-001: One\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "two.md").write_text(
+        "# Two Domain Requirement\n\nScope: two.\n\n### AC-TWO-001: Two\n- **Status:** 🔧 Implemented\n",
+        encoding="utf-8",
+    )
+
+    state = {"call": 0}
+    titles: list[str] = []
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Select file"):
+            titles.append(title)
+            state["call"] += 1
+            if state["call"] == 1:
+                return "cycle-sort"
+            if state["call"] == 2:
+                return "refresh"
+            return None
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert len(titles) == 3
+    assert "\x1b[1mP ↓\x1b[0m" in titles[1]
+    assert "\x1b[1mP ↓\x1b[0m" in titles[2]
 
 
 def test_RQMD_interactive_008_reason_prompt_helpers(monkeypatch) -> None:

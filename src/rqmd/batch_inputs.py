@@ -73,14 +73,14 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
                 record.get("criterion_id")
                 or record.get("requirement_id")
                 or record.get("id")
-                or record.get("ac_id")
+                or record.get("req_id")
                 or record.get("r_id")
                 or ""
             ).strip()
             status = str(record.get("status") or "").strip()
             if not criterion_id or not status:
                 raise click.ClickException(
-                    f"Invalid JSONL row at {path}:{line_number}: requires criterion_id/requirement_id/id/ac_id/r_id and status"
+                    f"Invalid JSONL row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and status"
                 )
 
             file_filter = str(record.get("file") or "").strip() or None
@@ -115,14 +115,14 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
                 row.get("criterion_id")
                 or row.get("requirement_id")
                 or row.get("id")
-                or row.get("ac_id")
+                or row.get("req_id")
                 or row.get("r_id")
                 or ""
             ).strip()
             status = str(row.get("status") or "").strip()
             if not criterion_id or not status:
                 raise click.ClickException(
-                    f"Invalid CSV/TSV row at {path}:{line_number}: requires criterion_id/requirement_id/id/ac_id/r_id and status columns"
+                    f"Invalid CSV/TSV row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and status columns"
                 )
 
             file_filter = str(row.get("file") or "").strip() or None

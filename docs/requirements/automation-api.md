@@ -22,7 +22,7 @@ Summary: 0💡 0🔧 10✅ 0⛔ 0🗑️
 
 ### RQMD-AUTOMATION-003: Repeatable bulk set mode
 - **Status:** ✅ Verified
-- Given multiple `--set AC-ID=STATUS` arguments
+- Given multiple `--set REQUIREMENT-ID=STATUS` arguments
 - When command runs
 - Then each update is applied in argument order
 - And command exits successfully when all updates succeed.
@@ -36,7 +36,7 @@ Summary: 0💡 0🔧 10✅ 0⛔ 0🗑️
 
 ### RQMD-AUTOMATION-005: Batch row schema aliases
 - **Status:** ✅ Verified
-- Given batch rows use `criterion_id`, `id`, or `ac_id`
+- Given batch rows use `requirement_id`, `criterion_id`, `id`, `ac_id`, or `r_id`
 - When parser reads rows
 - Then any supported key is accepted for requirement identifier
 - And status remains required.

@@ -1,6 +1,15 @@
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
 
+## 
+
+--json should include a "body" field by default, right? So that when you use it, you can super easily grok the entire requirement object including the text and line references, which is really helpful for automation and AI parsing. Maybe add a `--no-body` flag to disable that if you just want a flat status list or something.
+
+## rqmd --filter-status Implemented
+
+If a user runs a command, leaves, and comes back, they should be brought back to the same index they were at to continue their work.
+There should be a way to go back to 1 or to the end also.
+
 ## sort orders
 
 The default sort should also effect the inital summary output! (Looks to be ascending names instead of descending right now)

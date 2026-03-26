@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 10🔧 5✅ 0⛔ 0🗑️
+Summary: 1💡 6🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -14,7 +14,7 @@ Summary: 1💡 10🔧 5✅ 0⛔ 0🗑️
 - And non-markdown files are ignored.
 
 ### RQMD-CORE-002: Status line parsing
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given a requirement block with a status line
 - When the parser reads the document
 - Then the status is extracted from `- **Status:** ...`
@@ -28,14 +28,14 @@ Summary: 1💡 10🔧 5✅ 0⛔ 0🗑️
 - And unsupported values remain unchanged unless explicitly updated by user action.
 
 ### RQMD-CORE-004: Summary block insertion
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given a domain file without a summary block
 - When processing runs
 - Then a summary block is inserted near the top of the file
 - And the block format uses acceptance-status-summary markers.
 
 ### RQMD-CORE-005: Summary block replacement
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given a domain file with an existing summary block
 - When status counts change
 - Then only the existing summary block content is replaced
@@ -49,11 +49,12 @@ Summary: 1💡 10🔧 5✅ 0⛔ 0🗑️
 - And summary output uses count+emoji format.
 
 ### RQMD-CORE-007: Requirement header matching
-- **Status:** 🔧 Implemented
-- Given requirement headings follow `### AC-...: ...`
+- **Status:** ✅ Verified
+- Given requirement headings follow `### <PREFIX>-...: ...`
 - When parsing runs
 - Then each matching requirement is discoverable by ID
-- And title text is preserved for menu and reporting output.
+- And title text is preserved for menu and reporting output
+- And prefix handling follows configured or auto-detected `--id-prefix` behavior.
 
 ### RQMD-CORE-008: Idempotent processing
 - **Status:** 🔧 Implemented
@@ -76,17 +77,17 @@ Summary: 1💡 10🔧 5✅ 0⛔ 0🗑️
 - Then those reason lines are captured with line references
 - And can be updated or removed consistently by status mutation paths.
 
-### RQMD-CORE-011: Project AC scaffold initialization
+### RQMD-CORE-011: Project scaffold initialization
 - **Status:** ✅ Verified
-- Given a project does not yet have AC documentation
+- Given a project does not yet have requirement documentation
 - When an initialization command is run
 - Then boilerplate docs are created including `docs/requirements/README.md`
 - And a starter domain directory `docs/requirements/` is created
-- And generated content follows the AC index/domain pattern used by this tool.
+- And generated content follows the requirements index/domain pattern used by this tool.
 
 ### RQMD-CORE-012: Starter dummy requirement generation
 - **Status:** ✅ Verified
-- Given initialization is generating starter AC content
+- Given initialization is generating starter requirement content
 - When starter domain docs are created
 - Then at least one easy-to-delete sample requirement `<PREFIX>-HELLO-001` is included
 - And the sample clearly indicates it is a handoff placeholder for teams to replace.
