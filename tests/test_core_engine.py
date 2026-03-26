@@ -137,6 +137,28 @@ Scope: demo.
     assert changed_second is False
 
 
+def test_RQMD_core_009_missing_domain_docs_handling(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    (repo / "docs" / "requirements").mkdir(parents=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--check",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "No requirement markdown files found under" in result.output
+
+
 def test_RQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:
     path = tmp_path / "demo.md"
     path.write_text(
