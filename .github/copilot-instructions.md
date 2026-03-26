@@ -10,8 +10,8 @@ Goal:
 ## Package Overview
 
 - Package root: scripts/ac-cli
-- Source package: src/ac_cli
-- Main CLI module: src/ac_cli/cli.py
+- Source package: src/reqmd
+- Main CLI module: src/reqmd/cli.py
 - Entrypoint command: ac-cli
 
 Core flow in `cli.py`:
@@ -133,8 +133,8 @@ After changes, run from this folder:
 ## Packaging Notes
 
 Current package metadata is in `pyproject.toml`:
-- Name: `ac-docs-cli`
-- Entry point: `ac-cli = ac_cli.cli:main`
+- Name: `reqmd`
+- Entry point: `ac-cli = reqmd.cli:main`
 - Dependencies: `click`, `tabulate`
 
 Before publishing to PyPI, ensure:

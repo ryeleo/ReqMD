@@ -1,4 +1,4 @@
-# ac-docs-cli
+# reqmd
 
 Reusable requirements and acceptance-criteria workflow CLI.
 
@@ -55,7 +55,7 @@ uv run ac-cli --help
 Module entrypoint:
 
 ```bash
-uv run python -m ac_cli --help
+uv run python -m reqmd --help
 ```
 
 ## Core commands
@@ -176,9 +176,9 @@ Requirement header prefixes are configurable with `--id-prefix`. By default the 
 
 ## Packaging notes
 
-- Package name: `ac-docs-cli`
+- Package name: `reqmd`
 - Console script entrypoint: `ac-cli`
-- Source package: `src/ac_cli`
+- Source package: `src/reqmd`
 
 When ready for PyPI:
 

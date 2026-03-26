@@ -1,6 +1,6 @@
 # Requirements
 
-This document is the source-of-truth index for ac-docs-cli requirements.
+This document is the source-of-truth index for reqmd requirements.
 
 ## How To Use
 

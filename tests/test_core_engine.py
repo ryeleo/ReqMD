@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ac_cli import cli
+from reqmd import cli
 
 
-def test_ac_acccli_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path: Path) -> None:
+def test_REQMD_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain_dir = repo / "docs" / "requirements"
     domain_dir.mkdir(parents=True)
@@ -17,7 +17,7 @@ def test_ac_acccli_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path:
     assert [p.name for p in files] == ["a.md", "z.md"]
 
 
-def test_ac_acccli_core_002_and_007_parse_and_find_criterion() -> None:
+def test_REQMD_core_002_and_007_parse_and_find_criterion() -> None:
     text = """# Demo Acceptance Criteria
 
 Scope: demo.
@@ -39,7 +39,7 @@ Scope: demo.
         assert cli.find_criterion_by_id(path, "ac-demo-002")["title"] == "Second"
 
 
-def test_ac_acccli_core_002b_parse_requirement_ids_with_configured_prefix() -> None:
+def test_REQMD_core_002b_parse_requirement_ids_with_configured_prefix() -> None:
     text = """# Demo Requirements
 
 Scope: demo.
@@ -58,7 +58,7 @@ Scope: demo.
         assert cli.find_criterion_by_id(path, "r-demo-001", id_prefixes=("R",))["title"] == "First"
 
 
-def test_ac_acccli_core_003_normalize_status_aliases() -> None:
+def test_REQMD_core_003_normalize_status_aliases() -> None:
     original = """### AC-DEMO-001: First
 - **Status:** ✅ Verified
 """
@@ -67,7 +67,7 @@ def test_ac_acccli_core_003_normalize_status_aliases() -> None:
     assert "- **Status:** ✅ Done" in normalized
 
 
-def test_ac_acccli_core_004_and_005_insert_or_replace_summary_block() -> None:
+def test_REQMD_core_004_and_005_insert_or_replace_summary_block() -> None:
     text = """# Demo Acceptance Criteria
 
 Scope: demo.
@@ -87,7 +87,7 @@ Scope: demo.
     assert "Summary: 0💡 1🔧" in replaced
 
 
-def test_ac_acccli_core_006_count_statuses_model() -> None:
+def test_REQMD_core_006_count_statuses_model() -> None:
     text = "\n".join(
         [
             "- **Status:** 💡 Proposed",
@@ -109,7 +109,7 @@ def test_ac_acccli_core_006_count_statuses_model() -> None:
     assert counts["🗑️ Deprecated"] == 1
 
 
-def test_ac_acccli_core_008_process_file_idempotent(tmp_path: Path) -> None:
+def test_REQMD_core_008_process_file_idempotent(tmp_path: Path) -> None:
     path = tmp_path / "demo.md"
     path.write_text(
         """# Demo Acceptance Criteria
@@ -128,7 +128,7 @@ Scope: demo.
     assert changed_second is False
 
 
-def test_ac_acccli_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:
+def test_REQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:
     path = tmp_path / "demo.md"
     path.write_text(
         """# Demo Acceptance Criteria

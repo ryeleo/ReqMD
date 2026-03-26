@@ -10,7 +10,7 @@ Summary: 3💡 5🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 - **Status:** 🔧 Implemented
 - Given the package source tree
 - When inspected
-- Then Python package code lives under `src/ac_cli`
+- Then Python package code lives under `src/reqmd`
 - And project metadata is defined in `pyproject.toml`.
 
 ### REQMD-PACKAGING-002: Console entrypoint
@@ -23,7 +23,7 @@ Summary: 3💡 5🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 ### REQMD-PACKAGING-003: Module entrypoint
 - **Status:** 🔧 Implemented
 - Given package source is available
-- When user runs `python -m ac_cli`
+- When user runs `python -m reqmd`
 - Then CLI starts successfully
 - And exposes same command options as console script.
 

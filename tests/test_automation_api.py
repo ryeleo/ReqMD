@@ -5,10 +5,10 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from ac_cli import cli
+from reqmd import cli
 
 
-def test_ac_acccli_automation_001_check_only_mode_detects_needed_changes(repo_with_domain_docs: Path) -> None:
+def test_REQMD_automation_001_check_only_mode_detects_needed_changes(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     target = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
     before = target.read_text(encoding="utf-8")
@@ -30,7 +30,7 @@ def test_ac_acccli_automation_001_check_only_mode_detects_needed_changes(repo_wi
     assert target.read_text(encoding="utf-8") == before
 
 
-def test_ac_acccli_automation_002_single_set_updates_criterion(repo_with_domain_docs: Path) -> None:
+def test_REQMD_automation_002_single_set_updates_criterion(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -51,7 +51,7 @@ def test_ac_acccli_automation_002_single_set_updates_criterion(repo_with_domain_
     assert "- **Status:** ✅ Done" in text
 
 
-def test_ac_acccli_automation_002b_single_set_updates_r_prefixed_requirement(tmp_path: Path) -> None:
+def test_REQMD_automation_002b_single_set_updates_r_prefixed_requirement(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -89,7 +89,7 @@ Scope: demo.
     assert "- **Status:** ✅ Done" in text
 
 
-def test_ac_acccli_automation_003_repeatable_set_bulk_updates(repo_with_domain_docs: Path) -> None:
+def test_REQMD_automation_003_repeatable_set_bulk_updates(repo_with_domain_docs: Path) -> None:
     domain = repo_with_domain_docs / "docs" / "requirements"
     (domain / "extra.md").write_text(
         """# Extra Acceptance Criteria
@@ -122,7 +122,7 @@ Scope: extra.
     assert "💻 Desktop-Verified" in (domain / "extra.md").read_text(encoding="utf-8")
 
 
-def test_ac_acccli_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+def test_REQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_domain_docs: Path, tmp_path: Path) -> None:
     update_file = tmp_path / "updates.jsonl"
     rows = [
         {"id": "AC-HELLO-001", "status": "blocked", "blocked_reason": "Pending"},
@@ -148,7 +148,7 @@ def test_ac_acccli_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_wi
     assert "**Blocked:** Pending" in text
 
 
-def test_ac_acccli_automation_006_conflicting_mode_guardrails(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+def test_REQMD_automation_006_conflicting_mode_guardrails(repo_with_domain_docs: Path, tmp_path: Path) -> None:
     update_file = tmp_path / "updates.jsonl"
     update_file.write_text('{"criterion_id":"AC-HELLO-001","status":"done"}\n', encoding="utf-8")
 
@@ -170,7 +170,7 @@ def test_ac_acccli_automation_006_conflicting_mode_guardrails(repo_with_domain_d
     assert "exactly one non-interactive update mode" in result.output
 
 
-def test_ac_acccli_automation_007_file_scope_disambiguation(two_file_repo: Path) -> None:
+def test_REQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> None:
     runner = CliRunner()
 
     ambiguous = runner.invoke(
@@ -213,7 +213,7 @@ def test_ac_acccli_automation_007_file_scope_disambiguation(two_file_repo: Path)
     assert "✅ Done" not in second_text
 
 
-def test_ac_acccli_automation_008_filtered_tree_output(repo_with_domain_docs: Path) -> None:
+def test_REQMD_automation_008_filtered_tree_output(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -233,7 +233,7 @@ def test_ac_acccli_automation_008_filtered_tree_output(repo_with_domain_docs: Pa
     assert "AC-HELLO-001" in result.output
 
 
-def test_ac_acccli_automation_009_no_summary_table_suppresses_table(repo_with_domain_docs: Path) -> None:
+def test_REQMD_automation_009_no_summary_table_suppresses_table(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,

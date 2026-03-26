@@ -4,10 +4,10 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from ac_cli import cli
+from reqmd import cli
 
 
-def test_ac_acccli_portability_001_and_002_repo_root_and_criteria_dir_flags(tmp_path: Path) -> None:
+def test_REQMD_portability_001_and_002_repo_root_and_criteria_dir_flags(tmp_path: Path) -> None:
     repo = tmp_path / "another-repo"
     criteria = repo / "custom" / "ac"
     criteria.mkdir(parents=True)
@@ -38,7 +38,7 @@ Scope: x.
     assert result.exit_code == 1
 
 
-def test_ac_acccli_portability_003_default_conventions(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_REQMD_portability_003_default_conventions(monkeypatch, repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
         # Build default docs/requirements under isolated CWD.
@@ -59,7 +59,7 @@ Scope: demo.
         assert result.exit_code == 1
 
 
-def test_ac_acccli_portability_004_relative_source_display(tmp_path: Path, capsys) -> None:
+def test_REQMD_portability_004_relative_source_display(tmp_path: Path, capsys) -> None:
     repo = tmp_path / "repo"
     path = repo / "docs" / "requirements" / "demo.md"
     path.parent.mkdir(parents=True)
@@ -79,7 +79,7 @@ Scope: demo.
     assert "Source: docs/requirements/demo.md" in output
 
 
-def test_ac_acccli_portability_005_generic_project_assumptions(tmp_path: Path) -> None:
+def test_REQMD_portability_005_generic_project_assumptions(tmp_path: Path) -> None:
     repo = tmp_path / "generic"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -102,14 +102,14 @@ Scope: generic.
     assert result.exit_code == 0
 
 
-def test_ac_acccli_packaging_001_to_005_metadata_and_layout() -> None:
+def test_REQMD_packaging_001_to_005_metadata_and_layout() -> None:
     project_root = Path(__file__).resolve().parents[1]
 
-    assert (project_root / "src" / "ac_cli" / "cli.py").exists()
-    assert (project_root / "src" / "ac_cli" / "__main__.py").exists()
+    assert (project_root / "src" / "reqmd" / "cli.py").exists()
+    assert (project_root / "src" / "reqmd" / "__main__.py").exists()
 
     pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
-    assert "ac-cli = \"ac_cli.cli:main\"" in pyproject
+    assert "ac-cli = \"reqmd.cli:main\"" in pyproject
     assert "click>=8.1.0" in pyproject
     assert "tabulate>=0.9.0" in pyproject
 

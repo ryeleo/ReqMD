@@ -16,7 +16,7 @@ Your job is to carry substantial repository work from analysis through implement
 - Use the Explore agent for read-only discovery when the task is broad or ambiguous, then perform the implementation yourself.
 
 ## Constraints
-- Prefer surgical changes over broad rewrites, especially in src/ac_cli/cli.py.
+- Prefer surgical changes over broad rewrites, especially in src/reqmd/cli.py.
 - Preserve tolerant status parsing, canonical status normalization, and idempotent summary updates.
 - Keep non-interactive flows deterministic and free of hidden prompts.
 - Avoid introducing project-specific assumptions into default CLI behavior.

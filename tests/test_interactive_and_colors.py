@@ -4,17 +4,17 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from ac_cli import cli
+from reqmd import cli
 
 
-def test_ac_acccli_interactive_002_single_key_selection(monkeypatch) -> None:
+def test_REQMD_interactive_002_single_key_selection(monkeypatch) -> None:
     keys = iter(["1"])
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
     result = cli.select_from_menu("Pick", ["A", "B"])
     assert result == 0
 
 
-def test_ac_acccli_interactive_003_paging_controls(monkeypatch) -> None:
+def test_REQMD_interactive_003_paging_controls(monkeypatch) -> None:
     keys = iter(["n", "1"])
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
     options = [f"opt{i}" for i in range(12)]
@@ -22,7 +22,7 @@ def test_ac_acccli_interactive_003_paging_controls(monkeypatch) -> None:
     assert result == 9
 
 
-def test_ac_acccli_interactive_004_nav_shortcuts(monkeypatch) -> None:
+def test_REQMD_interactive_004_nav_shortcuts(monkeypatch) -> None:
     keys = iter(["n"])
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
     result = cli.select_from_menu(
@@ -34,21 +34,21 @@ def test_ac_acccli_interactive_004_nav_shortcuts(monkeypatch) -> None:
     assert result == "nav-next"
 
 
-def test_ac_acccli_interactive_005_sort_toggle_key(monkeypatch) -> None:
+def test_REQMD_interactive_005_sort_toggle_key(monkeypatch) -> None:
     keys = iter(["s"])
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
     result = cli.select_from_menu("Sort", ["A"], extra_key="s", extra_key_return="toggle-sort")
     assert result == "toggle-sort"
 
 
-def test_ac_acccli_interactive_006_status_highlight_preserves_background() -> None:
+def test_REQMD_interactive_006_status_highlight_preserves_background() -> None:
     line = "status \x1b[0m text"
     patched = cli.apply_background_preserving_styles(line, "\x1b[48;5;220m")
     assert patched.startswith("\x1b[48;5;220m")
     assert "\x1b[0m\x1b[48;5;220m" in patched
 
 
-def test_ac_acccli_interactive_006a_color_semantics() -> None:
+def test_REQMD_interactive_006a_color_semantics() -> None:
     proposed = cli.style_status_label("💡 Proposed")
     done = cli.style_status_label("✅ Done")
     blocked = cli.style_status_label("⛔ Blocked")
@@ -60,7 +60,7 @@ def test_ac_acccli_interactive_006a_color_semantics() -> None:
     assert implemented == "🔧 Implemented"
 
 
-def test_ac_acccli_interactive_006b_color_rollup_contains_bucket_styling() -> None:
+def test_REQMD_interactive_006b_color_rollup_contains_bucket_styling() -> None:
     counts = {label: 0 for label, _ in cli.STATUS_ORDER}
     counts["💡 Proposed"] = 1
     counts["🔧 Implemented"] = 2
@@ -73,13 +73,13 @@ def test_ac_acccli_interactive_006b_color_rollup_contains_bucket_styling() -> No
     assert "\x1b[" in rollup
 
 
-def test_ac_acccli_interactive_008_reason_prompt_helpers(monkeypatch) -> None:
+def test_REQMD_interactive_008_reason_prompt_helpers(monkeypatch) -> None:
     monkeypatch.setattr(cli.click, "prompt", lambda *args, **kwargs: "Some reason")
     assert cli.prompt_for_blocked_reason() == "Some reason"
     assert cli.prompt_for_deprecated_reason() == "Some reason"
 
 
-def test_ac_acccli_interactive_009_positional_lookup_mode(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_REQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
     def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns, id_prefixes):
@@ -106,7 +106,7 @@ def test_ac_acccli_interactive_009_positional_lookup_mode(monkeypatch, repo_with
     assert called["value"] is True
 
 
-def test_ac_acccli_interactive_001_default_invokes_interactive_loop(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_REQMD_interactive_001_default_invokes_interactive_loop(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
     def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, id_prefixes):
