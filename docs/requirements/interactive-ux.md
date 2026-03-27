@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 0🔧 14✅ 0⛔ 2🗑️
+Summary: 4💡 0🔧 14✅ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -91,6 +91,15 @@ Summary: 3💡 0🔧 14✅ 0⛔ 2🗑️
 - When command executes
 - Then matching requirement panel opens directly
 - And user can set status once then exit.
+
+### REQMD-INTERACTIVE-016: Open specific domain file from CLI entry
+- **Status:** 💡 Proposed
+- Given a user invokes `rqmd` with a path to a domain file (absolute or repo-root-relative)
+- When the provided path resolves to a valid markdown domain file containing criteria
+- Then rqmd opens the interactive session with that file selected and the requirement list for that file presented first
+- And behavior mirrors positional ID entry: the user can immediately set status/priority or navigate requirements within that file
+- And in non-interactive modes the provided file path scopes non-interactive commands (e.g., `--set`, `--check`, `--set-priority`) to that file only
+- And if the file path is invalid the tool prints a helpful error and suggestions (nearest matching domain files, common typos), and offers to search for similar files.
 
 ### RQMD-INTERACTIVE-009A: Up key for hierarchical navigation
 - **Status:** ✅ Verified
