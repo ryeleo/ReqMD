@@ -188,6 +188,113 @@ Scope: feature.
     assert "AC-ROOT-001" not in result.output
 
 
+def test_RQMD_portability_014_state_dir_option_forwards_to_filtered_walk(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "demo.md").write_text(
+        """# Demo Requirement
+
+Scope: demo.
+
+### AC-DEMO-001: Demo
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_filtered_loop(repo_root, domain_files, target_status, emoji_columns, id_prefixes, resume_filter, state_dir, include_status_emojis):
+        captured["state_dir"] = state_dir
+        captured["target_status"] = target_status
+        return 0
+
+    monkeypatch.setattr(cli, "filtered_interactive_loop", fake_filtered_loop)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-status",
+            "implemented",
+            "--state-dir",
+            "project-local",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["state_dir"] == "project-local"
+    assert captured["target_status"] == "🔧 Implemented"
+
+
+def test_RQMD_portability_010_strip_and_restore_status_emojis(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    target = criteria_dir / "demo.md"
+    target.write_text(
+        """# Demo Requirement
+
+Scope: demo.
+
+### AC-DEMO-001: Demo
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+
+    strip_result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root", str(repo),
+            "--requirements-dir", "docs/requirements",
+            "--strip-status-emojis",
+            "--no-summary-table",
+        ],
+    )
+    assert strip_result.exit_code == 0
+
+    stripped_text = target.read_text(encoding="utf-8")
+    assert "- **Status:** Implemented" in stripped_text
+    assert "🔧" not in stripped_text
+
+    no_reintroduce_result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root", str(repo),
+            "--requirements-dir", "docs/requirements",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+    assert no_reintroduce_result.exit_code == 0
+    assert "🔧" not in target.read_text(encoding="utf-8")
+
+    restore_result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root", str(repo),
+            "--requirements-dir", "docs/requirements",
+            "--restore-status-emojis",
+            "--no-summary-table",
+        ],
+    )
+    assert restore_result.exit_code == 0
+
+    restored_text = target.read_text(encoding="utf-8")
+    assert "- **Status:** 🔧 Implemented" in restored_text
+    assert "Summary:" in restored_text
+    assert "🔧" in restored_text
+
+
 def test_RQMD_packaging_001_to_005_metadata_and_layout() -> None:
     project_root = Path(__file__).resolve().parents[1]
 
@@ -211,6 +318,45 @@ def test_RQMD_packaging_001_to_005_metadata_and_layout() -> None:
     assert "# Changelog" in changelog
     assert "## [Unreleased]" in changelog
     assert "Keep a Changelog" in changelog
+
+
+def test_RQMD_packaging_006_metadata_hardening_fields_present() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert "license = \"MIT\"" in pyproject
+    assert "[project.urls]" in pyproject
+    assert "Homepage = \"https://github.com/example/rqmd\"" in pyproject
+    assert "Repository = \"https://github.com/example/rqmd\"" in pyproject
+    assert "Issues = \"https://github.com/example/rqmd/issues\"" in pyproject
+    assert "classifiers = [" in pyproject
+    assert "Programming Language :: Python :: 3.10" in pyproject
+
+
+def test_RQMD_packaging_007_semver_policy_documented() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    semver_path = project_root / "docs" / "SEMVER.md"
+
+    assert semver_path.exists()
+    semver_text = semver_path.read_text(encoding="utf-8")
+    assert "Semantic Versioning" in semver_text
+    assert "MAJOR.MINOR.PATCH" in semver_text
+    assert "PATCH" in semver_text
+    assert "MINOR" in semver_text
+    assert "MAJOR" in semver_text
+
+
+def test_RQMD_packaging_008_release_publish_workflow_present() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    workflow_path = project_root / ".github" / "workflows" / "publish-pypi.yml"
+
+    assert workflow_path.exists()
+    workflow_text = workflow_path.read_text(encoding="utf-8")
+    assert "release:" in workflow_text
+    assert "types: [published]" in workflow_text
+    assert "uv build" in workflow_text
+    assert "uv publish" in workflow_text
+    assert "PYPI_API_TOKEN" in workflow_text
 
 
 def test_RQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_docs_prefix() -> None:

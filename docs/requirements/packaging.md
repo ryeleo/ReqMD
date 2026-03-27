@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 6🔧 0✅ 0⛔ 0🗑️
+Summary: 0💡 6🔧 3✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -42,21 +42,21 @@ Summary: 3💡 6🔧 0✅ 0⛔ 0🗑️
 - And portability plus ID-prefix flags are documented.
 
 ### RQMD-PACKAGING-006: PyPI metadata hardening
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - Given package is prepared for public release
 - When metadata is finalized
 - Then author/license/classifiers/urls are complete
 - And build+upload instructions remain valid.
 
 ### RQMD-PACKAGING-007: Semantic versioning policy
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - Given package evolves across projects
 - When versions are tagged
 - Then backward-compatible changes use minor/patch bumps
 - And breaking CLI changes trigger major version bumps.
 
 ### RQMD-PACKAGING-008: Publish to PyPI on GitHub release
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - Given a GitHub release is created for this repository
 - When the release workflow runs
 - Then the tagged package version is published to pypi.org automatically

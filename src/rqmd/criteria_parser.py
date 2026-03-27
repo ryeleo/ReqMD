@@ -138,6 +138,7 @@ def parse_criteria(
                 "id": header_match.group("id"),
                 "title": header_match.group("title"),
                 "status": None,
+                "header_line": index,
                 "status_line": None,
                 "blocked_reason": None,
                 "blocked_reason_line": None,
@@ -209,6 +210,34 @@ def extract_criterion_block(
             break
 
     return "\n".join(lines[start_index:end_index]).strip()
+
+
+def extract_criterion_block_with_lines(
+    path: Path,
+    criterion_id: str,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> tuple[str, int | None, int | None]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    start_index: int | None = None
+    target = criterion_id.strip().upper()
+    header_pattern = build_criterion_header_pattern(id_prefixes)
+
+    for index, line in enumerate(lines):
+        match = header_pattern.match(line)
+        if match and match.group("id").upper() == target:
+            start_index = index
+            break
+
+    if start_index is None:
+        return "", None, None
+
+    end_index = len(lines)
+    for index in range(start_index + 1, len(lines)):
+        if header_pattern.match(lines[index]):
+            end_index = index
+            break
+
+    return "\n".join(lines[start_index:end_index]).strip(), start_index, end_index - 1
 
 
 def collect_criteria_by_status(

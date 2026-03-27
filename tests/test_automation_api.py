@@ -551,6 +551,35 @@ def test_RQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: P
     assert payload["total"] == 1
     assert payload["files"][0]["path"].endswith("second.md")
     assert payload["files"][0]["requirements"][0]["id"] == "AC-OVERLAP-001"
+    body = payload["files"][0]["requirements"][0]["body"]
+    assert "### AC-OVERLAP-001: Shared ID" in body["markdown"]
+    assert isinstance(body["lines"]["header"], int)
+    assert isinstance(body["lines"]["status"], int)
+
+
+def test_RQMD_automation_008e_filtered_json_output_supports_no_body(two_file_repo: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(two_file_repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-status",
+            "proposed",
+            "--json",
+            "--no-body",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    requirement = payload["files"][0]["requirements"][0]
+    assert requirement["id"] == "AC-OVERLAP-001"
+    assert "body" not in requirement
 
 
 def test_RQMD_automation_008f_json_summary_output_without_filter_status(repo_with_domain_docs: Path) -> None:
@@ -813,6 +842,7 @@ def test_RQMD_rollup_007_cli_map_takes_precedence_over_rollup_config(repo_with_d
 def test_RQMD_automation_010_filter_status_implemented_json_entries_match_live_requirements() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     runner = CliRunner()
+    id_prefixes = cli.resolve_id_prefixes(repo_root, "docs/requirements", ())
 
     result = runner.invoke(
         cli.main,
@@ -850,7 +880,7 @@ def test_RQMD_automation_010_filter_status_implemented_json_entries_match_live_r
         file_path = repo_root / rel_path
         assert file_path.exists()
 
-        parsed = cli.parse_criteria(file_path)
+        parsed = cli.parse_criteria(file_path, id_prefixes=id_prefixes)
         matching = [item for item in parsed if str(item["id"]) == requirement_id]
         assert len(matching) == 1
         assert str(matching[0]["status"]) == "🔧 Implemented"
@@ -877,3 +907,87 @@ def test_RQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_d
     assert "Blk" in result.output
     assert "Dep" in result.output
     assert "WaitVR" not in result.output
+
+
+def test_RQMD_sorting_initial_summary_table_matches_default_app_order(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "a.md").write_text(
+        """# Alpha Domain Requirement
+
+Scope: alpha.
+
+### AC-ALPHA-001: Alpha requirement
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    (domain / "b.md").write_text(
+        """# Bravo Domain Requirement
+
+Scope: bravo.
+
+### AC-BRAVO-001: Bravo requirement
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert result.output.find("Bravo Domain") < result.output.find("Alpha Domain")
+
+
+def test_RQMD_sorting_initial_summary_table_honors_status_focus_strategy(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "z.md").write_text(
+        """# Zulu Domain Requirement
+
+Scope: zulu.
+
+### AC-ZULU-001: Zulu requirement
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    (domain / "a.md").write_text(
+        """# Alpha Domain Requirement
+
+Scope: alpha.
+
+### AC-ALPHA-001: Alpha requirement
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--sort-strategy",
+            "status-focus",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert result.output.find("Alpha Domain") < result.output.find("Zulu Domain")

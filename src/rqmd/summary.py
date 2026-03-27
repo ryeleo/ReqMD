@@ -24,14 +24,27 @@ from .constants import (STATUS_ORDER, STATUS_PATTERN,
 from .status_model import coerce_status_label, style_status_count
 
 
-def build_summary_line(counts: dict[str, int], verbose: bool = False, filename: str = "") -> str:
+def _plain_status_label(canonical_status: str) -> str:
+    parts = canonical_status.split(" ", 1)
+    return parts[1] if len(parts) > 1 else canonical_status
+
+
+def build_summary_line(
+    counts: dict[str, int],
+    verbose: bool = False,
+    filename: str = "",
+    include_status_emojis: bool = True,
+) -> str:
     if verbose:
         # Build a table row for this file
         row = [filename] + [counts[label] for label, _ in STATUS_ORDER]
         return row
 
     # Terse mode: show just emojis and counts inline
-    parts = [f"{counts[label]}{label.split()[0]}" for label, _ in STATUS_ORDER]
+    parts = [
+        f"{counts[label]}{label.split()[0] if include_status_emojis else _plain_status_label(label)}"
+        for label, _ in STATUS_ORDER
+    ]
     return " ".join(parts)
 
 
@@ -44,9 +57,12 @@ def build_summary_table(rows: list[list], verbose: bool = False) -> str:
     return tabulate(rows, headers=headers, tablefmt="simple")
 
 
-def build_summary_block(counts: dict[str, int]) -> str:
+def build_summary_block(counts: dict[str, int], include_status_emojis: bool = True) -> str:
     # Build simple inline summary for HTML comments in markdown.
-    parts = [f"{counts[label]}{label.split()[0]}" for label, _ in STATUS_ORDER]
+    parts = [
+        f"{counts[label]}{label.split()[0] if include_status_emojis else _plain_status_label(label)}"
+        for label, _ in STATUS_ORDER
+    ]
     summary_text = " ".join(parts)
     return "\n".join([
         SUMMARY_START,
@@ -55,7 +71,7 @@ def build_summary_block(counts: dict[str, int]) -> str:
     ])
 
 
-def normalize_status_lines(text: str) -> tuple[str, bool]:
+def normalize_status_lines(text: str, include_status_emojis: bool = True) -> tuple[str, bool]:
     changed = False
 
     def replace_status_line(match: re.Match[str]) -> str:
@@ -66,7 +82,8 @@ def normalize_status_lines(text: str) -> tuple[str, bool]:
         except ValueError:
             return match.group(0)
 
-        updated_line = f"- **Status:** {canonical}"
+        normalized_status = canonical if include_status_emojis else _plain_status_label(canonical)
+        updated_line = f"- **Status:** {normalized_status}"
         if updated_line != match.group(0):
             changed = True
         return updated_line
@@ -115,11 +132,19 @@ def insert_or_replace_summary(text: str, summary_block: str) -> str:
     return "\n".join(new_lines).rstrip() + "\n"
 
 
-def process_file(path: Path, check_only: bool, verbose: bool = False) -> tuple[bool, dict[str, int]]:
+def process_file(
+    path: Path,
+    check_only: bool,
+    verbose: bool = False,
+    include_status_emojis: bool = True,
+) -> tuple[bool, dict[str, int]]:
     original = path.read_text(encoding="utf-8")
-    normalized, _ = normalize_status_lines(original)
+    normalized, _ = normalize_status_lines(original, include_status_emojis=include_status_emojis)
     counts = count_statuses(normalized)
-    updated = insert_or_replace_summary(normalized, build_summary_block(counts))
+    updated = insert_or_replace_summary(
+        normalized,
+        build_summary_block(counts, include_status_emojis=include_status_emojis),
+    )
 
     # Normalize trailing newline so repeated processing stays idempotent.
     original_canonical = original.rstrip("\n") + "\n"
@@ -136,12 +161,17 @@ def collect_summary_rows(
     domain_files: list[Path],
     check_only: bool,
     display_name_fn: Callable[[Path], str],
+    include_status_emojis: bool = True,
 ) -> tuple[list[Path], list[list[object]]]:
     changed_paths: list[Path] = []
     table_rows: list[list[object]] = []
 
     for path in domain_files:
-        changed, counts = process_file(path, check_only=check_only)
+        changed, counts = process_file(
+            path,
+            check_only=check_only,
+            include_status_emojis=include_status_emojis,
+        )
         if changed:
             changed_paths.append(path)
 

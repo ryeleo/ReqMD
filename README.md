@@ -97,6 +97,7 @@ uv run rqmd --init
 ```
 
 `--init` prompts for a starter requirement key prefix (default: `REQ`; recommended to customize).
+Scaffold content is sourced from repository-managed templates in `init-docs/README.md` and `init-docs/domain-example.md`.
 
 Set one requirement non-interactively:
 
@@ -134,6 +135,21 @@ Filter walk:
 uv run rqmd --filter-status proposed
 ```
 
+Filtered walk resume behavior (enabled by default):
+
+- Uses persisted state so reruns continue at the last visited requirement.
+- Disable with `--no-resume-filter`.
+- Control storage location with `--state-dir`.
+
+Examples:
+
+```bash
+uv run rqmd --filter-status implemented --state-dir system-temp
+uv run rqmd --filter-status implemented --state-dir project-local
+uv run rqmd --filter-status implemented --state-dir .rqmd/state
+uv run rqmd --filter-status implemented --no-resume-filter
+```
+
 Filter tree only:
 
 ```bash
@@ -144,6 +160,18 @@ Filter as JSON for automation/AI parsing:
 
 ```bash
 uv run rqmd --filter-status proposed --json
+```
+
+Filter JSON includes requirement body content and line metadata by default:
+
+```bash
+uv run rqmd --filter-status proposed --json
+```
+
+Use compact output without bodies:
+
+```bash
+uv run rqmd --filter-status proposed --json --no-body
 ```
 
 Summary/check/set JSON examples:
@@ -214,11 +242,16 @@ Notable project changes are tracked in `CHANGELOG.md` using the Keep a Changelog
 
 ## CI
 
-This package includes a GitHub Actions workflow at `.github/workflows/pytest.yml`.
+This package includes GitHub Actions workflows:
 
+- `.github/workflows/pytest.yml`
 - Triggers on push and pull_request.
 - Installs project dependencies with `uv sync --extra dev`.
 - Runs `bash scripts/local-smoke.sh --skip-install`.
+
+- `.github/workflows/publish-pypi.yml`
+- Triggers when a GitHub release is published.
+- Builds with `uv build` and publishes with `uv publish` using `PYPI_API_TOKEN`.
 
 ## Project portability
 
@@ -237,6 +270,12 @@ uv run rqmd --repo-root /path/to/project --requirements-dir docs/requirements
 
 `--requirements-dir` can be absolute or relative to `--repo-root`.
 When auto-detection is used, rqmd reports which index path it selected.
+
+Filtered walkthrough resume state is configurable with `--state-dir`:
+
+- `system-temp` (default): OS temp directory.
+- `project-local`: `<repo-root>/tmp/rqmd`.
+- custom path: absolute or relative to `--repo-root`.
 
 Requirement header prefixes are configurable with `--id-prefix`.
 When omitted, rqmd auto-detects prefixes by reading the selected `README.md` requirements index and linked domain docs when available.
@@ -258,6 +297,6 @@ If no prefixes are discovered, it falls back to `AC-`, `R-`, and `RQMD-`.
 
 When ready for PyPI:
 
-1. Choose final author/license metadata in `pyproject.toml`.
+1. Follow semantic versioning policy in `docs/SEMVER.md`.
 2. Build artifacts with `uv build`.
-3. Upload using `uv publish`.
+3. Publish via GitHub release workflow or upload manually using `uv publish`.
