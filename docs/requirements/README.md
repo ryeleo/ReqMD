@@ -12,8 +12,15 @@ This document is the source-of-truth index for rqmd requirements.
 - Keep domain docs under docs/requirements/.
 
 Status workflow:
-- 💡 Proposed -> 🔧 Implemented -> ✅ Verified
-- Use ⛔ Blocked or 🗑️ Deprecated when needed.
+- 💡 Proposed
+- 🧪 Pytested
+- 🚧 AI Blocked
+- ⏭️ AI Skipped
+- 🤖 AI Verified
+- ✅ Done
+- 🔄 Change Requested
+- ❌ Cancelled
+- 🗑️ Deprecated
 
 ## Domain Documents
 

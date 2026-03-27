@@ -2,6 +2,12 @@
 
 Reusable requirements and acceptance-requirements workflow CLI.
 
+rqmd: Human-readable + AI-readable requirements for Requirements Driven Development (RDD).
+
+Project links:
+- GitHub: https://github.com/example/rqmd
+- PyPI: https://pypi.org/project/rqmd/
+
 This package extracts the markdown status-tracking workflow used in this repository into a portable Python package that can be copied to other projects and eventually published to PyPI.
 
 ## What this tool does
@@ -27,9 +33,13 @@ Requirement bodies can be as short as a title plus status line, or include riche
 ## Status model
 
 - `💡 Proposed`
-- `🔧 Implemented`
-- `✅ Verified`
-- `⛔ Blocked`
+- `🧪 Pytested`
+- `🚧 AI Blocked`
+- `⏭️ AI Skipped`
+- `🤖 AI Verified`
+- `✅ Done`
+- `🔄 Change Requested`
+- `❌ Cancelled`
 - `🗑️ Deprecated`
 
 ## Priority model (optional field)
@@ -80,6 +90,37 @@ Module entrypoint:
 ```bash
 uv run python -m rqmd --help
 ```
+
+## Shell completion
+
+rqmd uses Click dynamic completion and supports shell activation without maintaining static completion files.
+Completion candidates stay in sync with live requirement docs, including positional target tokens (domain names, requirement IDs, and subsection names).
+
+zsh activation (add to `~/.zshrc`):
+
+```bash
+eval "$(_RQMD_COMPLETE=zsh_source rqmd)"
+```
+
+bash activation (add to `~/.bashrc`):
+
+```bash
+eval "$(_RQMD_COMPLETE=bash_source rqmd)"
+```
+
+fish activation (add to `~/.config/fish/config.fish`):
+
+```fish
+_RQMD_COMPLETE=fish_source rqmd | source
+```
+
+If you are running from a local clone during development, keep using `uv run rqmd` for execution; completion is provided by the installed `rqmd` console entrypoint.
+
+Troubleshooting completion cache refresh:
+
+- zsh: `rm -f ~/.zcompdump* && exec zsh`
+- bash: open a new shell session after updating rc files
+- fish: `exec fish` after updating config
 
 ## Core commands
 

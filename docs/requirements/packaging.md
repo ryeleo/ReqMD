@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
+Summary: 0💡 1🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -79,7 +79,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 - So that updates are recorded under an `Unreleased` section before version cut.
 
 ### RQMD-PACKAGING-010: Shell completion distribution and activation guidance
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when installing rqmd on a workstation
 - I want shell completion support to be available for zsh (and documented for bash/fish where supported)

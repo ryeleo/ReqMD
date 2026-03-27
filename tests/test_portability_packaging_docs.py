@@ -370,6 +370,18 @@ def test_RQMD_packaging_007_semver_policy_documented() -> None:
     assert "MAJOR" in semver_text
 
 
+def test_RQMD_packaging_010_readme_documents_shell_completion_activation() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    readme = (project_root / "README.md").read_text(encoding="utf-8")
+
+    assert "## Shell completion" in readme
+    assert "_RQMD_COMPLETE=zsh_source rqmd" in readme
+    assert "_RQMD_COMPLETE=bash_source rqmd" in readme
+    assert "_RQMD_COMPLETE=fish_source rqmd | source" in readme
+    assert "zcompdump" in readme
+    assert "Completion candidates stay in sync with live requirement docs" in readme
+
+
 def test_RQMD_packaging_008_release_publish_workflow_present() -> None:
     project_root = Path(__file__).resolve().parents[1]
     workflow_path = project_root / ".github" / "workflows" / "publish-pypi.yml"

@@ -53,8 +53,15 @@ Domain files can use **H2 headers** (`##`) to organize requirements into logical
 ### Status Workflow
 
 Canonical status progression:
-- `💡 Proposed` → `🔧 Implemented` → `✅ Verified`
-- Use `⛔ Blocked` or `🗑️ Deprecated` when needed.
+- `💡 Proposed`
+- `🧪 Pytested`
+- `🚧 AI Blocked`
+- `⏭️ AI Skipped`
+- `🤖 AI Verified`
+- `✅ Done`
+- `🔄 Change Requested`
+- `❌ Cancelled`
+- `🗑️ Deprecated`
 
 ## Schema Reference
 

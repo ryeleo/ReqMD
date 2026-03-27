@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 4🔧 16✅ 0⛔ 0🗑️
+Summary: 3💡 5🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -144,7 +144,7 @@ Summary: 4💡 4🔧 16✅ 0⛔ 0🗑️
 - So that those documents are maintained in the "./init-docs" directory in this repo for easy editing and management.
 
 ### RQMD-CORE-017: Branded init and README messaging
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I first encounter rqmd through README or `rqmd --bootstrap`
 - I want branded, persuasive copy and direct project links

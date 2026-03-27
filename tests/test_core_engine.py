@@ -298,6 +298,30 @@ def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(tmp_path: P
     assert "### REQ-HELLO-001: Replace this starter requirement" in starter
 
 
+def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--bootstrap",
+            "--force-yes",
+        ],
+    )
+
+    assert result.exit_code == 0
+    readme_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
+    assert "Human-readable + AI-readable requirements for Requirements Driven Development (RDD)." in readme_text
+    assert "https://github.com/example/rqmd" in readme_text
+    assert "https://pypi.org/project/rqmd/" in readme_text
+
+
 def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
