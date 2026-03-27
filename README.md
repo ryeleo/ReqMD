@@ -119,12 +119,6 @@ Initialize docs scaffold (index + starter domain file):
 uv run rqmd --init
 ```
 
-Automation-friendly scaffold initialization (skip prompts):
-
-```bash
-uv run rqmd --init --yes
-```
-
 `--init` prompts for a starter requirement key prefix (default: `REQ`; recommended to customize).
 Scaffold content is sourced from repository-managed templates in `init-docs/README.md` and `init-docs/domain-example.md`.
 
@@ -160,12 +154,6 @@ Regenerate summary blocks with priority aggregates included:
 
 ```bash
 uv run rqmd --show-priority-summary --no-interactive
-```
-
-Initialize missing priority lines in existing requirement files (idempotent migration):
-
-```bash
-uv run rqmd --init-priorities --default-priority p3 --no-interactive
 ```
 
 Filter by priority in tree, JSON, or interactive walk modes:
