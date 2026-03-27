@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd import cli
 from rqmd.markdown_io import scope_and_body_from_file
 from rqmd.req_parser import collect_sub_sections

@@ -282,6 +282,16 @@ uv run rqmd-ai --as-json --update RQMD-CORE-001=implemented
 uv run rqmd-ai --as-json --write --update RQMD-CORE-001=implemented
 ```
 
+Install a standard AI agent/skill instruction bundle (minimal or full preset):
+
+```bash
+uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset minimal --dry-run
+uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset full
+uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset full --overwrite-existing
+```
+
+Bundle installs are idempotent by default and preserve existing customized instruction files unless `--overwrite-existing` is explicitly passed.
+
 When apply mode runs, rqmd-ai appends a structured audit event to the local shared history backend at `.rqmd/history/rqmd-history/audit.jsonl`.
 
 Batch set from file:

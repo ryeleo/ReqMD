@@ -46,6 +46,78 @@ from .status_update import apply_status_change_by_id
 HISTORY_REPO_RELATIVE = Path(".rqmd") / "history" / "rqmd-history"
 AUDIT_LOG_RELATIVE = HISTORY_REPO_RELATIVE / "audit.jsonl"
 
+_BUNDLE_MINIMAL_FILES: dict[str, str] = {
+    ".github/copilot-instructions.md": """# rqmd AI Contributor Instructions
+
+Purpose:
+- Keep requirement docs, summaries, and status lines synchronized.
+- Prefer machine-readable workflows (`--as-json`) for automation.
+
+Repository conventions:
+- Requirements index: docs/requirements/README.md
+- Domain docs: docs/requirements/*.md
+- Verify-only pass: uv run rqmd --verify-summaries --no-walk --no-table
+
+AI workflow defaults:
+- Start with read-only context export via rqmd-ai.
+- Propose updates before apply (`--update ...` without `--write`).
+- Apply only after review with `--write`.
+
+Useful commands:
+- uv run rqmd-ai --as-json --dump-status proposed
+- uv run rqmd-ai --as-json --dump-id RQMD-CORE-001 --include-requirement-body
+- uv run rqmd-ai --as-json --update RQMD-CORE-001=implemented
+- uv run rqmd-ai --as-json --write --update RQMD-CORE-001=implemented
+""",
+    ".github/agents/core.agent.md": """name: core
+description: "Primary implementation mode for rqmd repository tasks."
+tools: [read, search, edit, execute, todo, agent]
+agents: [Explore]
+argument-hint: "Describe the behavior change, affected files, and whether docs/requirements should be updated."
+---
+
+You are the core implementation agent for this repository.
+
+Execution contract:
+- Make focused edits with minimal behavior drift.
+- Keep docs/requirements status and summary blocks synchronized.
+- Keep README and automation docs aligned with shipped behavior.
+- Run targeted tests, then full tests before completion.
+- Update CHANGELOG.md under [Unreleased] for every shipped change.
+""",
+}
+
+_BUNDLE_FULL_FILES: dict[str, str] = {
+    ".github/agents/Explore.agent.md": """name: Explore
+description: "Read-only exploration mode for locating files, symbols, tests, and requirement references."
+tools: [read, search, execute]
+agents: []
+argument-hint: "Describe what to find and desired thoroughness (quick/medium/thorough)."
+---
+
+You are a read-only exploration agent.
+
+Guidelines:
+- Do not edit files.
+- Prefer fast searches and concise evidence collection.
+- Return file paths and line hints that unblock implementation quickly.
+""",
+    ".github/agents/README.md": """# rqmd Agent Bundle
+
+This folder contains a standard AI agent bundle installed by:
+
+`rqmd-ai --install-agent-bundle`
+
+Presets:
+- minimal: `.github/copilot-instructions.md`, `.github/agents/core.agent.md`
+- full: minimal + `.github/agents/Explore.agent.md` and this README
+
+Operational notes:
+- Re-run is idempotent.
+- Existing files are preserved unless `--overwrite-existing` is used.
+""",
+}
+
 
 def _build_guide_payload(repo_root: Path, requirements_dir: Path, read_only: bool) -> dict[str, object]:
     return {
@@ -65,6 +137,54 @@ def _build_guide_payload(repo_root: Path, requirements_dir: Path, read_only: boo
             "rqmd-ai --update RQMD-CORE-001=implemented",
             "rqmd-ai --update RQMD-CORE-001=implemented --write",
         ],
+    }
+
+
+def _bundle_files_for_preset(preset: str) -> dict[str, str]:
+    files = dict(_BUNDLE_MINIMAL_FILES)
+    if preset == "full":
+        files.update(_BUNDLE_FULL_FILES)
+    return files
+
+
+def _install_agent_bundle(
+    repo_root: Path,
+    preset: str,
+    overwrite_existing: bool,
+    dry_run: bool,
+) -> dict[str, object]:
+    files = _bundle_files_for_preset(preset)
+    created_files: list[str] = []
+    overwritten_files: list[str] = []
+    skipped_existing: list[str] = []
+
+    for rel_path, content in files.items():
+        target = (repo_root / rel_path).resolve()
+        exists = target.exists()
+
+        if exists and not overwrite_existing:
+            skipped_existing.append(rel_path)
+            continue
+
+        if not dry_run:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content.rstrip() + "\n", encoding="utf-8")
+
+        if exists:
+            overwritten_files.append(rel_path)
+        else:
+            created_files.append(rel_path)
+
+    return {
+        "mode": "install-agent-bundle",
+        "read_only": dry_run,
+        "preset": preset,
+        "overwrite_existing": overwrite_existing,
+        "dry_run": dry_run,
+        "created_files": created_files,
+        "overwritten_files": overwritten_files,
+        "skipped_existing": skipped_existing,
+        "changed_count": len(created_files) + len(overwritten_files),
     }
 
 
@@ -417,6 +537,17 @@ def _plan_or_apply_updates(
 @click.option("--update", "set_entries", multiple=True, default=(), help="Planned status update in ID=STATUS format.")
 @click.option("--scope-file", "file_scope", type=str, default=None, help="Optional file scope used with --update/--write.")
 @click.option("--write", "apply", is_flag=True, help="Apply planned updates. Without this flag rqmd-ai remains read-only.")
+@click.option("--install-agent-bundle", "install_bundle", is_flag=True, help="Install a standard agent/skill instruction bundle into the workspace.")
+@click.option(
+    "--bundle-preset",
+    "bundle_preset",
+    type=click.Choice(["minimal", "full"], case_sensitive=False),
+    default="minimal",
+    show_default=True,
+    help="Bundle preset for --install-agent-bundle.",
+)
+@click.option("--overwrite-existing", "overwrite_existing", is_flag=True, help="Allow --install-agent-bundle to overwrite existing instruction files.")
+@click.option("--dry-run", "dry_run", is_flag=True, help="Preview --install-agent-bundle changes without writing files.")
 def main(
     json_output: bool,
     guide: bool,
@@ -432,8 +563,27 @@ def main(
     set_entries: tuple[str, ...],
     file_scope: str | None,
     apply: bool,
+    install_bundle: bool,
+    bundle_preset: str,
+    overwrite_existing: bool,
+    dry_run: bool,
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
+
+    if install_bundle:
+        if guide or set_entries or export_ids or export_files or export_status or apply:
+            raise click.ClickException(
+                "--install-agent-bundle cannot be combined with guide/export/update/apply options."
+            )
+        payload = _install_agent_bundle(
+            repo_root=repo_root,
+            preset=bundle_preset.lower(),
+            overwrite_existing=overwrite_existing,
+            dry_run=dry_run,
+        )
+        _emit(payload, json_output=json_output)
+        return
+
     resolved_criteria_dir, _message = resolve_requirements_dir(repo_root, requirements_dir)
     try:
         resolved_prefixes_input = normalize_id_prefixes(id_prefixes) if id_prefixes else id_prefixes

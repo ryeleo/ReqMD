@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd import cli
 
 
@@ -107,6 +109,82 @@ Scope: generic.
         ["--project-root", str(repo), "--docs-dir", "docs/requirements", "--no-walk", "--no-table"],
     )
     assert result.exit_code == 0
+
+
+def test_RQMD_portability_017_unknown_status_reports_actionable_guidance(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "demo.md").write_text(
+        """# Demo Requirement
+
+Scope: demo.
+
+### AC-DEMO-001: Demo requirement
+- **Status:** 💻 Desktop-Verified
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--verify-summaries",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Unknown status compatibility issue" in result.output
+    assert "Desktop-Verified" in result.output
+    assert "docs/requirements/demo.md" in result.output
+    assert "Remediation:" in result.output
+
+
+def test_RQMD_portability_017_unknown_status_json_error_payload(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "demo.md").write_text(
+        """# Demo Requirement
+
+Scope: demo.
+
+### AC-DEMO-001: Demo requirement
+- **Status:** 💻 Desktop-Verified
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.output)
+    assert payload["mode"] == "summary"
+    assert payload["ok"] is False
+    assert payload["error"]["type"] == "unknown-status"
+    assert payload["error"]["input"] == "💻 Desktop-Verified"
+    assert payload["error"]["source_file"] == "docs/requirements/demo.md"
+    assert isinstance(payload["error"]["line"], int)
+    assert payload["error"]["candidates"]
 
 
 def test_RQMD_portability_008a_auto_detects_requirements_dir_without_explicit_flag(tmp_path: Path) -> None:

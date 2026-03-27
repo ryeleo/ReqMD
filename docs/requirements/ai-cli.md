@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 8🔧 0✅ 0⛔ 3🗑️
+Summary: 0💡 9🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -90,7 +90,7 @@ Summary: 1💡 8🔧 0✅ 0⛔ 3🗑️
 - So that domain-body inclusion is explicit and bounded (for example size-capped or section-filtered) to keep prompt payloads stable and cost-aware.
 
 ### RQMD-AI-012: Installable AI agent/skill instruction bundle
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a team maintainer when onboarding AI-assisted contributors
 - I want rqmd to install a standard agent/skill instruction bundle into the workspace

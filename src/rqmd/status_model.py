@@ -10,6 +10,8 @@ This module provides:
 
 from __future__ import annotations
 
+import difflib
+
 import click
 
 from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, NON_ALNUM_PATTERN,
@@ -244,6 +246,41 @@ def _status_prefix_matches(value: str) -> list[str]:
         }
     )
     return matches
+
+
+def suggest_status_labels(value: str, limit: int = 3) -> list[str]:
+    """Suggest nearest configured canonical status labels for a raw input value.
+
+    Suggestions prefer unique prefix matches first, then fuzzy matches against
+    canonical label/plain/slug keys.
+    """
+    prefix_matches = _status_prefix_matches(value)
+    if prefix_matches:
+        return prefix_matches[:limit]
+
+    token = status_key(value)
+    if not token:
+        return [label for label, _ in STATUS_ORDER[:limit]]
+
+    key_to_label: dict[str, str] = {}
+    for label, slug in STATUS_ORDER:
+        plain = label.split(" ", 1)[1] if " " in label else label
+        key_to_label[status_key(label)] = label
+        key_to_label[status_key(plain)] = label
+        key_to_label[status_key(slug)] = label
+
+    close_keys = difflib.get_close_matches(token, list(key_to_label.keys()), n=max(limit * 2, 3), cutoff=0.45)
+    suggestions: list[str] = []
+    for key in close_keys:
+        label = key_to_label[key]
+        if label not in suggestions:
+            suggestions.append(label)
+        if len(suggestions) >= limit:
+            break
+
+    if suggestions:
+        return suggestions
+    return [label for label, _ in STATUS_ORDER[:limit]]
 
 
 def status_key(value: str) -> str:

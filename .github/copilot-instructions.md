@@ -149,4 +149,5 @@ When editing this package:
 - Prefer small, surgical changes to `cli.py` because behavior is broad and interconnected.
 - If refactoring, preserve all command-line semantics and interactive keys.
 - Update README when adding/removing options.
+- Update `CHANGELOG.md` under `## [Unreleased]` for every shipped change (code, tests, docs, and requirement status changes) before considering work complete.
 - Avoid introducing project-specific assumptions into default behavior.
