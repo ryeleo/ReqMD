@@ -4,7 +4,7 @@ This module provides:
 - Parsing of target token files (JSONL, CSV, MD, TXT formats)
 - Tokenization of target input (IDs, file paths, sub-domains)
 - Completion suggestions for partial target tokens
-- Resolution of raw tokens to actual criteria/files
+- Resolution of raw tokens to actual requirements/files
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import click
 
-from .criteria_parser import (collect_sub_sections, find_criterion_by_id,
+from .req_parser import (collect_sub_sections, find_criterion_by_id,
                               normalize_sub_domain_name, parse_criteria)
 from .markdown_io import display_name_from_h1, format_path_display
 

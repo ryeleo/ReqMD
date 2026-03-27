@@ -80,10 +80,10 @@ from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
                            parse_batch_update_jsonl, parse_set_entry,
                            parse_set_flagged_entry, parse_set_priority_entry)
 from .config import load_config, validate_config
-from .constants import (DEFAULT_CRITERIA_DIR, DEFAULT_ID_PREFIXES,
+from .constants import (DEFAULT_REQUIREMENTS_DIR, DEFAULT_ID_PREFIXES,
                         ID_PREFIX_PATTERN, STATUS_ORDER, STATUS_PATTERN,
                         SUMMARY_END, SUMMARY_START)
-from .criteria_parser import (collect_criteria_by_flagged,
+from .req_parser import (collect_criteria_by_flagged,
                               collect_criteria_by_priority,
                               collect_criteria_by_status,
                               collect_criteria_by_sub_domain,
@@ -209,7 +209,7 @@ def looks_like_requirement_id_token(token: str, id_prefixes: tuple[str, ...]) ->
 
 def interactive_update_loop(
     repo_root: Path,
-    criteria_dir: str,
+    requirements_dir: str,
     domain_files: list[Path],
     emoji_columns: bool,
     sort_files: bool,
@@ -222,7 +222,7 @@ def interactive_update_loop(
 ) -> int:
     return workflows_mod.interactive_update_loop(
         repo_root=repo_root,
-        criteria_dir=criteria_dir,
+        criteria_dir=requirements_dir,
         domain_files=domain_files,
         emoji_columns=emoji_columns,
         sort_files=sort_files,
@@ -351,7 +351,7 @@ def shell_complete_target_tokens(
     try:
         raw_repo_root = ctx.params.get("repo_root")
         repo_root = Path(raw_repo_root).resolve() if raw_repo_root else discover_project_root(Path.cwd())[0]
-        raw_criteria_dir = ctx.params.get("criteria_dir")
+        raw_criteria_dir = ctx.params.get("requirements_dir")
         resolved_criteria_dir, _message = resolve_criteria_dir(repo_root, raw_criteria_dir)
         raw_prefixes = tuple(ctx.params.get("id_prefixes") or ())
         resolved_prefixes = resolve_id_prefixes(repo_root, str(resolved_criteria_dir), raw_prefixes)
@@ -592,8 +592,7 @@ def shell_complete_target_tokens(
 )
 @click.option(
     "--requirements-dir",
-    "--criteria-dir",
-    "criteria_dir",
+    "requirements_dir",
     type=str,
     default=None,
     help="Directory (absolute or relative to --repo-root) containing requirement markdown files. When omitted, rqmd auto-detects from the current working path.",
@@ -665,7 +664,7 @@ def main(
     default_priority: str,
     state_dir: str,
     repo_root: Path,
-    criteria_dir: str | None,
+    requirements_dir: str | None,
     id_prefixes: tuple[str, ...],
     check_index: bool,
     init_scaffold: bool,
@@ -699,8 +698,8 @@ def main(
     ctx.call_on_close(lambda: configure_status_catalog(None))
 
     # Apply config defaults (CLI flags override config file)
-    if not criteria_dir and "requirements_dir" in config:
-        criteria_dir = config["requirements_dir"]
+    if not requirements_dir and "requirements_dir" in config:
+        requirements_dir = config["requirements_dir"]
     if not id_prefixes and "id_prefix" in config:
         id_prefixes = (config["id_prefix"],)
     if sort_strategy == "standard" and "sort_strategy" in config:
@@ -742,13 +741,13 @@ def main(
 
         created = initialize_requirements_scaffold(
             repo_root,
-            criteria_dir or DEFAULT_CRITERIA_DIR,
+            requirements_dir or DEFAULT_REQUIREMENTS_DIR,
             starter_prefix=starter_prefix,
         )
         if json_output:
             payload = {
                 "mode": "init",
-                "criteria_dir": criteria_dir or DEFAULT_CRITERIA_DIR,
+                "requirements_dir": requirements_dir or DEFAULT_REQUIREMENTS_DIR,
                 "starter_prefix": starter_prefix,
                 "created_files": [format_path_display(path, repo_root) for path in created],
                 "created_count": len(created),
@@ -764,7 +763,7 @@ def main(
             click.echo("Requirement scaffold already present; no files created.")
         raise SystemExit(0)
 
-    resolved_criteria_dir, criteria_dir_message = resolve_criteria_dir(repo_root, criteria_dir)
+    resolved_criteria_dir, criteria_dir_message = resolve_criteria_dir(repo_root, requirements_dir)
     resolved_criteria_dir_input = str(resolved_criteria_dir)
     if criteria_dir_message and not json_output:
         click.echo(criteria_dir_message)
@@ -907,7 +906,7 @@ def main(
         if json_output:
             payload = {
                 "mode": "init-priorities",
-                "criteria_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
                 "default_priority": canonical_default_priority,
                 "dry_run": dry_run,
                 "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
@@ -943,7 +942,7 @@ def main(
         if json_output:
             payload = {
                 "mode": mode_name,
-                "criteria_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
                 "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
                 "changed_count": len(changed_paths),
             }
@@ -1178,7 +1177,7 @@ def main(
         if json_output:
             payload = {
                 "mode": "rollup",
-                "criteria_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
                 "file_count": len(domain_files),
                 "totals": summary_payload["totals"],
             }

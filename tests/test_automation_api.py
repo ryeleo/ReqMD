@@ -600,7 +600,7 @@ def test_RQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: P
     assert result.exit_code == 0
     payload = json.loads(result.output)
     assert payload["status"] == "💡 Proposed"
-    assert payload["criteria_dir"] == "docs/requirements"
+    assert payload["requirements_dir"] == "docs/requirements"
     assert payload["total"] == 1
     assert payload["files"][0]["path"].endswith("second.md")
     assert payload["files"][0]["requirements"][0]["id"] == "AC-OVERLAP-001"
@@ -654,7 +654,7 @@ def test_RQMD_automation_008f_json_summary_output_without_filter_status(repo_wit
     payload = json.loads(result.output)
     assert payload["mode"] == "summary"
     assert payload["ok"] is True
-    assert payload["criteria_dir"] == "docs/requirements"
+    assert payload["requirements_dir"] == "docs/requirements"
     assert payload["totals"]["🔧 Implemented"] >= 1
 
 
@@ -759,7 +759,7 @@ def test_RQMD_rollup_005_json_mode_reports_global_totals(repo_with_domain_docs: 
     assert result.exit_code == 0
     payload = json.loads(result.output)
     assert payload["mode"] == "rollup"
-    assert payload["criteria_dir"] == "docs/requirements"
+    assert payload["requirements_dir"] == "docs/requirements"
     assert payload["file_count"] >= 1
     assert payload["totals"]["🔧 Implemented"] >= 1
 

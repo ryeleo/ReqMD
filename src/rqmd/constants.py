@@ -5,7 +5,7 @@ import re
 SUMMARY_START = "<!-- acceptance-status-summary:start -->"
 SUMMARY_END = "<!-- acceptance-status-summary:end -->"
 DEFAULT_ID_PREFIXES = ("AC", "R", "RQMD")
-DEFAULT_CRITERIA_DIR = "docs/requirements"
+DEFAULT_REQUIREMENTS_DIR = "docs/requirements"
 REQUIREMENTS_INDEX_NAME = "README.md"
 
 STATUS_ORDER = [

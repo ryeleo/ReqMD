@@ -946,7 +946,7 @@ Scope: demo.
     ctx = click.Context(cli.main)
     ctx.params = {
         "repo_root": repo,
-        "criteria_dir": "docs/requirements",
+        "requirements_dir": "docs/requirements",
         "id_prefixes": (),
     }
 

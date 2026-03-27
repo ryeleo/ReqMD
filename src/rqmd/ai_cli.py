@@ -26,7 +26,7 @@ except ImportError:
     sys.exit(1)
 
 from .batch_inputs import parse_set_entry
-from .criteria_parser import (extract_criterion_block_with_lines,
+from .req_parser import (extract_criterion_block_with_lines,
                               normalize_id_prefixes, parse_criteria,
                               resolve_id_prefixes)
 from .markdown_io import (discover_project_root, format_path_display,
@@ -39,12 +39,12 @@ HISTORY_REPO_RELATIVE = Path(".rqmd") / "history" / "rqmd-history"
 AUDIT_LOG_RELATIVE = HISTORY_REPO_RELATIVE / "audit.jsonl"
 
 
-def _build_guide_payload(repo_root: Path, criteria_dir: Path, read_only: bool) -> dict[str, object]:
+def _build_guide_payload(repo_root: Path, requirements_dir: Path, read_only: bool) -> dict[str, object]:
     return {
         "mode": "guide",
         "read_only": read_only,
         "repo_root": str(repo_root),
-        "criteria_dir": format_path_display(criteria_dir, repo_root),
+        "requirements_dir": format_path_display(requirements_dir, repo_root),
         "workflow": [
             "Export context with --export-id/--export-status/--export-file.",
             "Draft updates using --set ID=STATUS without --apply to preview.",
@@ -149,7 +149,7 @@ def _append_audit_record(repo_root: Path, record: dict[str, object]) -> str:
 
 def _build_apply_audit_record(
     repo_root: Path,
-    criteria_dir: Path,
+    requirements_dir: Path,
     file_scope: str | None,
     updates: list[dict[str, object]],
     changed_count: int,
@@ -175,7 +175,7 @@ def _build_apply_audit_record(
         "mode": "apply",
         "inputs": {
             "repo_root": str(repo_root),
-            "criteria_dir": format_path_display(criteria_dir, repo_root),
+            "requirements_dir": format_path_display(requirements_dir, repo_root),
             "file_scope": file_scope,
             "update_count": len(updates),
             "updates": [
@@ -196,7 +196,7 @@ def _build_apply_audit_record(
 
 def _export_context(
     repo_root: Path,
-    criteria_dir: Path,
+    requirements_dir: Path,
     domain_files: list[Path],
     id_prefixes: tuple[str, ...],
     export_ids: tuple[str, ...],
@@ -289,7 +289,7 @@ def _export_context(
     return {
         "mode": "export-context",
         "read_only": True,
-        "criteria_dir": format_path_display(criteria_dir, repo_root),
+        "requirements_dir": format_path_display(requirements_dir, repo_root),
         "total": total,
         "files": files_payload,
     }
@@ -297,7 +297,7 @@ def _export_context(
 
 def _plan_or_apply_updates(
     repo_root: Path,
-    criteria_dir: Path,
+    requirements_dir: Path,
     domain_files: list[Path],
     id_prefixes: tuple[str, ...],
     set_entries: tuple[str, ...],
@@ -338,7 +338,7 @@ def _plan_or_apply_updates(
     if apply:
         audit_record = _build_apply_audit_record(
             repo_root=repo_root,
-            criteria_dir=criteria_dir,
+            requirements_dir=requirements_dir,
             file_scope=file_scope,
             updates=payload_updates,
             changed_count=changed_count,
@@ -353,7 +353,7 @@ def _plan_or_apply_updates(
     return {
         "mode": "apply" if apply else "plan",
         "read_only": not apply,
-        "criteria_dir": format_path_display(criteria_dir, repo_root),
+        "requirements_dir": format_path_display(requirements_dir, repo_root),
         "update_count": len(payload_updates),
         "changed_count": changed_count,
         "updates": payload_updates,
@@ -373,8 +373,7 @@ def _plan_or_apply_updates(
 )
 @click.option(
     "--requirements-dir",
-    "--criteria-dir",
-    "criteria_dir",
+    "requirements_dir",
     type=str,
     default=None,
     help="Directory (absolute or relative to --repo-root) containing requirement markdown files.",
@@ -409,7 +408,7 @@ def main(
     json_output: bool,
     guide: bool,
     repo_root: Path,
-    criteria_dir: str | None,
+    requirements_dir: str | None,
     id_prefixes: tuple[str, ...],
     export_ids: tuple[str, ...],
     export_files: tuple[str, ...],
@@ -422,7 +421,7 @@ def main(
     apply: bool,
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
-    resolved_criteria_dir, _message = resolve_criteria_dir(repo_root, criteria_dir)
+    resolved_criteria_dir, _message = resolve_criteria_dir(repo_root, requirements_dir)
     try:
         resolved_prefixes_input = normalize_id_prefixes(id_prefixes) if id_prefixes else id_prefixes
         id_prefixes = resolve_id_prefixes(repo_root, str(resolved_criteria_dir), resolved_prefixes_input)
@@ -446,7 +445,7 @@ def main(
     if set_entries:
         payload = _plan_or_apply_updates(
             repo_root=repo_root,
-            criteria_dir=resolved_criteria_dir,
+            requirements_dir=resolved_criteria_dir,
             domain_files=domain_files,
             id_prefixes=id_prefixes,
             set_entries=set_entries,
@@ -459,7 +458,7 @@ def main(
     if export_ids or export_files or export_status:
         payload = _export_context(
             repo_root=repo_root,
-            criteria_dir=resolved_criteria_dir,
+            requirements_dir=resolved_criteria_dir,
             domain_files=domain_files,
             id_prefixes=id_prefixes,
             export_ids=export_ids,

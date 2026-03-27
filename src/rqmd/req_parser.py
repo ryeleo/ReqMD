@@ -1,9 +1,9 @@
-"""Requirement criteria parsing and manipulation utilities.
+"""Requirements parsing and manipulation utilities.
 
 This module provides:
-- Parsing markdown requirement criteria from domain files
+- Parsing markdown requirements from domain files
 - Extraction of requirement properties (status, priority, blocked reason, etc.)
-- Lookup and filtering of criteria by ID, status, priority, sub-domain, etc.
+- Lookup and filtering of requirements by ID, status, priority, sub-domain, etc.
 - H2 subsection tracking and aggregation
 - Criterion block extraction with line number tracking
 - ID prefix detection and normalization
@@ -218,7 +218,7 @@ def parse_criteria(
     path: Path,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> list[dict[str, object]]:
-    """Parse all requirement criteria from a markdown domain file.
+    """Parse all requirements from a markdown domain file.
 
     Extracts requirement headers (### ID: Title), status lines, and associated metadata
     (priority, blocked reason, deprecated reason, flagged status, sub-domain).
@@ -495,7 +495,7 @@ def collect_criteria_by_sub_domain(
 ) -> dict[Path, list[dict[str, object]]]:
     """Collect all requirements in a sub-domain (H2 section) across files.
 
-    Matching is prefix-based: criteria with sub_domain starting with target match.
+    Matching is prefix-based: requirements with sub_domain starting with target match.
 
     Args:
         repo_root: Root path of the project.

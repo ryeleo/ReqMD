@@ -205,7 +205,7 @@ Remember
   - Direct flagged-state mutation support in automation flows.
   - Prompt suppression guarantees for non-interactive and JSON runs.
   - Exit-code behavior documented for automation.
-  - Main touchpoints: cli.py, batch_inputs.py, criteria_parser.py, test_automation_api.py, README.md, automation-api.md.
+  - Main touchpoints: cli.py, batch_inputs.py, req_parser.py, test_automation_api.py, README.md, automation-api.md.
 
 - Non-destructive mutation preview support:
   - Dry-run behavior added for mutation-style commands and migration/update workflows.
@@ -227,7 +227,7 @@ Remember
   - Main touchpoints: menus.py, workflows.py, test_interactive.py, sorting.md, interactive-ux.md, README.md.
 
 - Requirements and documentation synchronization:
-  - Acceptance criteria wording/status updates across multiple requirement domain docs.
+  - Requirements wording/status updates across multiple requirement domain docs.
   - README command/contract text updated to reflect implemented behavior.
   - Main touchpoints: automation-api.md, core-engine.md, interactive-ux.md, sorting.md, portability.md, README.md.
 
