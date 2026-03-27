@@ -58,6 +58,7 @@ Summary: 0💡 0🔧 9✅ 0⛔ 2🗑️
 - I want to press `s`
 - So that the active sort column cycles to the next available column from left to right
 - So that when the cycle advances past the last sortable column, pressing `s` again returns the view to the default menu sort (for file lists, `name`) so the cycle can continue indefinitely without a separate filesystem-only mode
+- So that pressing `S` cycles the active sort column in the reverse direction using the same wrap behavior
 - So that the UI indicates the active sort column and direction in the menu header/footer.
 
 ### RQMD-SORTING-008: Toggle ascending/descending with `d`
@@ -80,7 +81,7 @@ Summary: 0💡 0🔧 9✅ 0⛔ 2🗑️
 - As a rqmd user when the interactive UI must remain discoverable and consistent
 - I want menus to render
 - So that a standardized key legend is shown in the footer in this order and format:
-- `keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[asc|dsc] | r=rfrsh | q=quit`
+- `keys: 1-9 select | n=next | p=prev | u=up | s=sort | S=sort-back | d=[asc|dsc] | r=rfrsh | q=quit`
 - So that the `d` segment is updated dynamically to reflect the current sort direction.
 
 ### RQMD-SORTING-011: Visual indicator for active sort column and direction

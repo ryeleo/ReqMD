@@ -59,12 +59,15 @@ def update_criterion_status(
     blocked_reason: str | None = None,
     deprecated_reason: str | None = None,
     new_priority: str | None = None,
+    new_flagged: bool | None = None,
+    apply_changes: bool = True,
 ) -> bool:
     lines = path.read_text(encoding="utf-8").splitlines()
     status_line = requirement["status_line"]
     blocked_reason_line = requirement.get("blocked_reason_line")
     deprecated_reason_line = requirement.get("deprecated_reason_line")
     priority_line = requirement.get("priority_line")
+    flagged_line = requirement.get("flagged_line")
     if not isinstance(status_line, int):
         raise ValueError("Invalid requirement status line.")
 
@@ -131,7 +134,22 @@ def update_criterion_status(
             shift += 1
             status_changed = True
 
-    if status_changed:
+    if new_flagged is not None:
+        flagged_text = "true" if new_flagged else "false"
+        new_flagged_line_text = f"- **Flagged:** {flagged_text}"
+        if isinstance(flagged_line, int):
+            adj_flagged = flagged_line + shift
+            if lines[adj_flagged] != new_flagged_line_text:
+                lines[adj_flagged] = new_flagged_line_text
+                status_changed = True
+        else:
+            insert_at = status_line + 1 + shift
+            if isinstance(priority_line, int):
+                insert_at = max(insert_at, priority_line + 1 + shift)
+            lines.insert(insert_at, new_flagged_line_text)
+            status_changed = True
+
+    if status_changed and apply_changes:
         path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
     return status_changed
@@ -184,10 +202,12 @@ def apply_status_change_by_id(
     blocked_reason: str | None = None,
     deprecated_reason: str | None = None,
     new_priority_input: str | None = None,
+    new_flagged_value: bool | None = None,
     include_status_emojis: bool = True,
     include_priority_summary: bool = False,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     emit_output: bool = True,
+    dry_run: bool = False,
 ) -> bool:
     target_paths: list[Path]
     if file_filter:
@@ -219,8 +239,8 @@ def apply_status_change_by_id(
 
     path, requirement = matches[0]
 
-    if new_status_input is None and new_priority_input is None:
-        raise click.ClickException("No update requested. Provide status and/or priority.")
+    if new_status_input is None and new_priority_input is None and new_flagged_value is None:
+        raise click.ClickException("No update requested. Provide status, priority, and/or flagged.")
 
     current_status = str(requirement.get("status") or "")
     new_status = current_status
@@ -241,13 +261,16 @@ def apply_status_change_by_id(
         blocked_reason=blocked_reason,
         deprecated_reason=deprecated_reason,
         new_priority=new_priority,
+        new_flagged=new_flagged_value,
+        apply_changes=not dry_run,
     )
-    process_file(
-        path,
-        check_only=False,
-        include_status_emojis=include_status_emojis,
-        include_priority_summary=include_priority_summary,
-    )
+    if not dry_run:
+        process_file(
+            path,
+            check_only=False,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
 
     if emit_output:
         updates: list[str] = []
@@ -255,9 +278,13 @@ def apply_status_change_by_id(
             updates.append(new_status)
         if new_priority is not None:
             updates.append(new_priority)
+        if new_flagged_value is not None:
+            updates.append(f"flagged={str(new_flagged_value).lower()}")
         update_summary = " | ".join(updates) if updates else "no-op"
         if changed:
-            click.echo(f"Updated {requirement['id']} in {path.relative_to(repo_root).as_posix()} -> {update_summary}")
+            action = "Would update" if dry_run else "Updated"
+            click.echo(f"{action} {requirement['id']} in {path.relative_to(repo_root).as_posix()} -> {update_summary}")
         else:
-            click.echo(f"No change for {requirement['id']} in {path.relative_to(repo_root).as_posix()} ({update_summary})")
+            prefix = "No dry-run change" if dry_run else "No change"
+            click.echo(f"{prefix} for {requirement['id']} in {path.relative_to(repo_root).as_posix()} ({update_summary})")
     return changed

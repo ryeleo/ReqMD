@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 from click.testing import CliRunner
 from rqmd import cli
@@ -202,6 +203,52 @@ def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(tmp_path: P
     assert result.exit_code == 0
     starter = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
     assert "### REQ-HELLO-001: Replace this starter requirement" in starter
+
+
+def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    runner = CliRunner()
+
+    first = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--init",
+            "--yes",
+            "--json",
+        ],
+    )
+    assert first.exit_code == 0
+    first_payload = json.loads(first.output)
+    assert first_payload["mode"] == "init"
+    assert first_payload["starter_prefix"] == "REQ"
+    assert first_payload["created_count"] == 2
+    assert sorted(first_payload["created_files"]) == [
+        "docs/requirements/README.md",
+        "docs/requirements/starter.md",
+    ]
+
+    second = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--init",
+            "--yes",
+            "--json",
+        ],
+    )
+    assert second.exit_code == 0
+    second_payload = json.loads(second.output)
+    assert second_payload["mode"] == "init"
+    assert second_payload["created_count"] == 0
+    assert second_payload["created_files"] == []
 
 
 def test_RQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:

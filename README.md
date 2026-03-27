@@ -241,6 +241,31 @@ uv run rqmd --set-requirement-id AC-EXAMPLE-001 --set-status verified --json
 uv run rqmd --rollup --json --no-interactive
 ```
 
+### JSON contract (stable keys)
+
+When `--json` is used, top-level keys are stable by mode:
+
+- `summary`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
+- `check`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
+- `set` / `set-priority` / `set-flagged`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `updates`
+- `filter-status`: `mode`, `status`, `criteria_dir`, `total`, `files`
+- `filter-priority`: `mode`, `priority`, `criteria_dir`, `total`, `files`
+- `filter-flagged`: `mode`, `flagged`, `criteria_dir`, `total`, `files`
+- `rollup`: `mode`, `criteria_dir`, `file_count`, `totals`, optional `rollup_source`, optional `rollup_columns`
+- `init`: `mode`, `criteria_dir`, `starter_prefix`, `created_files`, `created_count`
+- `init-priorities`: `mode`, `criteria_dir`, `default_priority`, `changed_files`, `changed_count`
+
+Filter payloads return `files` ordered by path and requirement entries ordered by requirement ID.
+By default, filter JSON includes `body.markdown` and line metadata; pass `--no-body` to omit bodies.
+
+### Exit codes
+
+RQMD uses this exit-code matrix for automation:
+
+- `0`: Success (including successful no-op runs)
+- `1`: Validation or contract failure (for example `--check` found out-of-sync summaries, invalid input, missing docs, ambiguity, or other `ClickException` errors)
+- `130`: Interrupted by user (`Ctrl+C`)
+
 Explicit global roll-up totals:
 
 ```bash
@@ -353,8 +378,20 @@ This package includes GitHub Actions workflows:
 
 ## Project portability
 
-By default, rqmd uses the current working directory as `--repo-root`.
-Repo root is not auto-detected upward.
+By default, rqmd auto-discovers `--repo-root` by searching from the current working directory upward.
+The nearest ancestor with a supported marker wins.
+
+Marker priority within each directory is deterministic:
+
+1. `.rqmd.yml`, `.rqmd.yaml`, `.rqmd.json`
+2. `docs/requirements/`
+3. `requirements/`
+
+If no marker is found, rqmd falls back to current working directory.
+When auto-discovery is used, rqmd reports the discovered root and source marker.
+
+Passing explicit `--repo-root` bypasses auto-discovery.
+
 When `--requirements-dir` is omitted, rqmd auto-detects requirement docs by scanning from the current working path.
 
 Auto-detect preference is deterministic:
@@ -405,11 +442,6 @@ Supported keys:
 - `state_dir`: Default state directory for filtered walk resume (system-temp, project-local, or custom path)
 
 CLI flags always override config file values. When `.rqmd.yml` (or `.rqmd.yaml` / `.rqmd.json`) is present, rqmd loads it automatically; no additional flag is needed.
-
-Note on repo-root discovery:
-
-- Current behavior: `--repo-root` defaults to current working directory and is not auto-discovered upward.
-- Planned requirement: support git-like upward discovery of project root by searching current and parent directories for any of `.rqmd.yml/.rqmd.yaml/.rqmd.json`, `requirements/`, or `docs/requirements/`.
 
 ## Recommended docs recipe for projects
 

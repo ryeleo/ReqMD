@@ -137,13 +137,13 @@ def test_RQMD_sorting_010_footer_legend_uses_standardized_order(monkeypatch, cap
     result = cli.select_from_menu(
         "Sort",
         ["A", "B"],
-        footer_legend="keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[asc] | r=rfrsh | q=quit",
+        footer_legend="keys: 1-9 select | n=next | p=prev | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit",
         extra_keys={"s": "cycle-sort", "d": "toggle-direction", "r": "refresh"},
     )
     output = capsys.readouterr().out
 
     assert result is None
-    assert "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[asc] | r=rfrsh | q=quit" in output
+    assert "keys: 1-9 select | n=next | p=prev | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit" in output
 
 
 def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp_path: Path) -> None:
@@ -194,7 +194,7 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
     assert "\x1b[1mname ↓\x1b[0m" in str(captured["title"])
     title_plain = re.sub(r"\x1b\[[0-9;]*m", "", str(captured["title"]))
     assert re.search(r"Pri\s+\|\s+P\s+\|\s+I\s+\|\s+Ver\s+\|\s+Blk/Dep", title_plain)
-    assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[dsc] | r=rfrsh | q=quit"
+    assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
 
 
 def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, tmp_path: Path) -> None:
@@ -286,7 +286,50 @@ def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(m
     assert "\x1b[1mPri ↓\x1b[0m" in str(captured["title"])
     assert "Z Domain" in captured["options"][0]
     assert "A Domain" in captured["options"][1]
-    assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[dsc] | r=rfrsh | q=quit"
+    assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+
+
+def test_RQMD_sorting_shift_s_cycles_file_sort_backward(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "README.md").write_text(
+        "# Requirements\n\n## Domain Documents\n\n- [A](a.md)\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "a.md").write_text(
+        "# A Domain Requirement\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+
+    state = {"call": 0}
+    titles: list[str] = []
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Select file"):
+            titles.append(title)
+            state["call"] += 1
+            if state["call"] == 1:
+                return "cycle-sort-backward"
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert len(titles) >= 2
+    assert "\x1b[1mBlk/Dep ↓\x1b[0m" in titles[1]
 
 
 def test_RQMD_sorting_011_header_columns_stay_fixed_when_indicator_moves(monkeypatch, tmp_path: Path) -> None:
@@ -382,8 +425,8 @@ def test_RQMD_sorting_008_direction_token_updates_in_legend(monkeypatch, tmp_pat
     )
 
     assert result.exit_code == 0
-    assert legends[0] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[dsc] | r=rfrsh | q=quit"
-    assert legends[1] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[asc] | r=rfrsh | q=quit"
+    assert legends[0] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    assert legends[1] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
 
 
 def test_RQMD_sorting_009_refresh_reopens_file_menu(monkeypatch, tmp_path: Path) -> None:
@@ -665,6 +708,92 @@ Scope: demo.
     assert "[2/2]" in seen_titles[0]
 
 
+def test_RQMD_interactive_filtered_walk_shift_n_is_previous_and_g_G_jump(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    domain_file = domain / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 🔧 Implemented
+
+### AC-DEMO-002: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    seen_titles: list[str] = []
+    actions = iter(["nav-last", "nav-first", "nav-next", "nav-prev", "up"])
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Set status for"):
+            seen_titles.append(title)
+            return next(actions)
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    result = cli.filtered_interactive_loop(
+        repo_root=repo,
+        domain_files=[domain_file],
+        target_status="🔧 Implemented",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+        resume_filter=False,
+    )
+
+    assert result == 0
+    assert any("[2/2]" in title for title in seen_titles)
+    assert any("[1/2]" in title for title in seen_titles)
+
+
+def test_RQMD_interactive_filtered_walk_end_message_does_not_exit(monkeypatch, tmp_path: Path, capsys) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    domain_file = domain / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 🔧 Implemented
+
+### AC-DEMO-002: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    actions = iter(["nav-last", "nav-next", "up"])
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Set status for"):
+            return next(actions)
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    result = cli.filtered_interactive_loop(
+        repo_root=repo,
+        domain_files=[domain_file],
+        target_status="🔧 Implemented",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+        resume_filter=False,
+    )
+
+    output = capsys.readouterr().out
+    assert result == 0
+    assert "No more 🔧 Implemented requirements." in output
+
+
 def test_RQMD_interactive_filtered_walk_project_local_state_dir_writes_under_repo(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
@@ -772,7 +901,7 @@ def test_RQMD_sorting_005_alpha_asc_strategy_changes_default_direction(monkeypat
     assert "\x1b[1mname ↑\x1b[0m" in str(captured["title"])
     assert "A Domain" in captured["options"][0]
     assert "B Domain" in captured["options"][1]
-    assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[asc] | r=rfrsh | q=quit"
+    assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
 
 
 def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(monkeypatch, tmp_path: Path) -> None:
@@ -821,7 +950,7 @@ def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(monkeyp
     assert "\x1b[1mI ↓\x1b[0m" in str(captured["title"])
     assert "High" in captured["options"][0]
     assert "Low" in captured["options"][1]
-    assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[dsc] | r=rfrsh | q=quit"
+    assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
 
 
 def test_RQMD_sorting_unsorted_flag_warns_as_deprecated_alias(monkeypatch, repo_with_domain_docs: Path) -> None:

@@ -55,6 +55,7 @@ STATUS_PATTERN = re.compile(r"^- \*\*Status:\*\* (?P<status>.+?)\s*$", re.MULTIL
 PRIORITY_PATTERN = re.compile(r"^- \*\*Priority:\*\* (?P<priority>.+?)\s*$", re.MULTILINE)
 BLOCKED_REASON_PATTERN = re.compile(r"^\*\*Blocked:\*\*\s*(.+?)\s*$", re.MULTILINE)
 DEPRECATED_REASON_PATTERN = re.compile(r"^\*\*Deprecated:\*\*\s*(.+?)\s*$", re.MULTILINE)
+FLAGGED_PATTERN = re.compile(r"^- \*\*Flagged:\*\* (?P<flagged>true|false)\s*$", re.MULTILINE)
 ID_PREFIX_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*$")
 GENERIC_CRITERION_HEADER_PATTERN = re.compile(
     r"^###\s+(?P<id>(?P<prefix>[A-Z][A-Z0-9]*)-[A-Z0-9-]+):\s*(?P<title>.+?)\s*$"

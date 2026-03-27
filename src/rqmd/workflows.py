@@ -122,6 +122,7 @@ def _cycle_sort_key(
     current_key: str | None,
     columns: list[tuple[str, str]],
     wrap_to_first: bool = False,
+    reverse: bool = False,
 ) -> str | None:
     keys = [key for key, _label in columns]
     if current_key is None:
@@ -130,6 +131,10 @@ def _cycle_sort_key(
         index = keys.index(current_key)
     except ValueError:
         return keys[0] if keys else None
+    if reverse:
+        if index == 0:
+            return keys[-1] if wrap_to_first and keys else None
+        return keys[index - 1]
     if index == len(keys) - 1:
         return keys[0] if wrap_to_first and keys else None
     return keys[index + 1]
@@ -246,7 +251,7 @@ def _build_sort_footer(ascending: bool) -> str:
     direction = "asc" if ascending else "dsc"
     return (
         f"keys: 1-9 select | n=next | p=prev | u=up | "
-        f"{MENU_TOGGLE_SORT}=sort | {MENU_TOGGLE_DIRECTION}=[{direction}] | {MENU_REFRESH}=rfrsh | q=quit"
+        f"{MENU_TOGGLE_SORT}=sort | S=sort-back | {MENU_TOGGLE_DIRECTION}=[{direction}] | {MENU_REFRESH}=rfrsh | q=quit"
     )
 
 
@@ -401,8 +406,8 @@ def _prompt_for_requirement_action(
     extra_keys = {"t": "toggle-field"}
     extra_keys_help = {"t": "toggle"}
     if allow_nav:
-        extra_keys.update({"n": "nav-next", "p": "nav-prev"})
-        extra_keys_help.update({"n": "next", "p": "prev"})
+        extra_keys.update({"n": "nav-next", "p": "nav-prev", "N": "nav-prev", "g": "nav-first", "G": "nav-last"})
+        extra_keys_help.update({"n": "next", "p": "prev", "N": "prev", "g": "begin", "G": "end"})
 
     choice = select_from_menu_fn(
         title,
@@ -416,7 +421,7 @@ def _prompt_for_requirement_action(
     )
     if choice is None:
         return "quit", None
-    if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "toggle-field"}:
+    if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "nav-first", "nav-last", "toggle-field"}:
         return choice, None
     return "apply", labels[int(choice)]
 
@@ -495,11 +500,18 @@ def build_filtered_criteria_payload(
     for path in sorted(criteria_by_file.keys()):
         relative_path = format_path_display(path, repo_root)
         criteria_payload: list[dict[str, str]] = []
-        for requirement in criteria_by_file[path]:
+        sorted_requirements = sorted(
+            criteria_by_file[path],
+            key=lambda req: str(req.get("id") or "").lower(),
+        )
+        for requirement in sorted_requirements:
             entry: dict[str, object] = {
                 "id": str(requirement["id"]),
                 "title": str(requirement["title"]),
             }
+            flagged_value = requirement.get("flagged")
+            if isinstance(flagged_value, bool):
+                entry["flagged"] = flagged_value
 
             if include_body:
                 body_markdown, block_start, block_end = extract_criterion_block_with_lines(
@@ -642,6 +654,7 @@ def interactive_update_loop(
             zebra=True,
             extra_keys={
                 MENU_TOGGLE_SORT: "cycle-sort",
+                "S": "cycle-sort-backward",
                 MENU_TOGGLE_DIRECTION: "toggle-direction",
                 MENU_REFRESH: "refresh",
             },
@@ -653,6 +666,18 @@ def interactive_update_loop(
             continue
         if file_choice == "cycle-sort":
             current_file_sort_key = _cycle_sort_key(current_file_sort_key, file_columns, wrap_to_first=True) or "name"
+            current_file_sort_ascending = False
+            force_rescan = True
+            mode = current_file_sort_key
+            click.echo(f"Select file sort: {mode} ({'asc' if current_file_sort_ascending else 'dsc'})")
+            continue
+        if file_choice == "cycle-sort-backward":
+            current_file_sort_key = _cycle_sort_key(
+                current_file_sort_key,
+                file_columns,
+                wrap_to_first=True,
+                reverse=True,
+            ) or "name"
             current_file_sort_ascending = False
             force_rescan = True
             mode = current_file_sort_key
@@ -708,6 +733,7 @@ def interactive_update_loop(
                     option_right_labels=criterion_right_labels,
                     extra_keys={
                         MENU_TOGGLE_SORT: "cycle-sort",
+                        "S": "cycle-sort-backward",
                         MENU_TOGGLE_DIRECTION: "toggle-direction",
                         MENU_REFRESH: "refresh",
                     },
@@ -722,6 +748,16 @@ def interactive_update_loop(
                         current_criterion_sort_key,
                         criterion_columns,
                         wrap_to_first=bool(strategy["criterion_cycle_wrap"]),
+                    )
+                    current_criterion_sort_ascending = False
+                    click.echo(f"Requirement sort: {current_criterion_sort_key or 'document'} (dsc)")
+                    continue
+                if criterion_choice == "cycle-sort-backward":
+                    current_criterion_sort_key = _cycle_sort_key(
+                        current_criterion_sort_key,
+                        criterion_columns,
+                        wrap_to_first=bool(strategy["criterion_cycle_wrap"]),
+                        reverse=True,
                     )
                     current_criterion_sort_ascending = False
                     click.echo(f"Requirement sort: {current_criterion_sort_key or 'document'} (dsc)")
@@ -985,13 +1021,21 @@ def filtered_interactive_loop(
                 click.echo("Already at first filtered AC.")
             save_current(flat_list, index)
             continue
+        if action == "nav-first":
+            index = 0
+            save_current(flat_list, index)
+            continue
+        if action == "nav-last":
+            index = len(flat_list) - 1
+            save_current(flat_list, index)
+            continue
         if action == "nav-next":
             if index < len(flat_list) - 1:
                 index += 1
             else:
-                click.echo("End of filtered list. All requirements reviewed.")
+                click.echo(f"No more {target_status} requirements.")
                 save_current(flat_list, index)
-                return 0
+                continue
             save_current(flat_list, index)
             continue
 
@@ -1176,13 +1220,21 @@ def filtered_priority_interactive_loop(
                 click.echo("Already at first filtered AC.")
             save_current(flat_list, index)
             continue
+        if action == "nav-first":
+            index = 0
+            save_current(flat_list, index)
+            continue
+        if action == "nav-last":
+            index = len(flat_list) - 1
+            save_current(flat_list, index)
+            continue
         if action == "nav-next":
             if index < len(flat_list) - 1:
                 index += 1
             else:
-                click.echo("End of filtered list. All requirements reviewed.")
+                click.echo(f"No more {target_priority} requirements.")
                 save_current(flat_list, index)
-                return 0
+                continue
             save_current(flat_list, index)
             continue
 

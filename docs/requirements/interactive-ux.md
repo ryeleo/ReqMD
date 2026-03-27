@@ -33,6 +33,7 @@ Summary: 4💡 0🔧 13✅ 0⛔ 4🗑️
 - I want to press `n` (next) or `p` (prev)
 - So that focus moves across requirements in current ordering
 - So that history-aware navigation supports backtracking.
+- So that `N` (Shift+N) is treated as reverse navigation for terminals where uppercase shortcuts are easier to reach.
 
 ### RQMD-INTERACTIVE-004A: Next/prev stack semantics
 - **Status:** ✅ Verified
@@ -40,6 +41,8 @@ Summary: 4💡 0🔧 13✅ 0⛔ 4🗑️
 - I want to move forward and backward across requirements
 - So that rqmd preserves a history stack semantics for backtracking
 - So that `p` returns to the previously visited requirement context.
+- So that filtered walkthroughs support `g` (beginning) and `G` (end) jump shortcuts.
+- So that reaching the end of a filtered walkthrough with `n` keeps the session open and displays a clear "no more <target> requirements" message.
 
 ### RQMD-INTERACTIVE-005: Sort toggles
 - **Status:** 🗑️ Deprecated

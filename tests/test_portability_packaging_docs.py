@@ -312,6 +312,30 @@ def test_RQMD_packaging_001_to_005_metadata_and_layout() -> None:
     assert "--requirements-dir" in readme
     assert "--id-prefix" in readme
 
+
+def test_RQMD_automation_012_readme_documents_json_schema_contract() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    readme = (project_root / "README.md").read_text(encoding="utf-8")
+
+    assert "JSON contract (stable keys)" in readme
+    assert "summary" in readme
+    assert "check" in readme
+    assert "set" in readme
+    assert "filter-status" in readme
+    assert "filter-priority" in readme
+    assert "filter-flagged" in readme
+    assert "rollup" in readme
+
+
+def test_RQMD_automation_016_readme_documents_exit_code_matrix() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    readme = (project_root / "README.md").read_text(encoding="utf-8")
+
+    assert "Exit codes" in readme
+    assert "- `0`:" in readme
+    assert "- `1`:" in readme
+    assert "130" in readme
+
     changelog_path = project_root / "CHANGELOG.md"
     assert changelog_path.exists()
     changelog = changelog_path.read_text(encoding="utf-8")
@@ -525,3 +549,113 @@ def test_RQMD_core_013_parse_index_links_extracts_md_filenames(tmp_path: Path) -
     assert "ux.md" in links
     # Links with path separators or external domains should be excluded
     assert not any("/" in lnk for lnk in links)
+
+
+def test_RQMD_portability_015_upward_root_discovery_prefers_nearest_ancestor(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    root_criteria = repo / "docs" / "requirements"
+    nested_root = repo / "packages" / "feature"
+    nested_criteria = nested_root / "requirements"
+
+    root_criteria.mkdir(parents=True)
+    nested_criteria.mkdir(parents=True)
+
+    (root_criteria / "README.md").write_text("# Requirements\n\n- [Root](root.md)\n", encoding="utf-8")
+    (root_criteria / "root.md").write_text(
+        """# Root Requirement
+
+### AC-ROOT-001: Root
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+    (nested_criteria / "README.md").write_text("# Requirements\n\n- [Nested](nested.md)\n", encoding="utf-8")
+    (nested_criteria / "nested.md").write_text(
+        """# Nested Requirement
+
+### AC-NEST-001: Nested
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    (nested_root / "src").mkdir(parents=True, exist_ok=True)
+    monkeypatch.chdir(nested_root / "src")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        ["--filter-status", "Implemented", "--tree", "--no-interactive", "--no-summary-table"],
+    )
+
+    assert result.exit_code == 0
+    assert "AC-NEST-001" in result.output
+    assert "AC-ROOT-001" not in result.output
+
+
+def test_RQMD_portability_015_marker_priority_prefers_rqmd_config(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    (repo / ".rqmd.yml").write_text("requirements_dir: docs/requirements\n", encoding="utf-8")
+    (repo / "requirements").mkdir(parents=True)
+    criteria = repo / "docs" / "requirements"
+    criteria.mkdir(parents=True)
+    (criteria / "README.md").write_text("# Requirements\n\n- [Demo](demo.md)\n", encoding="utf-8")
+    (criteria / "demo.md").write_text(
+        """# Demo Requirement
+
+### AC-DEMO-001: Demo
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(repo)
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        ["--filter-status", "Implemented", "--tree", "--no-interactive", "--no-summary-table"],
+    )
+
+    assert result.exit_code == 0
+    assert "marker:.rqmd.yml" in result.output
+
+
+def test_RQMD_portability_015_explicit_repo_root_bypasses_discovery(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    nested = repo / "nested"
+    nested.mkdir(parents=True)
+    (nested / ".rqmd.yml").write_text("requirements_dir: requirements\n", encoding="utf-8")
+    (nested / "requirements").mkdir(parents=True)
+
+    root_criteria = repo / "docs" / "requirements"
+    root_criteria.mkdir(parents=True)
+    (root_criteria / "root.md").write_text(
+        """# Root Requirement
+
+### AC-ROOT-001: Root
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(nested)
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-status",
+            "Implemented",
+            "--tree",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Auto-discovered project root:" not in result.output
+    assert "AC-ROOT-001" in result.output
