@@ -3,7 +3,7 @@
 Scope: add a first-class `Priority` field to requirement entries, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
+Summary: 2💡 0🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PRIORITY-001: First-class priority field
@@ -83,3 +83,12 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 - As a rqmd user when the increased surface area
 - I want to implement priority features
 - So that unit tests cover parsing, normalization, UI toggle behavior, sorting integration, and migration; documentation and examples are added to README and examples in `.reqmd/`.
+
+### RQMD-PRIORITY-011: Project-customizable priority catalog schema
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when projects have domain-specific priority terminology
+- I want priority definitions to be configurable per project similarly to status definitions
+- So that each priority entry supports a custom display name, shortcode, and emoji (for example `{"name": "Critical", "shortcode": "C", "emoji": "🔥"}`)
+- So that parsing, normalization, rendering, sorting labels, and JSON outputs all use the configured priority catalog consistently
+- So that defaults remain available when no project override is present.
