@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from pathlib import Path
@@ -533,7 +534,7 @@ def test_RQMD_interactive_008_reason_prompt_helpers(monkeypatch) -> None:
 def test_RQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
-    def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns, id_prefixes):
+    def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns, id_prefixes, include_status_emojis):
         called["value"] = True
         assert criterion_id == "AC-HELLO-001"
         assert id_prefixes == ("AC", "R", "RQMD")
@@ -587,10 +588,122 @@ def test_RQMD_interactive_009b_filtered_walk_up_exits(monkeypatch, repo_with_dom
     assert result == 0
 
 
+def test_RQMD_interactive_filtered_walk_resumes_position_across_runs(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    domain_file = domain / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 🔧 Implemented
+
+### AC-DEMO-002: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    first_actions = iter(["nav-next", None])
+
+    def first_select(title, options, **kwargs):
+        if title.startswith("Set status for"):
+            return next(first_actions)
+        return None
+
+    original_select = cli.select_from_menu
+    cli.select_from_menu = first_select
+
+    try:
+        first_result = cli.filtered_interactive_loop(
+            repo_root=repo,
+            domain_files=[domain_file],
+            target_status="🔧 Implemented",
+            emoji_columns=False,
+            id_prefixes=("AC",),
+            resume_filter=True,
+            state_dir="state-cache",
+        )
+    finally:
+        cli.select_from_menu = original_select
+
+    assert first_result == 0
+    resume_files = list((repo / "state-cache").glob("filter-resume-*.json"))
+    assert len(resume_files) == 1
+    resume_state = json.loads(resume_files[0].read_text(encoding="utf-8"))
+    assert resume_state["🔧 Implemented"]["id"] == "AC-DEMO-002"
+
+    seen_titles: list[str] = []
+
+    def second_select(title, options, **kwargs):
+        if title.startswith("Set status for"):
+            seen_titles.append(title)
+            return None
+        return None
+
+    original_select = cli.select_from_menu
+    cli.select_from_menu = second_select
+
+    try:
+        second_result = cli.filtered_interactive_loop(
+            repo_root=repo,
+            domain_files=[domain_file],
+            target_status="🔧 Implemented",
+            emoji_columns=False,
+            id_prefixes=("AC",),
+            resume_filter=True,
+            state_dir="state-cache",
+        )
+    finally:
+        cli.select_from_menu = original_select
+
+    assert second_result == 0
+    assert seen_titles
+    assert "[2/2]" in seen_titles[0]
+
+
+def test_RQMD_interactive_filtered_walk_project_local_state_dir_writes_under_repo(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    domain_file = domain / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    original_select = cli.select_from_menu
+    cli.select_from_menu = lambda *args, **kwargs: None
+    try:
+        result = cli.filtered_interactive_loop(
+            repo_root=repo,
+            domain_files=[domain_file],
+            target_status="🔧 Implemented",
+            emoji_columns=False,
+            id_prefixes=("AC",),
+            resume_filter=True,
+            state_dir="project-local",
+        )
+    finally:
+        cli.select_from_menu = original_select
+
+    assert result == 0
+    assert list((repo / "tmp" / "rqmd").glob("filter-resume-*.json"))
+
+
 def test_RQMD_interactive_001_default_invokes_interactive_loop(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
-    def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes):
+    def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis):
         called["value"] = True
         assert sort_strategy == "standard"
         assert id_prefixes == ("AC", "R", "RQMD")

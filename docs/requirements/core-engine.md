@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 6🔧 9✅ 0⛔ 0🗑️
+Summary: 0💡 6🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -63,12 +63,14 @@ Summary: 1💡 6🔧 9✅ 0⛔ 0🗑️
 - Then generated output remains byte-stable for those files
 - And no unnecessary rewrites occur.
 
-### RQMD-CORE-009: Missing domain docs handling
+### REQMD-CORE-009: Missing domain docs handling
 - **Status:** 🔧 Implemented
 - Given no domain markdown files are found
 - When the command is run
-- Then the process exits non-zero
-- And prints a clear error message.
+- Then reqmd prints a clear, actionable error message
+- And offers to initialize a starter requirements project in the current working directory (the same behavior as `--init`)
+- And the tool never creates files without explicit user confirmation: the initialization flow must prompt the user to confirm creation and allow a `--yes`/`--confirm` override for automation
+- And in non-interactive or CI contexts the tool exits non-zero and prints the guidance to run `rqmd --init` or `rqmd --init --yes` to create starter files.
 
 ### RQMD-CORE-010: Blocked/deprecated reason extraction
 - **Status:** 🔧 Implemented
@@ -116,7 +118,7 @@ Summary: 1💡 6🔧 9✅ 0⛔ 0🗑️
 - And generated starter requirement IDs use the selected prefix.
 
 ### RQMD-CORE-016: Initial scaffolding content/copy
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - Given users run `rqmd --init`
 - When scaffold initialization runs
 - Then generated `docs/requirements/README.md` includes a welcome message and instructions for getting started that is copied from:

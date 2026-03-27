@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.resources
 import os
 import re
 import sys
@@ -190,6 +191,24 @@ def display_name_from_h1(path: Path) -> str:
     return path.stem
 
 
+def _load_init_template(template_name: str) -> str:
+    # Preferred source in repository for easy editing during development.
+    repo_template = Path(__file__).resolve().parents[2] / "init-docs" / template_name
+    if repo_template.exists() and repo_template.is_file():
+        return repo_template.read_text(encoding="utf-8")
+
+    # Packaged fallback for installed distributions.
+    packaged = importlib.resources.files("rqmd").joinpath("init_docs", template_name)
+    return packaged.read_text(encoding="utf-8")
+
+
+def _render_init_template(template_name: str, values: dict[str, str]) -> str:
+    rendered = _load_init_template(template_name)
+    for key, value in values.items():
+        rendered = rendered.replace(f"{{{{{key}}}}}", value)
+    return rendered
+
+
 def initialize_requirements_scaffold(repo_root: Path, criteria_dir_input: str, starter_prefix: str) -> list[Path]:
     criteria_dir = Path(criteria_dir_input)
     if not criteria_dir.is_absolute():
@@ -205,48 +224,19 @@ def initialize_requirements_scaffold(repo_root: Path, criteria_dir_input: str, s
 
     created_paths: list[Path] = []
 
+    template_values = {
+        "INDEX_DISPLAY": index_display,
+        "STARTER_DISPLAY": starter_display,
+        "CRITERIA_DIR_DISPLAY": criteria_dir_display,
+        "STARTER_PREFIX": starter_prefix,
+    }
+
     if not index_path.exists():
-        index_path.write_text(
-            f"""# Requirements
-
-This document is the source-of-truth index for rqmd requirements.
-
-## How To Use
-
-- Keep requirement IDs stable and unique.
-- Keep one status line directly below each requirement heading.
-- Use Given/When/Then when a requirement needs explicit acceptance detail.
-- Simple one-line requirements with only a title and status are also valid.
-- Keep this index at {index_display}.
-- Keep domain docs under {criteria_dir_display}/.
-
-Status workflow:
-- 💡 Proposed -> 🔧 Implemented -> ✅ Verified
-- Use ⛔ Blocked or 🗑️ Deprecated when needed.
-
-## Domain Documents
-
-### Starter
-- [Starter]({starter_display}) - bootstrap requirement for first-run setup
-""",
-            encoding="utf-8",
-        )
+        index_path.write_text(_render_init_template("README.md", template_values), encoding="utf-8")
         created_paths.append(index_path)
 
     if not starter_domain_path.exists():
-        starter_domain_path.write_text(
-            f"""# Starter Requirements
-
-Scope: starter bootstrap content.
-
-### {starter_prefix}-HELLO-001: Replace this starter requirement
-- **Status:** 💡 Proposed
-- Given a newly initialized requirements catalog
-- When teams adopt this tool in their project
-- Then this requirement serves as an easy-to-delete handoff placeholder.
-""",
-            encoding="utf-8",
-        )
+        starter_domain_path.write_text(_render_init_template("domain-example.md", template_values), encoding="utf-8")
         process_file(starter_domain_path, check_only=False)
         created_paths.append(starter_domain_path)
 

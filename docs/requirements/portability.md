@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 7🔧 0✅ 0⛔ 1🗑️
+Summary: 4💡 7🔧 2✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -75,7 +75,7 @@ Summary: 5💡 7🔧 0✅ 0⛔ 1🗑️
 - And no partial interactive session is started.
 
 ### RQMD-PORTABILITY-010: One-time emoji strip and restore commands
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - Given a team prefers plain-text status labels for platform compatibility or readability
 - When `--strip-status-emojis` is run once against the docs
 - Then all emoji prefixes are removed from every status line across all requirements files
@@ -103,6 +103,14 @@ Summary: 5💡 7🔧 0✅ 0⛔ 1🗑️
 - And the user-level file can override color-related settings including zebra striping colors
 - And precedence is: CLI options > project config > user config > built-in defaults
 - And effective color settings are applied consistently in interactive and roll-up displays.
+
+### RQMD-PORTABILITY-014: Configurable state directory for persisted workflow state
+- **Status:** ✅ Verified
+- Given teams may have different conventions for temporary/runtime files
+- When users run filtered interactive workflows with resume enabled
+- Then rqmd supports `--state-dir` with explicit modes `system-temp` and `project-local`
+- And `--state-dir` also accepts a custom absolute or repo-root-relative path
+- And resume state persists under the selected directory without assuming any single repo layout.
 
 ### RQMD-PORTABILITY-013: Project-configurable roll-up color knobs
 - **Status:** 🗑️ Deprecated

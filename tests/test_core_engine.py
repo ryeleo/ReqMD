@@ -239,6 +239,32 @@ def test_RQMD_core_012b_init_scaffold_allows_custom_starter_key(tmp_path: Path) 
     assert "### TEAM-HELLO-001: Replace this starter requirement" in starter_text
 
 
+def test_RQMD_core_016_init_scaffold_copies_template_content(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--init",
+        ],
+        input="\n",
+    )
+
+    assert result.exit_code == 0
+
+    index_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
+    starter_text = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
+
+    assert "Generated from init-docs/README.md." in index_text
+    assert "And this file content is sourced from init-docs/domain-example.md." in starter_text
+
+
 def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)

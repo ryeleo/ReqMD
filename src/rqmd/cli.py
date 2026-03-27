@@ -79,8 +79,8 @@ from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
                            parse_batch_update_jsonl, parse_set_entry)
 from .constants import (DEFAULT_CRITERIA_DIR, DEFAULT_ID_PREFIXES,
                         ID_PREFIX_PATTERN, MENU_REFRESH, MENU_TOGGLE_DIRECTION,
-                        MENU_TOGGLE_SORT, STATUS_ORDER, SUMMARY_END,
-                        SUMMARY_START)
+                        MENU_TOGGLE_SORT, STATUS_ORDER, STATUS_PATTERN,
+                        SUMMARY_END, SUMMARY_START)
 from .criteria_parser import (collect_criteria_by_status, find_criterion_by_id,
                               normalize_id_prefixes, parse_criteria,
                               resolve_id_prefixes)
@@ -160,6 +160,17 @@ def prompt_for_init_prefix(default_prefix: str = "REQ") -> str:
     return value
 
 
+def infer_include_status_emojis(domain_files: list[Path]) -> bool:
+    emoji_prefixes = tuple(label.split(" ", 1)[0] for label, _ in STATUS_ORDER)
+    for path in domain_files:
+        text = path.read_text(encoding="utf-8")
+        for match in STATUS_PATTERN.finditer(text):
+            raw = match.group("status").strip()
+            if raw.startswith(emoji_prefixes):
+                return True
+    return False
+
+
 def interactive_update_loop(
     repo_root: Path,
     criteria_dir: str,
@@ -168,6 +179,7 @@ def interactive_update_loop(
     sort_files: bool,
     sort_strategy: str = "standard",
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    include_status_emojis: bool | None = None,
 ) -> int:
     return workflows_mod.interactive_update_loop(
         repo_root=repo_root,
@@ -178,6 +190,7 @@ def interactive_update_loop(
         sort_strategy=sort_strategy,
         id_prefixes=id_prefixes,
         select_from_menu_fn=select_from_menu,
+        include_status_emojis=include_status_emojis,
     )
 
 
@@ -187,6 +200,9 @@ def filtered_interactive_loop(
     target_status: str,
     emoji_columns: bool,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    resume_filter: bool = True,
+    state_dir: str = "system-temp",
+    include_status_emojis: bool | None = None,
 ) -> int:
     return workflows_mod.filtered_interactive_loop(
         repo_root=repo_root,
@@ -195,6 +211,9 @@ def filtered_interactive_loop(
         emoji_columns=emoji_columns,
         id_prefixes=id_prefixes,
         select_from_menu_fn=select_from_menu,
+        resume_filter=resume_filter,
+        state_dir=state_dir,
+        include_status_emojis=include_status_emojis,
     )
 
 
@@ -204,6 +223,7 @@ def lookup_criterion_interactive(
     criterion_id: str,
     emoji_columns: bool,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    include_status_emojis: bool | None = None,
 ) -> int:
     return workflows_mod.lookup_criterion_interactive(
         repo_root=repo_root,
@@ -212,6 +232,7 @@ def lookup_criterion_interactive(
         emoji_columns=emoji_columns,
         id_prefixes=id_prefixes,
         select_from_menu_fn=select_from_menu,
+        include_status_emojis=include_status_emojis,
     )
 
 
@@ -333,6 +354,34 @@ def lookup_criterion_interactive(
     help="Print machine-readable JSON output for non-interactive workflows.",
 )
 @click.option(
+    "--body/--no-body",
+    "include_body",
+    default=True,
+    help="With --json --filter-status: include full requirement body and line metadata (disable with --no-body).",
+)
+@click.option(
+    "--resume-filter/--no-resume-filter",
+    default=True,
+    help="Resume filtered interactive walkthrough position across runs.",
+)
+@click.option(
+    "--strip-status-emojis",
+    is_flag=True,
+    help="One-time conversion: remove emoji prefixes from all status lines and regenerate summaries.",
+)
+@click.option(
+    "--restore-status-emojis",
+    is_flag=True,
+    help="One-time conversion: restore canonical emoji-prefixed status lines and regenerate summaries.",
+)
+@click.option(
+    "--state-dir",
+    type=str,
+    default="system-temp",
+    show_default=True,
+    help="Directory for persisted workflow state: system-temp, project-local, or a custom path.",
+)
+@click.option(
     "--repo-root",
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
     default=Path("."),
@@ -387,6 +436,11 @@ def main(
     rollup_map_entries: tuple[str, ...],
     rollup_config: str | None,
     json_output: bool,
+    include_body: bool,
+    resume_filter: bool,
+    strip_status_emojis: bool,
+    restore_status_emojis: bool,
+    state_dir: str,
     repo_root: Path,
     criteria_dir: str | None,
     id_prefixes: tuple[str, ...],
@@ -447,6 +501,41 @@ def main(
     # RQMD-PORTABILITY-009: validate files are readable before proceeding
     validate_files_readable(domain_files, repo_root)
 
+    include_status_emojis = infer_include_status_emojis(domain_files)
+
+    if strip_status_emojis and restore_status_emojis:
+        raise click.ClickException("Use either --strip-status-emojis or --restore-status-emojis, not both.")
+
+    if strip_status_emojis or restore_status_emojis:
+        if check or filter_status or set_criterion_id or set_status or set_updates or set_file_input or set_file or tree or rollup_mode or criterion_id:
+            raise click.ClickException(
+                "Emoji strip/restore modes cannot be combined with --check, --rollup, positional ID, --filter-status/--tree, or --set-* options."
+            )
+
+        include_status_emojis = not strip_status_emojis
+        changed_paths, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=False,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+        )
+        if summary_table and not json_output:
+            print_summary_table(table_rows, emoji_columns=emoji_columns)
+
+        mode_name = "restore-status-emojis" if restore_status_emojis else "strip-status-emojis"
+        if json_output:
+            payload = {
+                "mode": mode_name,
+                "criteria_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
+                "changed_count": len(changed_paths),
+            }
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
+        click.echo(f"Updated {len(changed_paths)} file(s) in {mode_name} mode.")
+        raise SystemExit(0)
+
     # RQMD-CORE-013: --check-index mode — compare index links with actual domain files
     if check_index:
         index_path = resolved_criteria_dir / "README.md"
@@ -482,14 +571,38 @@ def main(
                 criterion_id=criterion_id,
                 emoji_columns=emoji_columns,
                 id_prefixes=id_prefixes,
+                include_status_emojis=include_status_emojis,
             )
         )
 
-    changed_paths, table_rows = collect_summary_rows(domain_files, check_only=check, display_name_fn=display_name_from_h1)
+    changed_paths, table_rows = collect_summary_rows(
+        domain_files,
+        check_only=check,
+        display_name_fn=display_name_from_h1,
+        include_status_emojis=include_status_emojis,
+    )
+
+    path_to_row = {path: row for path, row in zip(domain_files, table_rows)}
+    file_rows_for_sort: list[tuple[Path, dict[str, int], str]] = []
+    for path in domain_files:
+        row = path_to_row[path]
+        counts = {
+            label: int(row[index + 1])
+            for index, (label, _slug) in enumerate(STATUS_ORDER)
+        }
+        file_rows_for_sort.append((path, counts, display_name_from_h1(path)))
+
+    ordered_file_rows = workflows_mod.sort_file_rows_for_strategy(
+        file_rows_for_sort,
+        sort_strategy=sort_strategy,
+    )
+    ordered_paths = [path for path, _counts, _label in ordered_file_rows]
+    table_rows = [path_to_row[path] for path in ordered_paths]
+
     summary_payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, changed_paths)
 
     if summary_table and verbose and not json_output and not rollup_mode:
-        for row, path in zip(table_rows, domain_files):
+        for row, path in zip(table_rows, ordered_paths):
             marker = "UPDATE" if path in changed_paths else "OK"
             parts = [
                 f"{style_status_count(label, row[index + 1])} {label}"
@@ -580,6 +693,8 @@ def main(
                 resolved_criteria_dir,
                 criteria_by_file,
                 normalized_status,
+                include_body=include_body,
+                id_prefixes=id_prefixes,
             )
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
             raise SystemExit(0)
@@ -595,6 +710,9 @@ def main(
                 target_status=normalized_status,
                 emoji_columns=emoji_columns,
                 id_prefixes=id_prefixes,
+                resume_filter=resume_filter,
+                state_dir=state_dir,
+                include_status_emojis=include_status_emojis,
             )
         )
 
@@ -706,6 +824,7 @@ def main(
                 sort_files=False,
                 sort_strategy=sort_strategy,
                 id_prefixes=id_prefixes,
+                include_status_emojis=include_status_emojis,
             )
         )
 

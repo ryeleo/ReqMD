@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import tempfile
 import shutil
 import sys
 from pathlib import Path
@@ -12,8 +15,10 @@ except ImportError:
     sys.exit(1)
 
 from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
-                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT, STATUS_ORDER)
-from .criteria_parser import find_criterion_by_id, parse_criteria
+                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT, STATUS_ORDER,
+                        STATUS_PATTERN)
+from .criteria_parser import (extract_criterion_block_with_lines,
+                              find_criterion_by_id, parse_criteria)
 from .markdown_io import (display_name_from_h1, format_path_display,
                           iter_domain_files)
 from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
@@ -259,6 +264,40 @@ def _sort_file_rows(
     )
 
 
+def sort_file_rows_for_strategy(
+    rows: list[tuple[Path, dict[str, int], str]],
+    sort_strategy: str,
+) -> list[tuple[Path, dict[str, int], str]]:
+    strategy = get_sort_strategy_spec(sort_strategy)
+    sort_key = str(strategy["file_default_key"])
+    ascending = bool(strategy["file_default_ascending"])
+    return _sort_file_rows(rows, sort_key, ascending)
+
+
+def resolve_resume_state_dir(repo_root: Path, state_dir: str) -> Path:
+    mode = (state_dir or "system-temp").strip().lower()
+    if mode == "system-temp":
+        return Path(tempfile.gettempdir()) / "rqmd"
+    if mode == "project-local":
+        return repo_root / "tmp" / "rqmd"
+
+    resolved = Path(state_dir).expanduser()
+    if resolved.is_absolute():
+        return resolved
+    return (repo_root / resolved).resolve()
+
+
+def infer_include_status_emojis(domain_files: list[Path]) -> bool:
+    emoji_prefixes = tuple(label.split(" ", 1)[0] for label, _ in STATUS_ORDER)
+    for path in domain_files:
+        text = path.read_text(encoding="utf-8")
+        for match in STATUS_PATTERN.finditer(text):
+            raw = match.group("status").strip()
+            if raw.startswith(emoji_prefixes):
+                return True
+    return False
+
+
 def _criterion_status_rank(status: str) -> int:
     status_priority = {label: i for i, (label, _slug) in enumerate(STATUS_ORDER)}
     return status_priority.get(status, 99)
@@ -316,6 +355,8 @@ def build_filtered_criteria_payload(
     criteria_dir: Path,
     criteria_by_file: dict[Path, list[dict[str, object]]],
     target_status: str,
+    include_body: bool = True,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> dict[str, object]:
     files_payload: list[dict[str, object]] = []
     total = 0
@@ -324,12 +365,37 @@ def build_filtered_criteria_payload(
         relative_path = format_path_display(path, repo_root)
         criteria_payload: list[dict[str, str]] = []
         for requirement in criteria_by_file[path]:
-            criteria_payload.append(
-                {
-                    "id": str(requirement["id"]),
-                    "title": str(requirement["title"]),
+            entry: dict[str, object] = {
+                "id": str(requirement["id"]),
+                "title": str(requirement["title"]),
+            }
+
+            if include_body:
+                body_markdown, block_start, block_end = extract_criterion_block_with_lines(
+                    path,
+                    str(requirement["id"]),
+                    id_prefixes=id_prefixes,
+                )
+                lines_payload = {
+                    "header": int(requirement.get("header_line") or 0) + 1,
+                    "status": int(requirement.get("status_line") or 0) + 1,
                 }
-            )
+                blocked_line = requirement.get("blocked_reason_line")
+                if isinstance(blocked_line, int):
+                    lines_payload["blocked_reason"] = blocked_line + 1
+                deprecated_line = requirement.get("deprecated_reason_line")
+                if isinstance(deprecated_line, int):
+                    lines_payload["deprecated_reason"] = deprecated_line + 1
+                if block_start is not None and block_end is not None:
+                    lines_payload["body_start"] = block_start + 1
+                    lines_payload["body_end"] = block_end + 1
+
+                entry["body"] = {
+                    "markdown": body_markdown,
+                    "lines": lines_payload,
+                }
+
+            criteria_payload.append(entry)
         files_payload.append({"path": relative_path, "requirements": criteria_payload})
         total += len(criteria_payload)
 
@@ -384,7 +450,10 @@ def interactive_update_loop(
     sort_strategy: str = "standard",
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     select_from_menu_fn=select_from_menu,
+    include_status_emojis: bool | None = None,
 ) -> int:
+    if include_status_emojis is None:
+        include_status_emojis = infer_include_status_emojis(domain_files)
     strategy = get_sort_strategy_spec(sort_strategy)
     file_columns = list(strategy["file_columns"])
     criterion_columns = list(strategy["criterion_columns"])
@@ -605,14 +674,19 @@ def interactive_update_loop(
                 blocked_reason=blocked_reason,
                 deprecated_reason=deprecated_reason,
             )
-            process_file(selected_path, check_only=False)
+            process_file(selected_path, check_only=False, include_status_emojis=include_status_emojis)
 
             if changed:
                 click.echo(f"Updated {selected_criterion['id']} -> {new_status}")
             else:
                 click.echo(f"No change for {selected_criterion['id']} ({new_status})")
 
-            _, table_rows = collect_summary_rows(domain_files, check_only=True, display_name_fn=display_name_from_h1)
+            _, table_rows = collect_summary_rows(
+                domain_files,
+                check_only=True,
+                display_name_fn=display_name_from_h1,
+                include_status_emojis=include_status_emojis,
+            )
             print_summary_table(table_rows, emoji_columns=emoji_columns)
 
             raw_criteria_after = parse_criteria(selected_path, id_prefixes=id_prefixes)
@@ -646,7 +720,71 @@ def filtered_interactive_loop(
     emoji_columns: bool,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     select_from_menu_fn=select_from_menu,
+    resume_filter: bool = True,
+    state_dir: str = "system-temp",
+    include_status_emojis: bool | None = None,
 ) -> int:
+    if include_status_emojis is None:
+        include_status_emojis = infer_include_status_emojis(domain_files)
+    repo_hash = hashlib.sha256(str(repo_root.resolve()).encode("utf-8")).hexdigest()[:12]
+    resume_root = resolve_resume_state_dir(repo_root, state_dir)
+    resume_path = resume_root / f"filter-resume-{repo_hash}.json"
+
+    def load_resume_state() -> dict[str, dict[str, str]]:
+        if not resume_path.exists() or not resume_path.is_file():
+            return {}
+        try:
+            loaded = json.loads(resume_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        if not isinstance(loaded, dict):
+            return {}
+        normalized: dict[str, dict[str, str]] = {}
+        for key, value in loaded.items():
+            if isinstance(key, str) and isinstance(value, dict):
+                req_id = value.get("id")
+                req_path = value.get("path")
+                if isinstance(req_id, str) and isinstance(req_path, str):
+                    normalized[key] = {"id": req_id, "path": req_path}
+        return normalized
+
+    def save_resume_state(state: dict[str, dict[str, str]]) -> None:
+        try:
+            resume_path.parent.mkdir(parents=True, exist_ok=True)
+            resume_path.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError:
+            return
+
+    def state_key() -> str:
+        return target_status
+
+    def save_current(flat_items: list[tuple[Path, dict[str, object]]], current_index: int) -> None:
+        if not resume_filter or not flat_items:
+            return
+        idx = min(max(current_index, 0), len(flat_items) - 1)
+        cur_path, cur_req = flat_items[idx]
+        state = load_resume_state()
+        state[state_key()] = {
+            "path": format_path_display(cur_path, repo_root),
+            "id": str(cur_req["id"]),
+        }
+        save_resume_state(state)
+
+    def resolve_resume_index(flat_items: list[tuple[Path, dict[str, object]]]) -> int:
+        if not resume_filter or not flat_items:
+            return 0
+        state = load_resume_state()
+        saved = state.get(state_key())
+        if not saved:
+            return 0
+        saved_id = saved.get("id")
+        saved_path = saved.get("path")
+        for i, (path, req) in enumerate(flat_items):
+            if str(req["id"]) == saved_id and format_path_display(path, repo_root) == saved_path:
+                click.echo(click.style(f"Resuming filtered walk at {saved_id}.", dim=True))
+                return i
+        return 0
+
     def build_flat_list() -> list[tuple[Path, dict[str, object]]]:
         result: list[tuple[Path, dict[str, object]]] = []
         for path in domain_files:
@@ -665,13 +803,14 @@ def filtered_interactive_loop(
         bold=True,
     ))
 
-    index = 0
+    index = resolve_resume_index(flat_list)
     while True:
         flat_list = build_flat_list()
         if not flat_list:
             click.echo("No more requirements with this status.")
             return 0
         index = min(index, len(flat_list) - 1)
+        save_current(flat_list, index)
 
         path, requirement = flat_list[index]
         refreshed = find_criterion_by_id(path, str(requirement["id"]), id_prefixes=id_prefixes)
@@ -709,21 +848,26 @@ def filtered_interactive_loop(
         )
 
         if status_choice is None:
+            save_current(flat_list, index)
             return 0
         if status_choice == "up":
+            save_current(flat_list, index)
             return 0
         if status_choice == "nav-prev":
             if index > 0:
                 index -= 1
             else:
                 click.echo("Already at first filtered AC.")
+            save_current(flat_list, index)
             continue
         if status_choice == "nav-next":
             if index < len(flat_list) - 1:
                 index += 1
             else:
                 click.echo("End of filtered list. All requirements reviewed.")
+                save_current(flat_list, index)
                 return 0
+            save_current(flat_list, index)
             continue
 
         new_status = status_labels[int(status_choice)]
@@ -737,14 +881,19 @@ def filtered_interactive_loop(
             blocked_reason=blocked_reason,
             deprecated_reason=deprecated_reason,
         )
-        process_file(path, check_only=False)
+        process_file(path, check_only=False, include_status_emojis=include_status_emojis)
 
         if changed:
             click.echo(f"Updated {requirement['id']} -> {new_status}")
         else:
             click.echo(f"No change for {requirement['id']} ({new_status})")
 
-        _, table_rows = collect_summary_rows(domain_files, check_only=True, display_name_fn=display_name_from_h1)
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+        )
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
         flat_after = build_flat_list()
@@ -753,12 +902,15 @@ def filtered_interactive_loop(
                 click.echo("All filtered requirements reviewed.")
                 return 0
             index = min(index, len(flat_after) - 1)
+            save_current(flat_after, index)
         else:
             if flat_after and index < len(flat_after) - 1:
                 index += 1
+                save_current(flat_after, index)
             elif flat_after:
                 click.echo("End of filtered list, wrapping to first.")
                 index = 0
+                save_current(flat_after, index)
             else:
                 click.echo("All filtered requirements reviewed.")
                 return 0
@@ -771,7 +923,10 @@ def lookup_criterion_interactive(
     emoji_columns: bool,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     select_from_menu_fn=select_from_menu,
+    include_status_emojis: bool | None = None,
 ) -> int:
+    if include_status_emojis is None:
+        include_status_emojis = infer_include_status_emojis(domain_files)
     criterion_id = criterion_id.strip().upper()
     matches: list[tuple[Path, dict[str, object]]] = []
     for path in domain_files:
@@ -836,14 +991,19 @@ def lookup_criterion_interactive(
             blocked_reason=blocked_reason,
             deprecated_reason=deprecated_reason,
         )
-        process_file(path, check_only=False)
+        process_file(path, check_only=False, include_status_emojis=include_status_emojis)
 
         if changed:
             click.echo(f"Updated {requirement['id']} -> {new_status}")
         else:
             click.echo(f"No change for {requirement['id']} ({new_status})")
 
-        _, table_rows = collect_summary_rows(domain_files, check_only=True, display_name_fn=display_name_from_h1)
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+        )
         print_summary_table(table_rows, emoji_columns=emoji_columns)
         return 0
 
