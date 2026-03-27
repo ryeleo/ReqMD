@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 0🔧 9✅ 0⛔ 0🗑️
+Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -68,3 +68,11 @@ Summary: 0💡 0🔧 9✅ 0⛔ 0🗑️
 - I want to prepare release and pre-release updates
 - So that repository contains a root-level `CHANGELOG.md` following Keep a Changelog structure
 - So that updates are recorded under an `Unreleased` section before version cut.
+
+### RQMD-PACKAGING-010: Shell completion distribution and activation guidance
+- **Status:** 💡 Proposed
+- As a rqmd user when installing rqmd on a workstation
+- I want shell completion support to be available for zsh (and documented for bash/fish where supported)
+- So that users can enable completion using standard shell-init patterns without hand-maintaining completion scripts.
+- So that dynamic completion can query rqmd for current domain/requirement tokens at completion time and stay in sync with repository docs.
+- So that packaging/README instructions include copy-paste-safe activation commands and troubleshooting notes for completion cache refresh.

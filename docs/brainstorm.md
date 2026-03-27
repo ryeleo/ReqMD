@@ -1,5 +1,9 @@
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
+## Debug why rqmd fails for Speed Shooting VR
+
+- ValueError: Unrecognized status value: 💻 Desktop-Verified
+
 ## TODO
 
 follow-on requirement for --set-flagged ID=true|false so automation can mutate flagged state directly too.

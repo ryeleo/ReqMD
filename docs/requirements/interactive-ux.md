@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 0🔧 13✅ 0⛔ 4🗑️
+Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -104,6 +104,7 @@ Summary: 5💡 0🔧 13✅ 0⛔ 4🗑️
 - So that this behavior mirrors positional ID entry: users can immediately set status/priority or navigate requirements within that file
 - So that in non-interactive modes the provided file path scopes non-interactive commands (e.g., `--set`, `--check`, `--set-priority`) to that file only
 - So that if the file path is invalid the tool prints a helpful error and suggestions (nearest matching domain files, common typos), and offers to search for similar files.
+- If both an ID and a filename are provided as positional arguments, the tool should prioritize the ID for lookup and open the file containing that ID if found; if the ID is not found but the file is valid, it should open the specified file and print a warning about the missing ID.
 
 ### RQMD-INTERACTIVE-017: Interactive flagged-state toggling
 - **Status:** 💡 Proposed
@@ -118,6 +119,34 @@ Summary: 5💡 0🔧 13✅ 0⛔ 4🗑️
 - So that implementation guidance and AI-authored domain rationale are available without cluttering individual requirement bodies.
 - So that interactive navigation remains focused on requirement editing while preserving fast access to domain context.
 - So that this UX behavior depends on the canonical domain-body model defined by RQMD-CORE-019 rather than a separate interactive-only parsing path.
+
+### RQMD-INTERACTIVE-019: Explicit ReqID-list focused interactive walk
+- **Status:** 💡 Proposed
+- As a rqmd user when I only want to work a specific subset of requirements
+- I want to provide an explicit target list at CLI (via positional args or `--filter-ids-file`) and launch a focused interactive walk
+- So that the workflow behaves similarly to `--filter-status` navigation but uses user-provided membership instead of status-based filtering.
+- So that `n`/`p` traversal, resume behavior, and update flows work consistently within the explicit list scope.
+- So that target lists can mix requirement IDs and domain identifiers (filename, stem, or display name), where domain tokens expand deterministically into that domain's requirements.
+- So that positional arguments and `--filter-ids-file` use the same token parser, expansion rules, ordering semantics, duplicate handling, and validation behavior.
+- So that missing/invalid tokens are reported clearly before entering the walk.
+
+### RQMD-INTERACTIVE-020: Case-insensitive tab completion for positional targets
+- **Status:** 💡 Proposed
+- As a rqmd user invoking CLI commands from zsh
+- I want tab completion for positional target tokens
+- So that typing a prefix such as `rqmd Co<TAB>` suggests matching requirement IDs, domain identifiers, and subsection names that start with that prefix.
+- So that matching is case-insensitive and deterministic across domain display names, domain file stems/paths, requirement IDs, and H2 subsection names.
+- So that completion behavior uses the same token-resolution contract as explicit target-list parsing (`RQMD-INTERACTIVE-019` and `RQMD-AUTOMATION-027/028`).
+- So that subsection tokens are expanded when used in target lists or `--filter-ids-file`, expanding to all requirements in that subsection.
+
+### RQMD-INTERACTIVE-021: Subsection navigation and discovery in interactive mode
+- **Status:** 💡 Proposed
+- As an interactive user when navigating requirements within a domain that has H2 subsections
+- I want the menu to expose subsection structure
+- So that subsections are visually grouped and labeled in the requirement list view
+- So that navigation can jump to subsections (e.g., `g api` to jump to "API" subsection)
+- So that when opening a domain, subsections are collapsed/expandable or displayed as distinct menu sections
+- So that this behavior depends on the domain-body and subsection parsing model defined by RQMD-CORE-020 rather than a separate interactive-only parsing path.
 
 ### RQMD-INTERACTIVE-009A: Up key for hierarchical navigation
 - **Status:** ✅ Verified

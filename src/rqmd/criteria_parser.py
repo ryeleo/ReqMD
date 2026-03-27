@@ -6,7 +6,8 @@ from pathlib import Path
 
 from .constants import (BLOCKED_REASON_PATTERN, DEFAULT_ID_PREFIXES,
                         DEPRECATED_REASON_PATTERN, FLAGGED_PATTERN,
-                        GENERIC_CRITERION_HEADER_PATTERN, ID_PREFIX_PATTERN,
+                        GENERIC_CRITERION_HEADER_PATTERN,
+                        H2_SUBSECTION_PATTERN, ID_PREFIX_PATTERN,
                         MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
                         REQUIREMENTS_INDEX_NAME, STATUS_PATTERN)
 from .priority_model import coerce_priority_label
@@ -130,9 +131,16 @@ def parse_criteria(
     lines = path.read_text(encoding="utf-8").splitlines()
     requirements: list[dict[str, object]] = []
     current: dict[str, object] | None = None
+    current_subsection: str | None = None  # Track active H2 subsection
     header_pattern = build_criterion_header_pattern(id_prefixes)
 
     for index, line in enumerate(lines):
+        # Track H2 subsection headers (optional organizational structure)
+        subsection_match = H2_SUBSECTION_PATTERN.match(line)
+        if subsection_match:
+            current_subsection = subsection_match.group("section_title")
+            continue
+
         header_match = header_pattern.match(line)
         if header_match:
             current = {
@@ -149,6 +157,7 @@ def parse_criteria(
                 "deprecated_reason_line": None,
                 "flagged": None,
                 "flagged_line": None,
+                "sub_domain": current_subsection,  # Assign current subsection if present
             }
             requirements.append(current)
             continue
@@ -300,6 +309,13 @@ def collect_criteria_by_flagged(
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> dict[Path, list[dict[str, object]]]:
     del repo_root
+    result: dict[Path, list[dict[str, object]]] = {}
+    for path in domain_files:
+        requirements = parse_criteria(path, id_prefixes=id_prefixes)
+        matching = [c for c in requirements if c.get("flagged") is flagged]
+        if matching:
+            result[path] = matching
+    return result
     result: dict[Path, list[dict[str, object]]] = {}
     for path in domain_files:
         requirements = parse_criteria(path, id_prefixes=id_prefixes)

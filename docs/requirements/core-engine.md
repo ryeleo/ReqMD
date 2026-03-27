@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 1🔧 16✅ 0⛔ 0🗑️
+Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -148,5 +148,15 @@ Summary: 2💡 1🔧 16✅ 0⛔ 0🗑️
 - As a rqmd maintainer when requirement domains include long-form narrative notes
 - I want each domain markdown file to support an explicit optional domain-level body section (separate from per-requirement bodies)
 - So that implementation rationale, migration guidance, and AI-generated domain notes can live at domain scope without polluting requirement entries.
+
+### RQMD-CORE-020: H2 subsection parsing and metadata capture
+- **Status:** 💡 Proposed
+- As a rqmd maintainer when a domain markdown file includes H2 section headings
+- I want rqmd to recognize H2 headers as subsection boundaries
+- So that each requirement captures a `sub_domain` metadata field indicating which H2 section contains it
+- So that optional narrative body content between an H2 header and the first H3 requirement below it is captured as subsection-level body content
+- So that H2 sections are optional; requirements without a containing H2 have empty/null `sub_domain`
+- So that subsection names are normalized deterministically (trimmed, lowercased internally for matching; original case preserved for display)
+- So that RQMD-AUTOMATION-029/030 and RQMD-INTERACTIVE-020/021 can expose subsection metadata for filtering, JSON export, and completion behavior.
 - So that parsing and summary regeneration preserve domain-body content verbatim and never treat it as requirement text.
 - So that future interactive and automation surfaces can consume this domain-body model through a single canonical core contract.
