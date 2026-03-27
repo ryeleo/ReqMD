@@ -18,9 +18,14 @@ I've set `chat.agent.maxRequests=1500` so you can go for a while!
 Make sure to check that `rqmd` runs for you, and there aren't regressions in our test suite as you go! And update the test suite as you go! And update requirements as you go using `rqmd --set...`! And update requirements directly if they change as you go!
 ```
 
+
+continue updating reqs!
+Then continue implementing features with tests and making sure you keep requirements well docuemnted as you go as details reveal themselves!
+
+
 ## Screen Write vs Scroll?
 
-Consider if we should change the UI to be screen write instead of scrolling style. That would make the UI 
+Consider if we should change the UI to be screen write instead of scrolling style. That would make the UI much more snappy, and capable of handling page changes more gracefully, which we do a lot of in this CLI tool.
 
 ## Full Blocking Implementation
 

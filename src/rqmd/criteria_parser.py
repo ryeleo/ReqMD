@@ -5,8 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from .constants import (BLOCKED_REASON_PATTERN, DEFAULT_ID_PREFIXES,
-                        DEPRECATED_REASON_PATTERN,
-                        FLAGGED_PATTERN,
+                        DEPRECATED_REASON_PATTERN, FLAGGED_PATTERN,
                         GENERIC_CRITERION_HEADER_PATTERN, ID_PREFIX_PATTERN,
                         MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
                         REQUIREMENTS_INDEX_NAME, STATUS_PATTERN)

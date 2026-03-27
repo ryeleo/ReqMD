@@ -77,21 +77,19 @@ except ImportError:
 from . import workflows as workflows_mod
 from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
                            parse_batch_update_jsonl, parse_set_entry,
-                           parse_set_flagged_entry,
-                           parse_set_priority_entry)
+                           parse_set_flagged_entry, parse_set_priority_entry)
 from .config import load_config, validate_config
 from .constants import (DEFAULT_CRITERIA_DIR, DEFAULT_ID_PREFIXES,
                         ID_PREFIX_PATTERN, STATUS_ORDER, STATUS_PATTERN,
                         SUMMARY_END, SUMMARY_START)
-from .criteria_parser import (collect_criteria_by_priority,
-                              collect_criteria_by_flagged,
+from .criteria_parser import (collect_criteria_by_flagged,
+                              collect_criteria_by_priority,
                               collect_criteria_by_status, find_criterion_by_id,
                               normalize_id_prefixes, parse_criteria,
                               resolve_id_prefixes)
 from .markdown_io import (auto_detect_criteria_dir, check_files_writable,
-                          check_index_sync, display_name_from_h1,
-                          discover_project_root,
-                          format_path_display,
+                          check_index_sync, discover_project_root,
+                          display_name_from_h1, format_path_display,
                           initialize_requirements_scaffold,
                           iter_criteria_search_roots, iter_domain_files,
                           parse_index_links, resolve_criteria_dir,
