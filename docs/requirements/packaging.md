@@ -8,6 +8,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PACKAGING-001: src-layout package structure
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when the package source tree
 - I want to inspect it
 - So that Python package code lives under `src/rqmd`
@@ -15,6 +16,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PACKAGING-002: Console entrypoint
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when package is installed
 - I want to run `rqmd`
 - So that command invokes package main CLI handler
@@ -22,6 +24,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PACKAGING-003: Module entrypoint
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when package source is available
 - I want to run `python -m rqmd`
 - So that CLI starts successfully
@@ -29,6 +32,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PACKAGING-004: Runtime dependencies declared
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when project metadata in pyproject
 - I want to install the package
 - So that required dependencies include click and tabulate
@@ -36,6 +40,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PACKAGING-005: Readme-backed usage docs
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when package folder is copied to a new project
 - I want to read README
 - So that install and command examples are present
@@ -43,6 +48,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PACKAGING-006: PyPI metadata hardening
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when package is prepared for public release
 - I want to finalize metadata
 - So that author/license/classifiers/urls are complete
@@ -50,6 +56,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PACKAGING-007: Semantic versioning policy
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when package evolves across projects
 - I want to tag versions
 - So that backward-compatible changes use minor/patch bumps
@@ -57,6 +64,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PACKAGING-008: Publish to PyPI on GitHub release
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a GitHub release is created for this repository
 - I want to run the release workflow
 - So that the tagged package version is published to pypi.org automatically
@@ -64,6 +72,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PACKAGING-009: Keep a Changelog maintained
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when contributors ship notable changes
 - I want to prepare release and pre-release updates
 - So that repository contains a root-level `CHANGELOG.md` following Keep a Changelog structure
@@ -71,6 +80,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PACKAGING-010: Shell completion distribution and activation guidance
 - **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when installing rqmd on a workstation
 - I want shell completion support to be available for zsh (and documented for bash/fish where supported)
 - So that users can enable completion using standard shell-init patterns without hand-maintaining completion scripts.

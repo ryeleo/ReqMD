@@ -12,12 +12,14 @@ This subsection covers read-only operations.
 
 ### RQMD-TEST-001: Simple query
 - **Status:** ✅ Verified
+- **Priority:** 🟢 P3 - Low
 - Given a simple query
 - When executed
 - Then results are returned.
 
 ### RQMD-TEST-002: Complex query
 - **Status:** 💡 Proposed
+- **Priority:** 🟢 P3 - Low
 - Given a complex query with joins
 - When executed
 - Then optimized results are returned.
@@ -28,6 +30,7 @@ This subsection covers write operations.
 
 ### RQMD-TEST-003: Create operation
 - **Status:** 💡 Proposed
+- **Priority:** 🟢 P3 - Low
 - Given valid input
 - When create endpoint is called
 - Then entity is persisted.
