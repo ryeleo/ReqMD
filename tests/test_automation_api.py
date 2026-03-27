@@ -284,6 +284,59 @@ def test_RQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_d
     assert "- **Status:** ✅ Verified" in text_after_tsv
 
 
+def test_RQMD_priority_009_set_file_jsonl_accepts_priority_only_rows(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+    update_file = tmp_path / "priority-updates.jsonl"
+    rows = [
+        {"id": "AC-HELLO-001", "priority": "p0"},
+    ]
+    update_file.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--requirements-dir",
+            "docs/requirements",
+            "--set-file",
+            str(update_file),
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    text = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
+    assert "- **Priority:** 🔴 P0 - Critical" in text
+
+
+def test_RQMD_priority_009_set_file_jsonl_applies_status_and_priority_together(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+    update_file = tmp_path / "priority-and-status.jsonl"
+    rows = [
+        {"id": "AC-HELLO-001", "status": "implemented", "priority": "medium"},
+    ]
+    update_file.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--requirements-dir",
+            "docs/requirements",
+            "--set-file",
+            str(update_file),
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    text = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
+    assert "- **Status:** 🔧 Implemented" in text
+    assert "- **Priority:** 🟡 P2 - Medium" in text
+
+
 def test_RQMD_automation_004c_set_file_jsonl_invalid_row_reports_path_and_line(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"

@@ -375,3 +375,84 @@ def test_RQMD_core_005c_file_priority_sort_key_tie_breaks_by_label() -> None:
     key_a = cli.file_sort_key_by_priority(same_counts, "a-file")
     key_b = cli.file_sort_key_by_priority(same_counts, "b-file")
     assert key_a < key_b
+
+
+# Priority parsing and normalization tests (RQMD-PRIORITY-001 & 002)
+def test_RQMD_priority_001_parse_priority_field() -> None:
+    from rqmd.criteria_parser import parse_criteria
+
+    text = """# Demo Requirements
+
+### AC-DEMO-001: Critical Feature
+- **Status:** 🔧 Implemented
+- **Priority:** 🔴 P0 - Critical
+
+### AC-DEMO-002: Nice to Have
+- **Status:** 💡 Proposed
+- **Priority:** 🟢 P3 - Low
+"""
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "demo.md"
+        path.write_text(text, encoding="utf-8")
+        requirements = parse_criteria(path)
+
+        assert len(requirements) == 2
+        assert requirements[0]["priority"] == "🔴 P0 - Critical"
+        assert requirements[0]["priority_line"] == 4  # 0-indexed line 4
+        assert requirements[1]["priority"] == "🟢 P3 - Low"
+        assert requirements[1]["priority_line"] == 8  # 0-indexed line 8
+
+
+def test_RQMD_priority_001_priority_is_optional() -> None:
+    from rqmd.criteria_parser import parse_criteria
+
+    text = """# Demo Requirements
+
+### AC-DEMO-001: Has Priority
+- **Status:** 🔧 Implemented
+- **Priority:** 🔴 P0 - Critical
+
+### AC-DEMO-002: No Priority
+- **Status:** 💡 Proposed
+"""
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "demo.md"
+        path.write_text(text, encoding="utf-8")
+        requirements = parse_criteria(path)
+
+        assert requirements[0]["priority"] == "🔴 P0 - Critical"
+        assert requirements[1]["priority"] is None  # Priority is optional
+
+
+def test_RQMD_priority_002_coerce_priority_with_aliases() -> None:
+    from rqmd.priority_model import coerce_priority_label
+
+    # Test canonical forms
+    assert coerce_priority_label("🔴 P0 - Critical") == "🔴 P0 - Critical"
+    assert coerce_priority_label("🟠 P1 - High") == "🟠 P1 - High"
+    assert coerce_priority_label("🟡 P2 - Medium") == "🟡 P2 - Medium"
+    assert coerce_priority_label("🟢 P3 - Low") == "🟢 P3 - Low"
+
+    # Test case-insensitive aliases
+    assert coerce_priority_label("p0") == "🔴 P0 - Critical"
+    assert coerce_priority_label("P0") == "🔴 P0 - Critical"
+    assert coerce_priority_label("critical") == "🔴 P0 - Critical"
+    assert coerce_priority_label("p1") == "🟠 P1 - High"
+    assert coerce_priority_label("high") == "🟠 P1 - High"
+    assert coerce_priority_label("p2") == "🟡 P2 - Medium"
+    assert coerce_priority_label("medium") == "🟡 P2 - Medium"
+    assert coerce_priority_label("p3") == "🟢 P3 - Low"
+    assert coerce_priority_label("low") == "🟢 P3 - Low"
+
+
+def test_RQMD_priority_002_coerce_priority_unknown_yields_unset() -> None:
+    from rqmd.priority_model import coerce_priority_label
+
+    # Unknown priority defaults to "unset"
+    assert coerce_priority_label("unknown") == "unset"
+    assert coerce_priority_label("maybe") == "unset"
+    assert coerce_priority_label("") == "unset"

@@ -205,7 +205,7 @@ Scope: demo.
 
     captured: dict[str, object] = {}
 
-    def fake_filtered_loop(repo_root, domain_files, target_status, emoji_columns, id_prefixes, resume_filter, state_dir, include_status_emojis):
+    def fake_filtered_loop(repo_root, domain_files, target_status, emoji_columns, id_prefixes, resume_filter, state_dir, include_status_emojis, priority_mode, include_priority_summary):
         captured["state_dir"] = state_dir
         captured["target_status"] = target_status
         return 0

@@ -13,6 +13,7 @@ except ImportError:
 
 from .constants import DEFAULT_ID_PREFIXES
 from .criteria_parser import extract_criterion_block, find_criterion_by_id
+from .priority_model import coerce_priority_label
 from .status_model import normalize_status_input
 from .summary import process_file
 
@@ -57,11 +58,13 @@ def update_criterion_status(
     new_status: str,
     blocked_reason: str | None = None,
     deprecated_reason: str | None = None,
+    new_priority: str | None = None,
 ) -> bool:
     lines = path.read_text(encoding="utf-8").splitlines()
     status_line = requirement["status_line"]
     blocked_reason_line = requirement.get("blocked_reason_line")
     deprecated_reason_line = requirement.get("deprecated_reason_line")
+    priority_line = requirement.get("priority_line")
     if not isinstance(status_line, int):
         raise ValueError("Invalid requirement status line.")
 
@@ -112,6 +115,22 @@ def update_criterion_status(
         lines.insert(insert_at, f"**Deprecated:** {deprecated_reason}")
         status_changed = True
 
+    # Handle priority updates
+    if new_priority:
+        if isinstance(priority_line, int):
+            adj_priority = priority_line + shift
+            new_priority_line_text = f"- **Priority:** {new_priority}"
+            if lines[adj_priority] != new_priority_line_text:
+                lines[adj_priority] = new_priority_line_text
+                status_changed = True
+        else:
+            # Insert new priority line after status
+            insert_at = status_line + 1 + shift
+            new_priority_line_text = f"- **Priority:** {new_priority}"
+            lines.insert(insert_at, new_priority_line_text)
+            shift += 1
+            status_changed = True
+
     if status_changed:
         path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
@@ -132,14 +151,41 @@ def prompt_for_deprecated_reason() -> str:
     return reason
 
 
+def prompt_for_priority() -> str:
+    """Interactive priority selection menu."""
+    from .constants import PRIORITY_ORDER
+    
+    click.echo()
+    click.echo("Select a priority:")
+    for i, (label, _) in enumerate(PRIORITY_ORDER, 1):
+        click.echo(f"  {i}. {label}")
+    
+    choice = click.prompt("Priority choice (1-4, or press Enter to skip)", default="", show_default=False).strip()
+    if not choice:
+        return ""
+    
+    try:
+        idx = int(choice) - 1
+        if 0 <= idx < len(PRIORITY_ORDER):
+            return PRIORITY_ORDER[idx][0]
+    except (ValueError, IndexError):
+        pass
+    
+    click.echo("Invalid choice. Skipping priority update.")
+    return ""
+
+
 def apply_status_change_by_id(
     repo_root: Path,
     domain_files: list[Path],
     criterion_id: str,
-    new_status_input: str,
+    new_status_input: str | None,
     file_filter: str | None,
     blocked_reason: str | None = None,
     deprecated_reason: str | None = None,
+    new_priority_input: str | None = None,
+    include_status_emojis: bool = True,
+    include_priority_summary: bool = False,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     emit_output: bool = True,
 ) -> bool:
@@ -172,19 +218,46 @@ def apply_status_change_by_id(
         )
 
     path, requirement = matches[0]
-    new_status = normalize_status_input(new_status_input)
+
+    if new_status_input is None and new_priority_input is None:
+        raise click.ClickException("No update requested. Provide status and/or priority.")
+
+    current_status = str(requirement.get("status") or "")
+    new_status = current_status
+    if new_status_input is not None:
+        new_status = normalize_status_input(new_status_input)
+
+    new_priority: str | None = None
+    if new_priority_input is not None:
+        normalized_priority = coerce_priority_label(new_priority_input)
+        if normalized_priority == "unset":
+            raise click.ClickException(f"Unrecognized priority input: {new_priority_input}")
+        new_priority = normalized_priority
+
     changed = update_criterion_status(
         path,
         requirement,
         new_status,
         blocked_reason=blocked_reason,
         deprecated_reason=deprecated_reason,
+        new_priority=new_priority,
     )
-    process_file(path, check_only=False)
+    process_file(
+        path,
+        check_only=False,
+        include_status_emojis=include_status_emojis,
+        include_priority_summary=include_priority_summary,
+    )
 
     if emit_output:
+        updates: list[str] = []
+        if new_status_input is not None:
+            updates.append(new_status)
+        if new_priority is not None:
+            updates.append(new_priority)
+        update_summary = " | ".join(updates) if updates else "no-op"
         if changed:
-            click.echo(f"Updated {requirement['id']} in {path.relative_to(repo_root).as_posix()} -> {new_status}")
+            click.echo(f"Updated {requirement['id']} in {path.relative_to(repo_root).as_posix()} -> {update_summary}")
         else:
-            click.echo(f"No change for {requirement['id']} in {path.relative_to(repo_root).as_posix()} ({new_status})")
+            click.echo(f"No change for {requirement['id']} in {path.relative_to(repo_root).as_posix()} ({update_summary})")
     return changed

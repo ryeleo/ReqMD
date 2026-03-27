@@ -19,7 +19,7 @@ except ImportError:
     print("Install with: pip3 install tabulate", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (STATUS_ORDER, STATUS_PATTERN,
+from .constants import (PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN,
                         STATUS_TERSE_HEADERS_ASCII, SUMMARY_END, SUMMARY_START)
 from .status_model import coerce_status_label, style_status_count
 
@@ -57,18 +57,34 @@ def build_summary_table(rows: list[list], verbose: bool = False) -> str:
     return tabulate(rows, headers=headers, tablefmt="simple")
 
 
-def build_summary_block(counts: dict[str, int], include_status_emojis: bool = True) -> str:
+def build_summary_block(
+    counts: dict[str, int],
+    include_status_emojis: bool = True,
+    priority_counts: dict[str, int] | None = None,
+) -> str:
     # Build simple inline summary for HTML comments in markdown.
     parts = [
         f"{counts[label]}{label.split()[0] if include_status_emojis else _plain_status_label(label)}"
         for label, _ in STATUS_ORDER
     ]
     summary_text = " ".join(parts)
-    return "\n".join([
+    
+    result = [
         SUMMARY_START,
         f"Summary: {summary_text}",
-        SUMMARY_END,
-    ])
+    ]
+    
+    # Optionally include priority summary
+    if priority_counts:
+        priority_parts = [
+            f"{priority_counts[label]}{label.split()[0]}"
+            for label, _ in PRIORITY_ORDER
+        ]
+        priority_summary = " ".join(priority_parts)
+        result.append(f"Priorities: {priority_summary}")
+    
+    result.append(SUMMARY_END)
+    return "\n".join(result)
 
 
 def normalize_status_lines(text: str, include_status_emojis: bool = True) -> tuple[str, bool]:
@@ -98,6 +114,23 @@ def count_statuses(text: str) -> dict[str, int]:
         raw_status = match.group("status")
         status = coerce_status_label(raw_status)
         counts[status] += 1
+    return counts
+
+
+def count_priorities(text: str) -> dict[str, int]:
+    """Count requirements by priority level."""
+    from .constants import PRIORITY_PATTERN
+    from .priority_model import coerce_priority_label
+    
+    counts = {label: 0 for label, _ in PRIORITY_ORDER}
+    for match in PRIORITY_PATTERN.finditer(text):
+        raw_priority = match.group("priority")
+        try:
+            priority = coerce_priority_label(raw_priority)
+            if priority != "unset" and priority in counts:
+                counts[priority] += 1
+        except (ValueError, KeyError):
+            pass
     return counts
 
 
@@ -137,13 +170,19 @@ def process_file(
     check_only: bool,
     verbose: bool = False,
     include_status_emojis: bool = True,
+    include_priority_summary: bool = False,
 ) -> tuple[bool, dict[str, int]]:
     original = path.read_text(encoding="utf-8")
     normalized, _ = normalize_status_lines(original, include_status_emojis=include_status_emojis)
     counts = count_statuses(normalized)
+    priority_counts = count_priorities(normalized) if include_priority_summary else None
     updated = insert_or_replace_summary(
         normalized,
-        build_summary_block(counts, include_status_emojis=include_status_emojis),
+        build_summary_block(
+            counts,
+            include_status_emojis=include_status_emojis,
+            priority_counts=priority_counts,
+        ),
     )
 
     # Normalize trailing newline so repeated processing stays idempotent.
@@ -162,6 +201,7 @@ def collect_summary_rows(
     check_only: bool,
     display_name_fn: Callable[[Path], str],
     include_status_emojis: bool = True,
+    include_priority_summary: bool = False,
 ) -> tuple[list[Path], list[list[object]]]:
     changed_paths: list[Path] = []
     table_rows: list[list[object]] = []
@@ -171,6 +211,7 @@ def collect_summary_rows(
             path,
             check_only=check_only,
             include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
         )
         if changed:
             changed_paths.append(path)

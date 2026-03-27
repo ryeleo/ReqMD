@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 7🔧 2✅ 0⛔ 1🗑️
+Summary: 3💡 7🔧 3✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -42,7 +42,7 @@ Summary: 4💡 7🔧 2✅ 0⛔ 1🗑️
 - And only AC markdown contract is required.
 
 ### RQMD-PORTABILITY-006: Optional future config file support
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - Given teams may want fewer CLI flags
 - When a project config file is added in future
 - Then defaults for repo root and requirements path can be declared centrally

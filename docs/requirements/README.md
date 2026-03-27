@@ -23,6 +23,7 @@ Status workflow:
 - [Automation API](automation-api.md) - non-interactive set/set-file/filter behavior
 - [Sorting](sorting.md) - ordering rules, toggles, deterministic ranking behavior
 - [Roll-up](roll-up.md) - summary counts, bucket rendering, and visual roll-up output
+- [Time Machine](time-machine.md) - branch-aware historical browsing, detached views, and replay from prior states
 - [Portability](portability.md) - repo root, requirements directory, cross-project assumptions
 - [Packaging](packaging.md) - package layout, entrypoints, install/run behavior
 
@@ -39,6 +40,7 @@ Status workflow:
 | RQMD-AUTOMATION-* | Automation API |
 | RQMD-SORTING-* | Sorting |
 | RQMD-ROLLUP-* | Roll-up |
+| RQMD-TIME-* | Time Machine |
 | RQMD-PORTABILITY-* | Portability |
 | RQMD-PACKAGING-* | Packaging |
 
