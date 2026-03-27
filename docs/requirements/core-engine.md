@@ -8,6 +8,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-001: Domain file discovery
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when repo root and requirements directory are configured
 - I want the tool to scan for domain docs
 - So that all markdown files in that directory are discovered in stable sorted order
@@ -15,6 +16,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-002: Status line parsing
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a requirement block with a status line
 - I want the parser to read the document
 - So that the status is extracted from `- **Status:** ...`
@@ -22,6 +24,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-003: Canonical status normalization
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when variant status spellings or aliases
 - I want normalization to run
 - So that the status is rewritten to canonical labels
@@ -29,6 +32,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-004: Summary block insertion
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a domain file without a summary block
 - I want processing to run
 - So that a summary block is inserted near the top of the file
@@ -36,6 +40,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-005: Summary block replacement
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a domain file with an existing summary block
 - I want status counts change
 - So that only the existing summary block content is replaced
@@ -43,6 +48,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-006: Status count model
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when canonical statuses are present in a file
 - I want counts to be computed
 - So that counts include all supported statuses in fixed order
@@ -50,6 +56,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-007: Requirement header matching
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when requirement headings follow `### <PREFIX>-...: ...`
 - I want parsing to run
 - So that each matching requirement is discoverable by ID
@@ -58,6 +65,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-008: Idempotent processing
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when no status or summary changes are needed
 - I want processing to run repeatedly
 - So that generated output remains byte-stable for those files
@@ -65,6 +73,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-009: Missing domain docs handling
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when no domain markdown files are found
 - I want to run the command
 - So that reqmd prints a clear, actionable error message
@@ -74,6 +83,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-010: Blocked/deprecated reason extraction
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a requirement includes blocked or deprecated reason lines
 - I want parsing to run
 - So that those reason lines are captured with line references
@@ -81,6 +91,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-011: Project scaffold initialization
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a project does not yet have requirement documentation
 - I want to run an initialization command
 - So that boilerplate docs are created including `docs/requirements/README.md`
@@ -89,6 +100,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-012: Starter dummy requirement generation
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when initialization is generating starter requirement content
 - I want to create starter domain docs
 - So that at least one easy-to-delete sample requirement `<PREFIX>-HELLO-001` is included
@@ -96,6 +108,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-013: Domain-sync maintenance over time
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when users add or evolve domain documentation over time
 - I want to run sync/maintenance commands
 - So that index and domain-document references are kept consistent with current domain files
@@ -104,6 +117,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-014: Automatic ID prefix detection from requirements index
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when users do not pass `--id-prefix`
 - I want rqmd to read `docs/requirements/README.md` and linked domain docs
 - So that requirement ID prefixes are auto-detected from discovered requirement headers
@@ -111,6 +125,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-015: Init key prompt with customizable default
 - **Status:** ✅ Verified
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when users run `rqmd --init`
 - I want scaffold initialization to start
 - So that rqmd prompts for a starter requirement key prefix
@@ -119,7 +134,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-016: Initial scaffolding content/copy
 - **Status:** ✅ Verified
-- **Priority:** 🟠 P1 - High
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when users run `rqmd --init`
 - I want scaffold initialization to execute
 - So that generated `docs/requirements/README.md` includes a welcome message and instructions for getting started that is copied from:
@@ -138,6 +153,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-018: First-class binary flagged field
 - **Status:** 🔧 Implemented
+- **Priority:** 🟡 P2 - Medium
 - As a rqmd user when I want to focus on a subset of requirements without changing project statuses
 - I want a simple binary flagged field on requirements
 - So that I can mark items for attention without introducing a new `Flagged` status into the status catalog.
@@ -145,12 +161,14 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-019: Domain-level body parsing and preservation
 - **Status:** 💡 Proposed
+- **Priority:** 🔴 P0 - Critical
 - As a rqmd maintainer when requirement domains include long-form narrative notes
 - I want each domain markdown file to support an explicit optional domain-level body section (separate from per-requirement bodies)
 - So that implementation rationale, migration guidance, and AI-generated domain notes can live at domain scope without polluting requirement entries.
 
 ### RQMD-CORE-020: H2 subsection parsing and metadata capture
 - **Status:** 💡 Proposed
+- **Priority:** 🔴 P0 - Critical
 - As a rqmd maintainer when a domain markdown file includes H2 section headings
 - I want rqmd to recognize H2 headers as subsection boundaries
 - So that each requirement captures a `sub_domain` metadata field indicating which H2 section contains it

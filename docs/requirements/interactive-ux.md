@@ -8,13 +8,16 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when the command is run without non-interactive flags
 - I want check mode to be disabled
 - So that interactive flow opens by default
 - So that users can navigate file -> requirement -> status.
+- So that startup and in-session interaction responsiveness follow the app-wide latency budgets defined by RQMD-UI-009 instead of redefining separate thresholds here.
 
 ### RQMD-INTERACTIVE-002: Single-key menu navigation
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when the interactive menu is visible
 - I want to press menu keys
 - So that selections and navigation are handled without pressing Enter
@@ -22,6 +25,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-003: Paging controls
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when menu options exceed one page
 - I want to press next/prev page keys
 - So that menu page changes accordingly
@@ -29,6 +33,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-004: Requirement next/prev shortcuts
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when the status menu for a requirement is open
 - I want to press `n` (next) or `p` (prev)
 - So that focus moves across requirements in current ordering
@@ -37,6 +42,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-004A: Next/prev stack semantics
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when users navigate requirements using `n` and `p`
 - I want to move forward and backward across requirements
 - So that rqmd preserves a history stack semantics for backtracking
@@ -46,6 +52,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-005: Sort toggles
 - **Status:** 🗑️ Deprecated
+- **Priority:** 🟢 P3 - Low
 - **Deprecated:** Superseded by RQMD-SORTING-007/008/010, which define sort-column cycling, direction toggling, and standardized legend behavior.
 - As a rqmd user when file or requirement list menu is open
 - I want to toggle sort
@@ -54,6 +61,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-006: Status highlight row
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when status options are displayed for a requirement
 - I want the menu to render
 - So that current status row is highlighted
@@ -61,6 +69,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-006A: Color semantics for status families
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when status-driven text appears in menus and tables
 - I want status color styles to be applied
 - So that Proposed uses the dedicated proposed color treatment
@@ -70,6 +79,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-006B: Color roll-up and row styling
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when the file selection menu shows aggregate roll-ups
 - I want roll-up text to render
 - So that blue/proposed, green/completed, normal/in-progress, and dimmed/blocked+deprecated buckets are visually distinct
@@ -77,6 +87,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-007: Auto-advance after update
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when a requirement status is changed in interactive flow
 - I want the update to succeed
 - So that the interface advances to the next requirement
@@ -84,6 +95,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-008: Optional reason prompts
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when user sets status to Blocked or Deprecated
 - I want the update to be confirmed
 - So that tool prompts for optional reason text
@@ -91,6 +103,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-009: Positional requirement lookup mode
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when a requirement ID is passed positionally
 - I want the command to execute
 - So that matching requirement panel opens directly
@@ -98,6 +111,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-016: Open specific domain file from CLI entry
 - **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when a user invokes `rqmd` with a path to a domain file (absolute or repo-root-relative)
 - I want the provided path to resolve to a valid markdown domain file containing criteria
 - So that rqmd opens the interactive session with that file selected and the requirement list for that file presented first
@@ -108,12 +122,14 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-017: Interactive flagged-state toggling
 - **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when I am reviewing requirements interactively
 - I want to toggle a requirement's binary flagged state without changing its status
 - So that I can quickly mark or unmark items that need special attention during triage and review.
 
 ### RQMD-INTERACTIVE-018: Domain-level notes discoverability in interactive mode
 - **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when I open a domain in interactive mode
 - I want optional domain-level notes/body content to be discoverable in-context (for example in a compact notes pane or explicit notes command)
 - So that implementation guidance and AI-authored domain rationale are available without cluttering individual requirement bodies.
@@ -122,6 +138,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-019: Explicit ReqID-list focused interactive walk
 - **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when I only want to work a specific subset of requirements
 - I want to provide an explicit target list at CLI (via positional args or `--filter-ids-file`) and launch a focused interactive walk
 - So that the workflow behaves similarly to `--filter-status` navigation but uses user-provided membership instead of status-based filtering.
@@ -132,6 +149,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-020: Case-insensitive tab completion for positional targets
 - **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
 - As a rqmd user invoking CLI commands from zsh
 - I want tab completion for positional target tokens
 - So that typing a prefix such as `rqmd Co<TAB>` suggests matching requirement IDs, domain identifiers, and subsection names that start with that prefix.
@@ -141,6 +159,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-021: Subsection navigation and discovery in interactive mode
 - **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
 - As an interactive user when navigating requirements within a domain that has H2 subsections
 - I want the menu to expose subsection structure
 - So that subsections are visually grouped and labeled in the requirement list view
@@ -150,6 +169,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-009A: Up key for hierarchical navigation
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when users are in interactive menus
 - I want to press `u` (up)
 - So that rqmd moves up exactly one level in the menu hierarchy
@@ -157,6 +177,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-010: Customizable status catalog and colors
 - **Status:** 🗑️ Deprecated
+- **Priority:** 🟢 P3 - Low
 - **Deprecated:** Superseded by RQMD-PORTABILITY-007/011/012, which own status-catalog schema, configuration loading/precedence, and user/project override behavior.
 - As a rqmd user when teams have different status taxonomies
 - I want the tool exposes status customization settings
@@ -167,6 +188,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-011: Preflight write-permission gate before interactive mode
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when interactive mode can modify markdown requirement files
 - I want rqmd to validate write permissions before opening interactive menus
 - So that rqmd validates write permissions for target requirement files up front
@@ -175,6 +197,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-012: Accessibility-safe zebra and color override rendering
 - **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when terminal themes vary and default zebra/background colors may reduce readability
 - I want to configure user or project color overrides
 - So that interactive list zebra striping uses configured accessible foreground/background pairs
@@ -183,6 +206,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-013: Terminal light/dark detection for automatic zebra adjustment
 - **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when users benefit from automatic contrast-appropriate styling
 - I want rqmd to start an interactive session
 - So that reqmd attempts to infer a light or dark display context using a best-effort detection strategy (in priority order):
@@ -206,6 +230,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-014: Standardized footer legend and dynamic sort indicator
 - **Status:** 🗑️ Deprecated
+- **Priority:** 🟢 P3 - Low
 - **Deprecated:** Superseded by RQMD-SORTING-010, which owns the standardized interaction legend and dynamic sort-direction footer behavior.
 - As a rqmd user when interactive menus must show keyboard affordances consistently
 - I want to open any interactive menu
@@ -217,6 +242,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 
 ### RQMD-INTERACTIVE-015: Bold active sort column and arrow direction indicator
 - **Status:** 🗑️ Deprecated
+- **Priority:** 🟢 P3 - Low
 - **Deprecated:** Superseded by RQMD-SORTING-011, which owns active sort-column emphasis and direction indicators across interactive views.
 - As a rqmd user when a sortable tabular or list view is displayed interactively
 - I want a column to be the active sort key
