@@ -45,4 +45,6 @@ Your job is to carry substantial repository work from analysis through implement
 
 - Use ./tmp or a similar scratch space for any intermediate files or notes rather than /tmp to avoid requiring the user to allow AI to access /tmp.
 - The environment here does not have pip available directly in the venv, so the reliable path was uv pip ... rather than python -m pip ....
-- When making changes, run all tests after each change to validate no regressions.
+- Always run the full test suite using VS Code test integration (runTests tool) after each change to validate no regressions.
+- Use `rqmd --as-json` as much as possible for planning and managing `docs/requirements/` work.
+- When asked to "continue" or "implement next proposal", always start by checking proposals with `rqmd --status Proposed --as-json`.

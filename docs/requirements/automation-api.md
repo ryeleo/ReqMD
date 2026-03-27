@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
+Summary: 11💡 10🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -243,3 +243,20 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - So that domain-level JSON includes an optional `sub_sections` array listing available H2 section names and their requirement counts
 - So that `--sub-domain` metadata in JSON output includes the filter name and matching count
 - So that schema documentation clearly specifies the null-vs-absent distinction for `sub_domain` and `sub_sections`.
+
+### RQMD-AUTOMATION-031: Minimal differentiable token matching for CLI args and values
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when typing commands quickly
+- I want all CLI argument values that support enumerations/aliases to accept their smallest differentiable token**s** and shortcodes
+- So that canonical labels are tokenized by whitespace-separated units and each unit is eligible for deterministic matching
+- So that `🟡 P2 - Medium` is treated as exactly 4 tokens:
+- `🟡`
+- `P2`
+- `-`
+- `Medium`
+- So that inputs like `--priority P2` resolve to the canonical configured priority label (for example `🟡 P2 - Medium`)
+- So that inputs like `--priority M` resolve to the canonical configured priority label (for example `🟡 P2 - Medium`)
+- So that inputs like `--priority H` resolve to the canonical configured priority label (for example `P1 - High`)
+- So that inputs like `--status Ver` resolve to the canonical configured status label (for example `✅ Verified`)
+- So that resolution is deterministic: unique prefixes are accepted, ambiguous prefixes fail with candidate lists, and unknown tokens return clear validation errors.
