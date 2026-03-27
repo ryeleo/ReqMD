@@ -114,6 +114,7 @@ class TestRQMDPriority004ModeFlag:
         assert "--set-priority" in result.output
         assert "--priority-mode" in result.output
         assert "--show-priority-summary" in result.output
+        assert "--init-priorities" in result.output
 
     def test_cli_set_priority_updates_existing_and_missing_priority(self, tmp_path: Path):
         repo = tmp_path / "repo"
@@ -299,6 +300,94 @@ class TestRQMDPriority004ModeFlag:
         assert payload["priority"] == "🔴 P0 - Critical"
         assert payload["total"] == 1
         assert payload["files"][0]["requirements"][0]["id"] == "AC-001"
+
+    def test_init_priorities_adds_default_and_is_idempotent(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        criteria_dir = repo / "docs" / "requirements"
+        criteria_dir.mkdir(parents=True)
+        target = criteria_dir / "demo.md"
+        target.write_text(
+            """# Demo Requirements
+
+### AC-001: Missing priority
+- **Status:** 💡 Proposed
+
+### AC-002: Existing priority
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+""",
+            encoding="utf-8",
+        )
+
+        runner = CliRunner()
+        first = runner.invoke(
+            cli.main,
+            [
+                "--repo-root",
+                str(repo),
+                "--requirements-dir",
+                "docs/requirements",
+                "--init-priorities",
+                "--default-priority",
+                "medium",
+                "--no-summary-table",
+            ],
+        )
+        assert first.exit_code == 0
+
+        updated = target.read_text(encoding="utf-8")
+        assert "### AC-001: Missing priority" in updated
+        assert "- **Priority:** 🟡 P2 - Medium" in updated
+        assert "- **Priority:** 🟠 P1 - High" in updated
+
+        second = runner.invoke(
+            cli.main,
+            [
+                "--repo-root",
+                str(repo),
+                "--requirements-dir",
+                "docs/requirements",
+                "--init-priorities",
+                "--default-priority",
+                "medium",
+                "--json",
+                "--no-summary-table",
+            ],
+        )
+        assert second.exit_code == 0
+        payload = json.loads(second.output)
+        assert payload["mode"] == "init-priorities"
+        assert payload["changed_count"] == 0
+
+    def test_init_priorities_rejects_incompatible_modes(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        criteria_dir = repo / "docs" / "requirements"
+        criteria_dir.mkdir(parents=True)
+        (criteria_dir / "demo.md").write_text(
+            """# Demo Requirements
+
+### AC-001: Missing priority
+- **Status:** 💡 Proposed
+""",
+            encoding="utf-8",
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli.main,
+            [
+                "--repo-root",
+                str(repo),
+                "--requirements-dir",
+                "docs/requirements",
+                "--init-priorities",
+                "--check",
+                "--no-summary-table",
+            ],
+        )
+
+        assert result.exit_code != 0
+        assert "--init-priorities cannot be combined" in result.output
 
     def test_requirement_menu_cycles_to_priority_sort(self, monkeypatch, tmp_path: Path):
         repo = tmp_path / "repo"

@@ -3,7 +3,7 @@
 Scope: deterministic ordering, sort toggles, and priority-based ranking in interactive views.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 8🔧 1✅ 0⛔ 2🗑️
+Summary: 0💡 0🔧 9✅ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-SORTING-001: File ranking by priority buckets
@@ -30,14 +30,14 @@ Summary: 0💡 8🔧 1✅ 0⛔ 2🗑️
 - And avoids jitter between refresh cycles, including going up/down the menu hierarchy.
 
 ### RQMD-SORTING-004: Rescan preserves selected sort mode
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given interactive mode rescans files after updates
 - When sort mode is currently enabled or disabled
 - Then rescan preserves the active mode
 - And ordering is rebuilt using that mode consistently.
 
 ### RQMD-SORTING-005: Configurable sort strategy catalog
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given teams may want alternative ranking policies
 - When sort customization is introduced
 - Then rqmd allows selecting named sort strategies (for example `standard`, `status-focus`, `alpha-asc`) via CLI
@@ -45,7 +45,7 @@ Summary: 0💡 8🔧 1✅ 0⛔ 2🗑️
 - And strategy selection applies consistently across interactive menus.
 
 ### RQMD-SORTING-006: Default name ordering
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given no explicit sort preference is set
 - When interactive menus render file lists
 - Then ordering defaults to the `name` sort column rather than a separate filesystem sort mode
@@ -53,7 +53,7 @@ Summary: 0💡 8🔧 1✅ 0⛔ 2🗑️
 - And no automatic priority-based reordering is applied unless the user selects a different sort column.
 
 ### RQMD-SORTING-007: Column-cycle sorting with `s`
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given a user is viewing a tabular menu or list with multiple sortable columns (e.g., file name, roll-up counts, changed flag)
 - When the user presses `s`
 - Then the active sort column cycles to the next available column from left to right
@@ -61,7 +61,7 @@ Summary: 0💡 8🔧 1✅ 0⛔ 2🗑️
 - And the UI indicates the active sort column and direction in the menu header/footer.
 
 ### RQMD-SORTING-008: Toggle ascending/descending with `d`
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given a sort column is active
 - When the user presses `d`
 - Then the sort direction toggles between ascending and descending
@@ -69,14 +69,14 @@ Summary: 0💡 8🔧 1✅ 0⛔ 2🗑️
 - And the legend shows the current direction as `d=[asc|dsc]` and updates dynamically.
 
 ### RQMD-SORTING-009: Refresh/rescan with `r`
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given the user has a current sort column and direction
 - When the user presses `r`
 - Then the UI refreshes all screen content, rescans underlying files, and reapplies the current sort scheme
 - And `r` is a non-destructive operation that does not change the active sort column or direction.
 
 ### RQMD-SORTING-010: Standardized interaction legend
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given the interactive UI must remain discoverable and consistent
 - When menus render
 - Then a standardized key legend is shown in the footer in this order and format:
@@ -84,7 +84,7 @@ Summary: 0💡 8🔧 1✅ 0⛔ 2🗑️
 - And the `d` segment is updated dynamically to reflect the current sort direction.
 
 ### RQMD-SORTING-011: Visual indicator for active sort column and direction
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given a column is actively used to sort a view
 - When menus render
 - Then the active column label is rendered in bold and an ASCII arrow indicator is shown to indicate direction (`↑` for ascending, `↓` for descending)

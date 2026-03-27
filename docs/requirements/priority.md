@@ -3,7 +3,7 @@
 Scope: add a first-class `Priority` field to requirement requirements, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 0🔧 8✅ 0⛔ 0🗑️
+Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PRIORITY-001: First-class priority field
@@ -50,11 +50,11 @@ Summary: 2💡 0🔧 8✅ 0⛔ 0🗑️
 - And default column-cycle order prefers filesystem/name, then priority, then status, then roll-up counts.
 
 ### RQMD-PRIORITY-007: Validation and migration
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - Given existing repositories may not include priority lines
 - When the new parser encounters missing priorities
 - Then it treats them as `unset` and does not break parsing
-- And a migration command `rqmd migrate --init-priorities` can populate default priorities (e.g., unset or `P3`) and update files idempotently.
+- And a migration mode (for example `rqmd --init-priorities`) can populate default priorities (e.g., unset or `P3`) and update files idempotently.
 
 ### RQMD-PRIORITY-008: Undo and history semantics
 - **Status:** 💡 Proposed
