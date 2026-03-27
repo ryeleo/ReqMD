@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 5🔧 16✅ 0⛔ 0🗑️
+Summary: 2💡 6🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -215,7 +215,7 @@ Summary: 3💡 5🔧 16✅ 0⛔ 0🗑️
 - So that a summary report shows all changed files and rename counts.
 
 ### RQMD-CORE-024: Generated top-level README from requirement domains
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when project README guidance drifts from requirement docs
 - I want rqmd to generate the project-level README requirement index sections from domain files automatically and on demand

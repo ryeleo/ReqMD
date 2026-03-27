@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added requirement-level tests for status value-prefix resolution and ambiguous option-prefix candidate reporting.
 - Added `rqmd-ai --install-agent-bundle` with minimal/full presets, dry-run preview, idempotent reruns, and optional overwrite behavior for existing instruction files.
 - Added unknown-status compatibility tests and machine-readable JSON error payload coverage.
+- Added `rqmd.readme_gen` module for RQMD-CORE-024: domain-to-README section generation with idempotent marker-based updates, status rollup summaries, and integration-ready API.
+- Added comprehensive tests for README generation: domain summary extraction, section generation, marker-based updates, and idempotency validation.
 
 ### Changed
 
@@ -30,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated requirement statuses to mark `RQMD-CORE-017` and `RQMD-PACKAGING-010` as Implemented.
 - Updated requirement status to mark `RQMD-AI-012` as Implemented.
 - Updated requirement status to mark `RQMD-PORTABILITY-017` as Implemented.
+- Updated requirement status to mark `RQMD-CORE-024` as Implemented (README auto-generation from domains).
 
 ## [0.1.0] - 2026-03-26
 
