@@ -261,3 +261,125 @@ def test_RQMD_AI_010_apply_emits_structured_audit_record(tmp_path: Path) -> None
     assert record["inputs"]["update_count"] == 1
     assert record["outputs"]["changed_count"] == 1
     assert record["decisions"][0]["decision"] == "applied"
+
+
+def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--install-agent-bundle",
+            "--bundle-preset",
+            "minimal",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    assert payload["mode"] == "install-agent-bundle"
+    assert payload["dry_run"] is True
+    assert payload["preset"] == "minimal"
+    assert payload["changed_count"] == 2
+    assert ".github/copilot-instructions.md" in payload["created_files"]
+    assert ".github/agents/core.agent.md" in payload["created_files"]
+    assert not (repo / ".github" / "copilot-instructions.md").exists()
+
+
+def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+
+    first = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--install-agent-bundle",
+            "--bundle-preset",
+            "full",
+        ],
+    )
+    assert first.exit_code == 0
+    first_payload = json.loads(first.output)
+    assert first_payload["changed_count"] == 4
+    assert (repo / ".github" / "copilot-instructions.md").exists()
+
+    second = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--install-agent-bundle",
+            "--bundle-preset",
+            "full",
+        ],
+    )
+    assert second.exit_code == 0
+    second_payload = json.loads(second.output)
+    _assert_schema_version(second_payload)
+    assert second_payload["changed_count"] == 0
+    assert len(second_payload["skipped_existing"]) == 4
+
+    custom = repo / ".github" / "copilot-instructions.md"
+    custom.write_text("# custom\n", encoding="utf-8")
+    overwrite = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--install-agent-bundle",
+            "--overwrite-existing",
+        ],
+    )
+    assert overwrite.exit_code == 0
+    overwrite_payload = json.loads(overwrite.output)
+    _assert_schema_version(overwrite_payload)
+    assert ".github/copilot-instructions.md" in overwrite_payload["overwritten_files"]
+    assert "custom" not in custom.read_text(encoding="utf-8")
+
+
+def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--as-json",
+            "--install-agent-bundle",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    assert payload["mode"] == "install-agent-bundle"
+    assert payload["changed_count"] == 2

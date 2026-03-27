@@ -33,6 +33,7 @@ Your job is to carry substantial repository work from analysis through implement
 ## Repo-Specific Guidance
 - Treat docs/requirements/*.md as part of the product surface, not as optional notes.
 - If statuses, aliases, summaries, CLI options, or interactive flows change, check for README and acceptance criteria drift.
+- Keep `CHANGELOG.md` up to date for every shipped change (code, tests, docs, or requirement-status moves). Add/adjust entries under `## [Unreleased]` in Keep a Changelog format before finishing.
 - Maintain ANSI display hygiene and visible-width handling in terminal output.
 - Favor additive options and backward-compatible behavior when extending the tool.
 

@@ -31,7 +31,30 @@ except ImportError:
 
 from .constants import (PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN,
                         STATUS_TERSE_HEADERS_ASCII, SUMMARY_END, SUMMARY_START)
-from .status_model import coerce_status_label, style_status_count
+from .status_model import (coerce_status_label, style_status_count,
+                           suggest_status_labels)
+
+
+class UnknownStatusValueError(ValueError):
+    """Raised when a requirement status value is unknown to the configured catalog."""
+
+    def __init__(
+        self,
+        status_value: str,
+        source_path: Path | None,
+        line_number: int,
+        suggestions: list[str],
+    ) -> None:
+        self.status_value = status_value
+        self.source_path = source_path
+        self.line_number = line_number
+        self.suggestions = suggestions
+        source_display = str(source_path) if source_path is not None else "<unknown file>"
+        message = (
+            f"Unknown status value '{status_value}' in {source_display}:{line_number}. "
+            f"Nearest configured statuses: {', '.join(suggestions)}"
+        )
+        super().__init__(message)
 
 
 def _plain_status_label(canonical_status: str) -> str:
@@ -163,7 +186,7 @@ def normalize_status_lines(text: str, include_status_emojis: bool = True) -> tup
     return updated_text, changed
 
 
-def count_statuses(text: str) -> dict[str, int]:
+def count_statuses(text: str, source_path: Path | None = None) -> dict[str, int]:
     """Count requirements by status in markdown text.
 
     Args:
@@ -173,9 +196,22 @@ def count_statuses(text: str) -> dict[str, int]:
         Dictionary mapping status labels to counts.
     """
     counts = {label: 0 for label, _ in STATUS_ORDER}
-    for match in STATUS_PATTERN.finditer(text):
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        match = STATUS_PATTERN.match(line)
+        if not match:
+            continue
+
         raw_status = match.group("status")
-        status = coerce_status_label(raw_status)
+        try:
+            status = coerce_status_label(raw_status)
+        except ValueError as exc:
+            suggestions = suggest_status_labels(raw_status)
+            raise UnknownStatusValueError(
+                status_value=raw_status,
+                source_path=source_path,
+                line_number=line_number,
+                suggestions=suggestions,
+            ) from exc
         counts[status] += 1
     return counts
 
@@ -244,7 +280,7 @@ def process_file(
 ) -> tuple[bool, dict[str, int]]:
     original = path.read_text(encoding="utf-8")
     normalized, _ = normalize_status_lines(original, include_status_emojis=include_status_emojis)
-    counts = count_statuses(normalized)
+    counts = count_statuses(normalized, source_path=path)
     priority_counts = count_priorities(normalized) if include_priority_summary else None
     updated = insert_or_replace_summary(
         normalized,

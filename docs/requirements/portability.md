@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 5🔧 10✅ 0⛔ 1🗑️
+Summary: 0💡 6🔧 10✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -155,7 +155,7 @@ Summary: 1💡 5🔧 10✅ 0⛔ 1🗑️
 - So that documented performance SLAs and benchmarks are available to users and operators.
 
 ### RQMD-PORTABILITY-017: Unknown status compatibility and recovery guidance
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when imported requirement docs include unconfigured statuses (for example `💻 Desktop-Verified`)
 - I want rqmd to fail with actionable compatibility guidance instead of opaque value errors

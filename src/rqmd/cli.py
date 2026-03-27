@@ -140,6 +140,7 @@ from .status_update import (
     update_criterion_status,
 )
 from .summary import (
+    UnknownStatusValueError,
     build_summary_block,
     build_summary_line,
     build_summary_table,
@@ -250,6 +251,57 @@ def _emit_json_ambiguity_error(mode: str, exc: click.ClickException) -> bool:
         return False
     _emit_json_payload(payload)
     raise SystemExit(1)
+
+
+def _build_unknown_status_payload(
+    mode: str,
+    exc: UnknownStatusValueError,
+    repo_root: Path,
+) -> dict[str, object]:
+    source_file = None
+    if exc.source_path is not None:
+        source_file = format_path_display(exc.source_path, repo_root)
+
+    return {
+        "mode": mode,
+        "ok": False,
+        "error": {
+            "type": "unknown-status",
+            "field": "status",
+            "input": exc.status_value,
+            "source_file": source_file,
+            "line": exc.line_number,
+            "candidates": exc.suggestions,
+            "message": str(exc),
+            "remediation": [
+                "Update status catalog configuration to include this status.",
+                "Add an alias mapping to canonicalize imported status values.",
+                "Run a one-time migration to replace unknown statuses in requirement docs.",
+            ],
+        },
+    }
+
+
+def _raise_unknown_status_error(
+    mode: str,
+    exc: UnknownStatusValueError,
+    repo_root: Path,
+    json_output: bool,
+) -> None:
+    if json_output:
+        _emit_json_payload(_build_unknown_status_payload(mode, exc, repo_root))
+        raise SystemExit(1)
+
+    source = "<unknown file>"
+    if exc.source_path is not None:
+        source = format_path_display(exc.source_path, repo_root)
+    suggestion_text = ", ".join(exc.suggestions) if exc.suggestions else "(no close matches)"
+    raise click.ClickException(
+        "Unknown status compatibility issue. "
+        f"Found '{exc.status_value}' at {source}:{exc.line_number}. "
+        f"Nearest configured statuses: {suggestion_text}. "
+        "Remediation: update status catalog config, add alias mapping, or run a one-time migration."
+    )
 
 
 def _expand_filter_values(raw_values: tuple[str, ...]) -> tuple[str, ...]:
@@ -1051,21 +1103,27 @@ def main(
             if inserted:
                 if not dry_run:
                     path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
-                    process_file(
-                        path,
-                        check_only=False,
-                        include_status_emojis=include_status_emojis,
-                        include_priority_summary=show_priority_summary,
-                    )
+                    try:
+                        process_file(
+                            path,
+                            check_only=False,
+                            include_status_emojis=include_status_emojis,
+                            include_priority_summary=show_priority_summary,
+                        )
+                    except UnknownStatusValueError as exc:
+                        _raise_unknown_status_error("init-priorities", exc, repo_root, json_output=json_output)
                 changed_paths.append(path)
 
-        _, table_rows = collect_summary_rows(
-            domain_files,
-            check_only=True,
-            display_name_fn=display_name_from_h1,
-            include_status_emojis=include_status_emojis,
-            include_priority_summary=show_priority_summary,
-        )
+        try:
+            _, table_rows = collect_summary_rows(
+                domain_files,
+                check_only=True,
+                display_name_fn=display_name_from_h1,
+                include_status_emojis=include_status_emojis,
+                include_priority_summary=show_priority_summary,
+            )
+        except UnknownStatusValueError as exc:
+            _raise_unknown_status_error("init-priorities", exc, repo_root, json_output=json_output)
 
         if json_output:
             payload = {
@@ -1092,17 +1150,20 @@ def main(
             )
 
         include_status_emojis = not strip_status_emojis
-        changed_paths, table_rows = collect_summary_rows(
-            domain_files,
-            check_only=False,
-            display_name_fn=display_name_from_h1,
-            include_status_emojis=include_status_emojis,
-            include_priority_summary=show_priority_summary,
-        )
+        mode_name = "restore-status-emojis" if restore_status_emojis else "strip-status-emojis"
+        try:
+            changed_paths, table_rows = collect_summary_rows(
+                domain_files,
+                check_only=False,
+                display_name_fn=display_name_from_h1,
+                include_status_emojis=include_status_emojis,
+                include_priority_summary=show_priority_summary,
+            )
+        except UnknownStatusValueError as exc:
+            _raise_unknown_status_error(mode_name, exc, repo_root, json_output=json_output)
         if summary_table and not json_output:
             print_summary_table(table_rows, emoji_columns=emoji_columns)
 
-        mode_name = "restore-status-emojis" if restore_status_emojis else "strip-status-emojis"
         if json_output:
             payload = {
                 "mode": mode_name,
@@ -1292,13 +1353,17 @@ def main(
             )
         )
 
-    changed_paths, table_rows = collect_summary_rows(
-        domain_files,
-        check_only=(check or dry_run),
-        display_name_fn=display_name_from_h1,
-        include_status_emojis=include_status_emojis,
-        include_priority_summary=show_priority_summary,
-    )
+    try:
+        changed_paths, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=(check or dry_run),
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=show_priority_summary,
+        )
+    except UnknownStatusValueError as exc:
+        mode_name = "check" if check else ("rollup" if rollup_mode else "summary")
+        _raise_unknown_status_error(mode_name, exc, repo_root, json_output=json_output)
 
     path_to_row = {path: row for path, row in zip(domain_files, table_rows)}
     file_rows_for_sort: list[tuple[Path, dict[str, int], str]] = []
@@ -1989,13 +2054,21 @@ def main(
                     }
                 )
 
-        _, table_rows = collect_summary_rows(
-            domain_files,
-            check_only=True,
-            display_name_fn=display_name_from_h1,
-            include_status_emojis=include_status_emojis,
-            include_priority_summary=show_priority_summary,
-        )
+        try:
+            _, table_rows = collect_summary_rows(
+                domain_files,
+                check_only=True,
+                display_name_fn=display_name_from_h1,
+                include_status_emojis=include_status_emojis,
+                include_priority_summary=show_priority_summary,
+            )
+        except UnknownStatusValueError as exc:
+            mode_name = "set"
+            if set_priority_updates and not set_updates and not set_flagged_updates:
+                mode_name = "set-priority"
+            elif set_flagged_updates and not set_updates and not set_priority_updates:
+                mode_name = "set-flagged"
+            _raise_unknown_status_error(mode_name, exc, repo_root, json_output=json_output)
         if json_output:
             payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
             payload["dry_run"] = dry_run
