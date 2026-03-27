@@ -1,0 +1,29 @@
+# .rqmd.yml
+statuses:
+  - name: Proposed
+    shortcode: P
+    emoji: "💡"
+  - name: Implemented7
+    shortcode: I
+    emoji: "🔧"
+  - name: Desktop-Verified
+    shortcode: DV
+    emoji: "💻"
+  - name: VR-Verified
+    shortcode: VV
+    emoji: "🎮"
+  - name: Done
+    shortcode: D
+    emoji: "✅"
+  - name: Blocked
+    shortcode: B
+    emoji: "⛔"
+  - name: Deprecated
+    shortcode: X
+    emoji: "🗑️"
+
+rollup_map:
+  Proposed: [proposed]
+  Build-Ready: [implemented, desktop-verified]
+  Complete: [vr-verified, done]
+  Parked: [blocked, deprecated]
