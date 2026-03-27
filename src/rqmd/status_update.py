@@ -1,4 +1,4 @@
-"""Status update and display utilities for requirement criteria.
+"""Status update and display utilities for requirements.
 
 This module provides:
 - Functions to update requirement status/priority/flagged fields in markdown
@@ -21,7 +21,7 @@ except ImportError:
     sys.exit(1)
 
 from .constants import DEFAULT_ID_PREFIXES
-from .criteria_parser import extract_criterion_block, find_criterion_by_id
+from .req_parser import extract_criterion_block, find_criterion_by_id
 from .priority_model import coerce_priority_label
 from .status_model import normalize_status_input
 from .summary import process_file

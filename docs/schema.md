@@ -207,7 +207,7 @@ When `--json` is used, top-level keys are stable by mode:
 {
   "mode": "filter-sub-domain",
   "sub_domain": "query",
-  "criteria_dir": "docs/requirements",
+  "requirements_dir": "docs/requirements",
   "total": 2,
   "files": [
     {

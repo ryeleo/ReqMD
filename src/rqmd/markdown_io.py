@@ -156,14 +156,14 @@ def resolve_criteria_dir(repo_root: Path, criteria_dir_input: str | None) -> tup
 
     Args:
         repo_root: Root path of the project.
-        criteria_dir_input: Explicitly provided criteria directory (optional).
+        criteria_dir_input: Explicitly provided requirements directory (optional).
 
     Returns:
         A tuple of (resolved_path, info_message) where info_message describes
         how the path was determined (auto-detected or explicit).
 
     Raises:
-        click.ClickException: If no criteria directory found.
+        click.ClickException: If no requirements directory found.
     """
     if criteria_dir_input:
         criteria_dir = Path(criteria_dir_input)

@@ -598,10 +598,10 @@ def test_RQMD_portability_015_marker_priority_prefers_rqmd_config(tmp_path: Path
     repo.mkdir(parents=True)
     (repo / ".rqmd.yml").write_text("requirements_dir: docs/requirements\n", encoding="utf-8")
     (repo / "requirements").mkdir(parents=True)
-    criteria = repo / "docs" / "requirements"
-    criteria.mkdir(parents=True)
-    (criteria / "README.md").write_text("# Requirements\n\n- [Demo](demo.md)\n", encoding="utf-8")
-    (criteria / "demo.md").write_text(
+    requirements = repo / "docs" / "requirements"
+    requirements.mkdir(parents=True)
+    (requirements / "README.md").write_text("# Requirements\n\n- [Demo](demo.md)\n", encoding="utf-8")
+    (requirements / "demo.md").write_text(
         """# Demo Requirement
 
 ### AC-DEMO-001: Demo

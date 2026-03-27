@@ -1,4 +1,4 @@
-"""Priority model and normalization logic for requirement criteria.
+"""Priority model and normalization logic for requirements.
 
 This module provides:
 - Priority label canonicalization and aliasing

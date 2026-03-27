@@ -17,7 +17,7 @@ except ImportError:
 from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
                         MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
                         PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
-from .criteria_parser import (collect_sub_sections,
+from .req_parser import (collect_sub_sections,
                               extract_criterion_block_with_lines,
                               find_criterion_by_id, normalize_sub_domain_name,
                               parse_criteria)
@@ -649,7 +649,7 @@ def build_filtered_criteria_payload(
     return {
         "mode": filter_mode,
         filter_label: target_value,
-        "criteria_dir": format_path_display(criteria_dir, repo_root),
+        "requirements_dir": format_path_display(criteria_dir, repo_root),
         "total": total,
         "files": files_payload,
     }
@@ -683,7 +683,7 @@ def build_summary_payload(
 
     return {
         "mode": "summary",
-        "criteria_dir": format_path_display(criteria_dir, repo_root),
+        "requirements_dir": format_path_display(criteria_dir, repo_root),
         "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
         "totals": totals,
         "files": files_payload,
@@ -757,7 +757,7 @@ def build_targeted_criteria_payload(
     return {
         "mode": "filter-targets",
         "targets": target_tokens,
-        "criteria_dir": format_path_display(criteria_dir, repo_root),
+        "requirements_dir": format_path_display(criteria_dir, repo_root),
         "total": len(selected_items),
         "files": files_payload,
     }

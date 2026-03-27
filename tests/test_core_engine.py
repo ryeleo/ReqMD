@@ -506,7 +506,7 @@ def test_RQMD_core_005c_file_priority_sort_key_tie_breaks_by_label() -> None:
 
 # Priority parsing and normalization tests (RQMD-PRIORITY-001 & 002)
 def test_RQMD_priority_001_parse_priority_field() -> None:
-    from rqmd.criteria_parser import parse_criteria
+    from rqmd.req_parser import parse_criteria
 
     text = """# Demo Requirements
 
@@ -533,7 +533,7 @@ def test_RQMD_priority_001_parse_priority_field() -> None:
 
 
 def test_RQMD_priority_001_priority_is_optional() -> None:
-    from rqmd.criteria_parser import parse_criteria
+    from rqmd.req_parser import parse_criteria
 
     text = """# Demo Requirements
 

@@ -113,7 +113,7 @@ Summary: 3💡 0🔧 18✅ 0⛔ 4🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when a user invokes `rqmd` with a path to a domain file (absolute or repo-root-relative)
-- I want the provided path to resolve to a valid markdown domain file containing criteria
+- I want the provided path to resolve to a valid markdown domain file containing requirements
 - So that rqmd opens the interactive session with that file selected and the requirement list for that file presented first
 - So that this behavior mirrors positional ID entry: users can immediately set status/priority or navigate requirements within that file
 - So that in non-interactive modes the provided file path scopes non-interactive commands (e.g., `--set`, `--check`, `--set-priority`) to that file only

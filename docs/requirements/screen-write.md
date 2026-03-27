@@ -108,7 +108,7 @@ Summary: 10💡 0🔧 0✅ 0⛔ 1🗑️
 - Default to enabling `screen_write` only when stdout is a TTY and common capability checks succeed.
 - Document the new flag and config option in the README and `docs/requirements/interactive-ux.md` with guidance on when to disable for CI or remote logging.
 
-### Acceptance criteria
+### Requirements
 - `--screen-write` flag exists and toggles the renderer.
 - Interactive flows use full-screen redraws by default on capable TTYs and preserve selection across page changes.
 - Startup, first-paint, and redraw timing are measured in tests/benchmarks for representative interactive workflows, with <=50ms as the target and <=60ms as the maximum acceptable bound before fallback/mitigation logic applies.

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 from rqmd import cli
-from rqmd.criteria_parser import parse_criteria
+from rqmd.req_parser import parse_criteria
 from rqmd.summary import (build_summary_block, collect_summary_rows,
                           count_priorities, process_file)
 
@@ -190,13 +190,13 @@ class TestRQMDPriority004ModeFlag:
         assert payload["updates"][0]["changed"] is True
 
     def test_priority_field_extraction_in_criteria(self, sample_file_with_priorities: Path):
-        criteria = parse_criteria(sample_file_with_priorities, id_prefixes=("AC",))
+        requirements = parse_criteria(sample_file_with_priorities, id_prefixes=("AC",))
 
-        assert len(criteria) == 3
-        assert criteria[0]["id"] == "AC-001"
-        assert "🔴 P0 - Critical" in criteria[0].get("priority", "")
-        assert criteria[1]["id"] == "AC-002"
-        assert "🟡 P2 - Medium" in criteria[1].get("priority", "")
+        assert len(requirements) == 3
+        assert requirements[0]["id"] == "AC-001"
+        assert "🔴 P0 - Critical" in requirements[0].get("priority", "")
+        assert requirements[1]["id"] == "AC-002"
+        assert "🟡 P2 - Medium" in requirements[1].get("priority", "")
 
     def test_lookup_priority_mode_starts_on_priority_panel(self, sample_file_with_priorities: Path, monkeypatch):
         titles: list[str] = []
@@ -496,9 +496,9 @@ Description.
         path = tmp_path / "test.md"
         path.write_text(content)
 
-        criteria = parse_criteria(path, id_prefixes=("AC",))
-        assert len(criteria) == 1
-        assert criteria[0]["priority"] is None
+        requirements = parse_criteria(path, id_prefixes=("AC",))
+        assert len(requirements) == 1
+        assert requirements[0]["priority"] is None
 
     def test_priority_line_number_tracking(self, tmp_path: Path):
         content = """\
@@ -513,10 +513,10 @@ Text.
         path = tmp_path / "test.md"
         path.write_text(content)
 
-        criteria = parse_criteria(path, id_prefixes=("AC",))
-        assert criteria[0]["priority_line"] is not None
-        assert isinstance(criteria[0]["priority_line"], int)
-        assert criteria[0]["priority_line"] > 0
+        requirements = parse_criteria(path, id_prefixes=("AC",))
+        assert requirements[0]["priority_line"] is not None
+        assert isinstance(requirements[0]["priority_line"], int)
+        assert requirements[0]["priority_line"] > 0
 
 
 if __name__ == "__main__":

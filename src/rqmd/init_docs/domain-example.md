@@ -18,9 +18,9 @@ This section demonstrates basic requirement structure. You can delete this subse
 - **Priority:** 🟡 P2 - Medium
 - This shows how optional Priority and Flagged fields work.
 
-### {{STARTER_PREFIX}}-HELLO-003: Example with detailed acceptance criteria
+### {{STARTER_PREFIX}}-HELLO-003: Example with detailed requirements
 - **Status:** Proposed
-- Given a requirement with multiple acceptance criteria
+- Given a requirement with multiple requirements
 - When using Given/When/Then format
 - Then each bullet point becomes a testable acceptance condition.
 - And teams can track progress through detailed verification.

@@ -1,4 +1,4 @@
-"""Status model and normalization logic for requirement criteria.
+"""Status model and normalization logic for requirements.
 
 This module provides:
 - Status label canonicalization and aliasing
