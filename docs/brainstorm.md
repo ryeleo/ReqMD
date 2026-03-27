@@ -1,5 +1,17 @@
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
+## Screen Write vs Scroll?
+
+Consider if we should change the UI to be screen write instead of scrolling style. That would make the UI 
+
+## Full Blocking Implementation
+
+Upgrdaing "block reason" to provide the user an option of which other requirement it is blocked by. This will be optional, but a quick way to insert a MD hyperlink to another REQ.
+Implementaiotn wise, hold an index at runtime of all issues 'search tokens', so that the user can easily quickly type in any word from the title the title or id REQ to find it easily then select it.
+Consider making this app no longer a scrolling app but a fixed terminal 
+Add to the schema for requirements/.md docs to include this field as an optional field. Then add the ability to edit it in interactive mode when setting status to blocked, and also to edit or remove it when changing status from blocked to something else.
+
+
 
 ## 
 

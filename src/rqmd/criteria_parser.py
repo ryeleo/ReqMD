@@ -7,8 +7,9 @@ from pathlib import Path
 from .constants import (BLOCKED_REASON_PATTERN, DEFAULT_ID_PREFIXES,
                         DEPRECATED_REASON_PATTERN,
                         GENERIC_CRITERION_HEADER_PATTERN, ID_PREFIX_PATTERN,
-                        MARKDOWN_LINK_PATTERN, REQUIREMENTS_INDEX_NAME,
-                        STATUS_PATTERN)
+                        MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
+                        REQUIREMENTS_INDEX_NAME, STATUS_PATTERN)
+from .priority_model import coerce_priority_label
 from .status_model import coerce_status_label
 
 
@@ -140,6 +141,8 @@ def parse_criteria(
                 "status": None,
                 "header_line": index,
                 "status_line": None,
+                "priority": None,
+                "priority_line": None,
                 "blocked_reason": None,
                 "blocked_reason_line": None,
                 "deprecated_reason": None,
@@ -157,6 +160,17 @@ def parse_criteria(
                 status = raw_status
             current["status"] = status
             current["status_line"] = index
+            continue
+
+        priority_match = PRIORITY_PATTERN.match(line)
+        if priority_match and current and current["priority"] is None:
+            raw_priority = priority_match.group("priority")
+            try:
+                priority = coerce_priority_label(raw_priority)
+            except ValueError:
+                priority = raw_priority
+            current["priority"] = priority
+            current["priority_line"] = index
             continue
 
         blocked_match = BLOCKED_REASON_PATTERN.match(line)
@@ -251,6 +265,22 @@ def collect_criteria_by_status(
     for path in domain_files:
         requirements = parse_criteria(path, id_prefixes=id_prefixes)
         matching = [c for c in requirements if c["status"] == target_status]
+        if matching:
+            result[path] = matching
+    return result
+
+
+def collect_criteria_by_priority(
+    repo_root: Path,
+    domain_files: list[Path],
+    target_priority: str,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> dict[Path, list[dict[str, object]]]:
+    del repo_root
+    result: dict[Path, list[dict[str, object]]] = {}
+    for path in domain_files:
+        requirements = parse_criteria(path, id_prefixes=id_prefixes)
+        matching = [c for c in requirements if c.get("priority") == target_priority]
         if matching:
             result[path] = matching
     return result

@@ -24,6 +24,24 @@ STATUS_PARSE_ALIASES = {
     "propose": "💡 Proposed",
 }
 
+PRIORITY_ORDER = [
+    ("🔴 P0 - Critical", "p0"),
+    ("🟠 P1 - High", "p1"),
+    ("🟡 P2 - Medium", "p2"),
+    ("🟢 P3 - Low", "p3"),
+]
+PRIORITY_ALIASES = {}
+PRIORITY_PARSE_ALIASES = {
+    "critical": "🔴 P0 - Critical",
+    "p0": "🔴 P0 - Critical",
+    "high": "🟠 P1 - High",
+    "p1": "🟠 P1 - High",
+    "medium": "🟡 P2 - Medium",
+    "p2": "🟡 P2 - Medium",
+    "low": "🟢 P3 - Low",
+    "p3": "🟢 P3 - Low",
+}
+
 MENU_UP = "u"
 MENU_QUIT = "q"
 MENU_NEXT = "n"
@@ -34,6 +52,7 @@ MENU_REFRESH = "r"
 MENU_PAGE_SIZE = 9
 
 STATUS_PATTERN = re.compile(r"^- \*\*Status:\*\* (?P<status>.+?)\s*$", re.MULTILINE)
+PRIORITY_PATTERN = re.compile(r"^- \*\*Priority:\*\* (?P<priority>.+?)\s*$", re.MULTILINE)
 BLOCKED_REASON_PATTERN = re.compile(r"^\*\*Blocked:\*\*\s*(.+?)\s*$", re.MULTILINE)
 DEPRECATED_REASON_PATTERN = re.compile(r"^\*\*Deprecated:\*\*\s*(.+?)\s*$", re.MULTILINE)
 ID_PREFIX_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*$")

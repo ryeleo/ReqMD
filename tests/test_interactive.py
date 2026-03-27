@@ -93,7 +93,7 @@ Scope: demo.
             return "up"
 
         if title.startswith("Set status for "):
-            status_visits.append(title.removeprefix("Set status for "))
+            status_visits.append(title.removeprefix("Set status for ").splitlines()[0])
             return next(status_actions)
 
         return None
@@ -193,7 +193,7 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
     assert "filesystem" not in str(captured["title"])
     assert "\x1b[1mname ↓\x1b[0m" in str(captured["title"])
     title_plain = re.sub(r"\x1b\[[0-9;]*m", "", str(captured["title"]))
-    assert re.search(r"P\s+\|\s+I\s+\|\s+Ver\s+\|\s+Blk/Dep", title_plain)
+    assert re.search(r"Pri\s+\|\s+P\s+\|\s+I\s+\|\s+Ver\s+\|\s+Blk/Dep", title_plain)
     assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[dsc] | r=rfrsh | q=quit"
 
 
@@ -234,7 +234,7 @@ def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, 
 
     assert result.exit_code == 0
     title_plain = re.sub(r"\x1b\[[0-9;]*m", "", str(captured["title"]))
-    assert re.search(r"💡\s+\|\s+🔧\s+\|\s+✅\s+\|\s+⛔/🗑️", title_plain)
+    assert re.search(r"Pri\s+\|\s+💡\s+\|\s+🔧\s+\|\s+✅\s+\|\s+⛔/🗑️", title_plain)
 
 
 def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(monkeypatch, tmp_path: Path) -> None:
@@ -283,7 +283,7 @@ def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(m
 
     assert result.exit_code == 0
     assert "title" in captured
-    assert "\x1b[1mP ↓\x1b[0m" in str(captured["title"])
+    assert "\x1b[1mPri ↓\x1b[0m" in str(captured["title"])
     assert "Z Domain" in captured["options"][0]
     assert "A Domain" in captured["options"][1]
     assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[dsc] | r=rfrsh | q=quit"
@@ -521,8 +521,8 @@ def test_RQMD_sorting_004_refresh_preserves_selected_sort_mode(monkeypatch, tmp_
 
     assert result.exit_code == 0
     assert len(titles) == 3
-    assert "\x1b[1mP ↓\x1b[0m" in titles[1]
-    assert "\x1b[1mP ↓\x1b[0m" in titles[2]
+    assert "\x1b[1mPri ↓\x1b[0m" in titles[1]
+    assert "\x1b[1mPri ↓\x1b[0m" in titles[2]
 
 
 def test_RQMD_interactive_008_reason_prompt_helpers(monkeypatch) -> None:
@@ -534,7 +534,7 @@ def test_RQMD_interactive_008_reason_prompt_helpers(monkeypatch) -> None:
 def test_RQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
-    def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns, id_prefixes, include_status_emojis):
+    def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
         called["value"] = True
         assert criterion_id == "AC-HELLO-001"
         assert id_prefixes == ("AC", "R", "RQMD")
@@ -703,7 +703,7 @@ Scope: demo.
 def test_RQMD_interactive_001_default_invokes_interactive_loop(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
-    def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis):
+    def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
         called["value"] = True
         assert sort_strategy == "standard"
         assert id_prefixes == ("AC", "R", "RQMD")

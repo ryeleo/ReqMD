@@ -32,6 +32,29 @@ Requirement bodies can be as short as a title plus status line, or include riche
 - `⛔ Blocked`
 - `🗑️ Deprecated`
 
+## Priority model (optional field)
+
+Requirements can optionally include a `**Priority:**` line alongside the status line. When present, priority metadata supports sorting, filtering, and priority-aware summaries.
+
+Default priority levels:
+
+- `🔴 P0 - Critical`
+- `🟠 P1 - High`
+- `🟡 P2 - Medium`
+- `🟢 P3 - Low`
+
+Example requirement with priority:
+
+```md
+### AC-FEATURE-001: Core API endpoint
+- **Status:** 🔧 Implemented
+- **Priority:** 🔴 P0 - Critical
+```
+
+Priority is optional; requirements without a priority line parse successfully with `priority: None`.
+
+Priority values are normalized case-insensitively, so `p0`, `P0`, `critical`, and `CRITICAL` all map to `🔴 P0 - Critical`.
+
 ## Install (local development)
 
 From this folder:
@@ -104,6 +127,43 @@ Set one requirement non-interactively:
 ```bash
 uv run rqmd --set-requirement-id AC-EXAMPLE-001 --set-status implemented
 ```
+
+Update priorities non-interactively:
+
+```bash
+uv run rqmd --set-priority AC-EXAMPLE-001=p0
+uv run rqmd --set-priority AC-EXAMPLE-001=critical --set-priority AC-EXAMPLE-002=medium
+```
+
+Batch updates can include `priority` fields, or combine `status` and `priority` in one row:
+
+```json
+{"id":"AC-EXAMPLE-001","priority":"p0"}
+{"id":"AC-EXAMPLE-002","status":"implemented","priority":"medium"}
+```
+
+Interactive entry panels can start in priority mode:
+
+```bash
+uv run rqmd --priority-mode
+```
+
+Within an entry panel, press `t` to toggle between status and priority editing.
+
+Regenerate summary blocks with priority aggregates included:
+
+```bash
+uv run rqmd --show-priority-summary --no-interactive
+```
+
+Filter by priority in tree, JSON, or interactive walk modes:
+
+```bash
+uv run rqmd --filter-priority critical --tree
+uv run rqmd --filter-priority p1 --json --no-interactive
+```
+
+Interactive file and requirement menus also expose `priority` as a sortable column via `s` / `d`.
 
 Use a different ID prefix:
 
@@ -201,6 +261,46 @@ Custom roll-up columns from config (`.json`, `.yml`, `.yaml`):
 uv run rqmd --rollup --rollup-config .rqmd-rollup.yaml --json --no-interactive
 ```
 
+Example project config for a repo that defines a custom status catalog and wants RQMD-ROLLUP-007 roll-up buckets:
+
+```yaml
+# .rqmd-rollup.yaml
+statuses:
+	- name: Proposed
+		shortcode: P
+		emoji: "💡"
+	- name: Implemented
+		shortcode: I
+		emoji: "🔧"
+	- name: Desktop-Verified
+		shortcode: DV
+		emoji: "💻"
+	- name: VR-Verified
+		shortcode: VV
+		emoji: "🎮"
+	- name: Done
+		shortcode: D
+		emoji: "✅"
+	- name: Blocked
+		shortcode: B
+		emoji: "⛔"
+	- name: Deprecated
+		shortcode: X
+		emoji: "🗑️"
+
+rollup_map:
+	Proposed: [proposed]
+	Build-Ready: [implemented, desktop-verified]
+	Complete: [vr-verified, done]
+	Parked: [blocked, deprecated]
+```
+
+That example yields these roll-up families:
+
+- `Blocked + Deprecated` roll up together in `Parked`
+- `Implemented + Desktop-Verified` roll up together in `Build-Ready`
+- `VR-Verified + Done` roll up together in `Complete`
+
 When no CLI map/config is passed, rqmd resolves roll-up mappings with this precedence:
 
 1. `--rollup-map` CLI equations
@@ -280,6 +380,28 @@ Filtered walkthrough resume state is configurable with `--state-dir`:
 Requirement header prefixes are configurable with `--id-prefix`.
 When omitted, rqmd auto-detects prefixes by reading the selected `README.md` requirements index and linked domain docs when available.
 If no prefixes are discovered, it falls back to `AC-`, `R-`, and `RQMD-`.
+
+### Project configuration file
+
+To avoid repeating CLI flags across team members, you can create a `.rqmd.json` file at the project root:
+
+```json
+{
+  "requirements_dir": "docs/requirements",
+  "id_prefix": "PROJ",
+  "sort_strategy": "status-focus",
+  "state_dir": "project-local"
+}
+```
+
+Supported keys:
+
+- `requirements_dir`: Default requirements directory (relative to repo root)
+- `id_prefix`: Default ID prefix for requirement headers
+- `sort_strategy`: Default sort strategy for interactive mode (standard, status-focus, alpha-asc)
+- `state_dir`: Default state directory for filtered walk resume (system-temp, project-local, or custom path)
+
+CLI flags always override config file values. When `.rqmd.json` is present, rqmd loads it automatically; no additional flag is needed.
 
 ## Recommended docs recipe for projects
 

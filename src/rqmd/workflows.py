@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-import tempfile
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 try:
@@ -15,26 +15,28 @@ except ImportError:
     sys.exit(1)
 
 from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
-                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT, STATUS_ORDER,
-                        STATUS_PATTERN)
+                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT, PRIORITY_ORDER,
+                        STATUS_ORDER, STATUS_PATTERN)
 from .criteria_parser import (extract_criterion_block_with_lines,
                               find_criterion_by_id, parse_criteria)
 from .markdown_io import (display_name_from_h1, format_path_display,
                           iter_domain_files)
 from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
                     visible_length)
+from .priority_model import style_priority_label
 from .status_model import (build_color_rollup_text, status_emoji,
                            style_status_label, style_status_line)
 from .status_update import (print_criterion_panel, prompt_for_blocked_reason,
                             prompt_for_deprecated_reason,
                             update_criterion_status)
-from .summary import (collect_summary_rows, count_statuses,
+from .summary import (collect_summary_rows, count_priorities, count_statuses,
                       print_summary_table, process_file)
 
 SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
     "standard": {
         "file_columns": [
             ("name", "name"),
+            ("priority", "Pri"),
             ("proposed", "P"),
             ("implemented", "I"),
             ("verified", "Ver"),
@@ -44,6 +46,7 @@ SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
         "file_default_ascending": False,
         "criterion_columns": [
             ("status", "status"),
+            ("priority", "priority"),
             ("title", "title"),
             ("id", "id"),
         ],
@@ -53,6 +56,7 @@ SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
     },
     "status-focus": {
         "file_columns": [
+            ("priority", "Pri"),
             ("implemented", "I"),
             ("verified", "Ver"),
             ("proposed", "P"),
@@ -63,6 +67,7 @@ SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
         "file_default_ascending": False,
         "criterion_columns": [
             ("status", "status"),
+            ("priority", "priority"),
             ("title", "title"),
             ("id", "id"),
         ],
@@ -73,6 +78,7 @@ SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
     "alpha-asc": {
         "file_columns": [
             ("name", "name"),
+            ("priority", "Pri"),
             ("proposed", "P"),
             ("implemented", "I"),
             ("verified", "Ver"),
@@ -82,6 +88,7 @@ SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
         "file_default_ascending": True,
         "criterion_columns": [
             ("status", "status"),
+            ("priority", "priority"),
             ("title", "title"),
             ("id", "id"),
         ],
@@ -96,6 +103,7 @@ SORT_STRATEGY_NAMES = tuple(sorted(SORT_STRATEGY_SPECS.keys()))
 
 FILE_SORT_COLUMNS: list[tuple[str, str]] = [
     ("name", "name"),
+    ("priority", "Pri"),
     ("proposed", "P"),
     ("implemented", "I"),
     ("verified", "Ver"),
@@ -104,6 +112,7 @@ FILE_SORT_COLUMNS: list[tuple[str, str]] = [
 
 CRITERION_SORT_COLUMNS: list[tuple[str, str]] = [
     ("status", "status"),
+    ("priority", "priority"),
     ("title", "title"),
     ("id", "id"),
 ]
@@ -158,6 +167,7 @@ def _right_align_text(left: str, right: str) -> str:
 
 def _build_file_stats_header(active_key: str, ascending: bool, emoji_columns: bool = False) -> str:
     labels = {
+        "priority": "Pri",
         "proposed": "💡" if emoji_columns else "P",
         "implemented": "🔧" if emoji_columns else "I",
         "verified": "✅" if emoji_columns else "Ver",
@@ -172,6 +182,7 @@ def _build_file_stats_header(active_key: str, ascending: bool, emoji_columns: bo
 
     return " | ".join(
         [
+            cell("priority", 7),
             cell("proposed", 5),
             cell("implemented", 5),
             cell("verified", 5),
@@ -198,6 +209,11 @@ def _build_file_sort_title(
 
 
 def _build_criterion_sort_title(base_title: str, active_key: str | None, ascending: bool) -> str:
+    priority_indicator = _sort_indicator(ascending) if active_key == "priority" else " "
+    priority_label = click.style(
+        f"priority {priority_indicator}",
+        bold=(active_key == "priority"),
+    )
     status_indicator = _sort_indicator(ascending) if active_key == "status" else " "
     status_label = click.style(
         f"status {status_indicator}",
@@ -214,7 +230,7 @@ def _build_criterion_sort_title(base_title: str, active_key: str | None, ascendi
         bold=(active_key == "id"),
     )
 
-    left = f"sort: {status_label} | {title_label}"
+    left = f"sort: {priority_label} | {status_label} | {title_label}"
     return f"{base_title}\n{_right_align_text(left, id_label)}"
 
 
@@ -248,6 +264,11 @@ def _file_sort_value(counts: dict[str, int], sort_key: str) -> int | str:
     raise ValueError(f"Unknown file sort key: {sort_key}")
 
 
+def _file_priority_tuple(path: Path) -> tuple[int, int, int, int]:
+    priority_counts = count_priorities(path.read_text(encoding="utf-8"))
+    return tuple(priority_counts[label] for label, _slug in PRIORITY_ORDER)
+
+
 def _sort_file_rows(
     rows: list[tuple[Path, dict[str, int], str]],
     sort_key: str | None,
@@ -257,6 +278,12 @@ def _sort_file_rows(
         return list(rows)
     if sort_key == "name":
         return sorted(rows, key=lambda row: (row[2].lower(), row[0].name.lower()), reverse=not ascending)
+    if sort_key == "priority":
+        return sorted(
+            rows,
+            key=lambda row: (_file_priority_tuple(row[0]), row[2].lower(), row[0].name.lower()),
+            reverse=not ascending,
+        )
     return sorted(
         rows,
         key=lambda row: (_file_sort_value(row[1], sort_key), row[2].lower(), row[0].name.lower()),
@@ -303,6 +330,97 @@ def _criterion_status_rank(status: str) -> int:
     return status_priority.get(status, 99)
 
 
+def _criterion_priority_rank(priority: str | None) -> int:
+    priority_order = {label: i for i, (label, _slug) in enumerate(PRIORITY_ORDER)}
+    if not priority or priority == "unset":
+        return len(PRIORITY_ORDER)
+    return priority_order.get(priority, len(PRIORITY_ORDER) + 1)
+
+
+def _priority_highlight_bg(priority: str) -> str:
+    if priority.startswith("🔴"):
+        return "\x1b[48;5;52m"
+    if priority.startswith("🟠"):
+        return "\x1b[48;5;130m"
+    if priority.startswith("🟡"):
+        return "\x1b[48;5;178m"
+    if priority.startswith("🟢"):
+        return "\x1b[48;5;22m"
+    return "\x1b[48;5;238m"
+
+
+def _build_requirement_field_menu(
+    requirement: dict[str, object],
+    active_field: str,
+    title_suffix: str = "",
+) -> tuple[str, list[str], list[str], int | None, str]:
+    if active_field == "priority":
+        labels = [label for label, _ in PRIORITY_ORDER]
+        options = [style_priority_label(label) for label in labels]
+        current_value = str(requirement.get("priority") or "")
+        try:
+            current_index = labels.index(current_value)
+        except ValueError:
+            current_index = None
+        highlight_bg = _priority_highlight_bg(current_value)
+        title = f"Set priority for {requirement['id']}{title_suffix}\nsetting: priority"
+        return title, labels, options, current_index, highlight_bg
+
+    labels = [label for label, _ in STATUS_ORDER]
+    options = [style_status_label(label) for label in labels]
+    current_value = str(requirement.get("status") or "")
+    try:
+        current_index = labels.index(current_value)
+    except ValueError:
+        current_index = None
+
+    highlight_bg = "\x1b[48;5;220m"
+    if current_value == "✅ Verified":
+        highlight_bg = "\x1b[48;5;28m"
+    elif current_value == "💡 Proposed":
+        highlight_bg = "\x1b[48;5;27m"
+    elif current_value in ("⛔ Blocked", "🗑️ Deprecated"):
+        highlight_bg = "\x1b[48;5;238m"
+
+    title = f"Set status for {requirement['id']}{title_suffix}\nsetting: status"
+    return title, labels, options, current_index, highlight_bg
+
+
+def _prompt_for_requirement_action(
+    requirement: dict[str, object],
+    active_field: str,
+    select_from_menu_fn,
+    title_suffix: str = "",
+    allow_nav: bool = True,
+) -> tuple[str, str | None]:
+    title, labels, options, selected_index, selected_bg = _build_requirement_field_menu(
+        requirement,
+        active_field,
+        title_suffix=title_suffix,
+    )
+    extra_keys = {"t": "toggle-field"}
+    extra_keys_help = {"t": "toggle"}
+    if allow_nav:
+        extra_keys.update({"n": "nav-next", "p": "nav-prev"})
+        extra_keys_help.update({"n": "next", "p": "prev"})
+
+    choice = select_from_menu_fn(
+        title,
+        options,
+        show_page_indicator=False,
+        allow_paging_nav=False,
+        extra_keys=extra_keys,
+        extra_keys_help=extra_keys_help,
+        selected_option_index=selected_index,
+        selected_option_bg=selected_bg,
+    )
+    if choice is None:
+        return "quit", None
+    if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "toggle-field"}:
+        return choice, None
+    return "apply", labels[int(choice)]
+
+
 def _sort_criteria(
     requirements: list[dict[str, object]],
     sort_key: str | None,
@@ -314,6 +432,12 @@ def _sort_criteria(
         return sorted(requirements, key=lambda item: (str(item["title"]).lower(), str(item["id"]).lower()), reverse=not ascending)
     if sort_key == "id":
         return sorted(requirements, key=lambda item: str(item["id"]).lower(), reverse=not ascending)
+    if sort_key == "priority":
+        return sorted(
+            requirements,
+            key=lambda item: (_criterion_priority_rank(item.get("priority") if isinstance(item.get("priority"), str) else None), str(item["title"]).lower(), str(item["id"]).lower()),
+            reverse=ascending,
+        )
     if sort_key == "status":
         return sorted(
             requirements,
@@ -323,12 +447,17 @@ def _sort_criteria(
     raise ValueError(f"Unknown requirement sort key: {sort_key}")
 
 
-def print_criteria_tree(repo_root: Path, criteria_by_file: dict[Path, list[dict[str, object]]], target_status: str) -> None:
+def print_criteria_tree(
+    repo_root: Path,
+    criteria_by_file: dict[Path, list[dict[str, object]]],
+    target_value: str,
+    filter_label: str = "status",
+) -> None:
     if not criteria_by_file:
-        click.echo(f"No requirements found with status: {target_status}")
+        click.echo(f"No requirements found with {filter_label}: {target_value}")
         return
 
-    click.echo(click.style(f"\n{target_status}", bold=True))
+    click.echo(click.style(f"\n{target_value}", bold=True))
     click.echo()
 
     files = sorted(criteria_by_file.keys())
@@ -354,9 +483,11 @@ def build_filtered_criteria_payload(
     repo_root: Path,
     criteria_dir: Path,
     criteria_by_file: dict[Path, list[dict[str, object]]],
-    target_status: str,
+    target_value: str,
     include_body: bool = True,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    filter_mode: str = "filter-status",
+    filter_label: str = "status",
 ) -> dict[str, object]:
     files_payload: list[dict[str, object]] = []
     total = 0
@@ -400,8 +531,8 @@ def build_filtered_criteria_payload(
         total += len(criteria_payload)
 
     return {
-        "mode": "filter-status",
-        "status": target_status,
+        "mode": filter_mode,
+        filter_label: target_value,
         "criteria_dir": format_path_display(criteria_dir, repo_root),
         "total": total,
         "files": files_payload,
@@ -451,6 +582,8 @@ def interactive_update_loop(
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     select_from_menu_fn=select_from_menu,
     include_status_emojis: bool | None = None,
+    priority_mode: bool = False,
+    include_priority_summary: bool = False,
 ) -> int:
     if include_status_emojis is None:
         include_status_emojis = infer_include_status_emojis(domain_files)
@@ -544,6 +677,7 @@ def interactive_update_loop(
         history: list[int] = []
         history_pos = -1
         criterion_index: int | None = None
+        current_entry_field = "priority" if priority_mode else "status"
 
         while True:
             raw_criteria = parse_criteria(selected_path, id_prefixes=id_prefixes)
@@ -613,44 +747,27 @@ def interactive_update_loop(
 
             print_criterion_panel(selected_path, selected_criterion, repo_root, id_prefixes=id_prefixes)
 
-            status_labels = [label for label, _ in STATUS_ORDER]
-            status_options = [style_status_label(label) for label, _ in STATUS_ORDER]
-            current_status = str(selected_criterion.get("status") or "")
-            try:
-                current_status_idx = status_labels.index(current_status)
-            except ValueError:
-                current_status_idx = None
-            highlight_bg = "\x1b[48;5;220m"
-            if current_status == "✅ Verified":
-                highlight_bg = "\x1b[48;5;28m"
-            elif current_status == "💡 Proposed":
-                highlight_bg = "\x1b[48;5;27m"
-            elif current_status in ("⛔ Blocked", "🗑️ Deprecated"):
-                highlight_bg = "\x1b[48;5;238m"
-
-            status_choice = select_from_menu_fn(
-                f"Set status for {selected_criterion['id']}",
-                status_options,
-                show_page_indicator=False,
-                allow_paging_nav=False,
-                extra_keys={"n": "nav-next", "p": "nav-prev"},
-                extra_keys_help={"n": "next", "p": "prev"},
-                selected_option_index=current_status_idx,
-                selected_option_bg=highlight_bg,
+            action, selected_value = _prompt_for_requirement_action(
+                selected_criterion,
+                current_entry_field,
+                select_from_menu_fn,
             )
-            if status_choice is None:
+            if action == "quit":
                 return 0
-            if status_choice == "up":
+            if action == "up":
                 criterion_index = None
                 continue
-            if status_choice == "nav-prev":
+            if action == "toggle-field":
+                current_entry_field = "priority" if current_entry_field == "status" else "status"
+                continue
+            if action == "nav-prev":
                 if history_pos > 0:
                     history_pos -= 1
                     criterion_index = history[history_pos]
                 else:
                     click.echo("Already at first requirement.")
                 continue
-            if status_choice == "nav-next":
+            if action == "nav-next":
                 if history_pos < len(history) - 1:
                     history_pos += 1
                     criterion_index = history[history_pos]
@@ -663,29 +780,50 @@ def interactive_update_loop(
                     click.echo("Already at last requirement in file.")
                 continue
 
-            new_status = status_labels[int(status_choice)]
-            blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
-            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+            changed = False
+            if current_entry_field == "priority":
+                changed = update_criterion_status(
+                    selected_path,
+                    selected_criterion,
+                    str(selected_criterion.get("status") or ""),
+                    new_priority=selected_value,
+                )
+                process_file(
+                    selected_path,
+                    check_only=False,
+                    include_status_emojis=include_status_emojis,
+                    include_priority_summary=include_priority_summary,
+                )
+            else:
+                new_status = selected_value or str(selected_criterion.get("status") or "")
+                blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
+                deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
 
-            changed = update_criterion_status(
-                selected_path,
-                selected_criterion,
-                new_status,
-                blocked_reason=blocked_reason,
-                deprecated_reason=deprecated_reason,
-            )
-            process_file(selected_path, check_only=False, include_status_emojis=include_status_emojis)
+                changed = update_criterion_status(
+                    selected_path,
+                    selected_criterion,
+                    new_status,
+                    blocked_reason=blocked_reason,
+                    deprecated_reason=deprecated_reason,
+                )
+                process_file(
+                    selected_path,
+                    check_only=False,
+                    include_status_emojis=include_status_emojis,
+                    include_priority_summary=include_priority_summary,
+                )
 
             if changed:
-                click.echo(f"Updated {selected_criterion['id']} -> {new_status}")
+                click.echo(f"Updated {selected_criterion['id']} -> {selected_value}")
             else:
-                click.echo(f"No change for {selected_criterion['id']} ({new_status})")
+                click.echo(f"No change for {selected_criterion['id']} ({selected_value})")
 
             _, table_rows = collect_summary_rows(
                 domain_files,
                 check_only=True,
                 display_name_fn=display_name_from_h1,
                 include_status_emojis=include_status_emojis,
+                include_priority_summary=include_priority_summary,
             )
             print_summary_table(table_rows, emoji_columns=emoji_columns)
 
@@ -723,6 +861,8 @@ def filtered_interactive_loop(
     resume_filter: bool = True,
     state_dir: str = "system-temp",
     include_status_emojis: bool | None = None,
+    priority_mode: bool = False,
+    include_priority_summary: bool = False,
 ) -> int:
     if include_status_emojis is None:
         include_status_emojis = infer_include_status_emojis(domain_files)
@@ -804,6 +944,7 @@ def filtered_interactive_loop(
     ))
 
     index = resolve_resume_index(flat_list)
+    current_entry_field = "priority" if priority_mode else "status"
     while True:
         flat_list = build_flat_list()
         if not flat_list:
@@ -820,47 +961,31 @@ def filtered_interactive_loop(
         click.echo(click.style(f"\n[{index + 1}/{len(flat_list)}]", dim=True))
         print_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
 
-        status_labels = [label for label, _ in STATUS_ORDER]
-        status_options = [style_status_label(label) for label, _ in STATUS_ORDER]
-        current_status = str(requirement.get("status") or "")
-        try:
-            current_status_idx = status_labels.index(current_status)
-        except ValueError:
-            current_status_idx = None
-
-        highlight_bg = "\x1b[48;5;220m"
-        if current_status == "\u2705 Verified":
-            highlight_bg = "\x1b[48;5;28m"
-        elif current_status == "\U0001f4a1 Proposed":
-            highlight_bg = "\x1b[48;5;27m"
-        elif current_status in ("\u26d4 Blocked", "\U0001f5d1\ufe0f Deprecated"):
-            highlight_bg = "\x1b[48;5;238m"
-
-        status_choice = select_from_menu_fn(
-            f"Set status for {requirement['id']} [{index + 1}/{len(flat_list)}]",
-            status_options,
-            show_page_indicator=False,
-            allow_paging_nav=False,
-            extra_keys={"n": "nav-next", "p": "nav-prev"},
-            extra_keys_help={"n": "next", "p": "prev"},
-            selected_option_index=current_status_idx,
-            selected_option_bg=highlight_bg,
+        action, selected_value = _prompt_for_requirement_action(
+            requirement,
+            current_entry_field,
+            select_from_menu_fn,
+            title_suffix=f" [{index + 1}/{len(flat_list)}]",
         )
 
-        if status_choice is None:
+        if action == "quit":
             save_current(flat_list, index)
             return 0
-        if status_choice == "up":
+        if action == "up":
             save_current(flat_list, index)
             return 0
-        if status_choice == "nav-prev":
+        if action == "toggle-field":
+            current_entry_field = "priority" if current_entry_field == "status" else "status"
+            save_current(flat_list, index)
+            continue
+        if action == "nav-prev":
             if index > 0:
                 index -= 1
             else:
                 click.echo("Already at first filtered AC.")
             save_current(flat_list, index)
             continue
-        if status_choice == "nav-next":
+        if action == "nav-next":
             if index < len(flat_list) - 1:
                 index += 1
             else:
@@ -870,34 +995,239 @@ def filtered_interactive_loop(
             save_current(flat_list, index)
             continue
 
-        new_status = status_labels[int(status_choice)]
-        blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
-        deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+        if current_entry_field == "priority":
+            changed = update_criterion_status(
+                path,
+                requirement,
+                str(requirement.get("status") or ""),
+                new_priority=selected_value,
+            )
+        else:
+            new_status = selected_value or str(requirement.get("status") or "")
+            blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
+            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
 
-        changed = update_criterion_status(
+            changed = update_criterion_status(
+                path,
+                requirement,
+                new_status,
+                blocked_reason=blocked_reason,
+                deprecated_reason=deprecated_reason,
+            )
+        process_file(
             path,
-            requirement,
-            new_status,
-            blocked_reason=blocked_reason,
-            deprecated_reason=deprecated_reason,
+            check_only=False,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
         )
-        process_file(path, check_only=False, include_status_emojis=include_status_emojis)
 
         if changed:
-            click.echo(f"Updated {requirement['id']} -> {new_status}")
+            click.echo(f"Updated {requirement['id']} -> {selected_value}")
         else:
-            click.echo(f"No change for {requirement['id']} ({new_status})")
+            click.echo(f"No change for {requirement['id']} ({selected_value})")
 
         _, table_rows = collect_summary_rows(
             domain_files,
             check_only=True,
             display_name_fn=display_name_from_h1,
             include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
         )
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
         flat_after = build_flat_list()
-        if changed and new_status != target_status:
+        if current_entry_field == "status" and changed and selected_value != target_status:
+            if not flat_after:
+                click.echo("All filtered requirements reviewed.")
+                return 0
+
+
+def filtered_priority_interactive_loop(
+    repo_root: Path,
+    domain_files: list[Path],
+    target_priority: str,
+    emoji_columns: bool,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    select_from_menu_fn=select_from_menu,
+    resume_filter: bool = True,
+    state_dir: str = "system-temp",
+    include_status_emojis: bool | None = None,
+    priority_mode: bool = True,
+    include_priority_summary: bool = False,
+) -> int:
+    if include_status_emojis is None:
+        include_status_emojis = infer_include_status_emojis(domain_files)
+    repo_hash = hashlib.sha256(str(repo_root.resolve()).encode("utf-8")).hexdigest()[:12]
+    resume_root = resolve_resume_state_dir(repo_root, state_dir)
+    resume_path = resume_root / f"filter-priority-resume-{repo_hash}.json"
+
+    def load_resume_state() -> dict[str, dict[str, str]]:
+        if not resume_path.exists() or not resume_path.is_file():
+            return {}
+        try:
+            loaded = json.loads(resume_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        if not isinstance(loaded, dict):
+            return {}
+        normalized: dict[str, dict[str, str]] = {}
+        for key, value in loaded.items():
+            if isinstance(key, str) and isinstance(value, dict):
+                req_id = value.get("id")
+                req_path = value.get("path")
+                if isinstance(req_id, str) and isinstance(req_path, str):
+                    normalized[key] = {"id": req_id, "path": req_path}
+        return normalized
+
+    def save_resume_state(state: dict[str, dict[str, str]]) -> None:
+        try:
+            resume_path.parent.mkdir(parents=True, exist_ok=True)
+            resume_path.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError:
+            return
+
+    def state_key() -> str:
+        return target_priority
+
+    def save_current(flat_items: list[tuple[Path, dict[str, object]]], current_index: int) -> None:
+        if not resume_filter or not flat_items:
+            return
+        idx = min(max(current_index, 0), len(flat_items) - 1)
+        cur_path, cur_req = flat_items[idx]
+        state = load_resume_state()
+        state[state_key()] = {
+            "path": format_path_display(cur_path, repo_root),
+            "id": str(cur_req["id"]),
+        }
+        save_resume_state(state)
+
+    def resolve_resume_index(flat_items: list[tuple[Path, dict[str, object]]]) -> int:
+        if not resume_filter or not flat_items:
+            return 0
+        state = load_resume_state()
+        saved = state.get(state_key())
+        if not saved:
+            return 0
+        saved_id = saved.get("id")
+        saved_path = saved.get("path")
+        for index, (path, req) in enumerate(flat_items):
+            if str(req["id"]) == saved_id and format_path_display(path, repo_root) == saved_path:
+                click.echo(click.style(f"Resuming filtered walk at {saved_id}.", dim=True))
+                return index
+        return 0
+
+    def build_flat_list() -> list[tuple[Path, dict[str, object]]]:
+        result: list[tuple[Path, dict[str, object]]] = []
+        for path in domain_files:
+            for crit in parse_criteria(path, id_prefixes=id_prefixes):
+                if crit.get("priority") == target_priority:
+                    result.append((path, crit))
+        return result
+
+    flat_list = build_flat_list()
+    if not flat_list:
+        click.echo(f"No requirements found with priority: {target_priority}")
+        return 0
+
+    click.echo(click.style(
+        f"\nFiltered walk: {target_priority} ({len(flat_list)} requirements across all files)",
+        bold=True,
+    ))
+
+    index = resolve_resume_index(flat_list)
+    current_entry_field = "priority" if priority_mode else "status"
+    while True:
+        flat_list = build_flat_list()
+        if not flat_list:
+            click.echo("No more requirements with this priority.")
+            return 0
+        index = min(index, len(flat_list) - 1)
+        save_current(flat_list, index)
+
+        path, requirement = flat_list[index]
+        refreshed = find_criterion_by_id(path, str(requirement["id"]), id_prefixes=id_prefixes)
+        if refreshed:
+            requirement = refreshed
+
+        click.echo(click.style(f"\n[{index + 1}/{len(flat_list)}]", dim=True))
+        print_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
+
+        action, selected_value = _prompt_for_requirement_action(
+            requirement,
+            current_entry_field,
+            select_from_menu_fn,
+            title_suffix=f" [{index + 1}/{len(flat_list)}]",
+        )
+
+        if action == "quit":
+            save_current(flat_list, index)
+            return 0
+        if action == "up":
+            save_current(flat_list, index)
+            return 0
+        if action == "toggle-field":
+            current_entry_field = "priority" if current_entry_field == "status" else "status"
+            save_current(flat_list, index)
+            continue
+        if action == "nav-prev":
+            if index > 0:
+                index -= 1
+            else:
+                click.echo("Already at first filtered AC.")
+            save_current(flat_list, index)
+            continue
+        if action == "nav-next":
+            if index < len(flat_list) - 1:
+                index += 1
+            else:
+                click.echo("End of filtered list. All requirements reviewed.")
+                save_current(flat_list, index)
+                return 0
+            save_current(flat_list, index)
+            continue
+
+        if current_entry_field == "priority":
+            changed = update_criterion_status(
+                path,
+                requirement,
+                str(requirement.get("status") or ""),
+                new_priority=selected_value,
+            )
+        else:
+            new_status = selected_value or str(requirement.get("status") or "")
+            blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
+            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+
+            changed = update_criterion_status(
+                path,
+                requirement,
+                new_status,
+                blocked_reason=blocked_reason,
+                deprecated_reason=deprecated_reason,
+            )
+        process_file(
+            path,
+            check_only=False,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+
+        if changed:
+            click.echo(f"Updated {requirement['id']} -> {selected_value}")
+        else:
+            click.echo(f"No change for {requirement['id']} ({selected_value})")
+
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+        print_summary_table(table_rows, emoji_columns=emoji_columns)
+
+        flat_after = build_flat_list()
+        if current_entry_field == "priority" and changed and selected_value != target_priority:
             if not flat_after:
                 click.echo("All filtered requirements reviewed.")
                 return 0
@@ -924,6 +1254,8 @@ def lookup_criterion_interactive(
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     select_from_menu_fn=select_from_menu,
     include_status_emojis: bool | None = None,
+    priority_mode: bool = False,
+    include_priority_summary: bool = False,
 ) -> int:
     if include_status_emojis is None:
         include_status_emojis = infer_include_status_emojis(domain_files)
@@ -945,6 +1277,8 @@ def lookup_criterion_interactive(
 
     path, requirement = matches[0]
 
+    current_entry_field = "priority" if priority_mode else "status"
+
     while True:
         refreshed = find_criterion_by_id(path, criterion_id, id_prefixes=id_prefixes)
         if refreshed:
@@ -952,51 +1286,50 @@ def lookup_criterion_interactive(
 
         print_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
 
-        status_labels = [label for label, _ in STATUS_ORDER]
-        status_options = [style_status_label(label) for label, _ in STATUS_ORDER]
-        current_status = str(requirement.get("status") or "")
-        try:
-            current_status_idx = status_labels.index(current_status)
-        except ValueError:
-            current_status_idx = None
-
-        highlight_bg = "\x1b[48;5;220m"
-        if current_status == "\u2705 Verified":
-            highlight_bg = "\x1b[48;5;28m"
-        elif current_status == "\U0001f4a1 Proposed":
-            highlight_bg = "\x1b[48;5;27m"
-        elif current_status in ("\u26d4 Blocked", "\U0001f5d1\ufe0f Deprecated"):
-            highlight_bg = "\x1b[48;5;238m"
-
-        status_choice = select_from_menu_fn(
-            f"Set status for {requirement['id']}",
-            status_options,
-            show_page_indicator=False,
-            allow_paging_nav=False,
-            selected_option_index=current_status_idx,
-            selected_option_bg=highlight_bg,
+        action, selected_value = _prompt_for_requirement_action(
+            requirement,
+            current_entry_field,
+            select_from_menu_fn,
+            allow_nav=False,
         )
 
-        if status_choice is None or status_choice == "up":
+        if action in {"quit", "up"}:
             return 0
 
-        new_status = status_labels[int(status_choice)]
-        blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
-        deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+        if action == "toggle-field":
+            current_entry_field = "priority" if current_entry_field == "status" else "status"
+            continue
 
-        changed = update_criterion_status(
+        if current_entry_field == "priority":
+            changed = update_criterion_status(
+                path,
+                requirement,
+                str(requirement.get("status") or ""),
+                new_priority=selected_value,
+            )
+        else:
+            new_status = selected_value or str(requirement.get("status") or "")
+            blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
+            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+
+            changed = update_criterion_status(
+                path,
+                requirement,
+                new_status,
+                blocked_reason=blocked_reason,
+                deprecated_reason=deprecated_reason,
+            )
+        process_file(
             path,
-            requirement,
-            new_status,
-            blocked_reason=blocked_reason,
-            deprecated_reason=deprecated_reason,
+            check_only=False,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
         )
-        process_file(path, check_only=False, include_status_emojis=include_status_emojis)
 
         if changed:
-            click.echo(f"Updated {requirement['id']} -> {new_status}")
+            click.echo(f"Updated {requirement['id']} -> {selected_value}")
         else:
-            click.echo(f"No change for {requirement['id']} ({new_status})")
+            click.echo(f"No change for {requirement['id']} ({selected_value})")
 
         _, table_rows = collect_summary_rows(
             domain_files,
@@ -1004,23 +1337,5 @@ def lookup_criterion_interactive(
             display_name_fn=display_name_from_h1,
             include_status_emojis=include_status_emojis,
         )
-        print_summary_table(table_rows, emoji_columns=emoji_columns)
-        return 0
-
-        changed = update_criterion_status(
-            path,
-            requirement,
-            new_status,
-            blocked_reason=blocked_reason,
-            deprecated_reason=deprecated_reason,
-        )
-        process_file(path, check_only=False)
-
-        if changed:
-            click.echo(f"Updated {requirement['id']} -> {new_status}")
-        else:
-            click.echo(f"No change for {requirement['id']} ({new_status})")
-
-        _, table_rows = collect_summary_rows(domain_files, check_only=True, display_name_fn=display_name_from_h1)
         print_summary_table(table_rows, emoji_columns=emoji_columns)
         return 0

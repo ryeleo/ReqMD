@@ -31,6 +31,24 @@ def parse_set_entry(entry: str) -> tuple[str, str]:
     return criterion_id, status
 
 
+def parse_set_priority_entry(entry: str) -> tuple[str, str]:
+    raw = entry.strip()
+    if "=" not in raw:
+        raise click.ClickException(
+            f"Invalid --set-priority value '{entry}'. Expected format ID=PRIORITY."
+        )
+
+    criterion_id, priority = raw.split("=", 1)
+    criterion_id = criterion_id.strip()
+    priority = priority.strip()
+    if not criterion_id or not priority:
+        raise click.ClickException(
+            f"Invalid --set-priority value '{entry}'. Expected format ID=PRIORITY."
+        )
+
+    return criterion_id, priority
+
+
 def parse_batch_update_file(repo_root: Path, file_path_input: str) -> list[dict[str, str | None]]:
     path = Path(file_path_input)
     if not path.is_absolute():
@@ -77,10 +95,11 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
                 or record.get("r_id")
                 or ""
             ).strip()
-            status = str(record.get("status") or "").strip()
-            if not criterion_id or not status:
+            status = str(record.get("status") or "").strip() or None
+            priority = str(record.get("priority") or "").strip() or None
+            if not criterion_id or (status is None and priority is None):
                 raise click.ClickException(
-                    f"Invalid JSONL row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and status"
+                    f"Invalid JSONL row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and at least one of status or priority"
                 )
 
             file_filter = str(record.get("file") or "").strip() or None
@@ -91,6 +110,7 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
                 {
                     "criterion_id": criterion_id,
                     "status": status,
+                    "priority": priority,
                     "file": file_filter,
                     "blocked_reason": blocked_reason,
                     "deprecated_reason": deprecated_reason,
@@ -119,10 +139,11 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
                 or row.get("r_id")
                 or ""
             ).strip()
-            status = str(row.get("status") or "").strip()
-            if not criterion_id or not status:
+            status = str(row.get("status") or "").strip() or None
+            priority = str(row.get("priority") or "").strip() or None
+            if not criterion_id or (status is None and priority is None):
                 raise click.ClickException(
-                    f"Invalid CSV/TSV row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and status columns"
+                    f"Invalid CSV/TSV row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and at least one of status or priority columns"
                 )
 
             file_filter = str(row.get("file") or "").strip() or None
@@ -133,6 +154,7 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
                 {
                     "criterion_id": criterion_id,
                     "status": status,
+                    "priority": priority,
                     "file": file_filter,
                     "blocked_reason": blocked_reason,
                     "deprecated_reason": deprecated_reason,
