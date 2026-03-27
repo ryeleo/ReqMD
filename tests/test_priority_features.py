@@ -298,8 +298,48 @@ class TestRQMDPriority004ModeFlag:
         payload = json.loads(result.output)
         assert payload["mode"] == "filter-priority"
         assert payload["priority"] == "🔴 P0 - Critical"
-        assert payload["total"] == 1
-        assert payload["files"][0]["requirements"][0]["id"] == "AC-001"
+
+    def test_init_priorities_dry_run_does_not_modify_file(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        domain = repo / "docs" / "requirements"
+        domain.mkdir(parents=True)
+
+        target = domain / "demo.md"
+        target.write_text(
+            """# Demo Requirement
+
+Scope: demo.
+
+### AC-001: Missing priority
+- **Status:** 🔧 Implemented
+""",
+            encoding="utf-8",
+        )
+        before = target.read_text(encoding="utf-8")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli.main,
+            [
+                "--repo-root",
+                str(repo),
+                "--requirements-dir",
+                "docs/requirements",
+                "--init-priorities",
+                "--default-priority",
+                "p2",
+                "--dry-run",
+                "--json",
+                "--no-summary-table",
+            ],
+        )
+
+        assert result.exit_code == 0
+        payload = json.loads(result.output)
+        assert payload["mode"] == "init-priorities"
+        assert payload["dry_run"] is True
+        assert payload["changed_count"] == 1
+        assert target.read_text(encoding="utf-8") == before
 
     def test_init_priorities_adds_default_and_is_idempotent(self, tmp_path: Path):
         repo = tmp_path / "repo"

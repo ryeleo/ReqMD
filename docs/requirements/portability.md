@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 0🔧 10✅ 0⛔ 1🗑️
+Summary: 3💡 1🔧 10✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -122,7 +122,7 @@ Summary: 4💡 0🔧 10✅ 0⛔ 1🗑️
 - So that roll-up rendering honors project-level knobs when present while falling back to user config and built-in defaults otherwise.
 
 ### RQMD-PORTABILITY-015: Upward project-root discovery
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As a rqmd user when I run commands from nested subdirectories
 - I want rqmd to discover project root by searching CWD and parent paths up to filesystem root
 - So that root resolution follows git-like behavior and finds the nearest valid project context.

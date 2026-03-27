@@ -40,6 +40,48 @@ def iter_criteria_search_roots(repo_root: Path, search_start: Path | None = None
     return roots
 
 
+def _iter_ancestors_inclusive(start: Path) -> list[Path]:
+    current = start.resolve()
+    ancestors = [current]
+    while current != current.parent:
+        current = current.parent
+        ancestors.append(current)
+    return ancestors
+
+
+def discover_project_root(search_start: Path | None = None) -> tuple[Path, str]:
+    """Discover project root by searching upward from CWD-like start.
+
+    Marker precedence within each directory is:
+    1) .rqmd.yml/.rqmd.yaml/.rqmd.json
+    2) docs/requirements/
+    3) requirements/
+
+    Nearest ancestor with any marker wins.
+    """
+    start = (search_start or Path.cwd()).resolve()
+
+    for candidate_root in _iter_ancestors_inclusive(start):
+        config_markers = [
+            ".rqmd.yml",
+            ".rqmd.yaml",
+            ".rqmd.json",
+        ]
+        for marker_name in config_markers:
+            if (candidate_root / marker_name).is_file():
+                return candidate_root, f"marker:{marker_name}"
+
+        docs_requirements = candidate_root / "docs" / "requirements"
+        if docs_requirements.is_dir():
+            return candidate_root, "marker:docs/requirements"
+
+        requirements = candidate_root / "requirements"
+        if requirements.is_dir():
+            return candidate_root, "marker:requirements"
+
+    return start, "fallback:cwd"
+
+
 def auto_detect_criteria_dir(repo_root: Path, search_start: Path | None = None) -> tuple[Path | None, str | None]:
     search_roots = iter_criteria_search_roots(repo_root, search_start)
     candidate_specs = (

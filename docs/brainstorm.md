@@ -9,7 +9,7 @@ follow-on requirement for --set-flagged ID=true|false so automation can mutate f
 This works great with AI agents!
 
 ```
-Continue! Try to implement all 41 proposed RQMDs this time if you can! Make sure to check your priorities after every 3-5 or so depending on how complicated the work is and how interdependent they might be.
+Continue! Try to implement all 48 proposed RQMDs this time if you can! Make sure to check your priorities after every 3-5 or so depending on how complicated the work is and how interdependent they might be.
 
 Do the easier ones first so we see how far you get before running into something you cannot do.
 

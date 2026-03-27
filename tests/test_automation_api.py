@@ -939,6 +939,289 @@ def test_RQMD_automation_010_filter_status_implemented_json_entries_match_live_r
         assert str(matching[0]["title"]) == requirement_title
 
 
+def test_RQMD_automation_011_filter_status_json_empty_result_has_zero_total(two_file_repo: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(two_file_repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-status",
+            "blocked",
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-status"
+    assert payload["status"] == "⛔ Blocked"
+    assert payload["total"] == 0
+    assert payload["files"] == []
+
+
+def test_RQMD_automation_013_filter_status_json_is_sorted_by_requirement_id(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-010: Later ID
+- **Status:** 💡 Proposed
+
+### AC-DEMO-002: Earlier ID
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-status",
+            "proposed",
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    ids = [entry["id"] for entry in payload["files"][0]["requirements"]]
+    assert ids == ["AC-DEMO-002", "AC-DEMO-010"]
+
+
+def test_RQMD_automation_023_and_024_filter_flagged_json(two_file_repo: Path) -> None:
+    first = two_file_repo / "docs" / "requirements" / "first.md"
+    first.write_text(
+        first.read_text(encoding="utf-8") + "\n- **Flagged:** true\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(two_file_repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-flagged",
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-flagged"
+    assert payload["flagged"] is True
+    assert payload["total"] == 1
+    requirement = payload["files"][0]["requirements"][0]
+    assert requirement["id"] == "AC-OVERLAP-001"
+    assert requirement["flagged"] is True
+
+
+def test_RQMD_automation_024_filter_flagged_json_empty(two_file_repo: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(two_file_repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-flagged",
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-flagged"
+    assert payload["flagged"] is True
+    assert payload["total"] == 0
+    assert payload["files"] == []
+
+
+def test_RQMD_automation_025_set_flagged_and_json_mode(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--requirements-dir",
+            "docs/requirements",
+            "--set-flagged",
+            "AC-HELLO-001=true",
+            "--json",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "set-flagged"
+    assert payload["updates"][0]["criterion_id"] == "AC-HELLO-001"
+    assert payload["updates"][0]["flagged"] is True
+
+    text = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
+    assert "- **Flagged:** true" in text
+
+
+def test_RQMD_automation_025_set_file_accepts_flagged_rows(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+    update_file = tmp_path / "flagged-updates.jsonl"
+    update_file.write_text('{"id":"AC-HELLO-001","flagged":"false"}\n', encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--requirements-dir",
+            "docs/requirements",
+            "--set-file",
+            str(update_file),
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    text = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
+    assert "- **Flagged:** false" in text
+
+
+def test_RQMD_automation_017_json_no_interactive_never_prompts(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+
+    def fail_confirm(*_args, **_kwargs):
+        raise AssertionError("click.confirm should not be called in JSON/non-interactive mode")
+
+    monkeypatch.setattr(cli.click, "confirm", fail_confirm)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Requirement docs directory not found" in result.output
+
+
+def test_RQMD_automation_014_set_dry_run_does_not_write(repo_with_domain_docs: Path) -> None:
+    target = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
+    before = target.read_text(encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--requirements-dir",
+            "docs/requirements",
+            "--set-requirement-id",
+            "AC-HELLO-001",
+            "--set-status",
+            "verified",
+            "--dry-run",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Would update AC-HELLO-001" in result.output
+    assert target.read_text(encoding="utf-8") == before
+
+
+def test_RQMD_automation_014_set_file_dry_run_does_not_write(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+    target = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
+    before = target.read_text(encoding="utf-8")
+
+    update_file = tmp_path / "updates.jsonl"
+    update_file.write_text('{"id":"AC-HELLO-001","status":"blocked"}\n', encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--requirements-dir",
+            "docs/requirements",
+            "--set-file",
+            str(update_file),
+            "--dry-run",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Would update AC-HELLO-001" in result.output
+    assert target.read_text(encoding="utf-8") == before
+
+
+def test_RQMD_automation_014_set_flagged_dry_run_json_reports_without_write(repo_with_domain_docs: Path) -> None:
+    target = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
+    before = target.read_text(encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--requirements-dir",
+            "docs/requirements",
+            "--set-flagged",
+            "AC-HELLO-001=true",
+            "--dry-run",
+            "--json",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "set-flagged"
+    assert payload["dry_run"] is True
+    assert payload["updates"][0]["flagged"] is True
+    assert target.read_text(encoding="utf-8") == before
+
+
 def test_RQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(

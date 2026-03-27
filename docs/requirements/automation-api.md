@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 15💡 0🔧 10✅ 0⛔ 0🗑️
+Summary: 5💡 10🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -78,25 +78,25 @@ Summary: 15💡 0🔧 10✅ 0⛔ 0🗑️
 - And rqmd exits without interactive prompts or tree formatting noise.
 
 ### RQMD-AUTOMATION-011: Empty filter JSON result
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As a CI user
 - I want `--json` filter queries with no matches to return `total: 0` and `files: []`
 - So that zero-match runs are handled as valid outcomes without brittle parsing.
 
 ### RQMD-AUTOMATION-012: Stable JSON schema contract
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As an API consumer
 - I want documented required JSON keys and value types per mode
 - So that integrations are predictable and versioned when schema changes.
 
 ### RQMD-AUTOMATION-013: Deterministic JSON ordering
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As a build engineer
 - I want JSON arrays emitted in deterministic order
 - So that repeated runs on unchanged inputs produce stable diffs.
 
 ### RQMD-AUTOMATION-014: Dry-run for mutation commands
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As an automation user
 - I want dry-run behavior for write commands (`--set`, `--set-file`, `--set-priority`, `--init-priorities`)
 - So that I can preview exact changes before applying them.
@@ -108,19 +108,19 @@ Summary: 15💡 0🔧 10✅ 0⛔ 0🗑️
 - So that retry logic can target only failed rows.
 
 ### RQMD-AUTOMATION-016: Exit code matrix
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As a pipeline author
 - I want explicit documented exit codes by outcome type
 - So that pipeline control flow remains unambiguous.
 
 ### RQMD-AUTOMATION-017: Prompt suppression guarantee
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As a headless runner
 - I want non-interactive and JSON modes to never prompt
 - So that jobs never hang waiting for input.
 
 ### RQMD-AUTOMATION-018: Migration mode automation contract
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As a migration operator
 - I want `--init --yes` and `--init-priorities` to be idempotent, deterministic, and JSON-reportable
 - So that migration steps are reliable in CI/CD workflows.
@@ -151,19 +151,19 @@ Summary: 15💡 0🔧 10✅ 0⛔ 0🗑️
 - So that tools can branch on error type, inspect candidates, and auto-remediate input expansion.
 
 ### RQMD-AUTOMATION-023: Filter flagged requirements
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As an automation user
 - I want a `--filter-flagged` mode for non-interactive workflows
 - So that flagged requirements can be listed, walked, or exported without relying on status changes.
 
 ### RQMD-AUTOMATION-024: JSON output for flagged items
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As an automation user
 - I want `--filter-flagged --json` to return flagged requirements in the same stable grouped structure used by other filter modes
 - So that bots and scripts can consume focus lists consistently.
 
 ### RQMD-AUTOMATION-025: Direct flagged-state mutation
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As an automation user
 - I want to set flagged state directly with `--set-flagged REQUIREMENT-ID=true|false`
 - So that workflows can mutate flagged state deterministically without requiring interactive mode.

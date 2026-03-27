@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 0🔧 16✅ 0⛔ 0🗑️
+Summary: 1💡 1🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -137,7 +137,7 @@ Summary: 2💡 0🔧 16✅ 0⛔ 0🗑️
 - So that generated scaffold copy and README messaging include a concise tagline plus direct links to the project GitHub homepage and/or PyPI page.
 
 ### RQMD-CORE-018: First-class binary flagged field
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - As a rqmd user when I want to focus on a subset of requirements without changing project statuses
 - I want a simple binary flagged field on requirements
 - So that I can mark items for attention without introducing a new `Flagged` status into the status catalog.

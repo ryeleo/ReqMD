@@ -77,17 +77,20 @@ except ImportError:
 from . import workflows as workflows_mod
 from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
                            parse_batch_update_jsonl, parse_set_entry,
+                           parse_set_flagged_entry,
                            parse_set_priority_entry)
 from .config import load_config, validate_config
 from .constants import (DEFAULT_CRITERIA_DIR, DEFAULT_ID_PREFIXES,
                         ID_PREFIX_PATTERN, STATUS_ORDER, STATUS_PATTERN,
                         SUMMARY_END, SUMMARY_START)
 from .criteria_parser import (collect_criteria_by_priority,
+                              collect_criteria_by_flagged,
                               collect_criteria_by_status, find_criterion_by_id,
                               normalize_id_prefixes, parse_criteria,
                               resolve_id_prefixes)
 from .markdown_io import (auto_detect_criteria_dir, check_files_writable,
                           check_index_sync, display_name_from_h1,
+                          discover_project_root,
                           format_path_display,
                           initialize_requirements_scaffold,
                           iter_criteria_search_roots, iter_domain_files,
@@ -327,6 +330,11 @@ def lookup_criterion_interactive(
     help="Non-interactive bulk mode: repeat ID=STATUS (for example --set R-FOO-001=implemented).",
 )
 @click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Preview mutation changes without writing files (applies to --set/--set-file/--set-priority/--set-flagged/--init-priorities).",
+)
+@click.option(
     "--set-file",
     "set_file_input",
     type=str,
@@ -356,6 +364,13 @@ def lookup_criterion_interactive(
     help="Non-interactive priority mode: repeat ID=PRIORITY (for example --set-priority R-FOO-001=p0).",
 )
 @click.option(
+    "--set-flagged",
+    "set_flagged_updates",
+    multiple=True,
+    type=str,
+    help="Non-interactive flagged mode: repeat ID=true|false (for example --set-flagged R-FOO-001=true).",
+)
+@click.option(
     "--priority-mode",
     is_flag=True,
     help="Interactive mode: default to Priority focus instead of Status focus in entry panels.",
@@ -374,6 +389,11 @@ def lookup_criterion_interactive(
     "--filter-priority",
     type=str,
     help="Filter by priority: walks matching requirements interactively (default) or shows tree with --tree.",
+)
+@click.option(
+    "--filter-flagged",
+    is_flag=True,
+    help="Filter flagged requirements and print matches as tree/JSON in non-interactive workflows.",
 )
 @click.option(
     "--tree",
@@ -499,7 +519,9 @@ def lookup_criterion_interactive(
     is_flag=True,
     help="Auto-confirm scaffold initialization (non-interactive friendly).",
 )
+@click.pass_context
 def main(
+    ctx: click.Context,
     check: bool,
     verbose: bool,
     emoji_columns: bool,
@@ -508,15 +530,18 @@ def main(
     set_criterion_id: str | None,
     set_status: str | None,
     set_updates: tuple[str, ...],
+    dry_run: bool,
     set_file_input: str | None,
     set_file: str | None,
     set_blocked_reason: str | None,
     set_deprecated_reason: str | None,
     set_priority_updates: tuple[str, ...],
+    set_flagged_updates: tuple[str, ...],
     priority_mode: bool,
     show_priority_summary: bool,
     filter_status: str | None,
     filter_priority: str | None,
+    filter_flagged: bool,
     tree: bool,
     summary_table: bool,
     sort_strategy: str,
@@ -539,7 +564,18 @@ def main(
     confirm_yes: bool,
     criterion_id: str | None,
 ) -> None:
-    repo_root = repo_root.resolve()
+    repo_root_source = ctx.get_parameter_source("repo_root")
+    repo_root_explicit = repo_root_source != click.core.ParameterSource.DEFAULT
+
+    root_discovery_message: str | None = None
+    if repo_root_explicit:
+        repo_root = repo_root.resolve()
+    else:
+        discovered_root, discovered_source = discover_project_root(Path.cwd())
+        repo_root = discovered_root
+        root_discovery_message = (
+            f"Auto-discovered project root: {repo_root} ({discovered_source})"
+        )
 
     # Load project config from .rqmd.json
     try:
@@ -571,8 +607,11 @@ def main(
             err=True,
         )
 
+    if root_discovery_message and not json_output:
+        click.echo(root_discovery_message)
+
     if init_scaffold:
-        if check or filter_status or filter_priority or set_criterion_id or set_status or set_updates or set_priority_updates or set_file_input or set_file or tree or rollup_mode or criterion_id:
+        if check or filter_status or filter_priority or filter_flagged or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or criterion_id:
             raise click.ClickException(
                 "--init cannot be combined with --check, --rollup, positional ID, --filter-status/--tree, or --set-* options."
             )
@@ -592,6 +631,17 @@ def main(
             criteria_dir or DEFAULT_CRITERIA_DIR,
             starter_prefix=starter_prefix,
         )
+        if json_output:
+            payload = {
+                "mode": "init",
+                "criteria_dir": criteria_dir or DEFAULT_CRITERIA_DIR,
+                "starter_prefix": starter_prefix,
+                "created_files": [format_path_display(path, repo_root) for path in created],
+                "created_count": len(created),
+            }
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
         if created:
             click.echo("Initialized requirement scaffold:")
             for path in created:
@@ -676,10 +726,12 @@ def main(
             check
             or filter_status
             or filter_priority
+            or filter_flagged
             or set_criterion_id
             or set_status
             or set_updates
             or set_priority_updates
+            or set_flagged_updates
             or set_file_input
             or set_file
             or tree
@@ -718,13 +770,14 @@ def main(
                 inserted = True
 
             if inserted:
-                path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
-                process_file(
-                    path,
-                    check_only=False,
-                    include_status_emojis=include_status_emojis,
-                    include_priority_summary=show_priority_summary,
-                )
+                if not dry_run:
+                    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+                    process_file(
+                        path,
+                        check_only=False,
+                        include_status_emojis=include_status_emojis,
+                        include_priority_summary=show_priority_summary,
+                    )
                 changed_paths.append(path)
 
         _, table_rows = collect_summary_rows(
@@ -740,6 +793,7 @@ def main(
                 "mode": "init-priorities",
                 "criteria_dir": format_path_display(resolved_criteria_dir, repo_root),
                 "default_priority": canonical_default_priority,
+                "dry_run": dry_run,
                 "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
                 "changed_count": len(changed_paths),
             }
@@ -748,11 +802,12 @@ def main(
 
         if summary_table:
             print_summary_table(table_rows, emoji_columns=emoji_columns)
-        click.echo(f"Initialized priorities in {len(changed_paths)} file(s) using {canonical_default_priority}.")
+        verb = "Would initialize" if dry_run else "Initialized"
+        click.echo(f"{verb} priorities in {len(changed_paths)} file(s) using {canonical_default_priority}.")
         raise SystemExit(0)
 
     if strip_status_emojis or restore_status_emojis:
-        if check or filter_status or set_criterion_id or set_status or set_updates or set_file_input or set_file or tree or rollup_mode or criterion_id:
+        if check or filter_status or filter_priority or filter_flagged or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or criterion_id:
             raise click.ClickException(
                 "Emoji strip/restore modes cannot be combined with --check, --rollup, positional ID, --filter-status/--tree, or --set-* options."
             )
@@ -806,7 +861,7 @@ def main(
 
     # Positional ID lookup: find the requirement, show panel + status menu, done.
     if criterion_id:
-        if check or filter_status or filter_priority or set_criterion_id or set_status or set_updates or set_priority_updates or set_file_input or set_file or tree or rollup_mode:
+        if check or filter_status or filter_priority or filter_flagged or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode:
             raise click.ClickException(
                 "Positional ID cannot be combined with --check, --rollup, --filter-status, --tree, or --set-* options."
             )
@@ -825,7 +880,7 @@ def main(
 
     changed_paths, table_rows = collect_summary_rows(
         domain_files,
-        check_only=check,
+        check_only=(check or dry_run),
         display_name_fn=display_name_from_h1,
         include_status_emojis=include_status_emojis,
         include_priority_summary=show_priority_summary,
@@ -863,7 +918,7 @@ def main(
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
     if rollup_mode:
-        if check or filter_status or set_criterion_id or set_status or set_updates or set_priority_updates or set_file_input or set_file or tree:
+        if check or filter_status or filter_priority or filter_flagged or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree:
             raise click.ClickException("--rollup cannot be combined with --check, --filter-status, --tree, or --set-* options.")
         rollup_columns, rollup_source = resolve_rollup_columns(
             repo_root,
@@ -918,16 +973,17 @@ def main(
             print(msg, file=sys.stderr)
         raise SystemExit(1)
 
-    # --tree without --filter-status is a no-op guard
-    if tree and not (filter_status or filter_priority):
-        raise click.ClickException("--tree requires --filter-status or --filter-priority.")
+    # --tree without an active filter mode is a no-op guard
+    if tree and not (filter_status or filter_priority or filter_flagged):
+        raise click.ClickException("--tree requires --filter-status, --filter-priority, or --filter-flagged.")
 
-    if filter_status and filter_priority:
-        raise click.ClickException("Use either --filter-status or --filter-priority, not both.")
+    active_filter_count = int(bool(filter_status)) + int(bool(filter_priority)) + int(bool(filter_flagged))
+    if active_filter_count > 1:
+        raise click.ClickException("Use only one filter mode at a time: --filter-status, --filter-priority, or --filter-flagged.")
 
     # Handle --filter-status mode
     if filter_status:
-        if check or set_criterion_id or set_status or set_updates or set_priority_updates or set_file_input or set_file:
+        if check or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
             raise click.ClickException("--filter-status cannot be combined with --check / --set-requirement-id / --set-status / --file.")
         try:
             normalized_status = normalize_status_input(filter_status)
@@ -971,7 +1027,7 @@ def main(
         )
 
     if filter_priority:
-        if check or set_criterion_id or set_status or set_updates or set_priority_updates or set_file_input or set_file:
+        if check or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
             raise click.ClickException("--filter-priority cannot be combined with --check / --set-requirement-id / --set-status / --set-priority / --file.")
         normalized_priority = normalize_priority_input(filter_priority)
         criteria_by_file = collect_criteria_by_priority(
@@ -1011,8 +1067,37 @@ def main(
             )
         )
 
+    if filter_flagged:
+        if check or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
+            raise click.ClickException("--filter-flagged cannot be combined with --check or mutation options.")
+
+        criteria_by_file = collect_criteria_by_flagged(
+            repo_root,
+            domain_files,
+            True,
+            id_prefixes=id_prefixes,
+        )
+
+        if json_output:
+            payload = build_filtered_criteria_payload(
+                repo_root,
+                resolved_criteria_dir,
+                criteria_by_file,
+                True,
+                include_body=include_body,
+                id_prefixes=id_prefixes,
+                filter_mode="filter-flagged",
+                filter_label="flagged",
+            )
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
+        # Non-interactive by design for automation workflows.
+        print_criteria_tree(repo_root, criteria_by_file, "flagged=true", filter_label="flagged")
+        raise SystemExit(0)
+
     non_interactive_requested = bool(
-        set_criterion_id or set_status or set_updates or set_priority_updates or set_file_input or set_file
+        set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file
     )
     if non_interactive_requested:
         if check:
@@ -1020,21 +1105,23 @@ def main(
         mode_count = (
             int(bool(set_updates))
             + int(bool(set_priority_updates))
+            + int(bool(set_flagged_updates))
             + int(bool(set_file_input))
             + int(bool(set_criterion_id or set_status))
         )
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --set-file, --set ID=STATUS (repeatable), --set-priority ID=PRIORITY (repeatable), or --set-requirement-id with --set-status."
+                "Use exactly one non-interactive update mode: --set-file, --set ID=STATUS (repeatable), --set-priority ID=PRIORITY (repeatable), --set-flagged ID=true|false (repeatable), or --set-requirement-id with --set-status."
             )
 
-        update_requests: list[dict[str, str | None]] = []
+        update_requests: list[dict[str, object]] = []
         if set_updates:
             update_requests = [
                 {
                     "criterion_id": cid,
                     "status": status,
                     "priority": None,
+                    "flagged": None,
                     "file": set_file,
                     "blocked_reason": None,
                     "deprecated_reason": None,
@@ -1049,11 +1136,27 @@ def main(
                     "criterion_id": cid,
                     "status": None,
                     "priority": priority,
+                    "flagged": None,
                     "file": set_file,
                     "blocked_reason": None,
                     "deprecated_reason": None,
                 }
                 for cid, priority in (parse_set_priority_entry(entry) for entry in set_priority_updates)
+            ]
+        elif set_flagged_updates:
+            if set_file_input:
+                raise click.ClickException("--set-flagged cannot be combined with --set-file.")
+            update_requests = [
+                {
+                    "criterion_id": cid,
+                    "status": None,
+                    "priority": None,
+                    "flagged": flagged,
+                    "file": set_file,
+                    "blocked_reason": None,
+                    "deprecated_reason": None,
+                }
+                for cid, flagged in (parse_set_flagged_entry(entry) for entry in set_flagged_updates)
             ]
         elif set_file_input:
             if set_file:
@@ -1069,6 +1172,7 @@ def main(
                     "criterion_id": set_criterion_id,
                     "status": set_status,
                     "priority": None,
+                    "flagged": None,
                     "file": set_file,
                     "blocked_reason": set_blocked_reason,
                     "deprecated_reason": set_deprecated_reason,
@@ -1084,6 +1188,7 @@ def main(
             criterion_id_value = str(request["criterion_id"])
             status_value = str(request["status"]) if request["status"] is not None else None
             priority_value = str(request["priority"]) if request.get("priority") is not None else None
+            flagged_value = request.get("flagged") if isinstance(request.get("flagged"), bool) else None
             row_file_filter = str(request["file"]) if request["file"] is not None else None
             normalized_status = normalize_status_input(status_value) if status_value is not None else None
 
@@ -1114,10 +1219,12 @@ def main(
                 blocked_reason=blocked_reason,
                 deprecated_reason=deprecated_reason,
                 new_priority_input=priority_value,
+                new_flagged_value=flagged_value,
                 include_status_emojis=include_status_emojis,
                 include_priority_summary=show_priority_summary,
                 id_prefixes=id_prefixes,
                 emit_output=not json_output,
+                dry_run=dry_run,
             )
             if changed and changed_path is not None:
                 changed_files.add(changed_path)
@@ -1126,6 +1233,7 @@ def main(
                     "criterion_id": criterion_id_value,
                     "status": normalized_status,
                     "priority": priority_value,
+                    "flagged": flagged_value,
                     "file": row_file_filter,
                     "changed": changed,
                 }
@@ -1140,7 +1248,13 @@ def main(
         )
         if json_output:
             payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
-            payload["mode"] = "set-priority" if set_priority_updates and not set_updates else "set"
+            payload["dry_run"] = dry_run
+            if set_priority_updates and not set_updates and not set_flagged_updates:
+                payload["mode"] = "set-priority"
+            elif set_flagged_updates and not set_updates and not set_priority_updates:
+                payload["mode"] = "set-flagged"
+            else:
+                payload["mode"] = "set"
             payload["updates"] = update_results
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
             raise SystemExit(0)

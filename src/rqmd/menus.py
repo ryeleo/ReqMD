@@ -163,27 +163,41 @@ def select_from_menu(
                     keys_line = f"{keys_line} | {key}={help_text}"
         click.echo(keys_line)
         click.echo("choice: ", nl=False)
-        choice = click.getchar().strip().lower()
+        raw_choice = click.getchar()
+        choice = raw_choice.strip()
         click.echo(choice)
 
         if not choice:
             continue
         if choice == "\x03":
             raise click.Abort()
-        if choice == MENU_QUIT:
+        if choice.lower() == MENU_QUIT:
             return None
-        if choice == MENU_UP:
+        if choice.lower() == MENU_UP:
             return "up"
         if extra_key and choice == extra_key:
             return extra_key_return
+        if extra_key and choice.lower() == extra_key.lower():
+            return extra_key_return
         if extra_keys and choice in extra_keys:
             return extra_keys[choice]
-        if allow_paging_nav and choice == MENU_NEXT:
-            if page < total_pages - 1:
+        if extra_keys and choice.lower() in extra_keys:
+            return extra_keys[choice.lower()]
+
+        if allow_paging_nav and choice.lower() == MENU_NEXT:
+            # Shift+N acts as reverse paging (previous page).
+            if choice.isupper():
+                if page > 0:
+                    page -= 1
+            elif page < total_pages - 1:
                 page += 1
             continue
-        if allow_paging_nav and choice == MENU_PREV:
-            if page > 0:
+        if allow_paging_nav and choice.lower() == MENU_PREV:
+            # Shift+P acts as reverse paging (next page).
+            if choice.isupper():
+                if page < total_pages - 1:
+                    page += 1
+            elif page > 0:
                 page -= 1
             continue
 

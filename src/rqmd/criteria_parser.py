@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .constants import (BLOCKED_REASON_PATTERN, DEFAULT_ID_PREFIXES,
                         DEPRECATED_REASON_PATTERN,
+                        FLAGGED_PATTERN,
                         GENERIC_CRITERION_HEADER_PATTERN, ID_PREFIX_PATTERN,
                         MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
                         REQUIREMENTS_INDEX_NAME, STATUS_PATTERN)
@@ -147,6 +148,8 @@ def parse_criteria(
                 "blocked_reason_line": None,
                 "deprecated_reason": None,
                 "deprecated_reason_line": None,
+                "flagged": None,
+                "flagged_line": None,
             }
             requirements.append(current)
             continue
@@ -182,6 +185,11 @@ def parse_criteria(
         if deprecated_match and current and current["status_line"] is not None:
             current["deprecated_reason"] = deprecated_match.group(1).strip()
             current["deprecated_reason_line"] = index
+
+        flagged_match = FLAGGED_PATTERN.match(line)
+        if flagged_match and current and current["status_line"] is not None:
+            current["flagged"] = flagged_match.group("flagged") == "true"
+            current["flagged_line"] = index
 
     return [requirement for requirement in requirements if requirement["status_line"] is not None]
 
@@ -281,6 +289,22 @@ def collect_criteria_by_priority(
     for path in domain_files:
         requirements = parse_criteria(path, id_prefixes=id_prefixes)
         matching = [c for c in requirements if c.get("priority") == target_priority]
+        if matching:
+            result[path] = matching
+    return result
+
+
+def collect_criteria_by_flagged(
+    repo_root: Path,
+    domain_files: list[Path],
+    flagged: bool,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> dict[Path, list[dict[str, object]]]:
+    del repo_root
+    result: dict[Path, list[dict[str, object]]] = {}
+    for path in domain_files:
+        requirements = parse_criteria(path, id_prefixes=id_prefixes)
+        matching = [c for c in requirements if c.get("flagged") is flagged]
         if matching:
             result[path] = matching
     return result

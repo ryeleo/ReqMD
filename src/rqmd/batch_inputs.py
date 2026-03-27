@@ -49,6 +49,24 @@ def parse_set_priority_entry(entry: str) -> tuple[str, str]:
     return criterion_id, priority
 
 
+def parse_set_flagged_entry(entry: str) -> tuple[str, bool]:
+    raw = entry.strip()
+    if "=" not in raw:
+        raise click.ClickException(
+            f"Invalid --set-flagged value '{entry}'. Expected format ID=true|false."
+        )
+
+    criterion_id, flagged_raw = raw.split("=", 1)
+    criterion_id = criterion_id.strip()
+    flagged_value = flagged_raw.strip().lower()
+    if not criterion_id or flagged_value not in {"true", "false"}:
+        raise click.ClickException(
+            f"Invalid --set-flagged value '{entry}'. Expected format ID=true|false."
+        )
+
+    return criterion_id, flagged_value == "true"
+
+
 def parse_batch_update_file(repo_root: Path, file_path_input: str) -> list[dict[str, str | None]]:
     path = Path(file_path_input)
     if not path.is_absolute():
@@ -97,9 +115,16 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
             ).strip()
             status = str(record.get("status") or "").strip() or None
             priority = str(record.get("priority") or "").strip() or None
-            if not criterion_id or (status is None and priority is None):
+            flagged_value = str(record.get("flagged") or "").strip().lower() or None
+            if flagged_value is not None and flagged_value not in {"true", "false"}:
                 raise click.ClickException(
-                    f"Invalid JSONL row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and at least one of status or priority"
+                    f"Invalid JSONL row at {path}:{line_number}: flagged must be true or false"
+                )
+            flagged = (flagged_value == "true") if flagged_value is not None else None
+
+            if not criterion_id or (status is None and priority is None and flagged is None):
+                raise click.ClickException(
+                    f"Invalid JSONL row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and at least one of status, priority, or flagged"
                 )
 
             file_filter = str(record.get("file") or "").strip() or None
@@ -111,6 +136,7 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
                     "criterion_id": criterion_id,
                     "status": status,
                     "priority": priority,
+                    "flagged": flagged,
                     "file": file_filter,
                     "blocked_reason": blocked_reason,
                     "deprecated_reason": deprecated_reason,
@@ -141,9 +167,16 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
             ).strip()
             status = str(row.get("status") or "").strip() or None
             priority = str(row.get("priority") or "").strip() or None
-            if not criterion_id or (status is None and priority is None):
+            flagged_value = str(row.get("flagged") or "").strip().lower() or None
+            if flagged_value is not None and flagged_value not in {"true", "false"}:
                 raise click.ClickException(
-                    f"Invalid CSV/TSV row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and at least one of status or priority columns"
+                    f"Invalid CSV/TSV row at {path}:{line_number}: flagged must be true or false"
+                )
+            flagged = (flagged_value == "true") if flagged_value is not None else None
+
+            if not criterion_id or (status is None and priority is None and flagged is None):
+                raise click.ClickException(
+                    f"Invalid CSV/TSV row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and at least one of status, priority, or flagged columns"
                 )
 
             file_filter = str(row.get("file") or "").strip() or None
@@ -155,6 +188,7 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
                     "criterion_id": criterion_id,
                     "status": status,
                     "priority": priority,
+                    "flagged": flagged,
                     "file": file_filter,
                     "blocked_reason": blocked_reason,
                     "deprecated_reason": deprecated_reason,
