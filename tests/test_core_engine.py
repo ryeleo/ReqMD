@@ -157,6 +157,51 @@ def test_RQMD_core_009_missing_domain_docs_handling(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "No requirement markdown files found under" in result.output
+    assert "rqmd --init --yes" in result.output
+
+
+def test_RQMD_core_009_missing_domain_docs_yes_initializes_scaffold(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    (repo / "docs" / "requirements").mkdir(parents=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--yes",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert (repo / "docs" / "requirements" / "README.md").exists()
+    starter = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
+    assert "### REQ-HELLO-001: Replace this starter requirement" in starter
+
+
+def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--init",
+            "--yes",
+        ],
+    )
+
+    assert result.exit_code == 0
+    starter = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
+    assert "### REQ-HELLO-001: Replace this starter requirement" in starter
 
 
 def test_RQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:

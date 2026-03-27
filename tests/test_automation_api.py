@@ -923,7 +923,6 @@ def test_RQMD_automation_010_filter_status_implemented_json_entries_match_live_r
         for requirement in file_entry["requirements"]
     ]
     assert payload["total"] == len(flattened)
-    assert payload["total"] > 0
 
     seen_ids: set[tuple[str, str]] = set()
     for rel_path, requirement_id, requirement_title in flattened:

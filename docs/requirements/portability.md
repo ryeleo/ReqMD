@@ -3,39 +3,39 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 7🔧 3✅ 0⛔ 1🗑️
+Summary: 3💡 0🔧 10✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given the target project is not the current directory
 - When `--repo-root` is provided
 - Then all file discovery and updates are scoped to that root
 - And relative paths are resolved against it.
 
 ### RQMD-PORTABILITY-002: Configurable requirements directory
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given requirements docs live outside default location
 - When `--requirements-dir` is set
 - Then markdown discovery uses that directory
 - And supports absolute or repo-root-relative input.
 
 ### RQMD-PORTABILITY-003: Default conventions
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given no portability flags are provided
 - When command runs
 - Then repo root defaults to current directory
 - And requirements directory defaults to docs/requirements.
 
 ### RQMD-PORTABILITY-004: Stable relative source display
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given requirement panels and updates are printed
 - When output references file paths
 - Then source paths are shown relative to repo root
 - And remain readable across machines.
 
 ### RQMD-PORTABILITY-005: Non-project-specific assumptions
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given this package is copied into another codebase
 - When command is executed with valid docs structure
 - Then tool behavior does not depend on Speed Steel VR-specific files
@@ -58,7 +58,7 @@ Summary: 3💡 7🔧 3✅ 0⛔ 1🗑️
 - And both JSON and YAML are supported: detection is by file extension (`.json`, `.yml`, `.yaml`) with content-based sniffing as a fallback; parsed content is validated against a single canonical schema to ensure consistent behavior across formats.
 
 ### RQMD-PORTABILITY-008: Automatic requirements-dir search from current path
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given users run rqmd without an explicit `--requirements-dir`
 - When rqmd scans from the current working path
 - Then rqmd searches for viable requirements index locations including `docs/requirements/README.md` and `requirements/README.md`
@@ -67,7 +67,7 @@ Summary: 3💡 7🔧 3✅ 0⛔ 1🗑️
 - And rqmd reports which path was selected.
 
 ### RQMD-PORTABILITY-009: Graceful startup errors for docs availability and permissions
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given rqmd cannot open requirements docs because files are missing or inaccessible
 - When startup validation fails
 - Then rqmd exits with a clear, actionable error message

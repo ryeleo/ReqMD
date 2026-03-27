@@ -3,60 +3,60 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 14🔧 0✅ 0⛔ 2🗑️
+Summary: 3💡 0🔧 14✅ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given the command is run without non-interactive flags
 - When check mode is not enabled
 - Then interactive flow opens by default
 - And user can navigate file -> requirement -> status.
 
 ### RQMD-INTERACTIVE-002: Single-key menu navigation
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given the interactive menu is visible
 - When the user presses menu keys
 - Then selections and navigation are handled without pressing Enter
 - And key mappings are printed in the menu footer.
 
 ### RQMD-INTERACTIVE-003: Paging controls
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given menu options exceed one page
 - When user presses next/prev page keys
 - Then menu page changes accordingly
 - And selection remains scoped to visible page indices.
 
 ### RQMD-INTERACTIVE-004: Requirement next/prev shortcuts
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given the status menu for a requirement is open
 - When user presses `n` (next) or `p` (prev)
 - Then focus moves across requirements in current ordering
 - And history-aware navigation supports backtracking.
 
 ### RQMD-INTERACTIVE-004A: Next/prev stack semantics
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given users navigate requirements using `n` and `p`
 - When users move forward and backward across requirements
 - Then rqmd preserves a history stack semantics for backtracking
 - And `p` returns to the previously visited requirement context.
 
 ### RQMD-INTERACTIVE-005: Sort toggles
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given file or requirement list menu is open
 - When user toggles sort
 - Then ordering switches between default and priority sorting
 - And the menu reflects the new mode.
 
 ### RQMD-INTERACTIVE-006: Status highlight row
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given status options are displayed for a requirement
 - When menu renders
 - Then current status row is highlighted
 - And highlight color aligns with status family.
 
 ### RQMD-INTERACTIVE-006A: Color semantics for status families
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given status-driven text appears in menus and tables
 - When status color styles are applied
 - Then Proposed uses the dedicated proposed color treatment
@@ -65,35 +65,35 @@ Summary: 3💡 14🔧 0✅ 0⛔ 2🗑️
 - And non-terminal in-progress statuses retain neutral baseline readability.
 
 ### RQMD-INTERACTIVE-006B: Color roll-up and row styling
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given the file selection menu shows aggregate roll-ups
 - When roll-up text is rendered
 - Then blue/proposed, green/completed, normal/in-progress, and dimmed/blocked+deprecated buckets are visually distinct
 - And zebra striping remains visible even when inline ANSI status colors are present
 
 ### RQMD-INTERACTIVE-007: Auto-advance after update
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given a requirement status is changed in interactive flow
 - When update succeeds
 - Then the interface advances to the next requirement
 - And summary table refreshes with updated counts.
 
 ### RQMD-INTERACTIVE-008: Optional reason prompts
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given user sets status to Blocked or Deprecated
 - When update is confirmed
 - Then tool prompts for optional reason text
 - And reason line is inserted or updated when provided.
 
 ### RQMD-INTERACTIVE-009: Positional requirement lookup mode
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given a requirement ID is passed positionally
 - When command executes
 - Then matching requirement panel opens directly
 - And user can set status once then exit.
 
 ### RQMD-INTERACTIVE-009A: Up key for hierarchical navigation
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given users are in interactive menus
 - When users press `u` (up)
 - Then rqmd moves up exactly one level in the menu hierarchy
@@ -109,7 +109,7 @@ Summary: 3💡 14🔧 0✅ 0⛔ 2🗑️
 - And interactive and non-interactive outputs both use the same configured status catalog.
 
 ### RQMD-INTERACTIVE-011: Preflight write-permission gate before interactive mode
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given interactive mode can modify markdown requirement files
 - When rqmd is about to open interactive menus
 - Then rqmd validates write permissions for target requirement files up front

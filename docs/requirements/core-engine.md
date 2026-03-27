@@ -3,11 +3,11 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 6🔧 10✅ 0⛔ 0🗑️
+Summary: 0💡 0🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given repo root and requirements directory are configured
 - When the tool scans for domain docs
 - Then all markdown files in that directory are discovered in stable sorted order
@@ -21,7 +21,7 @@ Summary: 0💡 6🔧 10✅ 0⛔ 0🗑️
 - And requirement metadata retains status line location for edits.
 
 ### RQMD-CORE-003: Canonical status normalization
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given variant status spellings or aliases
 - When normalization runs
 - Then the status is rewritten to canonical labels
@@ -57,14 +57,14 @@ Summary: 0💡 6🔧 10✅ 0⛔ 0🗑️
 - And prefix handling follows configured or auto-detected `--id-prefix` behavior.
 
 ### RQMD-CORE-008: Idempotent processing
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given no status or summary changes are needed
 - When processing runs repeatedly
 - Then generated output remains byte-stable for those files
 - And no unnecessary rewrites occur.
 
 ### REQMD-CORE-009: Missing domain docs handling
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given no domain markdown files are found
 - When the command is run
 - Then reqmd prints a clear, actionable error message
@@ -73,7 +73,7 @@ Summary: 0💡 6🔧 10✅ 0⛔ 0🗑️
 - And in non-interactive or CI contexts the tool exits non-zero and prints the guidance to run `rqmd --init` or `rqmd --init --yes` to create starter files.
 
 ### RQMD-CORE-010: Blocked/deprecated reason extraction
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given a requirement includes blocked or deprecated reason lines
 - When parsing runs
 - Then those reason lines are captured with line references
@@ -95,7 +95,7 @@ Summary: 0💡 6🔧 10✅ 0⛔ 0🗑️
 - And the sample clearly indicates it is a handoff placeholder for teams to replace.
 
 ### RQMD-CORE-013: Domain-sync maintenance over time
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given users add or evolve domain documentation over time
 - When sync/maintenance commands run
 - Then index and domain-document references are kept consistent with current domain files

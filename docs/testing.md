@@ -18,22 +18,29 @@ bash scripts/local-smoke.sh
 
 ## Latest Local Result
 
-- 50 passed
+- 143 passed
 - Command: `uv run pytest -q`
 
 ## Coverage Map
 
 - tests/test_core_engine.py:
   - RQMD-CORE-001..012, RQMD-CORE-014, RQMD-CORE-015
-  - Includes RQMD-CORE-006 (five-status summary order), RQMD-CORE-011/012 init scaffold behavior, and init key prompt/default handling
+  - Includes RQMD-CORE-006 (five-status summary order), RQMD-CORE-009 missing-docs init flow (`--yes`), RQMD-CORE-011/012 init scaffold behavior, and init key prompt/default handling
 - tests/test_automation_api.py:
   - RQMD-AUTOMATION-001..009 fully verified
+  - RQMD-ROLLUP-001, RQMD-ROLLUP-005, RQMD-ROLLUP-007
   - Includes check-only no-write behavior, single/bulk updates, JSONL/CSV/TSV batch modes, ID alias schema variants, row-level path+line validation errors, conflict guardrails, scoped disambiguation, filtered tree output, and summary table controls
-- tests/test_interactive_and_colors.py:
-  - RQMD-INTERACTIVE-001..009, RQMD-INTERACTIVE-006A, RQMD-INTERACTIVE-006B
+- tests/test_interactive.py:
+  - RQMD-INTERACTIVE-001..009, RQMD-INTERACTIVE-009A, RQMD-INTERACTIVE-011
+  - RQMD-SORTING-003..011
+  - Includes default interactive entry, single-key navigation, paging, next/prev history, direct lookup, reason prompts, write-permission preflight, sort strategies, refresh preservation, active-column indicators, and legend direction updates
+- tests/test_priority_features.py:
+  - RQMD-PRIORITY-004..007, RQMD-PRIORITY-009
+  - Includes `--set-priority`, `--priority-mode`, `--filter-priority`, `--init-priorities`, priority summary generation, and priority sorting entry points
 - tests/test_portability_packaging_docs.py:
-  - RQMD-PORTABILITY-001..005
-  - RQMD-PACKAGING-001..005
+  - RQMD-PORTABILITY-001..005, RQMD-PORTABILITY-008..010, RQMD-PORTABILITY-014
+  - RQMD-PACKAGING-001..009
+  - RQMD-CORE-013
 
 ## Notes
 

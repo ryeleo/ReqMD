@@ -3,39 +3,39 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 6🔧 3✅ 0⛔ 0🗑️
+Summary: 0💡 0🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given the package source tree
 - When inspected
 - Then Python package code lives under `src/rqmd`
 - And project metadata is defined in `pyproject.toml`.
 
 ### RQMD-PACKAGING-002: Console entrypoint
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given package is installed
 - When user runs `rqmd`
 - Then command invokes package main CLI handler
 - And matches module behavior.
 
 ### RQMD-PACKAGING-003: Module entrypoint
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given package source is available
 - When user runs `python -m rqmd`
 - Then CLI starts successfully
 - And exposes same command options as console script.
 
 ### RQMD-PACKAGING-004: Runtime dependencies declared
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given project metadata in pyproject
 - When package is installed
 - Then required dependencies include click and tabulate
 - And missing dependency crashes are avoided at runtime.
 
 ### RQMD-PACKAGING-005: Readme-backed usage docs
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given package folder is copied to a new project
 - When user reads README
 - Then install and command examples are present
@@ -63,7 +63,7 @@ Summary: 0💡 6🔧 3✅ 0⛔ 0🗑️
 - And publication uses repository automation rather than a manual local upload.
 
 ### RQMD-PACKAGING-009: Keep a Changelog maintained
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given contributors ship notable changes
 - When release and pre-release updates are prepared
 - Then repository contains a root-level `CHANGELOG.md` following Keep a Changelog structure

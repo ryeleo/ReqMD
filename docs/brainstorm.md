@@ -1,5 +1,17 @@
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
+## codify the "implement all proposed items" approach in the README and contribution guidelines
+
+This works great with AI agents!
+
+```
+Continue! Try to do all 28 this time if you can! Make sure to reset your priority after every 5 or so. Do the easier ones first so we see how far you get before running into something you cannot do.
+
+I've set `chat.agent.maxRequests=500` so you can go for a while! 
+
+make sure to check that `rqmd` runs for you, and there aren't regressions in our test suite as you go! And update the test suite as you go!
+```
+
 ## Screen Write vs Scroll?
 
 Consider if we should change the UI to be screen write instead of scrolling style. That would make the UI 

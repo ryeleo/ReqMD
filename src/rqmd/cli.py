@@ -80,8 +80,7 @@ from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
                            parse_set_priority_entry)
 from .config import load_config, validate_config
 from .constants import (DEFAULT_CRITERIA_DIR, DEFAULT_ID_PREFIXES,
-                        ID_PREFIX_PATTERN, MENU_REFRESH, MENU_TOGGLE_DIRECTION,
-                        MENU_TOGGLE_SORT, STATUS_ORDER, STATUS_PATTERN,
+                        ID_PREFIX_PATTERN, STATUS_ORDER, STATUS_PATTERN,
                         SUMMARY_END, SUMMARY_START)
 from .criteria_parser import (collect_criteria_by_priority,
                               collect_criteria_by_status, find_criterion_by_id,
@@ -440,6 +439,18 @@ def lookup_criterion_interactive(
     help="One-time conversion: restore canonical emoji-prefixed status lines and regenerate summaries.",
 )
 @click.option(
+    "--init-priorities",
+    is_flag=True,
+    help="One-time migration: add default priority lines to requirements missing them.",
+)
+@click.option(
+    "--default-priority",
+    type=str,
+    default="p3",
+    show_default=True,
+    help="Default priority used by --init-priorities (for example p0, high, medium, low).",
+)
+@click.option(
     "--state-dir",
     type=str,
     default="system-temp",
@@ -480,6 +491,13 @@ def lookup_criterion_interactive(
     is_flag=True,
     help="Initialize docs scaffold (index + starter domain file) and exit.",
 )
+@click.option(
+    "--yes",
+    "--confirm",
+    "confirm_yes",
+    is_flag=True,
+    help="Auto-confirm scaffold initialization (non-interactive friendly).",
+)
 def main(
     check: bool,
     verbose: bool,
@@ -509,12 +527,15 @@ def main(
     resume_filter: bool,
     strip_status_emojis: bool,
     restore_status_emojis: bool,
+    init_priorities: bool,
+    default_priority: str,
     state_dir: str,
     repo_root: Path,
     criteria_dir: str | None,
     id_prefixes: tuple[str, ...],
     check_index: bool,
     init_scaffold: bool,
+    confirm_yes: bool,
     criterion_id: str | None,
 ) -> None:
     repo_root = repo_root.resolve()
@@ -536,6 +557,13 @@ def main(
     if state_dir == "system-temp" and "state_dir" in config:
         state_dir = config["state_dir"]
 
+    requested_init_prefix: str | None = None
+    if id_prefixes:
+        try:
+            requested_init_prefix = normalize_id_prefixes(id_prefixes)[0]
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
+
     if unsorted and not json_output:
         click.echo(
             "Warning: --unsorted is deprecated and now acts as a compatibility alias because filesystem ordering is already the default.",
@@ -549,8 +577,10 @@ def main(
             )
 
         try:
-            if id_prefixes:
-                starter_prefix = normalize_id_prefixes(id_prefixes)[0]
+            if requested_init_prefix:
+                starter_prefix = requested_init_prefix
+            elif confirm_yes:
+                starter_prefix = "REQ"
             else:
                 starter_prefix = prompt_for_init_prefix(default_prefix="REQ")
         except ValueError as exc:
@@ -581,8 +611,56 @@ def main(
 
     domain_files = iter_domain_files(repo_root, resolved_criteria_dir_input)
     if not domain_files:
-        print(f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}", file=sys.stderr)
-        raise SystemExit(1)
+        missing_msg = f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
+        hint_msg = "Hint: run 'rqmd --init' (interactive) or 'rqmd --init --yes' (automation) to create starter docs."
+
+        if confirm_yes:
+            starter_prefix = requested_init_prefix or "REQ"
+            created = initialize_requirements_scaffold(
+                repo_root,
+                resolved_criteria_dir_input,
+                starter_prefix=starter_prefix,
+            )
+            if created:
+                click.echo("Initialized requirement scaffold:")
+                for path in created:
+                    click.echo(f"  + {path.relative_to(repo_root)}")
+            else:
+                click.echo("Requirement scaffold already present; no files created.")
+            raise SystemExit(0)
+
+        if (not sys.stdin.isatty()) or check or json_output or (not interactive):
+            print(missing_msg, file=sys.stderr)
+            print(hint_msg, file=sys.stderr)
+            raise SystemExit(1)
+
+        click.echo(missing_msg, err=True)
+        should_init = click.confirm(
+            "No requirement files found. Initialize a starter scaffold now?",
+            default=False,
+            show_default=True,
+        )
+        if not should_init:
+            click.echo(hint_msg, err=True)
+            raise SystemExit(1)
+
+        try:
+            starter_prefix = requested_init_prefix or prompt_for_init_prefix(default_prefix="REQ")
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
+
+        created = initialize_requirements_scaffold(
+            repo_root,
+            resolved_criteria_dir_input,
+            starter_prefix=starter_prefix,
+        )
+        if created:
+            click.echo("Initialized requirement scaffold:")
+            for path in created:
+                click.echo(f"  + {path.relative_to(repo_root)}")
+        else:
+            click.echo("Requirement scaffold already present; no files created.")
+        raise SystemExit(0)
 
     # RQMD-PORTABILITY-009: validate files are readable before proceeding
     validate_files_readable(domain_files, repo_root)
@@ -591,6 +669,86 @@ def main(
 
     if strip_status_emojis and restore_status_emojis:
         raise click.ClickException("Use either --strip-status-emojis or --restore-status-emojis, not both.")
+
+    if init_priorities:
+        if (
+            check
+            or filter_status
+            or filter_priority
+            or set_criterion_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_file_input
+            or set_file
+            or tree
+            or rollup_mode
+            or criterion_id
+            or strip_status_emojis
+            or restore_status_emojis
+        ):
+            raise click.ClickException(
+                "--init-priorities cannot be combined with check/filter/set/tree/rollup/lookup or emoji strip/restore modes."
+            )
+
+        canonical_default_priority = normalize_priority_input(default_priority)
+
+        changed_paths: list[Path] = []
+        for path in domain_files:
+            requirements = parse_criteria(path, id_prefixes=id_prefixes)
+            missing = [r for r in requirements if r.get("priority_line") is None and isinstance(r.get("status_line"), int)]
+            if not missing:
+                continue
+
+            lines = path.read_text(encoding="utf-8").splitlines()
+            inserted = False
+            for requirement in sorted(missing, key=lambda r: int(r["status_line"]), reverse=True):
+                status_line = int(requirement["status_line"])
+                blocked_line = requirement.get("blocked_reason_line")
+                deprecated_line = requirement.get("deprecated_reason_line")
+
+                insert_after = status_line
+                if isinstance(blocked_line, int):
+                    insert_after = max(insert_after, blocked_line)
+                if isinstance(deprecated_line, int):
+                    insert_after = max(insert_after, deprecated_line)
+
+                lines.insert(insert_after + 1, f"- **Priority:** {canonical_default_priority}")
+                inserted = True
+
+            if inserted:
+                path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+                process_file(
+                    path,
+                    check_only=False,
+                    include_status_emojis=include_status_emojis,
+                    include_priority_summary=show_priority_summary,
+                )
+                changed_paths.append(path)
+
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=show_priority_summary,
+        )
+
+        if json_output:
+            payload = {
+                "mode": "init-priorities",
+                "criteria_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "default_priority": canonical_default_priority,
+                "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
+                "changed_count": len(changed_paths),
+            }
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
+        if summary_table:
+            print_summary_table(table_rows, emoji_columns=emoji_columns)
+        click.echo(f"Initialized priorities in {len(changed_paths)} file(s) using {canonical_default_priority}.")
+        raise SystemExit(0)
 
     if strip_status_emojis or restore_status_emojis:
         if check or filter_status or set_criterion_id or set_status or set_updates or set_file_input or set_file or tree or rollup_mode or criterion_id:
@@ -976,47 +1134,6 @@ def main(
             domain_files,
             check_only=True,
             display_name_fn=display_name_from_h1,
-            include_status_emojis=include_status_emojis,
-            include_priority_summary=show_priority_summary,
-        )
-        if json_output:
-            payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
-            payload["mode"] = "set-priority" if set_priority_updates and not set_updates else "set"
-            payload["updates"] = update_results
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-            raise SystemExit(0)
-
-        if summary_table:
-            print_summary_table(table_rows, emoji_columns=emoji_columns)
-        raise SystemExit(0)
-
-    if json_output:
-        payload = dict(summary_payload)
-        payload["ok"] = True
-        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-        raise SystemExit(0)
-
-    if interactive and not check:
-        # RQMD-INTERACTIVE-011: preflight write-permission gate
-        check_files_writable(domain_files, repo_root)
-        raise SystemExit(
-            interactive_update_loop(
-                repo_root,
-                resolved_criteria_dir_input,
-                domain_files,
-                emoji_columns=emoji_columns,
-                sort_files=False,
-                sort_strategy=sort_strategy,
-                id_prefixes=id_prefixes,
-                include_status_emojis=include_status_emojis,
-                priority_mode=priority_mode,
-                include_priority_summary=show_priority_summary,
-            )
-        )
-
-
-if __name__ == "__main__":
-    main()            display_name_fn=display_name_from_h1,
             include_status_emojis=include_status_emojis,
             include_priority_summary=show_priority_summary,
         )
