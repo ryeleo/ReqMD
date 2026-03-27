@@ -1,3 +1,13 @@
+
+## Performance Improvements
+
+MAybe use Rust to reimplement this whole solution.
+
+Maybe use Rust where possible to speedup this code (I know that's why `uv` is so fast, for example). Maybe we can have a Rust core for parsing and JSON contract generation, and then a thin Python wrapper for the CLI and interactive features? This would be a big undertaking but could make the tool much more performant, especially for large requirement sets.
+
+##
+
+
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
 ## Priority for domain and sub-domain
