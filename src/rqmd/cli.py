@@ -92,8 +92,8 @@ from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
                           resolve_requirements_dir, validate_files_readable)
 from .menus import select_from_menu
 from .priority_model import normalize_priority_input
-from .req_parser import (collect_requirements_by_flagged,
-                         collect_requirements_by_filters,
+from .req_parser import (collect_requirements_by_filters,
+                         collect_requirements_by_flagged,
                          collect_requirements_by_priority,
                          collect_requirements_by_status,
                          collect_requirements_by_sub_domain,
@@ -1792,6 +1792,51 @@ def main(
                     "failed": failed_count,
                 }
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(1 if had_row_failures else 0)
+
+        if allow_partial_failures:
+            failed_rows = [row for row in update_results if not bool(row.get("ok"))]
+            succeeded_count = len(update_results) - len(failed_rows)
+            click.echo(
+                f"Batch row results: {succeeded_count} succeeded, {len(failed_rows)} failed."
+            )
+            for row in failed_rows:
+                click.echo(
+                    f"Row {row['row']} ({row['requirement_id']}): {row['error']}",
+                    err=True,
+                )
+
+        if summary_table:
+            print_summary_table(table_rows, emoji_columns=emoji_columns)
+        raise SystemExit(1 if had_row_failures else 0)
+
+    if json_output:
+        payload = dict(summary_payload)
+        payload["ok"] = True
+        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+        raise SystemExit(0)
+
+    if interactive and not check:
+        # RQMD-INTERACTIVE-011: preflight write-permission gate
+        check_files_writable(domain_files, repo_root)
+        raise SystemExit(
+            interactive_update_loop(
+                repo_root,
+                resolved_requirements_dir_input,
+                domain_files,
+                emoji_columns=emoji_columns,
+                sort_files=False,
+                sort_strategy=sort_strategy,
+                id_prefixes=id_prefixes,
+                include_status_emojis=include_status_emojis,
+                priority_mode=priority_mode,
+                include_priority_summary=show_priority_summary,
+            )
+        )
+
+
+if __name__ == "__main__":
+    main()
             raise SystemExit(1 if had_row_failures else 0)
 
         if allow_partial_failures:
