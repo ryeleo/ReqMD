@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 6💡 10🔧 10✅ 0⛔ 0🗑️
+Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -171,9 +171,45 @@ Summary: 6💡 10🔧 10✅ 0⛔ 0🗑️
 - So that `--set-file` rows can also include flagged-state mutation values with the same canonical true/false normalization and row-level error reporting guarantees.
 - So that `--json` mutation runs return structured success/failure results for flagged updates consistent with the existing batch partial-failure model.
 
-### RQMD-AUTOMATION-026: Domain-body JSON contract
+### RQMD-AUTOMATION-026: Full domain-document JSON contract
 - **Status:** 💡 Proposed
 - As an automation user when consuming `--json` outputs for domain-level workflows
-- I want an explicit machine-readable contract for optional domain-body payloads aligned to RQMD-CORE-019
-- So that clients can request domain-body content with a dedicated opt-in flag and receive deterministic keys/order.
-- So that default compact JSON responses exclude domain-body text to preserve payload size and avoid accidental downstream churn.
+- I want each domain entry to include all domain-document sections needed to reconstruct context, including `scope` and domain-level `body` aligned to RQMD-CORE-019
+- So that machine consumers do not need to re-parse markdown to recover domain context beyond requirement rows.
+- So that `--json` responses expose deterministic keys/order for domain metadata and preserve domain `body` content verbatim when present.
+
+### RQMD-AUTOMATION-027: ReqID list input mode
+- **Status:** 💡 Proposed
+- As a rqmd user when I want to target an explicit set of requirements
+- I want a non-interactive/selection mode that accepts a CLI token list of requirement IDs and/or domain identifiers
+- So that filtering and downstream operations can be scoped to exact IDs or whole domains instead of status or priority filters.
+- So that domain tokens (filename, stem, or display name) are expanded deterministically to requirement IDs.
+- So that list ordering is deterministic and duplicates are handled predictably.
+
+### RQMD-AUTOMATION-028: ReqID list file parsing and comment support
+- **Status:** 💡 Proposed
+- As a rqmd user when managing a reusable requirement worklist
+- I want rqmd to accept a simple `.txt`/`.conf`/`.md` list file where requirement IDs, domain tokens, and subsection tokens may appear one-per-line or as comma/whitespace-separated tokens on any line
+- So that teams can maintain lightweight worklists without strict CSV/JSONL schema overhead.
+- So that `#` comment syntax is supported (line comments and trailing comments), and parsing ignores commented segments deterministically.
+- So that this file-parser behavior is identical to positional/CLI token parsing for token forms, expansion, ordering, duplicate handling, and validation.
+- So that subsection tokens are recognized by exact or case-insensitive prefix match and expand deterministically to all requirements in those subsections.
+
+### RQMD-AUTOMATION-029: Filtered query by subsection
+- **Status:** 💡 Proposed
+- As an automation user when filtering requirements within subsections
+- I want a `--filter-sub-domain <NAME>` flag to filter results by subsection
+- So that similar to `--filter-status`, only requirements matching the subsection name are included
+- So that matching is case-insensitive prefix-based (e.g., `--filter-sub-domain api` matches "API", "api-v1", etc.)
+- So that subsection filtering works with `--tree`, `--json`, `--no-summary-table`, and `--list` output modes
+- So that in `--json` mode, filter context metadata includes the active `sub_domain` filter
+- So that empty results are handled consistently with other filter modes.
+
+### RQMD-AUTOMATION-030: Sub-domain metadata in JSON output
+- **Status:** 💡 Proposed
+- As an automation consumer when processing JSON output
+- I want each requirement entry to include a `sub_domain` field (string or null)
+- So that metadata consumers can understand and reconstruct subsection structure
+- So that domain-level JSON includes an optional `sub_sections` array listing available H2 section names and their requirement counts
+- So that `--filter-sub-domain` metadata in JSON output includes the filter name and matching count
+- So that schema documentation clearly specifies the null-vs-absent distinction for `sub_domain` and `sub_sections`.

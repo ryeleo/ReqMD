@@ -51,6 +51,10 @@ MENU_TOGGLE_DIRECTION = "d"
 MENU_REFRESH = "r"
 MENU_PAGE_SIZE = 9
 
+# H2 subsection header pattern — optional organizational structure within domain files
+# Matches: ## Some Subsection Title
+H2_SUBSECTION_PATTERN = re.compile(r"^##\s+(?P<section_title>.+?)\s*$", re.MULTILINE)
+
 STATUS_PATTERN = re.compile(r"^- \*\*Status:\*\* (?P<status>.+?)\s*$", re.MULTILINE)
 PRIORITY_PATTERN = re.compile(r"^- \*\*Priority:\*\* (?P<priority>.+?)\s*$", re.MULTILINE)
 BLOCKED_REASON_PATTERN = re.compile(r"^\*\*Blocked:\*\*\s*(.+?)\s*$", re.MULTILINE)

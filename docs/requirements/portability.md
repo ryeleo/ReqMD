@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 1🔧 10✅ 0⛔ 1🗑️
+Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -127,3 +127,13 @@ Summary: 3💡 1🔧 10✅ 0⛔ 1🗑️
 - I want rqmd to discover project root by searching CWD and parent paths up to filesystem root
 - So that root resolution follows git-like behavior and finds the nearest valid project context.
 - So that discovery checks for any of `.rqmd.yml/.rqmd.yaml/.rqmd.json`, `requirements/`, or `docs/requirements/`.
+
+### RQMD-PORTABILITY-016: Automated performance testing for large requirement datasets
+- **Status:** 💡 Proposed
+- As a rqmd team member ensuring tool responsiveness
+- I want automated performance tests against large fuzzy requirement datasets
+- So that latency guardrails are enforced as requirements evolve
+- So that discovery, parsing, filtering, and interactive navigation performance are measured and tracked deterministically
+- So that test suite includes datasets of varying size (e.g., 100, 1000, 10000+ requirements) and complexity
+- So that performance regressions trigger clear failures in CI before merging changes
+- So that documented performance SLAs and benchmarks are available to users and operators.
