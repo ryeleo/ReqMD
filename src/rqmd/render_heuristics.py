@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections import deque
-from dataclasses import dataclass
 import statistics
 import time
+from collections import deque
+from dataclasses import dataclass
 from typing import Literal
 
 RenderMode = Literal["screen-write", "append"]
