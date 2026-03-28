@@ -24,7 +24,7 @@ Summary: 3💡 8🔧 0✅ 0⛔ 0🗑️
 - So that no acknowledged write is lost due to process exit or crash (durability is guaranteed for committed operations).
 
 ### RQMD-UNDO-003: Branching history and "lost changes" visibility
-- **Status:** � Implemented
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user performs `undo` multiple times and then issues a new change (creating a divergent history)
 - I want the divergence to occur
