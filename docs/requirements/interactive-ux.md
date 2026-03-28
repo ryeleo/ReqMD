@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 1🔧 18✅ 0⛔ 4🗑️
+Summary: 2💡 2🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -261,7 +261,7 @@ colors:
 ```
 
 ### RQMD-INTERACTIVE-022: Interactive link entry with URL-to-hyperlink auto-formatting
-- **Status:** � Implemented
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I want to add or manage external links on a requirement interactively
 - I want a link-editing flow accessible from the requirement detail view
