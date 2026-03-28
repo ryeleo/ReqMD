@@ -23,9 +23,16 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, MENU_NEXT,
-                        MENU_PAGE_SIZE, MENU_PREV, MENU_QUIT, MENU_UP,
-                        ZEBRA_BG)
+from .constants import (
+    ANSI_ESCAPE_PATTERN,
+    ANSI_RESET,
+    MENU_NEXT,
+    MENU_PAGE_SIZE,
+    MENU_PREV,
+    MENU_QUIT,
+    MENU_UP,
+    ZEBRA_BG,
+)
 from .render_heuristics import RenderModeController
 
 _SCREEN_WRITE_ENABLED = False
