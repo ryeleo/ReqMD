@@ -361,6 +361,201 @@ def _build_history_compare_report_payload(
     }
 
 
+def _build_history_action_preview_payload(
+    manager: HistoryManager,
+    action_spec: str,
+    id_prefixes: tuple[str, ...],
+) -> dict[str, object]:
+    raw = action_spec.strip()
+    if ":" not in raw:
+        raise click.ClickException(
+            "--history-action must be in ACTION:ARGS format (for example restore:0, replay:0..3, cherry-pick:1,2)."
+        )
+
+    action_raw, args_raw = raw.split(":", 1)
+    action = action_raw.strip().casefold()
+    args_value = args_raw.strip()
+    if not action or not args_value:
+        raise click.ClickException(
+            "--history-action must include both action and args (for example restore:0)."
+        )
+
+    if action == "restore":
+        target = manager.resolve_ref(args_value)
+        if target is None:
+            raise click.ClickException(f"Unknown --history-action restore target: {args_value!r}")
+        compare_payload = _build_compare_payload(
+            manager=manager,
+            ref_a="head",
+            ref_b=args_value,
+            id_prefixes=id_prefixes,
+        )
+        return {
+            "mode": "history-action-preview",
+            "action": "restore",
+            "source": {
+                "requested": action_spec,
+                "target_ref": args_value,
+            },
+            "target": compare_payload.get("ref_b"),
+            "current": compare_payload.get("ref_a"),
+            "preview": {
+                "summary": compare_payload.get("summary"),
+                "transitions": compare_payload.get("transitions"),
+                "added": compare_payload.get("added"),
+                "removed": compare_payload.get("removed"),
+            },
+        }
+
+    if action == "replay":
+        if ".." in args_value:
+            left, right = args_value.split("..", 1)
+            ref_a = left.strip()
+            ref_b = right.strip()
+        else:
+            parts = args_value.split(None, 1)
+            if len(parts) != 2:
+                raise click.ClickException(
+                    "replay args must include two refs in 'A..B' or 'A B' format."
+                )
+            ref_a, ref_b = parts[0].strip(), parts[1].strip()
+
+        pair = manager.resolve_two_refs(ref_a, ref_b)
+        if pair is None:
+            raise click.ClickException(f"Unknown --history-action replay range: {args_value!r}")
+        entry_a, entry_b = pair
+        idx_a = int(entry_a.get("entry_index", -1))
+        idx_b = int(entry_b.get("entry_index", -1))
+        if idx_a < 0 or idx_b < 0:
+            raise click.ClickException("Replay preview requires refs that resolve to indexed history entries.")
+        if idx_b <= idx_a:
+            raise click.ClickException("Replay preview requires an increasing range where end is after start.")
+
+        compare_payload = _build_compare_payload(
+            manager=manager,
+            ref_a=ref_a,
+            ref_b=ref_b,
+            id_prefixes=id_prefixes,
+        )
+        entries = manager.list_entries()[idx_a + 1 : idx_b + 1]
+        replay_steps = [
+            {
+                "entry_index": idx_a + 1 + offset,
+                "commit": item.get("commit"),
+                "stable_id": manager.build_stable_history_id(str(item.get("commit") or "")) if item.get("commit") else None,
+                "command": item.get("command"),
+                "actor": item.get("actor"),
+                "branch": item.get("branch"),
+                "files": list(item.get("files") or []),
+            }
+            for offset, item in enumerate(entries)
+        ]
+
+        return {
+            "mode": "history-action-preview",
+            "action": "replay",
+            "source": {
+                "requested": action_spec,
+                "range": {
+                    "start": compare_payload.get("ref_a"),
+                    "end": compare_payload.get("ref_b"),
+                },
+            },
+            "steps": replay_steps,
+            "preview": {
+                "summary": compare_payload.get("summary"),
+                "transitions": compare_payload.get("transitions"),
+                "added": compare_payload.get("added"),
+                "removed": compare_payload.get("removed"),
+            },
+        }
+
+    if action == "cherry-pick":
+        tokens = [token.strip() for token in args_value.split(",") if token.strip()]
+        if not tokens:
+            raise click.ClickException("cherry-pick args must include one or more refs separated by commas.")
+
+        picks: list[dict[str, object]] = []
+        total_transitions = 0
+        total_added = 0
+        total_removed = 0
+
+        for token in tokens:
+            entry = manager.resolve_ref(token)
+            if entry is None:
+                raise click.ClickException(f"Unknown --history-action cherry-pick target: {token!r}")
+
+            parent_ref = str(entry.get("parent_commit") or "")
+            preview: dict[str, object]
+            if not parent_ref:
+                preview = {
+                    "summary": {
+                        "transitions": 0,
+                        "added": 0,
+                        "removed": 0,
+                        "unchanged": 0,
+                        "total_a": 0,
+                        "total_b": 0,
+                    },
+                    "transitions": [],
+                    "added": [],
+                    "removed": [],
+                }
+            else:
+                compare_payload = _build_compare_payload(
+                    manager=manager,
+                    ref_a=parent_ref,
+                    ref_b=str(entry.get("commit") or ""),
+                    id_prefixes=id_prefixes,
+                )
+                preview = {
+                    "summary": compare_payload.get("summary"),
+                    "transitions": compare_payload.get("transitions"),
+                    "added": compare_payload.get("added"),
+                    "removed": compare_payload.get("removed"),
+                }
+
+            summary = preview.get("summary") if isinstance(preview.get("summary"), dict) else {}
+            total_transitions += int(summary.get("transitions", 0))
+            total_added += int(summary.get("added", 0))
+            total_removed += int(summary.get("removed", 0))
+
+            picks.append(
+                {
+                    "requested_ref": token,
+                    "entry": {
+                        "entry_index": entry.get("entry_index"),
+                        "commit": entry.get("commit"),
+                        "stable_id": manager.build_stable_history_id(str(entry.get("commit") or "")) if entry.get("commit") else None,
+                        "timestamp": entry.get("timestamp"),
+                        "command": entry.get("command"),
+                        "actor": entry.get("actor"),
+                        "branch": entry.get("branch"),
+                        "parent_commit": entry.get("parent_commit"),
+                    },
+                    "preview": preview,
+                }
+            )
+
+        return {
+            "mode": "history-action-preview",
+            "action": "cherry-pick",
+            "source": {
+                "requested": action_spec,
+            },
+            "picks": picks,
+            "preview_totals": {
+                "transitions": total_transitions,
+                "added": total_added,
+                "removed": total_removed,
+            },
+        }
+
+    raise click.ClickException(
+        "Unsupported --history-action action. Use one of: restore, replay, cherry-pick."
+    )
+
+
 def _resolve_repo_root(repo_root: Path) -> Path:
     if repo_root != Path("."):
         return repo_root.resolve()
@@ -878,6 +1073,7 @@ def _plan_or_apply_updates(
 @click.option("--dump-status", "export_status", type=str, default=None, help="Export context filtered by status label or slug.")
 @click.option("--history-ref", "history_ref", type=str, default=None, help="Export context from a detached history entry index or commit ref instead of the current working tree.")
 @click.option("--compare-refs", "compare_refs", type=str, default=None, help="Compare two history entries by diff-oriented comparison. Format: 'A..B' or 'A B' where A and B are entry indices, commit refs, or 'head'/'latest'.")
+@click.option("--history-action", "history_action", type=str, default=None, help="Preview restore/replay/cherry-pick actions. Format: restore:REF | replay:A..B | cherry-pick:REF1,REF2.")
 @click.option("--history-report", "history_report", is_flag=True, help="Emit temporal report payloads for a selected --history-ref or --compare-refs range.")
 @click.option("--include-requirement-body/--no-include-requirement-body", "include_body", default=True, help="Include requirement body markdown in exports.")
 @click.option(
@@ -919,6 +1115,7 @@ def main(
     export_status: str | None,
     history_ref: str | None,
     compare_refs: str | None,
+    history_action: str | None,
     history_report: bool,
     include_body: bool,
     include_domain_body: bool,
@@ -959,6 +1156,20 @@ def main(
             raise click.ClickException("--history-report is read-only and cannot be combined with --show-guide, --write, or --update.")
         if not history_ref and not compare_refs:
             raise click.ClickException("--history-report requires either --history-ref or --compare-refs.")
+
+    if history_action:
+        if apply or set_entries or guide:
+            raise click.ClickException("--history-action is read-only and cannot be combined with --show-guide, --write, or --update.")
+        if history_ref or compare_refs or history_report:
+            raise click.ClickException("--history-action cannot be combined with --history-ref, --compare-refs, or --history-report.")
+        manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+        payload = _build_history_action_preview_payload(
+            manager=manager,
+            action_spec=history_action,
+            id_prefixes=id_prefixes,
+        )
+        _emit(payload, json_output=json_output)
+        return
 
     if compare_refs:
         if apply or set_entries:
