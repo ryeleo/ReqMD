@@ -167,11 +167,9 @@ file_sort_key_by_priority = menus_mod.file_sort_key_by_priority
 _AMBIGUOUS_INPUT_PATTERN = re.compile(
     r"^Ambiguous (?P<field>[a-z_]+) input '(?P<input>.+)'\. Matches: (?P<matches>[^.]+)(?:\..*)?$",
     re.IGNORECASE,
-    print_criteria_list,
-    print_criteria_tree,
 )
-from .workflows import (
-    focused_target_interactive_loop as focused_target_interactive_loop_impl,
+
+
 def _build_json_ambiguity_payload(mode: str, message: str) -> dict[str, object] | None:
     match = _AMBIGUOUS_INPUT_PATTERN.match(message.strip())
     if not match:
