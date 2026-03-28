@@ -3,7 +3,7 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 6🔧 0✅ 0⛔ 0🗑️
+Summary: 4💡 7🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
@@ -50,7 +50,7 @@ Summary: 5💡 6🔧 0✅ 0⛔ 0🗑️
 - So that the backend provides atomic commits, durable fsync semantics for acknowledged writes, and a safe compact/garbage-collection path that preserves user-confirmable alternate branches.
 
 ### RQMD-UNDO-006: Metadata, auditability, and provenance
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when teams need traceability for changes
 - I want to record history entries
