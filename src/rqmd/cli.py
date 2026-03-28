@@ -2355,6 +2355,7 @@ def main(
                         "branch": entry.get("branch"),
                         "parent_commit": entry.get("parent_commit"),
                         "files": list(entry.get("files") or []),
+                        "delta": entry.get("delta"),
                         "is_current_head": index == cursor,
                     }
                 )

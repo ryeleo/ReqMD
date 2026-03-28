@@ -179,6 +179,50 @@ class HistoryManager:
             title = f"{command}: {reason}"
         return title + "\n\n[rqmd-metadata]\n" + json.dumps(metadata, ensure_ascii=False, indent=2)
 
+    def _build_delta_payload(self, commit_hash: str) -> dict[str, Any]:
+        """Build a lightweight file-delta summary for a captured history commit."""
+        result = self._git(
+            "diff-tree",
+            "--root",
+            "--numstat",
+            "--no-commit-id",
+            "-r",
+            commit_hash,
+            "--",
+            CATALOG_DIRNAME,
+        )
+        files: list[dict[str, Any]] = []
+        total_additions = 0
+        total_deletions = 0
+        prefix = f"{CATALOG_DIRNAME}/"
+        for line in result.stdout.splitlines():
+            parts = line.split("\t")
+            if len(parts) != 3:
+                continue
+            raw_added, raw_deleted, raw_path = parts
+            if not raw_path.startswith(prefix):
+                continue
+
+            added = int(raw_added) if raw_added.isdigit() else 0
+            deleted = int(raw_deleted) if raw_deleted.isdigit() else 0
+            total_additions += added
+            total_deletions += deleted
+            files.append(
+                {
+                    "path": raw_path[len(prefix):],
+                    "additions": added,
+                    "deletions": deleted,
+                    "binary": not (raw_added.isdigit() and raw_deleted.isdigit()),
+                }
+            )
+
+        return {
+            "files_changed": len(files),
+            "additions": total_additions,
+            "deletions": total_deletions,
+            "files": files,
+        }
+
     def _ensure_initialized(self) -> bool:
         existed = (self.repo_dir / ".git").exists() and self.state_path.exists()
         self.history_root.mkdir(parents=True, exist_ok=True)
@@ -334,6 +378,7 @@ class HistoryManager:
         self._git("add", "-A")
         self._git("commit", "--allow-empty", "-m", self._build_commit_message(command, actor, reason, snapshot_files))
         commit_hash = self._git("rev-parse", "HEAD").stdout.strip()
+        delta = self._build_delta_payload(commit_hash)
 
         new_entry: dict[str, Any] = {
             "commit": commit_hash,
@@ -345,6 +390,7 @@ class HistoryManager:
             "parent_commit": parent_commit,
             "branch": "main" if not new_branch else new_branch,
             "branch_point": branch_point_commit,
+            "delta": delta,
         }
         entries.append(new_entry)
         state["entries"] = entries
