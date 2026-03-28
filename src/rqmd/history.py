@@ -11,8 +11,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
-HISTORY_ROOT_RELATIVE = Path(".rqmd") / "history"
 HISTORY_REPO_RELATIVE = HISTORY_ROOT_RELATIVE / "rqmd-history"
 STATE_FILE_RELATIVE = HISTORY_ROOT_RELATIVE / "state.json"
 CATALOG_DIRNAME = "catalog"
