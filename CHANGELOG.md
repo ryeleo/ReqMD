@@ -6,8 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
 ### Added
+
+- Added detached historical export browsing to `rqmd-ai` via `--history-ref`, allowing point-in-time inspection of prior requirement snapshots by history index or commit ref without mutating the current working tree (RQMD-TIME-001).
+- Added historical activity context in `rqmd-ai` history exports, including neighboring entry pointers and per-requirement before/after status deltas for the selected history entry (RQMD-TIME-004).
+- Added `rqmd --undo` and `rqmd --redo` non-interactive catalog restoration commands backed by persistent snapshot history, including automatic baseline capture on the first rqmd mutation (RQMD-UNDO-001).
+- Added persistent hidden `.rqmd/history/rqmd-history` git-backed catalog snapshots plus on-disk cursor state for durable undo/redo recovery across process restarts (RQMD-UNDO-005).
 
 - Added `extract_blocking_id()` to `req_parser.py`; `blocking_id` and `blocked_reason` fields now appear in JSON exports from `rqmd` and `rqmd-ai` when a requirement is blocked by a linked or bare requirement ID (RQMD-CORE-022).
 - Added `parse_domain_priority_metadata()` to `req_parser.py`; `domain_priority` and `sub_section_priorities` fields now appear in JSON payloads when domain-level `**Priority:**` metadata is present (RQMD-PRIORITY-012).
