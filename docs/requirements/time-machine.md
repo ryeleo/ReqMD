@@ -3,7 +3,7 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 6🔧 0✅ 0⛔ 0🗑️
+Summary: 3💡 7🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing
@@ -71,7 +71,7 @@ Summary: 4💡 6🔧 0✅ 0⛔ 0🗑️
 - So that identifiers remain valid across process restarts unless history has been explicitly pruned with confirmation.
 
 ### RQMD-TIME-009: Exportable temporal reports
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when teams may need audit or review artifacts from historical states
 - I want automation to request a historical export

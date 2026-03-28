@@ -265,6 +265,102 @@ def _emit(payload: dict[str, object], json_output: bool) -> None:
             click.echo(f"- {item}")
 
 
+def _emit_history_report(payload: dict[str, object], json_output: bool) -> None:
+    if json_output:
+        _emit(payload, json_output=True)
+        return
+
+    report_type = str(payload.get("report_type") or "unknown")
+    summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
+    source = payload.get("source") if isinstance(payload.get("source"), dict) else {}
+
+    click.echo("History Report")
+    click.echo(f"Report Type: {report_type}")
+    if source:
+        click.echo(f"Source: {source}")
+
+    if report_type == "state":
+        click.echo(f"Total Requirements: {summary.get('total_requirements', 0)}")
+        click.echo(f"Total Files: {summary.get('total_files', 0)}")
+        by_status = summary.get("by_status") if isinstance(summary.get("by_status"), dict) else {}
+        if by_status:
+            click.echo("By Status:")
+            for label, count in by_status.items():
+                click.echo(f"- {label}: {count}")
+        return
+
+    if report_type == "compare":
+        click.echo(f"Transitions: {summary.get('transitions', 0)}")
+        click.echo(f"Added: {summary.get('added', 0)}")
+        click.echo(f"Removed: {summary.get('removed', 0)}")
+        click.echo(f"Unchanged: {summary.get('unchanged', 0)}")
+
+
+def _build_history_state_report_payload(
+    repo_root: Path,
+    requirements_dir: Path,
+    domain_files: list[Path],
+    id_prefixes: tuple[str, ...],
+    history_source: dict[str, object] | None,
+) -> dict[str, object]:
+    by_status: dict[str, int] = {}
+    requirements: list[dict[str, object]] = []
+
+    for path in domain_files:
+        for requirement in parse_requirements(path, id_prefixes=id_prefixes):
+            status = str(requirement.get("status") or "")
+            if status:
+                by_status[status] = by_status.get(status, 0) + 1
+            requirements.append(
+                {
+                    "id": requirement.get("id"),
+                    "title": requirement.get("title"),
+                    "status": requirement.get("status"),
+                    "priority": requirement.get("priority"),
+                    "path": format_path_display(path, repo_root),
+                }
+            )
+
+    return {
+        "mode": "history-report",
+        "report_type": "state",
+        "source": history_source
+        if history_source is not None
+        else {
+            "requested_ref": "current",
+            "detached": False,
+        },
+        "requirements_dir": format_path_display(requirements_dir, repo_root),
+        "summary": {
+            "total_files": len(domain_files),
+            "total_requirements": len(requirements),
+            "by_status": dict(sorted(by_status.items(), key=lambda item: item[0])),
+        },
+        "requirements": requirements,
+    }
+
+
+def _build_history_compare_report_payload(
+    compare_payload: dict[str, object],
+    ref_a: str,
+    ref_b: str,
+) -> dict[str, object]:
+    return {
+        "mode": "history-report",
+        "report_type": "compare",
+        "source": {
+            "requested_compare_refs": f"{ref_a}..{ref_b}",
+            "detached": True,
+            "ref_a": compare_payload.get("ref_a"),
+            "ref_b": compare_payload.get("ref_b"),
+        },
+        "summary": compare_payload.get("summary"),
+        "transitions": compare_payload.get("transitions"),
+        "added": compare_payload.get("added"),
+        "removed": compare_payload.get("removed"),
+    }
+
+
 def _resolve_repo_root(repo_root: Path) -> Path:
     if repo_root != Path("."):
         return repo_root.resolve()
@@ -782,6 +878,7 @@ def _plan_or_apply_updates(
 @click.option("--dump-status", "export_status", type=str, default=None, help="Export context filtered by status label or slug.")
 @click.option("--history-ref", "history_ref", type=str, default=None, help="Export context from a detached history entry index or commit ref instead of the current working tree.")
 @click.option("--compare-refs", "compare_refs", type=str, default=None, help="Compare two history entries by diff-oriented comparison. Format: 'A..B' or 'A B' where A and B are entry indices, commit refs, or 'head'/'latest'.")
+@click.option("--history-report", "history_report", is_flag=True, help="Emit temporal report payloads for a selected --history-ref or --compare-refs range.")
 @click.option("--include-requirement-body/--no-include-requirement-body", "include_body", default=True, help="Include requirement body markdown in exports.")
 @click.option(
     "--include-domain-markdown/--no-include-domain-markdown",
@@ -822,6 +919,7 @@ def main(
     export_status: str | None,
     history_ref: str | None,
     compare_refs: str | None,
+    history_report: bool,
     include_body: bool,
     include_domain_body: bool,
     max_domain_body_chars: int,
@@ -856,6 +954,12 @@ def main(
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
+    if history_report:
+        if guide or apply or set_entries:
+            raise click.ClickException("--history-report is read-only and cannot be combined with --show-guide, --write, or --update.")
+        if not history_ref and not compare_refs:
+            raise click.ClickException("--history-report requires either --history-ref or --compare-refs.")
+
     if compare_refs:
         if apply or set_entries:
             raise click.ClickException("--compare-refs is read-only; it cannot be combined with --write or --update.")
@@ -878,7 +982,13 @@ def main(
             ref_b=ref_b,
             id_prefixes=id_prefixes,
         )
-        _emit(payload, json_output=json_output)
+        if history_report:
+            _emit_history_report(
+                _build_history_compare_report_payload(payload, ref_a=ref_a, ref_b=ref_b),
+                json_output=json_output,
+            )
+        else:
+            _emit(payload, json_output=json_output)
         return
 
     effective_repo_root, domain_files, history_source, history_tempdir, history_manager, resolved_history_entry = _resolve_history_view(
@@ -901,6 +1011,19 @@ def main(
         raise click.ClickException("--history-ref cannot be combined with --write.")
     if history_ref and set_entries:
         raise click.ClickException("--history-ref cannot be combined with --update; historical exports are read-only.")
+    if history_report:
+        payload = _build_history_state_report_payload(
+            repo_root=effective_repo_root,
+            requirements_dir=effective_requirements_dir,
+            domain_files=domain_files,
+            id_prefixes=id_prefixes,
+            history_source=history_source,
+        )
+        _emit_history_report(payload, json_output=json_output)
+        if history_tempdir is not None:
+            history_tempdir.cleanup()
+        return
+
     if guide:
         if history_tempdir is not None:
             history_tempdir.cleanup()
