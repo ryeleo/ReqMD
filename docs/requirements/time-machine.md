@@ -3,11 +3,11 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 10💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 8💡 2🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a requirements catalog with recorded history
 - I want to select a prior timestamp, revision, or history entry
@@ -31,7 +31,7 @@ Summary: 10💡 0🔧 0✅ 0⛔ 0🗑️
 - So that status changes or edits are blocked until the user returns to a writable head or explicitly starts a replay/apply flow.
 
 ### RQMD-TIME-004: Historical context and activity inspection
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user is viewing a prior revision
 - I want rqmd to render that historical state

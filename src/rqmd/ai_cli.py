@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -27,6 +28,7 @@ except ImportError:
 
 from .batch_inputs import parse_set_entry
 from .constants import JSON_SCHEMA_VERSION
+from .history import HistoryManager
 from .markdown_io import (discover_project_root, format_path_display,
                           iter_domain_files, resolve_requirements_dir,
                           validate_files_readable)
@@ -128,6 +130,7 @@ def _build_guide_payload(repo_root: Path, requirements_dir: Path, read_only: boo
             "rqmd-ai --as-json --dump-status proposed",
             "rqmd-ai --as-json --dump-id RQMD-CORE-001 --include-requirement-body",
             "rqmd-ai --as-json --dump-file ai-cli.md --include-domain-markdown",
+            "rqmd-ai --as-json --dump-status proposed --history-ref 0",
             "rqmd-ai --update RQMD-CORE-001=implemented",
             "rqmd-ai --update RQMD-CORE-001=implemented --write",
         ],
@@ -318,6 +321,146 @@ def _build_apply_audit_record(
     }
 
 
+def _resolve_history_view(
+    repo_root: Path,
+    requirements_dir: Path,
+    history_ref: str | None,
+) -> tuple[Path, list[Path], dict[str, object] | None, tempfile.TemporaryDirectory[str] | None, HistoryManager | None, dict[str, object] | None]:
+    if not history_ref:
+        domain_files = iter_domain_files(repo_root, str(requirements_dir))
+        return repo_root, domain_files, None, None, None, None
+
+    manager = HistoryManager(repo_root=repo_root, requirements_dir=requirements_dir)
+    resolved = manager.resolve_ref(history_ref)
+    if resolved is None:
+        raise click.ClickException(f"Unknown --history-ref target: {history_ref}")
+
+    tempdir = manager.materialize_snapshot_tempdir(str(resolved["commit"]))
+    snapshot_root = Path(tempdir.name)
+    domain_files = iter_domain_files(snapshot_root, manager.requirements_dir.as_posix())
+    history_source = {
+        "requested_ref": history_ref,
+        "resolved_commit": resolved["commit"],
+        "entry_index": resolved.get("entry_index"),
+        "timestamp": resolved.get("timestamp"),
+        "command": resolved.get("command"),
+        "reason": resolved.get("reason"),
+        "detached": True,
+    }
+    return snapshot_root, domain_files, history_source, tempdir, manager, resolved
+
+
+def _build_requirement_status_map(
+    domain_files: list[Path],
+    id_prefixes: tuple[str, ...],
+    repo_root: Path,
+) -> dict[str, dict[str, object]]:
+    mapping: dict[str, dict[str, object]] = {}
+    for path in domain_files:
+        for requirement in parse_requirements(path, id_prefixes=id_prefixes):
+            req_id = str(requirement.get("id") or "")
+            if not req_id:
+                continue
+            mapping[req_id] = {
+                "id": req_id,
+                "title": str(requirement.get("title") or ""),
+                "status": requirement.get("status"),
+                "blocked_reason": requirement.get("blocked_reason"),
+                "path": format_path_display(path, repo_root),
+            }
+    return mapping
+
+
+def _build_history_activity_payload(
+    manager: HistoryManager | None,
+    resolved_entry: dict[str, object] | None,
+    current_domain_files: list[Path],
+    current_repo_root: Path,
+    id_prefixes: tuple[str, ...],
+) -> dict[str, object] | None:
+    if manager is None or resolved_entry is None:
+        return None
+
+    current_map = _build_requirement_status_map(
+        current_domain_files,
+        id_prefixes=id_prefixes,
+        repo_root=current_repo_root,
+    )
+
+    entry_index_raw = resolved_entry.get("entry_index")
+    entry_index = int(entry_index_raw) if isinstance(entry_index_raw, int) else None
+    previous_map: dict[str, dict[str, object]] = {}
+
+    previous_entry = None
+    next_entry = None
+    entries = manager.list_entries()
+    if entry_index is not None and 0 <= entry_index < len(entries):
+        if entry_index > 0:
+            previous_entry = entries[entry_index - 1]
+        if entry_index < len(entries) - 1:
+            next_entry = entries[entry_index + 1]
+
+    previous_tempdir: tempfile.TemporaryDirectory[str] | None = None
+    if previous_entry is not None:
+        previous_tempdir = manager.materialize_snapshot_tempdir(str(previous_entry["commit"]))
+        previous_root = Path(previous_tempdir.name)
+        previous_files = iter_domain_files(previous_root, manager.requirements_dir.as_posix())
+        previous_map = _build_requirement_status_map(
+            previous_files,
+            id_prefixes=id_prefixes,
+            repo_root=previous_root,
+        )
+
+    changes: list[dict[str, object]] = []
+    for req_id in sorted(set(current_map).union(previous_map)):
+        before = previous_map.get(req_id)
+        after = current_map.get(req_id)
+        if before == after:
+            continue
+        if before and after:
+            if (
+                before.get("status") == after.get("status")
+                and before.get("blocked_reason") == after.get("blocked_reason")
+            ):
+                continue
+        changes.append(
+            {
+                "id": req_id,
+                "title": (after or before or {}).get("title"),
+                "before": before,
+                "after": after,
+            }
+        )
+
+    if previous_tempdir is not None:
+        previous_tempdir.cleanup()
+
+    return {
+        "entry": {
+            "commit": resolved_entry.get("commit"),
+            "entry_index": entry_index,
+            "timestamp": resolved_entry.get("timestamp"),
+            "command": resolved_entry.get("command"),
+            "reason": resolved_entry.get("reason"),
+            "actor": resolved_entry.get("actor"),
+            "changed_files": list(resolved_entry.get("files") or []),
+        },
+        "neighbors": {
+            "previous": {
+                "entry_index": entry_index - 1 if previous_entry is not None and entry_index is not None else None,
+                "commit": previous_entry.get("commit") if isinstance(previous_entry, dict) else None,
+                "timestamp": previous_entry.get("timestamp") if isinstance(previous_entry, dict) else None,
+            },
+            "next": {
+                "entry_index": entry_index + 1 if next_entry is not None and entry_index is not None else None,
+                "commit": next_entry.get("commit") if isinstance(next_entry, dict) else None,
+                "timestamp": next_entry.get("timestamp") if isinstance(next_entry, dict) else None,
+            },
+        },
+        "changed_requirements": changes,
+    }
+
+
 def _export_context(
     repo_root: Path,
     requirements_dir: Path,
@@ -329,6 +472,8 @@ def _export_context(
     include_body: bool,
     include_domain_body: bool,
     max_domain_body_chars: int,
+    history_source: dict[str, object] | None = None,
+    history_activity: dict[str, object] | None = None,
 ) -> dict[str, object]:
     normalized_ids = {value.strip().upper() for value in export_ids if value.strip()}
     normalized_status: str | None = None
@@ -427,6 +572,8 @@ def _export_context(
         "requirements_dir": format_path_display(requirements_dir, repo_root),
         "total": total,
         "files": files_payload,
+        "history_source": history_source,
+        "history_activity": history_activity,
     }
 
 
@@ -524,6 +671,7 @@ def _plan_or_apply_updates(
 @click.option("--dump-id", "export_ids", multiple=True, default=(), help="Export requirement context for one or more IDs.")
 @click.option("--dump-file", "export_files", multiple=True, default=(), help="Export context only from one or more domain files.")
 @click.option("--dump-status", "export_status", type=str, default=None, help="Export context filtered by status label or slug.")
+@click.option("--history-ref", "history_ref", type=str, default=None, help="Export context from a detached history entry index or commit ref instead of the current working tree.")
 @click.option("--include-requirement-body/--no-include-requirement-body", "include_body", default=True, help="Include requirement body markdown in exports.")
 @click.option(
     "--include-domain-markdown/--no-include-domain-markdown",
@@ -562,6 +710,7 @@ def main(
     export_ids: tuple[str, ...],
     export_files: tuple[str, ...],
     export_status: str | None,
+    history_ref: str | None,
     include_body: bool,
     include_domain_body: bool,
     max_domain_body_chars: int,
@@ -596,21 +745,36 @@ def main(
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
-    domain_files = iter_domain_files(repo_root, str(resolved_criteria_dir))
+    effective_repo_root, domain_files, history_source, history_tempdir, history_manager, resolved_history_entry = _resolve_history_view(
+        repo_root=repo_root,
+        requirements_dir=resolved_criteria_dir,
+        history_ref=history_ref,
+    )
+    effective_requirements_dir = resolved_criteria_dir
+    if history_source is not None:
+        effective_requirements_dir = effective_repo_root / resolved_criteria_dir.relative_to(repo_root)
     if not domain_files:
         raise click.ClickException(
             f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
         )
-    validate_files_readable(domain_files, repo_root)
+    validate_files_readable(domain_files, effective_repo_root)
 
     if apply and not set_entries:
         raise click.ClickException("rqmd-ai --write requires at least one --update ID=STATUS update.")
+    if history_ref and apply:
+        raise click.ClickException("--history-ref cannot be combined with --write.")
+    if history_ref and set_entries:
+        raise click.ClickException("--history-ref cannot be combined with --update; historical exports are read-only.")
 
     if guide:
+        if history_tempdir is not None:
+            history_tempdir.cleanup()
         _emit(_build_guide_payload(repo_root, resolved_criteria_dir, read_only=(not apply)), json_output=json_output)
         return
 
     if set_entries:
+        if history_tempdir is not None:
+            history_tempdir.cleanup()
         payload = _plan_or_apply_updates(
             repo_root=repo_root,
             requirements_dir=resolved_criteria_dir,
@@ -624,9 +788,16 @@ def main(
         return
 
     if export_ids or export_files or export_status:
+        history_activity = _build_history_activity_payload(
+            manager=history_manager,
+            resolved_entry=resolved_history_entry,
+            current_domain_files=domain_files,
+            current_repo_root=effective_repo_root,
+            id_prefixes=id_prefixes,
+        )
         payload = _export_context(
-            repo_root=repo_root,
-            requirements_dir=resolved_criteria_dir,
+            repo_root=effective_repo_root,
+            requirements_dir=effective_requirements_dir,
             domain_files=domain_files,
             id_prefixes=id_prefixes,
             export_ids=export_ids,
@@ -635,10 +806,16 @@ def main(
             include_body=include_body,
             include_domain_body=include_domain_body,
             max_domain_body_chars=max_domain_body_chars,
+            history_source=history_source,
+            history_activity=history_activity,
         )
         _emit(payload, json_output=json_output)
+        if history_tempdir is not None:
+            history_tempdir.cleanup()
         return
 
+    if history_tempdir is not None:
+        history_tempdir.cleanup()
     _emit(_build_guide_payload(repo_root, resolved_criteria_dir, read_only=True), json_output=json_output)
 
 

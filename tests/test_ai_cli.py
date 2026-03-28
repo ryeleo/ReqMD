@@ -7,6 +7,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from rqmd.ai_cli import main
+from rqmd.cli import main as rqmd_main
 from rqmd.constants import JSON_SCHEMA_VERSION
 
 
@@ -384,3 +385,137 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
     assert payload["changed_count"] == 2
+
+
+def test_RQMD_TIME_001_export_context_from_history_entry(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    domain = criteria_dir / "demo.md"
+    _write_demo_domain(domain)
+
+    runner = CliRunner()
+    applied = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--update-id",
+            "RQMD-DEMO-001",
+            "--update-status",
+            "verified",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+    assert applied.exit_code == 0
+
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--dump-status",
+            "proposed",
+            "--history-ref",
+            "0",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    assert payload["mode"] == "export-context"
+    assert payload["history_source"]["detached"] is True
+    assert payload["history_source"]["entry_index"] == 0
+    assert payload["total"] == 1
+    assert payload["files"][0]["requirements"][0]["status"] == "💡 Proposed"
+    assert "✅ Verified" in domain.read_text(encoding="utf-8")
+
+
+def test_RQMD_TIME_001_rejects_unknown_history_ref(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--dump-status",
+            "proposed",
+            "--history-ref",
+            "999",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Unknown --history-ref target" in result.output
+
+
+def test_RQMD_TIME_004_history_activity_shows_before_after_and_neighbors(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    domain = criteria_dir / "demo.md"
+    _write_demo_domain(domain)
+
+    runner = CliRunner()
+    applied = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--update-id",
+            "RQMD-DEMO-001",
+            "--update-status",
+            "verified",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+    assert applied.exit_code == 0
+
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--dump-id",
+            "RQMD-DEMO-001",
+            "--history-ref",
+            "1",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+
+    activity = payload["history_activity"]
+    assert activity is not None
+    assert activity["entry"]["entry_index"] == 1
+    assert activity["neighbors"]["previous"]["entry_index"] == 0
+    assert activity["neighbors"]["next"]["entry_index"] is None
+
+    changed = activity["changed_requirements"]
+    assert len(changed) == 1
+    assert changed[0]["id"] == "RQMD-DEMO-001"
+    assert changed[0]["before"]["status"] == "💡 Proposed"
+    assert changed[0]["after"]["status"] == "✅ Verified"

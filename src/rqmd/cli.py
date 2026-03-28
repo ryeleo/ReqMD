@@ -85,6 +85,7 @@ from .config import (load_config, load_priorities_file, load_statuses_file,
 from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
                         ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, STATUS_ORDER,
                         STATUS_PATTERN, SUMMARY_END, SUMMARY_START)
+from .history import HistoryManager, HistoryRestoreError
 from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
                           check_index_sync, discover_project_root,
                           display_name_from_h1, format_path_display,
@@ -574,6 +575,18 @@ def shell_complete_target_tokens(
     help="Non-interactive bulk mode: repeat ID=STATUS (for example --update R-FOO-001=implemented).",
 )
 @click.option(
+    "--undo",
+    "undo_last",
+    is_flag=True,
+    help="Non-interactive mode: restore the previous recorded catalog snapshot.",
+)
+@click.option(
+    "--redo",
+    "redo_last",
+    is_flag=True,
+    help="Non-interactive mode: reapply the next recorded catalog snapshot.",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     help="Preview mutation changes without writing files (applies to --update/--update-file/--update-priority/--update-flagged/--seed-priorities).",
@@ -858,6 +871,8 @@ def main(
     set_requirement_id: str | None,
     set_status: str | None,
     set_updates: tuple[str, ...],
+    undo_last: bool,
+    redo_last: bool,
     dry_run: bool,
     set_file_input: str | None,
     rename_id_prefix: str | None,
@@ -996,7 +1011,7 @@ def main(
         click.echo(root_discovery_message)
 
     if init_scaffold:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode or targets:
             raise click.ClickException(
                 "--bootstrap cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
@@ -1121,6 +1136,8 @@ def main(
             or set_flagged_updates
             or set_file_input
             or set_file
+            or undo_last
+            or redo_last
             or tree
             or rollup_mode
             or targets
@@ -1215,6 +1232,8 @@ def main(
             or set_flagged_updates
             or set_file_input
             or set_file
+            or undo_last
+            or redo_last
             or tree
             or rollup_mode
             or targets
@@ -1294,7 +1313,7 @@ def main(
         raise SystemExit(0)
 
     if strip_status_emojis or restore_status_emojis:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode or targets:
             raise click.ClickException(
                 "Emoji strip/restore modes cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
@@ -2032,7 +2051,7 @@ def main(
         )
 
     non_interactive_requested = bool(
-        set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file
+        set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last
     )
     if non_interactive_requested and positional_domain_file and not set_file and not set_file_input:
         set_file = format_path_display(positional_domain_file, repo_root)
@@ -2046,11 +2065,43 @@ def main(
             + int(bool(set_flagged_updates))
             + int(bool(set_file_input))
             + int(bool(set_requirement_id or set_status))
+            + int(bool(undo_last))
+            + int(bool(redo_last))
         )
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
+                "Use exactly one non-interactive update mode: --undo, --redo, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
             )
+
+        if undo_last or redo_last:
+            if set_file or set_file_input or set_blocked_reason or set_deprecated_reason:
+                raise click.ClickException("--undo/--redo cannot be combined with file-scoped update inputs or status note options.")
+
+            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            try:
+                commit_hash = history_manager.undo() if undo_last else history_manager.redo()
+            except HistoryRestoreError as exc:
+                raise click.ClickException(str(exc)) from exc
+
+            mode_name = "undo" if undo_last else "redo"
+            payload = {
+                "mode": mode_name,
+                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "changed": commit_hash is not None,
+                "commit": commit_hash,
+                "can_undo": history_manager.can_undo(),
+                "can_redo": history_manager.can_redo(),
+                "history_depth": len(history_manager.list_entries()),
+            }
+            if json_output:
+                _emit_json_payload(payload)
+            else:
+                if commit_hash is None:
+                    click.echo(f"No {mode_name} history available.")
+                else:
+                    verb = "Undid" if undo_last else "Redid"
+                    click.echo(f"{verb} catalog to history commit {commit_hash}.")
+            raise SystemExit(0)
 
         update_requests: list[dict[str, object]] = []
         if set_updates:

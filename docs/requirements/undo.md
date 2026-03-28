@@ -3,11 +3,11 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 11💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 9💡 2🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user makes sequential edits (status changes, reason edits, file updates)
 - I want to request `undo`
@@ -40,7 +40,7 @@ Summary: 11💡 0🔧 0✅ 0⛔ 0🗑️
 - So that rqmd prompts the user with a concise summary of what will be lost and requires explicit confirmation before proceeding.
 
 ### RQMD-UNDO-005: Storage backend and crash-safety
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when durability and history expressiveness are required
 - I want to implement undo stack storage
