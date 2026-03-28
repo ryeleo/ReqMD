@@ -3,7 +3,7 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 8🔧 0✅ 0⛔ 0🗑️
+Summary: 1💡 9🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing
@@ -47,7 +47,7 @@ Summary: 2💡 8🔧 0✅ 0⛔ 0🗑️
 - So that the comparison highlights additions, removals, and status transitions in a machine-readable and human-readable form.
 
 ### RQMD-TIME-006: Replay and restore from historical points
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user finds a useful historical point
 - I want to choose to restore, replay, or cherry-pick from that point
