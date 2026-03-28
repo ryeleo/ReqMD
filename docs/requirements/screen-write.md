@@ -3,11 +3,11 @@
 Scope: interactive menus, paginated views, and terminal rendering behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 9💡 1🔧 0✅ 0⛔ 1🗑️
+Summary: 7💡 3🔧 0✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UI-001: Screen-write rendering mode
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd user when interactive menus are displayed
 - I want the UI to use screen-write style full-screen updates instead of line-by-line scrolling
@@ -23,7 +23,7 @@ Summary: 9💡 1🔧 0✅ 0⛔ 1🗑️
 - So that precedence follows: CLI > project config > user config > built-in default (default = `true` when TTY supports it).
 
 ### RQMD-UI-003: Safe fallback for non-TTY and limited terminals
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd user when running in a non-interactive environment or a terminal lacking full-capability support
 - I want rqmd to automatically fall back to the existing scrolling/append-style output
