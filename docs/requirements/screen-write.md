@@ -3,7 +3,7 @@
 Scope: interactive menus, paginated views, and terminal rendering behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 9🔧 0✅ 0⛔ 1🗑️
+Summary: 0💡 10🔧 0✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UI-001: Screen-write rendering mode
@@ -65,7 +65,7 @@ Summary: 1💡 9🔧 0✅ 0⛔ 1🗑️
 - I want rqmd to handle SIGWINCH gracefully and reflow the current view into the new dimensions without losing selection state or corrupting the scrollback buffer.
 
 ### RQMD-UI-009: Performance targets and heuristics
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd maintainer
 - I want the entire rqmd interactive app (startup, first interactive paint, file/requirement/status menus, filtered walks, paging, and redraws) to stay snappy, with a target of <=50ms and an acceptable upper bound of <=60ms on typical modern terminals for menus under 80 rows

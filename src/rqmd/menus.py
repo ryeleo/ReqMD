@@ -13,6 +13,7 @@ from __future__ import annotations
 import shutil
 import signal
 import sys
+import time
 import unicodedata
 
 try:
@@ -25,10 +26,12 @@ except ImportError:
 from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, MENU_NEXT,
                         MENU_PAGE_SIZE, MENU_PREV, MENU_QUIT, MENU_UP,
                         ZEBRA_BG)
+from .render_heuristics import RenderModeController
 
 _SCREEN_WRITE_ENABLED = False
 _COLORIZED_REDRAW_ENABLED = True
 _RESIZE_SIGNAL_PENDING = False
+_RENDER_MODE_CONTROLLER = RenderModeController()
 
 
 def set_screen_write_enabled(enabled: bool) -> None:
@@ -51,6 +54,29 @@ def set_colorized_redraw_enabled(enabled: bool) -> None:
 def get_colorized_redraw_enabled() -> bool:
     """Return whether colorized row backgrounds are enabled."""
     return _COLORIZED_REDRAW_ENABLED
+
+
+def reset_render_mode_controller() -> None:
+    """Reset adaptive render mode controller state."""
+    _RENDER_MODE_CONTROLLER.reset(mode="screen-write")
+
+
+def configure_render_mode_controller(
+    target_ms: float,
+    upper_ms: float,
+    hysteresis_ms: float,
+    cooldown_seconds: float,
+    window_size: int,
+) -> None:
+    """Configure adaptive render mode controller thresholds."""
+    global _RENDER_MODE_CONTROLLER
+    _RENDER_MODE_CONTROLLER = RenderModeController(
+        target_ms=target_ms,
+        upper_ms=upper_ms,
+        hysteresis_ms=hysteresis_ms,
+        cooldown_seconds=cooldown_seconds,
+        window_size=window_size,
+    )
 
 
 def _mark_resize_pending(_signum: int, _frame: object) -> None:
@@ -258,9 +284,15 @@ def select_from_menu(
 
             _ = consume_resize_pending()
 
-            if _SCREEN_WRITE_ENABLED and is_tty:
+            effective_screen_write = _SCREEN_WRITE_ENABLED and is_tty
+            if effective_screen_write and _RENDER_MODE_CONTROLLER.mode == "append":
+                effective_screen_write = False
+
+            if effective_screen_write:
                 # Full-screen redraw mode: clear screen and return cursor to home.
                 click.echo("\x1b[2J\x1b[H", nl=False)
+
+            render_started = time.perf_counter()
 
             click.echo("")
             click.echo(title)
@@ -318,6 +350,9 @@ def select_from_menu(
             click.echo(choice)
 
             if not choice:
+                render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                if _SCREEN_WRITE_ENABLED:
+                    _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                 continue
             if choice == "\x03":
                 raise click.Abort()
@@ -341,6 +376,9 @@ def select_from_menu(
                         page -= 1
                 elif page < total_pages - 1:
                     page += 1
+                render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                if _SCREEN_WRITE_ENABLED:
+                    _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                 continue
             if allow_paging_nav and choice.lower() == MENU_PREV:
                 # Shift+P acts as reverse paging (next page).
@@ -349,6 +387,9 @@ def select_from_menu(
                         page += 1
                 elif page > 0:
                     page -= 1
+                render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                if _SCREEN_WRITE_ENABLED:
+                    _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                 continue
 
             if choice.isdigit():
@@ -357,6 +398,9 @@ def select_from_menu(
                     return start + local_index
 
             click.echo("Invalid input. Use number or navigation keys.")
+            render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+            if _SCREEN_WRITE_ENABLED:
+                _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
     finally:
         consume_resize_pending()
         if is_tty and hasattr(signal, "SIGWINCH") and previous_resize_handler is not None:
