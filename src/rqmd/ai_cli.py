@@ -469,6 +469,93 @@ def _build_history_activity_payload(
     }
 
 
+def _build_compare_payload(
+    manager: HistoryManager,
+    ref_a: str,
+    ref_b: str,
+    id_prefixes: tuple[str, ...],
+) -> dict[str, object]:
+    """Build a diff-oriented comparison payload between two history refs.
+
+    Materializes both snapshots into temporary directories, builds requirement
+    status maps for each, and returns a structured diff highlighting additions,
+    removals, and status transitions.
+    """
+    pair = manager.resolve_two_refs(ref_a, ref_b)
+    if pair is None:
+        unknown = ref_a if manager.resolve_ref(ref_a) is None else ref_b
+        raise click.ClickException(f"Unknown --compare-refs target: {unknown!r}")
+
+    entry_a, entry_b = pair
+
+    tempdir_a = manager.materialize_snapshot_tempdir(str(entry_a["commit"]))
+    tempdir_b = manager.materialize_snapshot_tempdir(str(entry_b["commit"]))
+    try:
+        root_a = Path(tempdir_a.name)
+        root_b = Path(tempdir_b.name)
+        files_a = iter_domain_files(root_a, manager.requirements_dir.as_posix())
+        files_b = iter_domain_files(root_b, manager.requirements_dir.as_posix())
+        map_a = _build_requirement_status_map(files_a, id_prefixes=id_prefixes, repo_root=root_a)
+        map_b = _build_requirement_status_map(files_b, id_prefixes=id_prefixes, repo_root=root_b)
+    finally:
+        tempdir_a.cleanup()
+        tempdir_b.cleanup()
+
+    all_ids = sorted(set(map_a).union(map_b))
+    transitions: list[dict[str, object]] = []
+    added: list[dict[str, object]] = []
+    removed: list[dict[str, object]] = []
+    unchanged_count = 0
+
+    for req_id in all_ids:
+        a = map_a.get(req_id)
+        b = map_b.get(req_id)
+        if a is None:
+            added.append({"id": req_id, "title": (b or {}).get("title"), "status": (b or {}).get("status"), "after": b})
+        elif b is None:
+            removed.append({"id": req_id, "title": a.get("title"), "status": a.get("status"), "before": a})
+        else:
+            if a.get("status") != b.get("status") or a.get("blocked_reason") != b.get("blocked_reason"):
+                transitions.append({
+                    "id": req_id,
+                    "title": b.get("title") or a.get("title"),
+                    "before_status": a.get("status"),
+                    "after_status": b.get("status"),
+                    "before_blocked_reason": a.get("blocked_reason"),
+                    "after_blocked_reason": b.get("blocked_reason"),
+                })
+            else:
+                unchanged_count += 1
+
+    def _entry_summary(entry: dict[str, object]) -> dict[str, object]:
+        return {
+            "entry_index": entry.get("entry_index"),
+            "commit": entry.get("commit"),
+            "timestamp": entry.get("timestamp"),
+            "command": entry.get("command"),
+            "reason": entry.get("reason"),
+            "actor": entry.get("actor"),
+            "branch": entry.get("branch"),
+        }
+
+    return {
+        "mode": "compare",
+        "ref_a": _entry_summary(entry_a),
+        "ref_b": _entry_summary(entry_b),
+        "summary": {
+            "transitions": len(transitions),
+            "added": len(added),
+            "removed": len(removed),
+            "unchanged": unchanged_count,
+            "total_a": len(map_a),
+            "total_b": len(map_b),
+        },
+        "transitions": transitions,
+        "added": added,
+        "removed": removed,
+    }
+
+
 def _export_context(
     repo_root: Path,
     requirements_dir: Path,
@@ -680,6 +767,7 @@ def _plan_or_apply_updates(
 @click.option("--dump-file", "export_files", multiple=True, default=(), help="Export context only from one or more domain files.")
 @click.option("--dump-status", "export_status", type=str, default=None, help="Export context filtered by status label or slug.")
 @click.option("--history-ref", "history_ref", type=str, default=None, help="Export context from a detached history entry index or commit ref instead of the current working tree.")
+@click.option("--compare-refs", "compare_refs", type=str, default=None, help="Compare two history entries by diff-oriented comparison. Format: 'A..B' or 'A B' where A and B are entry indices, commit refs, or 'head'/'latest'.")
 @click.option("--include-requirement-body/--no-include-requirement-body", "include_body", default=True, help="Include requirement body markdown in exports.")
 @click.option(
     "--include-domain-markdown/--no-include-domain-markdown",
@@ -719,6 +807,7 @@ def main(
     export_files: tuple[str, ...],
     export_status: str | None,
     history_ref: str | None,
+    compare_refs: str | None,
     include_body: bool,
     include_domain_body: bool,
     max_domain_body_chars: int,
@@ -753,6 +842,31 @@ def main(
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
+    if compare_refs:
+        if apply or set_entries:
+            raise click.ClickException("--compare-refs is read-only; it cannot be combined with --write or --update.")
+        # Parse "A..B" or "A B" format
+        raw = compare_refs.strip()
+        if ".." in raw:
+            parts = raw.split("..", 1)
+        else:
+            parts = raw.split(None, 1)
+        if len(parts) != 2 or not parts[0].strip() or not parts[1].strip():
+            raise click.ClickException(
+                "--compare-refs requires two refs separated by '..' or a space, "
+                f"for example '0..2' or '0 head'. Got: {compare_refs!r}"
+            )
+        ref_a, ref_b = parts[0].strip(), parts[1].strip()
+        _compare_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+        payload = _build_compare_payload(
+            manager=_compare_manager,
+            ref_a=ref_a,
+            ref_b=ref_b,
+            id_prefixes=id_prefixes,
+        )
+        _emit(payload, json_output=json_output)
+        return
+
     effective_repo_root, domain_files, history_source, history_tempdir, history_manager, resolved_history_entry = _resolve_history_view(
         repo_root=repo_root,
         requirements_dir=resolved_criteria_dir,
@@ -773,7 +887,6 @@ def main(
         raise click.ClickException("--history-ref cannot be combined with --write.")
     if history_ref and set_entries:
         raise click.ClickException("--history-ref cannot be combined with --update; historical exports are read-only.")
-
     if guide:
         if history_tempdir is not None:
             history_tempdir.cleanup()

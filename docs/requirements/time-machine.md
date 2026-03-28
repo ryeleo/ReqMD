@@ -3,7 +3,7 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 7💡 3🔧 0✅ 0⛔ 0🗑️
+Summary: 6💡 4🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing
@@ -39,7 +39,7 @@ Summary: 7💡 3🔧 0✅ 0⛔ 0🗑️
 - So that the user can move backward or forward through neighboring entries while preserving orientation in the same branch.
 
 ### RQMD-TIME-005: Compare historical points and branches
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when users need to understand how the catalog evolved
 - I want to select two points in time, two branches, or a branch point and current head

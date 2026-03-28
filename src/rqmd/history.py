@@ -436,3 +436,29 @@ class HistoryManager:
                 "is_current": branch_name == current_branch,
             }
         return branches_info
+
+    def resolve_two_refs(
+        self, ref_a: str, ref_b: str
+    ) -> tuple[dict[str, Any], dict[str, Any]] | None:
+        """Resolve two refs in one call; return None if either cannot be resolved.
+
+        ``ref_b`` may be the special literal ``"head"`` or ``"current"`` to mean the
+        cursor position, and ``"latest"`` to mean the last entry in the list.
+        Supports the same resolution rules as :meth:`resolve_ref`.
+        """
+        entries = self.list_entries()
+        if not entries:
+            return None
+
+        def _resolve(ref: str) -> dict[str, Any] | None:
+            if ref.lower() == "latest":
+                if not entries:
+                    return None
+                return dict(entries[-1], entry_index=len(entries) - 1)
+            return self.resolve_ref(ref)
+
+        a = _resolve(ref_a)
+        b = _resolve(ref_b)
+        if a is None or b is None:
+            return None
+        return a, b
