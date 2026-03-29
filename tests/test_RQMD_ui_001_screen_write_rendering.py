@@ -8,8 +8,7 @@ Verify that full-screen ANSI redraw behavior works correctly:
 """
 
 import io
-import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -86,6 +85,29 @@ class TestScreenWriteFullScreenRedraw:
         assert "Bravo" in output, "Menu content should be present in full-screen mode"
         assert "Charlie" in output, "Menu content should be present in full-screen mode"
         assert "Test Menu" in output, "Menu title should be present"
+
+    def test_RQMD_ui_001_prefix_text_is_rendered_with_screen_write(self):
+        """Verify prefix text survives full-screen redraws and stays above the menu."""
+        menus_mod.set_screen_write_enabled(True)
+
+        output_buffer = io.StringIO()
+        with patch("sys.stdout", output_buffer):
+            with patch("sys.stdout.isatty", return_value=True):
+                with patch("click.getchar", return_value="q"):
+                    menus_mod.select_from_menu(
+                        "Test Menu",
+                        ["Alpha", "Bravo"],
+                        allow_paging_nav=False,
+                        prefix_text="\nPANEL\n==========\nBody",
+                    )
+
+        output = output_buffer.getvalue()
+        assert "\x1b[2J\x1b[H" in output
+        assert "PANEL" in output
+        assert "==========" in output
+        assert output.index("PANEL") < output.index("Test Menu")
+
+        menus_mod.set_screen_write_enabled(False)
 
     def test_RQMD_ui_001_module_state_toggle_affects_rendering(self):
         """Verify set_screen_write_enabled() correctly controls rendering behavior."""

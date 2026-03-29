@@ -14,10 +14,9 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
+from .constants import (DEFAULT_ID_PREFIXES, MENU_PAGE_SIZE, MENU_REFRESH,
                         MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
-                        MENU_PAGE_SIZE, PRIORITY_ORDER, STATUS_ORDER,
-                        STATUS_PATTERN)
+                        PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
 from .markdown_io import (display_name_from_h1, format_path_display,
                           iter_domain_files, scope_and_body_from_file)
 from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
@@ -29,7 +28,7 @@ from .req_parser import (collect_sub_sections,
                          parse_requirements)
 from .status_model import (build_color_rollup_text, status_emoji,
                            style_status_label, style_status_line)
-from .status_update import (print_criterion_panel, prompt_for_blocked_reason,
+from .status_update import (format_criterion_panel, prompt_for_blocked_reason,
                             prompt_for_deprecated_reason,
                             prompt_for_links_flow, update_criterion_status)
 from .summary import (collect_summary_rows, count_priorities, count_statuses,
@@ -509,6 +508,7 @@ def _prompt_for_requirement_action(
     select_from_menu_fn,
     title_suffix: str = "",
     allow_nav: bool = True,
+    panel_text: str | None = None,
 ) -> tuple[str, str | None]:
     title, labels, options, selected_index, selected_bg = _build_requirement_field_menu(
         requirement,
@@ -531,12 +531,26 @@ def _prompt_for_requirement_action(
         selected_option_index=selected_index,
         selected_option_bg=selected_bg,
         footer_legend=_build_requirement_action_footer(allow_nav),
+        prefix_text=panel_text,
     )
     if choice is None:
         return "quit", None
     if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "nav-first", "nav-last", "toggle-field"}:
         return choice, None
     return "apply", labels[int(choice)]
+
+
+def _build_requirement_panel_text(
+    path: Path,
+    requirement: dict[str, object],
+    repo_root: Path,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    position_label: str | None = None,
+) -> str:
+    panel_text = format_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
+    if position_label is None:
+        return panel_text
+    return f"\n{click.style(position_label, dim=True)}{panel_text}"
 
 
 def _sort_criteria(
@@ -915,14 +929,20 @@ def focused_target_interactive_loop(
         save_current(flat_list, index)
 
         path, requirement = flat_list[index]
-        click.echo(click.style(f"\n[{index + 1}/{len(flat_list)}]", dim=True))
-        print_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
+        panel_text = _build_requirement_panel_text(
+            path,
+            requirement,
+            repo_root,
+            id_prefixes=id_prefixes,
+            position_label=f"[{index + 1}/{len(flat_list)}]",
+        )
 
         action, selected_value = _prompt_for_requirement_action(
             requirement,
             current_entry_field,
             select_from_menu_fn,
             title_suffix=f" [{index + 1}/{len(flat_list)}]",
+            panel_text=panel_text,
         )
 
         if action == "quit":
@@ -1293,12 +1313,18 @@ def interactive_update_loop(
                 selected_criterion = refreshed
                 criterion_index = requirements.index(refreshed)
 
-            print_criterion_panel(selected_path, selected_criterion, repo_root, id_prefixes=id_prefixes)
+            panel_text = _build_requirement_panel_text(
+                selected_path,
+                selected_criterion,
+                repo_root,
+                id_prefixes=id_prefixes,
+            )
 
             action, selected_value = _prompt_for_requirement_action(
                 selected_criterion,
                 current_entry_field,
                 select_from_menu_fn,
+                panel_text=panel_text,
             )
             if action == "quit":
                 return 0
@@ -1531,14 +1557,20 @@ def filtered_interactive_loop(
         if refreshed:
             requirement = refreshed
 
-        click.echo(click.style(f"\n[{index + 1}/{len(flat_list)}]", dim=True))
-        print_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
+        panel_text = _build_requirement_panel_text(
+            path,
+            requirement,
+            repo_root,
+            id_prefixes=id_prefixes,
+            position_label=f"[{index + 1}/{len(flat_list)}]",
+        )
 
         action, selected_value = _prompt_for_requirement_action(
             requirement,
             current_entry_field,
             select_from_menu_fn,
             title_suffix=f" [{index + 1}/{len(flat_list)}]",
+            panel_text=panel_text,
         )
 
         if action == "quit":
@@ -1739,14 +1771,20 @@ def filtered_priority_interactive_loop(
         if refreshed:
             requirement = refreshed
 
-        click.echo(click.style(f"\n[{index + 1}/{len(flat_list)}]", dim=True))
-        print_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
+        panel_text = _build_requirement_panel_text(
+            path,
+            requirement,
+            repo_root,
+            id_prefixes=id_prefixes,
+            position_label=f"[{index + 1}/{len(flat_list)}]",
+        )
 
         action, selected_value = _prompt_for_requirement_action(
             requirement,
             current_entry_field,
             select_from_menu_fn,
             title_suffix=f" [{index + 1}/{len(flat_list)}]",
+            panel_text=panel_text,
         )
 
         if action == "quit":
@@ -1891,13 +1929,19 @@ def lookup_criterion_interactive(
         if refreshed:
             requirement = refreshed
 
-        print_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
+        panel_text = _build_requirement_panel_text(
+            path,
+            requirement,
+            repo_root,
+            id_prefixes=id_prefixes,
+        )
 
         action, selected_value = _prompt_for_requirement_action(
             requirement,
             current_entry_field,
             select_from_menu_fn,
             allow_nav=False,
+            panel_text=panel_text,
         )
 
         if action in {"quit", "up"}:
@@ -1926,6 +1970,36 @@ def lookup_criterion_interactive(
         else:
             new_status = selected_value or str(requirement.get("status") or "")
             blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
+            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+
+            changed = update_criterion_status(
+                path,
+                requirement,
+                new_status,
+                blocked_reason=blocked_reason,
+                deprecated_reason=deprecated_reason,
+            )
+        process_file(
+            path,
+            check_only=False,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+
+        if changed:
+            click.echo(f"Updated {requirement['id']} -> {selected_value}")
+        else:
+            click.echo(f"No change for {requirement['id']} ({selected_value})")
+
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+        print_summary_table(table_rows, emoji_columns=emoji_columns)
+        return 0
             deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
 
             changed = update_criterion_status(
