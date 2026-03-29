@@ -14,9 +14,10 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (DEFAULT_ID_PREFIXES, MENU_PAGE_SIZE, MENU_REFRESH,
+from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
                         MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
-                        PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
+                        MENU_PAGE_SIZE, PRIORITY_ORDER, STATUS_ORDER,
+                        STATUS_PATTERN)
 from .markdown_io import (display_name_from_h1, format_path_display,
                           iter_domain_files, scope_and_body_from_file)
 from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
@@ -1925,36 +1926,6 @@ def lookup_criterion_interactive(
         else:
             new_status = selected_value or str(requirement.get("status") or "")
             blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
-            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
-
-            changed = update_criterion_status(
-                path,
-                requirement,
-                new_status,
-                blocked_reason=blocked_reason,
-                deprecated_reason=deprecated_reason,
-            )
-        process_file(
-            path,
-            check_only=False,
-            include_status_emojis=include_status_emojis,
-            include_priority_summary=include_priority_summary,
-        )
-
-        if changed:
-            click.echo(f"Updated {requirement['id']} -> {selected_value}")
-        else:
-            click.echo(f"No change for {requirement['id']} ({selected_value})")
-
-        _, table_rows = collect_summary_rows(
-            domain_files,
-            check_only=True,
-            display_name_fn=display_name_from_h1,
-            include_status_emojis=include_status_emojis,
-            include_priority_summary=include_priority_summary,
-        )
-        print_summary_table(table_rows, emoji_columns=emoji_columns)
-        return 0
             deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
 
             changed = update_criterion_status(
