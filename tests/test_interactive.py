@@ -160,13 +160,13 @@ def test_RQMD_sorting_010_footer_legend_uses_standardized_order(monkeypatch, cap
     result = cli.select_from_menu(
         "Sort",
         ["A", "B"],
-        footer_legend="keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit",
+        footer_legend="keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit",
         extra_keys={"s": "cycle-sort", "d": "toggle-direction", "r": "refresh"},
     )
     output = capsys.readouterr().out
 
     assert result is None
-    assert "keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit" in output
+    assert "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit" in output
 
 
 def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp_path: Path) -> None:
@@ -217,7 +217,7 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
     assert "\x1b[1mname ↓\x1b[0m" in str(captured["title"])
     title_plain = re.sub(r"\x1b\[[0-9;]*m", "", str(captured["title"]))
     assert re.search(r"priority\s+\|\s+P\s+\|\s+I\s+\|\s+Ver\s+\|\s+Blk/Dep", title_plain)
-    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
 
 
 def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, tmp_path: Path) -> None:
@@ -309,7 +309,7 @@ def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(m
     assert "\x1b[1mpriority ↓\x1b[0m" in str(captured["title"])
     assert "Z Domain" in captured["options"][0]
     assert "A Domain" in captured["options"][1]
-    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
 
 
 def test_RQMD_sorting_shift_s_cycles_file_sort_backward(monkeypatch, tmp_path: Path) -> None:
@@ -448,8 +448,8 @@ def test_RQMD_sorting_008_direction_token_updates_in_legend(monkeypatch, tmp_pat
     )
 
     assert result.exit_code == 0
-    assert legends[0] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
-    assert legends[1] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
+    assert legends[0] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    assert legends[1] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
 
 
 def test_RQMD_sorting_009_refresh_reopens_file_menu(monkeypatch, tmp_path: Path) -> None:
@@ -543,7 +543,7 @@ def test_RQMD_sorting_refresh_preserves_page_selection_context(monkeypatch, tmp_
 
     assert result.exit_code == 0
     assert selected_indices[0] == 0
-    assert selected_indices[1] == 9
+    assert selected_indices[1] == 1
 
 
 def test_RQMD_sorting_003_refresh_keeps_deterministic_file_order(monkeypatch, tmp_path: Path) -> None:
@@ -656,7 +656,37 @@ def test_RQMD_interactive_refresh_returns_page_metadata(monkeypatch) -> None:
         extra_keys={"r": "refresh"},
     )
 
-    assert result == "refresh:1"
+    assert result == "refresh:9"
+
+
+def test_RQMD_interactive_024_gg_jumps_to_first_page(monkeypatch) -> None:
+    keys = iter(["j", "g", "g", "1"])
+    monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
+    options = [f"opt{i}" for i in range(12)]
+
+    result = cli.select_from_menu("Pick", options)
+
+    assert result == 0
+
+
+def test_RQMD_interactive_024_G_jumps_to_last_page(monkeypatch) -> None:
+    keys = iter(["G", "1"])
+    monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
+    options = [f"opt{i}" for i in range(12)]
+
+    result = cli.select_from_menu("Pick", options)
+
+    assert result == 9
+
+
+def test_RQMD_interactive_024_ctrl_d_half_page_moves_forward(monkeypatch) -> None:
+    keys = iter(["\x04", "1"])
+    monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
+    options = [f"opt{i}" for i in range(12)]
+
+    result = cli.select_from_menu("Pick", options)
+
+    assert result == 4
 
 
 def test_RQMD_interactive_008_reason_prompt_helpers(monkeypatch) -> None:
@@ -1124,7 +1154,8 @@ def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -
     assert captured["right_labels"][0][:10].count("-") == 2
     assert "+" in captured["right_labels"][0]
     assert captured["selected_option_index"] == 0
-    assert "↓/j=next" in captured["footer_legend"]
+    assert "gg=first" in captured["footer_legend"]
+    assert "^U/^D=half" in captured["footer_legend"]
 
 
 @pytest.mark.timeout(5)
@@ -1770,7 +1801,7 @@ def test_RQMD_sorting_005_alpha_asc_strategy_changes_default_direction(monkeypat
     assert "\x1b[1mname ↑\x1b[0m" in str(captured["title"])
     assert "A Domain" in captured["options"][0]
     assert "B Domain" in captured["options"][1]
-    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
+    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
 
 
 def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(monkeypatch, tmp_path: Path) -> None:
@@ -1819,7 +1850,7 @@ def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(monkeyp
     assert "\x1b[1mI ↓\x1b[0m" in str(captured["title"])
     assert "High" in captured["options"][0]
     assert "Low" in captured["options"][1]
-    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
 
 
 def test_RQMD_sorting_unsorted_flag_warns_as_deprecated_alias(monkeypatch, repo_with_domain_docs: Path) -> None:

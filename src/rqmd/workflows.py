@@ -293,7 +293,7 @@ def _refresh_index_from_choice(choice: str) -> int | None:
     raw = choice.split(":", 1)[1].strip()
     if not raw.isdigit():
         return None
-    return int(raw) * MENU_PAGE_SIZE
+    return int(raw)
 
 
 def get_sort_strategy_spec(name: str) -> dict[str, object]:
@@ -318,7 +318,7 @@ def get_sort_strategy_spec(name: str) -> dict[str, object]:
 def _build_sort_footer(ascending: bool) -> str:
     direction = "asc" if ascending else "dsc"
     return (
-        f"keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | "
+        f"keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | "
         f"{MENU_TOGGLE_SORT}=sort | S=sort-back | {MENU_TOGGLE_DIRECTION}=[{direction}] | {MENU_REFRESH}=rfrsh | q=quit"
     )
 
@@ -327,7 +327,7 @@ def _build_requirement_action_footer(allow_nav: bool) -> str:
     base = "keys: 1-9 select | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
     if not allow_nav:
         return base
-    return "keys: 1-9 select | ↓/j=next | ↑/k=prev | g=begin | G=end | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    return "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=begin | G=end | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
 
 
 def _infer_requirements_dir(repo_root: Path, domain_files: list[Path]) -> Path:
@@ -659,7 +659,7 @@ def _show_history_browser(
             allow_paging_nav=True,
             option_right_labels=[_history_entry_right_label(entry) for entry in display_entries],
             selected_option_index=selected_index,
-            footer_legend="keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | q=quit",
+            footer_legend="keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | q=quit",
             prefix_text=prefix_text,
         )
         if choice is None or choice == "up":
@@ -1465,6 +1465,7 @@ def interactive_update_loop(
     force_rescan = True
     pending_initial_file = initial_file_path.resolve() if isinstance(initial_file_path, Path) else None
     file_menu_selected_index = 0
+    file_menu_window_start: int | None = None
 
     while True:
         if force_rescan:
@@ -1528,6 +1529,7 @@ def interactive_update_loop(
                 },
                 footer_legend=_build_sort_footer(current_file_sort_ascending),
                 selected_option_index=file_menu_selected_index,
+                initial_window_start=file_menu_window_start,
             )
             if file_choice is None:
                 return 0
@@ -1560,12 +1562,14 @@ def interactive_update_loop(
             if isinstance(file_choice, str) and file_choice.startswith("refresh"):
                 refresh_index = _refresh_index_from_choice(file_choice)
                 if refresh_index is not None and file_rows:
-                    file_menu_selected_index = min(max(refresh_index, 0), len(file_rows) - 1)
+                    file_menu_window_start = min(max(refresh_index, 0), len(file_rows) - 1)
+                    file_menu_selected_index = file_menu_window_start
                 force_rescan = True
                 click.echo("Select file refreshed.")
                 continue
 
             file_menu_selected_index = int(file_choice)
+            file_menu_window_start = None
             selected_path = file_rows[int(file_choice)][0]
 
         criterion_default_key = strategy["criterion_default_key"]
@@ -1576,6 +1580,7 @@ def interactive_update_loop(
         history_pos = -1
         criterion_index: int | None = None
         criterion_menu_selected_index = 0
+        criterion_menu_window_start: int | None = None
         current_entry_field = "priority" if priority_mode else "status"
 
         while True:
@@ -1618,6 +1623,7 @@ def interactive_update_loop(
                     },
                     footer_legend=_build_sort_footer(current_criterion_sort_ascending),
                     selected_option_index=criterion_menu_selected_index,
+                    initial_window_start=criterion_menu_window_start,
                 )
                 if criterion_choice is None:
                     return 0
@@ -1649,7 +1655,8 @@ def interactive_update_loop(
                 if isinstance(criterion_choice, str) and criterion_choice.startswith("refresh"):
                     refresh_index = _refresh_index_from_choice(criterion_choice)
                     if refresh_index is not None and requirements:
-                        criterion_menu_selected_index = min(max(refresh_index, 0), len(requirements) - 1)
+                        criterion_menu_window_start = min(max(refresh_index, 0), len(requirements) - 1)
+                        criterion_menu_selected_index = criterion_menu_window_start
                     click.echo("Requirement list refreshed.")
                     continue
                 if criterion_choice == "jump-subsection":
@@ -1682,6 +1689,7 @@ def interactive_update_loop(
 
                 criterion_index = int(criterion_choice)
                 criterion_menu_selected_index = criterion_index
+                criterion_menu_window_start = None
                 del history[history_pos + 1:]
                 history.append(criterion_index)
                 history_pos = len(history) - 1

@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 5🔧 18✅ 0⛔ 4🗑️
+Summary: 1💡 6🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -287,7 +287,7 @@ colors:
 - So that any old uses of `n`/`p` are either retired or repurposed only where they match familiar Vim semantics such as search result repeat (`n`/`N`).
 
 ### RQMD-INTERACTIVE-024: Vim-style list motions and paging
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when interactive lists span many files, requirements, or history entries
 - I want rqmd to support common Vim movement primitives beyond one-row navigation

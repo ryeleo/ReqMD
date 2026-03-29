@@ -10,6 +10,7 @@ Key requirements:
 - Cursor position remains consistent across pagination
 - Selection stays visible when possible
 - Navigation keys (down/up arrows and j/k aliases) don't lose selection state
+- Vim-style `gg`, `G`, `Ctrl-U`, and `Ctrl-D` motions preserve stable list windows
 """
 
 from unittest.mock import patch
@@ -217,6 +218,46 @@ class TestCursorNavigationConsistency:
                         # Should track selection through multiple pages
                     except:
                         pass
+
+    def test_RQMD_ui_005_gg_jump_returns_to_first_window(self):
+        options = [f"Entry {i}" for i in range(1, 26)]
+
+        with patch("rqmd.menus.click.echo"):
+            with patch("sys.stdout.isatty", return_value=False):
+                with patch("click.getchar", side_effect=['j', 'g', 'g', '1']):
+                    result = menus_mod.select_from_menu(
+                        "Entries", options,
+                        allow_paging_nav=True,
+                        selected_option_index=3
+                    )
+
+        assert result == 0
+
+    def test_RQMD_ui_005_G_jump_moves_to_last_window(self):
+        options = [f"Entry {i}" for i in range(1, 26)]
+
+        with patch("rqmd.menus.click.echo"):
+            with patch("sys.stdout.isatty", return_value=False):
+                with patch("click.getchar", side_effect=['G', '1']):
+                    result = menus_mod.select_from_menu(
+                        "Entries", options,
+                        allow_paging_nav=True,
+                    )
+
+        assert result == 18
+
+    def test_RQMD_ui_005_ctrl_d_and_ctrl_u_move_half_pages(self):
+        options = [f"Entry {i}" for i in range(1, 26)]
+
+        with patch("rqmd.menus.click.echo"):
+            with patch("sys.stdout.isatty", return_value=False):
+                with patch("click.getchar", side_effect=['\x04', '\x15', '1']):
+                    result = menus_mod.select_from_menu(
+                        "Entries", options,
+                        allow_paging_nav=True,
+                    )
+
+        assert result == 0
 
     def test_RQMD_ui_005_centering_of_large_lists(self):
         """Verify visual window centers around selected item in large lists."""
