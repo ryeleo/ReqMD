@@ -280,6 +280,7 @@ def select_from_menu(
     selected_option_index: int | None = None,
     selected_option_bg: str | None = None,
     footer_legend: str | None = None,
+    prefix_text: str | None = None,
 ) -> int | str | None:
     """Interactive menu selection with single-key navigation and paging.
 
@@ -299,6 +300,7 @@ def select_from_menu(
         selected_option_index: Initial selected option index.
         selected_option_bg: Background ANSI code for selected option.
         footer_legend: Optional legend text displayed at menu footer.
+        prefix_text: Optional text block rendered above the menu title on each redraw.
 
     Returns:
         Index of selected option and the option text, or extra_key_return if key pressed.
@@ -337,6 +339,8 @@ def select_from_menu(
 
             render_started = time.perf_counter()
 
+            if prefix_text:
+                click.echo(prefix_text)
             click.echo("")
             click.echo(title)
             if show_page_indicator and total_pages > 1:

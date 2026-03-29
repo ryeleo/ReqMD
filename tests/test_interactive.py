@@ -981,9 +981,10 @@ Scope: demo.
     def fake_panel(path, requirement, repo_root, id_prefixes):
         del path, repo_root, id_prefixes
         captured_ids.append(str(requirement["id"]))
+        return f"PANEL:{requirement['id']}"
 
     def fake_select(title, options, **kwargs):
-        del options, kwargs
+        del options
         if title.startswith("Select file"):
             return 0
         if title.startswith("Select requirement in"):
@@ -992,11 +993,12 @@ Scope: demo.
                 return "jump-subsection"
             return None
         if title.startswith("Set status for"):
+            assert kwargs.get("prefix_text") == "PANEL:AC-DEMO-002"
             return "up"
         return None
 
     monkeypatch.setattr(cli, "select_from_menu", fake_select)
-    monkeypatch.setattr(cli.workflows_mod, "print_criterion_panel", fake_panel)
+    monkeypatch.setattr(cli.workflows_mod, "format_criterion_panel", fake_panel)
     monkeypatch.setattr(cli.click, "prompt", lambda *args, **kwargs: "mutation")
 
     runner = CliRunner()
@@ -1013,6 +1015,33 @@ Scope: demo.
 
     assert result.exit_code == 0
     assert captured_ids[0] == "AC-DEMO-002"
+
+
+def test_RQMD_interactive_021b_requirement_menu_receives_panel_prefix() -> None:
+    captured: dict[str, object] = {}
+
+    def fake_select(title, options, **kwargs):
+        captured["title"] = title
+        captured["prefix_text"] = kwargs.get("prefix_text")
+        return "up"
+
+    requirement = {
+        "id": "RQMD-AUTOMATION-019",
+        "title": "Automation body stays visible",
+        "status": "💡 Proposed",
+    }
+
+    result = cli.workflows_mod._prompt_for_requirement_action(
+        requirement,
+        "status",
+        fake_select,
+        panel_text="\nPANEL BODY\n==========",
+        title_suffix=" [1/5]",
+    )
+
+    assert result == ("up", None)
+    assert captured["title"] == "Set status for RQMD-AUTOMATION-019 [1/5]\nsetting: status"
+    assert captured["prefix_text"] == "\nPANEL BODY\n=========="
 
 
 def test_RQMD_interactive_020_shell_completion_suggests_subsection_domain_and_id(tmp_path: Path) -> None:

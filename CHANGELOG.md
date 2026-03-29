@@ -88,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated the CLI entrypoint safety behavior so unexpected uncaught internal exceptions render as a single friendly error line by default, while `-v/--detailed` preserves traceback re-raise behavior for debugging.
 - Updated interactive navigation to make down/up arrow keys the primary next/prev controls in paged menus and requirement walkthroughs, while preserving `n`/`p` as compatibility aliases.
 - Fixed a `--screen-write` regression where adaptive render-mode fallback could override an explicit CLI request; explicit `--screen-write` now forces full-screen redraw for that run, and render-mode state is reset at CLI startup.
+- Fixed interactive requirement-action rendering so full requirement panels remain visible during status/priority/flagged/link prompts under screen-write redraws, restoring the colored rule, source/domain notes, and requirement body instead of dropping to a terse menu-only prompt.
 
 - Switched requirements index layout from sibling requirements.md files to in-directory README.md files.
 - Updated rqmd auto-detection to use docs/requirements/README.md and requirements/README.md.

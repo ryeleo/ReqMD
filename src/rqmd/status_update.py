@@ -48,6 +48,46 @@ def _rule_style_kwargs(status_label: str) -> dict:
     return {"fg": "yellow"}
 
 
+def format_criterion_panel(
+    path: Path,
+    requirement: dict[str, object],
+    repo_root: Path,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> str:
+    """Format a single requirement panel for display in interactive flows."""
+    requirement_id = str(requirement["id"])
+    title = str(requirement["title"])
+    status = str(requirement.get("status") or "")
+    criterion_text = extract_requirement_block(path, requirement_id, id_prefixes=id_prefixes)
+    term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
+    rule = "=" * max(24, min(term_width, 100))
+    rule_kwargs = _rule_style_kwargs(status)
+
+    lines = [
+        "",
+        click.style(rule, **rule_kwargs),
+        click.style(f"{requirement_id}: {title}", bold=True),
+        click.style(f"Source: {path.relative_to(repo_root).as_posix()}", dim=True),
+    ]
+
+    _, domain_body = scope_and_body_from_file(path, id_prefixes=id_prefixes)
+    if domain_body:
+        domain_lines = [ln for ln in domain_body.splitlines() if ln.strip()]
+        max_notes_lines = 3
+        truncated = len(domain_lines) > max_notes_lines
+        display_lines = domain_lines[:max_notes_lines]
+        notes_text = " | ".join(display_lines)
+        if truncated:
+            notes_text += " …"
+        lines.append(click.style(f"Domain notes: {notes_text}", dim=True))
+
+    lines.append(click.style(rule, **rule_kwargs))
+    if criterion_text:
+        lines.append(criterion_text)
+    lines.append(click.style(rule, **rule_kwargs))
+    return "\n".join(lines)
+
+
 def print_criterion_panel(
     path: Path,
     requirement: dict[str, object],
@@ -64,34 +104,7 @@ def print_criterion_panel(
         repo_root: Root path of the project (for display formatting).
         id_prefixes: Allowed ID prefixes (used for criterion extraction).
     """
-    requirement_id = str(requirement["id"])
-    title = str(requirement["title"])
-    status = str(requirement.get("status") or "")
-    criterion_text = extract_requirement_block(path, requirement_id, id_prefixes=id_prefixes)
-    term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
-    rule = "=" * max(24, min(term_width, 100))
-    rule_kwargs = _rule_style_kwargs(status)
-
-    click.echo("")
-    click.echo(click.style(rule, **rule_kwargs))
-    click.echo(click.style(f"{requirement_id}: {title}", bold=True))
-    click.echo(click.style(f"Source: {path.relative_to(repo_root).as_posix()}", dim=True))
-
-    _, domain_body = scope_and_body_from_file(path, id_prefixes=id_prefixes)
-    if domain_body:
-        domain_lines = [ln for ln in domain_body.splitlines() if ln.strip()]
-        max_notes_lines = 3
-        truncated = len(domain_lines) > max_notes_lines
-        display_lines = domain_lines[:max_notes_lines]
-        notes_text = " | ".join(display_lines)
-        if truncated:
-            notes_text += " …"
-        click.echo(click.style(f"Domain notes: {notes_text}", dim=True))
-
-    click.echo(click.style(rule, **rule_kwargs))
-    if criterion_text:
-        click.echo(criterion_text)
-    click.echo(click.style(rule, **rule_kwargs))
+    click.echo(format_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes))
 
 
 def update_criterion_status(
