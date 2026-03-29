@@ -35,6 +35,8 @@ _RESIZE_SIGNAL_PENDING = False
 _RENDER_MODE_CONTROLLER = RenderModeController()
 _ARROW_UP_KEYS = ("\x1b[A", "\x1bOA")
 _ARROW_DOWN_KEYS = ("\x1b[B", "\x1bOB")
+_CTRL_U = "\x15"
+_CTRL_D = "\x04"
 
 
 def set_screen_write_enabled(enabled: bool) -> None:
@@ -112,6 +114,10 @@ def _format_key_label(key: str) -> str:
         return "↑"
     if key in _ARROW_DOWN_KEYS:
         return "↓"
+    if key == _CTRL_U:
+        return "^U"
+    if key == _CTRL_D:
+        return "^D"
     return key
 
 
@@ -278,6 +284,7 @@ def select_from_menu(
     extra_keys: dict[str, str] | None = None,
     extra_keys_help: dict[str, str] | None = None,
     selected_option_index: int | None = None,
+    initial_window_start: int | None = None,
     selected_option_bg: str | None = None,
     footer_legend: str | None = None,
     prefix_text: str | None = None,
@@ -298,6 +305,7 @@ def select_from_menu(
         extra_keys: Optional dict of extra keys to function descriptions.
         extra_keys_help: Optional dict of extra key help text.
         selected_option_index: Initial selected option index.
+        initial_window_start: Optional initial top-of-window global index.
         selected_option_bg: Background ANSI code for selected option.
         footer_legend: Optional legend text displayed at menu footer.
         prefix_text: Optional text block rendered above the menu title on each redraw.
@@ -310,22 +318,28 @@ def select_from_menu(
         return None
 
     page_size = MENU_PAGE_SIZE
-    page = 0
+    max_window_start = max(0, len(options) - 1)
+    last_page_start = max(0, ((len(options) - 1) // page_size) * page_size)
+    window_start = 0
     is_tty = sys.stdout.isatty()
     previous_resize_handler: object | None = None
 
     if is_tty and hasattr(signal, "SIGWINCH"):
         previous_resize_handler = signal.signal(signal.SIGWINCH, _mark_resize_pending)
 
-    if selected_option_index is not None and selected_option_index >= 0:
-        page = min(selected_option_index // page_size, max(0, (len(options) - 1) // page_size))
+    if initial_window_start is not None and initial_window_start >= 0:
+        window_start = min(initial_window_start, max_window_start)
+    elif selected_option_index is not None and selected_option_index >= 0:
+        window_start = min((selected_option_index // page_size) * page_size, max_window_start)
 
     try:
         while True:
             total_pages = (len(options) + page_size - 1) // page_size
-            start = page * page_size
+            start = window_start
             page_items = options[start:start + page_size]
             term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
+            current_page = min((window_start // page_size) + 1, total_pages)
+            half_page = max(1, page_size // 2)
 
             _ = consume_resize_pending()
 
@@ -344,7 +358,7 @@ def select_from_menu(
             click.echo("")
             click.echo(title)
             if show_page_indicator and total_pages > 1:
-                click.echo(f"Page {page + 1}/{total_pages}")
+                click.echo(f"Page {current_page}/{total_pages}")
             for idx, option in enumerate(page_items):
                 global_idx = start + idx
                 selection_marker = "→" if selected_option_index is not None and global_idx == selected_option_index else " "
@@ -397,6 +411,30 @@ def select_from_menu(
             choice = raw_choice.strip()
             click.echo(_format_key_label(choice))
 
+            if allow_paging_nav and choice == "g":
+                click.echo("choice: ", nl=False)
+                raw_second_choice = click.getchar()
+                second_choice = raw_second_choice.strip()
+                click.echo(_format_key_label(second_choice))
+                if second_choice == "\x03":
+                    raise click.Abort()
+                if second_choice.lower() == "g":
+                    if extra_keys and "g" in extra_keys:
+                        mapped = extra_keys["g"]
+                        if mapped == "refresh":
+                            return f"refresh:{window_start}"
+                        return mapped
+                    window_start = 0
+                    render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                    if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                        _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                    continue
+                click.echo("Invalid input. Use number or navigation keys.")
+                render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                    _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                continue
+
             arrow_navigation = _resolve_arrow_navigation(choice, allow_paging_nav, extra_keys)
             if arrow_navigation in {"nav-next", "nav-prev"}:
                 return arrow_navigation
@@ -421,24 +459,41 @@ def select_from_menu(
             if extra_keys and choice in extra_keys:
                 mapped = extra_keys[choice]
                 if mapped == "refresh":
-                    return f"refresh:{page}"
+                    return f"refresh:{window_start}"
                 return mapped
             if extra_keys and choice.lower() in extra_keys:
                 mapped = extra_keys[choice.lower()]
                 if mapped == "refresh":
-                    return f"refresh:{page}"
+                    return f"refresh:{window_start}"
                 return mapped
 
+            if allow_paging_nav and choice == "G":
+                window_start = last_page_start
+                render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                    _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                continue
+            if allow_paging_nav and choice == _CTRL_D:
+                window_start = min(window_start + half_page, max_window_start)
+                render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                    _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                continue
+            if allow_paging_nav and choice == _CTRL_U:
+                window_start = max(window_start - half_page, 0)
+                render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                    _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                continue
+
             if allow_paging_nav and choice.lower() == MENU_NEXT:
-                if page < total_pages - 1:
-                    page += 1
+                window_start = min(window_start + page_size, last_page_start)
                 render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
                 if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                     _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                 continue
             if allow_paging_nav and choice.lower() == MENU_PREV:
-                if page > 0:
-                    page -= 1
+                window_start = max(window_start - page_size, 0)
                 render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
                 if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                     _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)

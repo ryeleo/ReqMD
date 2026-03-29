@@ -150,6 +150,9 @@ uv run rqmd docs/requirements/interactive-ux.md --update AC-EXAMPLE-001=verified
 
 Interactive file and requirement menus now support:
 
+- `j` and `k` for next/previous vertical movement alongside arrow keys
+- `gg` to jump to the first visible list position and `G` to jump to the last
+- `Ctrl-U` and `Ctrl-D` for deterministic half-page movement in paged menus
 - `s` to cycle sort columns
 - `d` to toggle ascending/descending
 - `r` to refresh/rescan while preserving the active sort
