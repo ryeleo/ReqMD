@@ -16,56 +16,26 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (
-    DEFAULT_ID_PREFIXES,
-    MENU_REFRESH,
-    MENU_TOGGLE_DIRECTION,
-    MENU_TOGGLE_SORT,
-    PRIORITY_ORDER,
-    STATUS_ORDER,
-    STATUS_PATTERN,
-)
+from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
+                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
+                        PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
 from .history import HistoryManager
-from .markdown_io import (
-    display_name_from_h1,
-    format_path_display,
-    iter_domain_files,
-    scope_and_body_from_file,
-)
-from .menus import (
-    right_align_menu_suffix,
-    select_from_menu,
-    truncate_text,
-    visible_length,
-)
-from .priority_model import style_priority_label
-from .req_parser import (
-    collect_sub_sections,
-    extract_requirement_block_with_lines,
-    find_requirement_by_id,
-    normalize_sub_domain_name,
-    parse_requirements,
-)
-from .status_model import (
-    build_color_rollup_text,
-    status_emoji,
-    style_status_label,
-    style_status_line,
-)
-from .status_update import (
-    format_criterion_panel,
-    prompt_for_blocked_reason,
-    prompt_for_deprecated_reason,
-    prompt_for_links_flow,
-    update_criterion_status,
-)
-from .summary import (
-    collect_summary_rows,
-    count_priorities,
-    count_statuses,
-    print_summary_table,
-    process_file,
-)
+from .markdown_io import (display_name_from_h1, format_path_display,
+                          iter_domain_files, scope_and_body_from_file)
+from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
+                    visible_length)
+from .priority_model import coerce_priority_label, style_priority_label
+from .req_parser import (collect_sub_sections,
+                         extract_requirement_block_with_lines,
+                         find_requirement_by_id, normalize_sub_domain_name,
+                         parse_requirements)
+from .status_model import (build_color_rollup_text, status_emoji,
+                           style_status_label, style_status_line)
+from .status_update import (format_criterion_panel, prompt_for_blocked_reason,
+                            prompt_for_deprecated_reason,
+                            prompt_for_links_flow, update_criterion_status)
+from .summary import (collect_summary_rows, count_priorities, count_statuses,
+                      print_summary_table, process_file)
 
 SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
     "standard": {
@@ -900,6 +870,28 @@ def _resolve_action_entry_field(current_entry_field: str, action: str) -> str:
     return current_entry_field
 
 
+def _build_status_priority_preview(
+    requirement: dict[str, object],
+) -> tuple[str, list[str]]:
+    title = _right_align_text("setting: status", "setting: priority")
+    current_priority = coerce_priority_label(str(requirement.get("priority") or ""))
+    if current_priority == "unset":
+        current_priority = ""
+    right_labels: list[str] = []
+
+    for index, _status in enumerate(STATUS_ORDER):
+        if index >= len(PRIORITY_ORDER) or index >= len(PRIORITY_SHORTCUT_KEYS):
+            right_labels.append("")
+            continue
+
+        priority_label = PRIORITY_ORDER[index][0]
+        marker = "→" if priority_label == current_priority else " "
+        shortcut = PRIORITY_SHORTCUT_KEYS[index]
+        right_labels.append(f"{marker} {shortcut}) {style_priority_label(priority_label)}")
+
+    return title, right_labels
+
+
 def _build_requirement_field_menu(
     requirement: dict[str, object],
     active_field: str,
@@ -951,7 +943,8 @@ def _build_requirement_field_menu(
     elif current_value in ("⛔ Blocked", "🗑️ Deprecated"):
         highlight_bg = "\x1b[48;5;238m"
 
-    title = f"Set status for {requirement['id']}{title_suffix}\nsetting: status"
+    priority_title, _option_right_labels = _build_status_priority_preview(requirement)
+    title = f"Set status for {requirement['id']}{title_suffix}\n{priority_title}"
     return title, labels, options, current_index, highlight_bg
 
 
@@ -969,6 +962,7 @@ def _prompt_for_requirement_action(
         title_suffix=title_suffix,
     )
     include_priority_shortcuts = active_field == "status"
+    option_right_labels = _build_status_priority_preview(requirement)[1] if include_priority_shortcuts else None
     extra_keys = {"t": "toggle-field"}
     extra_keys_help = {"t": "toggle"}
     extra_keys.update({"z": "undo", "y": "redo", "h": "history"})
@@ -989,6 +983,7 @@ def _prompt_for_requirement_action(
         extra_keys_help=extra_keys_help,
         selected_option_index=selected_index,
         selected_option_bg=selected_bg,
+        option_right_labels=option_right_labels,
         footer_legend=_build_requirement_action_footer(allow_nav, include_priority_shortcuts=include_priority_shortcuts),
         compact_footer=_build_requirement_action_compact_footer(allow_nav, include_priority_shortcuts=include_priority_shortcuts),
         prefix_text=panel_text,
