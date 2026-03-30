@@ -33,13 +33,9 @@ Requirement bodies can be as short as a title plus status line, or include riche
 ## Status model
 
 - `💡 Proposed`
-- `🧪 Pytested`
-- `🚧 AI Blocked`
-- `⏭️ AI Skipped`
-- `🤖 AI Verified`
-- `✅ Done`
-- `🔄 Change Requested`
-- `❌ Cancelled`
+- `🔧 Implemented`
+- `✅ Verified`
+- `⛔ Blocked`
 - `🗑️ Deprecated`
 
 ## Priority model (optional field)
@@ -327,6 +323,14 @@ uv run rqmd --update AC-EXAMPLE-001=implemented --update AC-EXAMPLE-002=verified
 ## AI CLI (rqmd-ai)
 
 `rqmd-ai` is a companion command for AI-oriented workflows. It is read-only by default and supports prompt-context export, plan previews, and guarded apply mode.
+
+Recommended AI change loop for brainstorm-driven work:
+
+1. Export focused context first with `rqmd-ai --as-json` or a targeted `--dump-*` command.
+2. Update tracked requirement docs, the requirement index, and `CHANGELOG.md` before code when the brainstorm changes product behavior or workflow.
+3. Review the read-only plan preview from `rqmd-ai --update ...`.
+4. Apply explicitly with `--write` only after the preview matches the intended requirement/doc changes.
+5. Finish with `rqmd --verify-summaries` and the test suite so requirement docs and shipped behavior stay aligned.
 
 Guidance mode:
 

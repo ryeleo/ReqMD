@@ -54,13 +54,9 @@ Requirement docs can use **H2 headers** (`##`) to organize requirements into log
 
 Canonical status progression:
 - `💡 Proposed`
-- `🧪 Pytested`
-- `🚧 AI Blocked`
-- `⏭️ AI Skipped`
-- `🤖 AI Verified`
-- `✅ Done`
-- `🔄 Change Requested`
-- `❌ Cancelled`
+- `🔧 Implemented`
+- `✅ Verified`
+- `⛔ Blocked`
 - `🗑️ Deprecated`
 
 ## Schema Reference

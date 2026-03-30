@@ -48,6 +48,47 @@ def _rule_style_kwargs(status_label: str) -> dict:
     return {"fg": "yellow"}
 
 
+_INLINE_BOLD_PATTERN = re.compile(r"\*\*(.+?)\*\*")
+
+
+def _render_inline_markdown(text: str) -> str:
+    """Render a small markdown subset suitable for terminal panels."""
+    parts: list[str] = []
+    cursor = 0
+    for match in _INLINE_BOLD_PATTERN.finditer(text):
+        parts.append(text[cursor:match.start()])
+        parts.append(click.style(match.group(1), bold=True))
+        cursor = match.end()
+    parts.append(text[cursor:])
+    return "".join(parts)
+
+
+def _render_requirement_markdown(block_text: str) -> str:
+    """Render lightweight markdown for interactive requirement panels."""
+    rendered_lines: list[str] = []
+    for line in block_text.splitlines():
+        stripped = line.lstrip()
+        indent = line[: len(line) - len(stripped)]
+
+        if not stripped:
+            rendered_lines.append("")
+            continue
+
+        if stripped.startswith("### "):
+            rendered_lines.append(f"{indent}{click.style(stripped[4:], bold=True)}")
+            continue
+        if stripped.startswith("## "):
+            rendered_lines.append(f"{indent}{click.style(stripped[3:], bold=True, underline=True)}")
+            continue
+        if stripped.startswith("# "):
+            rendered_lines.append(f"{indent}{click.style(stripped[2:], bold=True, underline=True)}")
+            continue
+
+        rendered_lines.append(f"{indent}{_render_inline_markdown(stripped)}")
+
+    return "\n".join(rendered_lines)
+
+
 def format_criterion_panel(
     path: Path,
     requirement: dict[str, object],
@@ -83,7 +124,7 @@ def format_criterion_panel(
 
     lines.append(click.style(rule, **rule_kwargs))
     if criterion_text:
-        lines.append(criterion_text)
+        lines.append(_render_requirement_markdown(criterion_text))
     lines.append(click.style(rule, **rule_kwargs))
     return "\n".join(lines)
 
