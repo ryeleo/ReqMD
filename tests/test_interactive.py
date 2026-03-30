@@ -1218,6 +1218,40 @@ def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -
 
 
 @pytest.mark.timeout(5)
+def test_RQMD_interactive_021d2_history_browser_checks_out_selected_branch(monkeypatch) -> None:
+    checkout_calls: list[str] = []
+
+    class StubHistoryManager:
+        def get_branches(self):
+            return {
+                "main": {"is_current": True},
+                "recovery-branch": {"is_current": False},
+            }
+
+        def checkout_branch(self, branch_name: str):
+            checkout_calls.append(branch_name)
+            return "deadbeefcafebabe"
+
+    monkeypatch.setattr(cli.click, "getchar", lambda: "c")
+
+    action = cli.workflows_mod._prompt_for_history_entry_action(
+        {
+            "entry_index": 1,
+            "command": "implemented",
+            "branch": "recovery-branch",
+            "commit": "abc12345deadbeef",
+            "timestamp": "2026-03-29T00:00:00+00:00",
+            "files": ["docs/requirements/demo.md"],
+            "delta": {"additions": 1, "deletions": 0, "files_changed": 1},
+        },
+        StubHistoryManager(),
+    )
+
+    assert action == "refresh"
+    assert checkout_calls == ["recovery-branch"]
+
+
+@pytest.mark.timeout(5)
 def test_RQMD_interactive_021e_history_browser_cherry_picks_selected_entry(monkeypatch) -> None:
     cherry_pick_calls: list[tuple[str, str | None]] = []
 

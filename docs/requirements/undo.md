@@ -3,7 +3,7 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 9🔧 0✅ 0⛔ 0🗑️
+Summary: 1💡 10🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
@@ -59,7 +59,7 @@ Summary: 2💡 9🔧 0✅ 0⛔ 0🗑️
 - So that the UI and `--verify-summaries` mode can render a human-readable history timeline showing provenance and diffs.
 
 ### RQMD-UNDO-007: UI affordances and commands
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when working in interactive and non-interactive modes
 - I want to expose history controls
