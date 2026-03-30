@@ -386,6 +386,8 @@ Bundle installs are idempotent by default and preserve existing customized instr
 
 The installed bundle now includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, docs-sync, history, bundle-management, and verification loops without rewriting those instructions in every workspace. Those skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
 
+The full bundle preset also installs specialized agents for requirement maintenance, docs sync, history investigation, and bundle maintenance so future agents can stay narrow and workflow-aware instead of overloading the single core agent with every repo-management task.
+
 When apply mode runs, rqmd-ai appends a structured audit event to the local shared history backend at `.rqmd/history/rqmd-history/audit.jsonl`.
 
 Batch set from file:

@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd.ai_cli import main
 from rqmd.cli import main as rqmd_main
 from rqmd.constants import JSON_SCHEMA_VERSION
@@ -487,8 +488,12 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 13
+    assert first_payload["changed_count"] == 17
     assert (repo / ".github" / "copilot-instructions.md").exists()
+    assert ".github/agents/Requirements.agent.md" in first_payload["created_files"]
+    assert ".github/agents/Docs.agent.md" in first_payload["created_files"]
+    assert ".github/agents/History.agent.md" in first_payload["created_files"]
+    assert ".github/agents/Bundle.agent.md" in first_payload["created_files"]
 
     second = runner.invoke(
         main,
@@ -507,7 +512,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 13
+    assert len(second_payload["skipped_existing"]) == 17
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
