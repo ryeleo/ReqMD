@@ -6,7 +6,7 @@ This folder contains a standard AI agent bundle installed by:
 
 Presets:
 - minimal: `.github/copilot-instructions.md`, `.github/agents/core.agent.md`, and the rqmd workflow skills under `.github/skills/`
-- full: minimal + `.github/agents/Explore.agent.md` and this README
+- full: minimal + `.github/agents/Explore.agent.md`, `.github/agents/Requirements.agent.md`, `.github/agents/Docs.agent.md`, `.github/agents/History.agent.md`, `.github/agents/Bundle.agent.md`, and this README
 
 Operational notes:
 - Re-run is idempotent.
@@ -23,3 +23,11 @@ Installed workflow skills:
 - `/rqmd-history`
 - `/rqmd-bundle`
 - `/rqmd-verify`
+
+Installed agents in the full preset:
+- `core`: primary implementation and orchestration agent
+- `Explore`: read-only codebase and requirement discovery agent
+- `Requirements`: backlog, status, priority, and requirement-doc maintenance agent
+- `Docs`: README, changelog, and requirement-doc sync agent
+- `History`: timeline, history-ref, compare-refs, and recovery-planning agent
+- `Bundle`: Copilot agent/skill bundle maintenance agent

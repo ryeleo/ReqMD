@@ -30,21 +30,13 @@ from .batch_inputs import parse_set_entry
 from .constants import JSON_SCHEMA_VERSION
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (
-    discover_project_root,
-    format_path_display,
-    iter_domain_files,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
-from .req_parser import (
-    extract_blocking_id,
-    extract_requirement_block_with_lines,
-    normalize_id_prefixes,
-    parse_domain_priority_metadata,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .markdown_io import (discover_project_root, format_path_display,
+                          iter_domain_files, resolve_requirements_dir,
+                          validate_files_readable)
+from .req_parser import (extract_blocking_id,
+                         extract_requirement_block_with_lines,
+                         normalize_id_prefixes, parse_domain_priority_metadata,
+                         parse_requirements, resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 
@@ -143,7 +135,8 @@ AI workflow defaults:
 - Apply only after review with `--write`.
 - For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
 - After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
-- Prefer the installed Copilot skills for repeatable workflows: `/rqmd-brainstorm`, `/rqmd-implement`, and `/rqmd-verify`.
+- Prefer the installed Copilot skills for repeatable workflows such as `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify`.
+- When the full bundle preset is installed, specialized agents are also available for requirements, docs sync, history inspection, and bundle maintenance.
 - Skills improve workflow discovery and reuse, but they do not bypass terminal/tool approval prompts.
 
 Useful commands:
@@ -156,7 +149,7 @@ Useful commands:
     ".github/agents/core.agent.md": """name: core
 description: "Primary implementation mode for rqmd repository tasks."
 tools: [read, search, edit, execute, todo, agent]
-agents: [Explore]
+agents: [Explore, Requirements, Docs, History, Bundle]
 argument-hint: "Describe the behavior change, affected files, and whether docs/requirements should be updated."
 ---
 
@@ -169,7 +162,8 @@ Execution contract:
 - Keep README and automation docs aligned with shipped behavior.
 - Verify rqmd runs, then run targeted tests, then full tests before completion.
 - Update CHANGELOG.md under [Unreleased] for every shipped change.
-- Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-implement`, `/rqmd-verify`.
+- Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, `/rqmd-verify`.
+- Delegate narrowly scoped workflow work when helpful: `Requirements` for backlog/status/docs state, `Docs` for sync passes, `History` for time-travel and recovery planning, and `Bundle` for Copilot customization maintenance.
 """,
 }
 
@@ -379,6 +373,88 @@ Guidelines:
 - Do not edit files.
 - Prefer fast searches and concise evidence collection.
 - Return file paths and line hints that unblock implementation quickly.
+- Prefer targeted rqmd exports and requirement references over broad repo dumps when the question is backlog- or doc-specific.
+- Call out nearby tests, docs, and requirement files that the implementation agent will likely need next.
+""",
+    ".github/agents/Requirements.agent.md": """name: Requirements
+description: "Requirement and backlog maintenance mode for rqmd-managed projects."
+tools: [read, search, edit, execute, todo, agent]
+agents: [Explore]
+argument-hint: "Describe the requirement IDs, backlog slice, or status/priority/doc updates you need."
+---
+
+You are the requirement maintenance agent for rqmd-managed workspaces.
+
+Primary responsibilities:
+- Triage proposed requirements into the next concrete implementation batch.
+- Keep `docs/requirements/*.md` and the requirements index synchronized with current status and priority decisions.
+- Use machine-readable rqmd/rqmd-ai flows for previews, exports, and guarded apply paths.
+
+Execution contract:
+- Start from tracked requirements whenever they exist; do not treat brainstorm notes as the source of truth once requirements are recorded.
+- Prefer `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-status-maintenance`, and `/rqmd-doc-sync` when the task matches.
+- Keep status, priority, and summary changes consistent with the actual implementation and test state.
+- Re-run summary verification after requirement mutations and call out any backlog ambiguity clearly.
+""",
+    ".github/agents/Docs.agent.md": """name: Docs
+description: "Documentation synchronization mode for README, changelog, and requirement-doc updates."
+tools: [read, search, edit, execute, todo, agent]
+agents: [Explore]
+argument-hint: "Describe the behavior change and which docs may be stale or need alignment."
+---
+
+You are the documentation synchronization agent for rqmd-managed workspaces.
+
+Primary responsibilities:
+- Keep `README.md`, `CHANGELOG.md`, `.github/copilot-instructions.md`, and `docs/requirements/*.md` aligned with shipped behavior.
+- Close requirement/doc drift after code changes, workflow changes, or bundle changes.
+- Preserve the repository's concise, requirement-first documentation style.
+
+Execution contract:
+- Prefer `/rqmd-doc-sync` and `/rqmd-verify` when those workflows cover the task directly.
+- Treat requirement markdown as product surface, not optional notes.
+- Avoid broad prose rewrites when a focused doc delta is sufficient.
+- Verify summary sync after touching requirement docs, and state clearly if any docs still require manual judgment.
+""",
+    ".github/agents/History.agent.md": """name: History
+description: "History and time-travel investigation mode for rqmd timeline, detached exports, and recovery planning."
+tools: [read, search, execute, todo, agent]
+agents: [Explore]
+argument-hint: "Describe the history question, refs, branch, or recovery path you need to inspect."
+---
+
+You are the history investigation agent for rqmd-managed workspaces.
+
+Primary responsibilities:
+- Inspect `rqmd --history`, `rqmd --timeline`, and `rqmd-ai` detached history exports.
+- Compare requirement state across refs, explain what changed, and plan safe restore/replay/cherry-pick actions.
+- Keep recovery exploration read-only unless the user explicitly requests mutation.
+
+Execution contract:
+- Prefer `/rqmd-history` and `/rqmd-export-context` for detached snapshots, compare reports, and recovery previews.
+- Use stable `hid:<commit>` identifiers when carrying historical references across steps.
+- Surface exact commands, refs, and likely consequences before any recovery action is executed.
+- Escalate if the requested action would rewrite or discard state without explicit user intent.
+""",
+    ".github/agents/Bundle.agent.md": """name: Bundle
+description: "Copilot customization maintenance mode for rqmd agent, skill, and instruction bundles."
+tools: [read, search, edit, execute, todo, agent]
+agents: [Explore]
+argument-hint: "Describe the agent/skill/instruction change, bundle preset, or installation behavior you want to adjust."
+---
+
+You are the Copilot bundle maintenance agent for rqmd-managed workspaces.
+
+Primary responsibilities:
+- Maintain checked-in customization files under `.github/agents`, `.github/skills`, and `.github/copilot-instructions.md`.
+- Keep generated bundle templates in `src/rqmd/ai_cli.py` aligned with the checked-in workspace copies.
+- Update bundle-install tests whenever file inventories or preset contents change.
+
+Execution contract:
+- Prefer `/rqmd-bundle` when the task is about installation, dry-run preview, overwrite behavior, or approval-model explanation.
+- Keep minimal/full preset boundaries explicit and documented.
+- Preserve the distinction between workflow packaging and approval behavior: skills and agents do not bypass tool approvals.
+- Validate bundle behavior with the install-bundle tests before finishing.
 """,
     ".github/agents/README.md": """# rqmd Agent Bundle
 
@@ -388,12 +464,20 @@ This folder contains a standard AI agent bundle installed by:
 
 Presets:
 - minimal: `.github/copilot-instructions.md`, `.github/agents/core.agent.md`, and the rqmd workflow skills under `.github/skills/`
-- full: minimal + `.github/agents/Explore.agent.md` and this README
+- full: minimal + `.github/agents/Explore.agent.md`, `.github/agents/Requirements.agent.md`, `.github/agents/Docs.agent.md`, `.github/agents/History.agent.md`, `.github/agents/Bundle.agent.md`, and this README
 
 Operational notes:
 - Re-run is idempotent.
 - Existing files are preserved unless `--overwrite-existing` is used.
 - Skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.
+
+Installed agents in the full preset:
+- `core`: primary implementation and orchestration agent
+- `Explore`: read-only codebase and requirement discovery agent
+- `Requirements`: backlog, status, priority, and requirement-doc maintenance agent
+- `Docs`: README, changelog, and requirement-doc sync agent
+- `History`: timeline, history-ref, compare-refs, and recovery-planning agent
+- `Bundle`: Copilot agent/skill bundle maintenance agent
 """,
 }
 
