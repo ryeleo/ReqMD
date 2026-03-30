@@ -3,6 +3,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import click
 from rqmd.status_update import print_criterion_panel
 
 _TERM_SIZE = MagicMock(columns=120)
@@ -79,4 +80,31 @@ class TestPrintCriterionPanelDomainNotes:
         assert "Line one" in output
         assert "Line four" not in output
         assert "…" in output
+
+    def test_requirement_block_renders_lightweight_markdown(self, tmp_path: Path):
+        domain_file = tmp_path / "domain.md"
+        domain_file.write_text(
+            "# Domain\n\n"
+            "Context before the requirement.\n\n"
+            "### RQMD-DOM-001: Test requirement\n"
+            "- **Status:** 💡 Proposed\n"
+            "- **Priority:** 🟠 P1 - High\n"
+            "Use **cached** prompt context for repeat runs.\n",
+            encoding="utf-8",
+        )
+        requirement = {
+            "id": "RQMD-DOM-001",
+            "title": "Test requirement",
+            "status": "💡 Proposed",
+        }
+
+        output = click.unstyle(_capture_panel(domain_file, requirement, tmp_path))
+        assert "### " not in output
+        assert "**Status:**" not in output
+        assert "**Priority:**" not in output
+        assert "**cached**" not in output
+        assert "RQMD-DOM-001: Test requirement" in output
+        assert "Status: 💡 Proposed" in output
+        assert "Priority: 🟠 P1 - High" in output
+        assert "Use cached prompt context for repeat runs." in output
 

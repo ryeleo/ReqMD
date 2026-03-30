@@ -13,13 +13,9 @@ This document is the source-of-truth index for rqmd requirements.
 
 Status workflow:
 - 💡 Proposed
-- 🧪 Pytested
-- 🚧 AI Blocked
-- ⏭️ AI Skipped
-- 🤖 AI Verified
-- ✅ Done
-- 🔄 Change Requested
-- ❌ Cancelled
+- 🔧 Implemented
+- ✅ Verified
+- ⛔ Blocked
 - 🗑️ Deprecated
 
 ## Requirement Documents
@@ -61,4 +57,5 @@ Each requirement document can represent a domain, user story, feature area, or a
 
 - Run rqmd --verify-summaries to validate summaries.
 - Run rqmd to update summaries and optionally edit requirement statuses interactively.
+- When turning a brainstorm into implementation work, update the affected requirement docs, this index, and `CHANGELOG.md` before applying code changes so the tracked contract stays ahead of the implementation.
 - Use --id-namespace to limit or expand which header prefixes are recognized.

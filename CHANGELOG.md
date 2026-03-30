@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
+- Added lightweight terminal markdown rendering in requirement panels so criterion headings and bold inline labels display cleanly during interactive review without changing the underlying line-oriented markdown contract.
+- Added explicit requirement-first AI workflow guidance to the README and AI CLI requirements, codifying the brainstorm -> requirements/docs -> preview -> apply -> verify loop for agent-assisted changes (RQMD-AI-013).
 - Added terminology-neutral requirement document wording in scaffolded and generated indexes so teams can treat requirement markdown files as domains, user stories, feature areas, or other project-specific groupings without changing the parser contract (RQMD-PORTABILITY-019).
 - Added positional status/priority filter tokens with filter-first precedence over requirement/domain lookup, deterministic prefix matching for IDs and domains, mixed filter-plus-target scoping such as `rqmd P1 core-engine`, and shell completion entries for positional filter values alongside IDs, domains, and subsection tokens (RQMD-AUTOMATION-035, RQMD-INTERACTIVE-027, RQMD-PACKAGING-011).
 - Added policy-aware history retention defaults and config overrides (`history_retention.retain_last`, `retain_days`, `max_size_kib`), and wired `rqmd --history-gc` to trim persisted history state before pack/prune maintenance while reporting the active policy in `--history` and `--history-gc` outputs (RQMD-UNDO-008).
@@ -89,6 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Removed a stray duplicated import line in `workflows.py` that could break CLI startup and pytest collection with an `IndentationError`.
+- Updated the documented canonical status workflow across the main README, requirements index, and generated init-doc templates to match the current five-status model: Proposed, Implemented, Verified, Blocked, Deprecated.
 - Updated the scratch QA checklist with a step-by-step undo/history UX walkthrough covering `h` history browsing, `z` undo, `y` redo, git-style history rows, branch divergence setup, and branch checkout verification.
 - Updated requirement status to mark `RQMD-AUTOMATION-019` as Implemented (unique option-name/value prefix abbreviations now supported in `rqmd`).
 - Updated human-readable `rqmd --history` output to include reason text and compact diff summaries (`+additions/-deletions`, changed-file count) for each entry, bringing the text mode closer to the existing JSON metadata surface (progress toward RQMD-UNDO-007).

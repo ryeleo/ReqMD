@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 9🔧 0✅ 0⛔ 3🗑️
+Summary: 0💡 10🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -98,3 +98,11 @@ Summary: 0💡 9🔧 0✅ 0⛔ 3🗑️
 - So that installation supports a dry-run preview and idempotent re-run behavior
 - So that teams can choose a minimal or full preset while preserving existing customized instruction files unless explicit overwrite is requested
 - So that installed guidance references local commands and requirement file conventions in this repository layout.
+
+### RQMD-AI-013: Requirement-first AI workflow guidance
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer when handing brainstorm items to an AI agent
+- I want rqmd-ai guidance and docs to prescribe a requirement-first workflow before code is applied
+- So that brainstorm ideas are promoted into tracked requirements, index updates, and changelog entries before implementation starts.
+- So that the recommended loop stays explicit: export focused context, update requirements/docs, preview the patch, apply only with explicit write mode, and run verification afterward.
