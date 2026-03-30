@@ -8,7 +8,6 @@ from pathlib import Path
 import click
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli, menus
 
 
@@ -1104,6 +1103,7 @@ def test_RQMD_interactive_021b_requirement_menu_receives_panel_prefix() -> None:
     def fake_select(title, options, **kwargs):
         captured["title"] = title
         captured["prefix_text"] = kwargs.get("prefix_text")
+        captured["right_labels"] = list(kwargs.get("option_right_labels") or [])
         return "up"
 
     requirement = {
@@ -1121,8 +1121,13 @@ def test_RQMD_interactive_021b_requirement_menu_receives_panel_prefix() -> None:
     )
 
     assert result == ("up", None)
-    assert captured["title"] == "Set status for RQMD-AUTOMATION-019 [1/5]\nsetting: status"
+    assert captured["title"].startswith("Set status for RQMD-AUTOMATION-019 [1/5]\n")
+    assert "setting: status" in captured["title"]
+    assert "setting: priority" in captured["title"]
     assert captured["prefix_text"] == "\nPANEL BODY\n=========="
+    assert len(captured["right_labels"]) == 5
+    assert captured["right_labels"][0].startswith("  !)")
+    assert captured["right_labels"][2].startswith("  #)")
 
 
 def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> None:
@@ -1167,6 +1172,7 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
         captured["extra_keys_help"] = kwargs.get("extra_keys_help")
         captured["footer_legend"] = kwargs.get("footer_legend")
         captured["compact_footer"] = kwargs.get("compact_footer")
+        captured["right_labels"] = list(kwargs.get("option_right_labels") or [])
         return "priority-shortcut:🟠 P1 - High"
 
     requirement = {
@@ -1192,6 +1198,14 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
     assert "!=p0" in captured["footer_legend"]
     assert "@=p1" in captured["footer_legend"]
     assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
+    right_labels_plain = [re.sub(r"\x1b\[[0-9;]*m", "", item) for item in captured["right_labels"]]
+    assert right_labels_plain == [
+        "  !) 🔴 P0 - Critical",
+        "  @) 🟠 P1 - High",
+        "→ #) 🟡 P2 - Medium",
+        "  $) 🟢 P3 - Low",
+        "",
+    ]
 
 
 def test_RQMD_interactive_021cb_priority_shortcut_advances_to_next_requirement(tmp_path: Path) -> None:
