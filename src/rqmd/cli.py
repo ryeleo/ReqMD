@@ -62,11 +62,14 @@ Notes:
 
 from __future__ import annotations
 
+import json
 import re
 import readline  # noqa: F401 — activates arrow-key line editing in input()/click.prompt()
 import sys
 from datetime import datetime
+from importlib import metadata as importlib_metadata
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 try:
     import click
@@ -77,108 +80,58 @@ except ImportError:
 
 from . import menus as menus_mod
 from . import workflows as workflows_mod
-from .batch_inputs import (
-    parse_batch_update_csv,
-    parse_batch_update_file,
-    parse_batch_update_jsonl,
-    parse_set_entry,
-    parse_set_flagged_entry,
-    parse_set_priority_entry,
-)
-from .config import (
-    load_config,
-    load_priorities_file,
-    load_statuses_file,
-    load_user_config,
-    validate_config,
-)
-from .constants import (
-    DEFAULT_ID_PREFIXES,
-    DEFAULT_REQUIREMENTS_DIR,
-    ID_PREFIX_PATTERN,
-    JSON_SCHEMA_VERSION,
-    PRIORITY_ORDER,
-    STATUS_ORDER,
-    STATUS_PATTERN,
-    SUMMARY_END,
-    SUMMARY_START,
-)
-from .history import HistoryManager, HistoryRestoreError, merge_retention_policies
+from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
+                           parse_batch_update_jsonl, parse_set_entry,
+                           parse_set_flagged_entry, parse_set_priority_entry)
+from .config import (load_config, load_priorities_file, load_statuses_file,
+                     load_user_config, validate_config)
+from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
+                        ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, PRIORITY_ORDER,
+                        STATUS_ORDER, STATUS_PATTERN, SUMMARY_END,
+                        SUMMARY_START)
+from .history import (HistoryManager, HistoryRestoreError,
+                      merge_retention_policies)
 from .json_speedups import dumps_json
-from .markdown_io import (
-    auto_detect_requirements_dir,
-    check_files_writable,
-    check_index_sync,
-    discover_project_root,
-    display_name_from_h1,
-    format_path_display,
-    initialize_requirements_scaffold,
-    iter_domain_files,
-    iter_requirements_search_roots,
-    parse_index_links,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
+from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
+                          check_index_sync, discover_project_root,
+                          display_name_from_h1, format_path_display,
+                          initialize_requirements_scaffold, iter_domain_files,
+                          iter_requirements_search_roots, parse_index_links,
+                          resolve_requirements_dir, validate_files_readable)
 from .menus import select_from_menu
-from .priority_model import configure_priority_catalog, normalize_priority_input
-from .req_parser import (
-    collect_requirements_by_filters,
-    collect_requirements_by_flagged,
-    collect_requirements_by_links,
-    collect_requirements_by_priority,
-    collect_requirements_by_status,
-    collect_requirements_by_sub_domain,
-    find_duplicate_requirement_ids,
-    find_requirement_by_id,
-    next_sequential_requirement_id,
-    normalize_id_prefixes,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .priority_model import (configure_priority_catalog,
+                             normalize_priority_input)
+from .req_parser import (collect_requirements_by_filters,
+                         collect_requirements_by_flagged,
+                         collect_requirements_by_links,
+                         collect_requirements_by_priority,
+                         collect_requirements_by_status,
+                         collect_requirements_by_sub_domain,
+                         find_duplicate_requirement_ids,
+                         find_requirement_by_id,
+                         next_sequential_requirement_id, normalize_id_prefixes,
+                         parse_requirements, resolve_id_prefixes)
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
-from .status_model import (
-    build_color_rollup_text,
-    configure_status_catalog,
-    normalize_status_input,
-    style_status_count,
-    style_status_label,
-)
-from .status_update import (
-    apply_status_change_by_id,
-    print_criterion_panel,
-    prompt_for_blocked_reason,
-    prompt_for_deprecated_reason,
-    update_criterion_status,
-)
-from .summary import (
-    UnknownStatusValueError,
-    build_summary_block,
-    build_summary_line,
-    build_summary_table,
-    collect_summary_rows,
-    count_statuses,
-    insert_or_replace_summary,
-    normalize_status_lines,
-    print_custom_rollup_table,
-    print_global_rollup_table,
-    print_summary_table,
-    process_file,
-)
-from .target_selection import (
-    complete_target_completion_candidates,
-    parse_target_token_file,
-    resolve_target_tokens,
-)
-from .workflows import (
-    build_filtered_criteria_payload,
-    build_summary_payload,
-    build_targeted_criteria_payload,
-    print_criteria_list,
-    print_criteria_tree,
-)
-from .workflows import (
-    focused_target_interactive_loop as focused_target_interactive_loop_impl,
-)
+from .status_model import (build_color_rollup_text, configure_status_catalog,
+                           normalize_status_input, style_status_count,
+                           style_status_label)
+from .status_update import (apply_status_change_by_id, print_criterion_panel,
+                            prompt_for_blocked_reason,
+                            prompt_for_deprecated_reason,
+                            update_criterion_status)
+from .summary import (UnknownStatusValueError, build_summary_block,
+                      build_summary_line, build_summary_table,
+                      collect_summary_rows, count_statuses,
+                      insert_or_replace_summary, normalize_status_lines,
+                      print_custom_rollup_table, print_global_rollup_table,
+                      print_summary_table, process_file)
+from .target_selection import (complete_target_completion_candidates,
+                               parse_target_token_file, resolve_target_tokens)
+from .workflows import (build_filtered_criteria_payload, build_summary_payload,
+                        build_targeted_criteria_payload)
+from .workflows import \
+    focused_target_interactive_loop as focused_target_interactive_loop_impl
+from .workflows import print_criteria_list, print_criteria_tree
 
 __all__ = [
     "SUMMARY_START",
@@ -449,6 +402,16 @@ def _raise_duplicate_id_error(
         )
         duplicate_parts.append(f"{requirement_id} [{locations}]")
     raise click.ClickException(f"Duplicate requirement IDs found: {'; '.join(duplicate_parts)}")
+
+
+def _ensure_unique_requirement_ids(
+    repo_root: Path,
+    domain_files: list[Path],
+    id_prefixes: tuple[str, ...],
+) -> None:
+    duplicates = find_duplicate_requirement_ids(domain_files, id_prefixes=id_prefixes)
+    if duplicates:
+        _raise_duplicate_id_error(repo_root, duplicates)
 
 
 def _expand_filter_values(raw_values: tuple[str, ...]) -> tuple[str, ...]:
@@ -925,6 +888,62 @@ def _parse_iso8601_filter(value: str, option_name: str) -> datetime:
         ) from exc
 
 
+def _editable_source_path_from_distribution() -> Path | None:
+    try:
+        distribution = importlib_metadata.distribution("rqmd")
+    except importlib_metadata.PackageNotFoundError:
+        return None
+
+    direct_url_text = distribution.read_text("direct_url.json")
+    if not direct_url_text:
+        return None
+
+    try:
+        payload = json.loads(direct_url_text)
+    except json.JSONDecodeError:
+        return None
+
+    dir_info = payload.get("dir_info")
+    url = payload.get("url")
+    if not isinstance(dir_info, dict) or dir_info.get("editable") is not True or not isinstance(url, str):
+        return None
+
+    parsed = urlparse(url)
+    if parsed.scheme != "file":
+        return None
+
+    if parsed.netloc:
+        candidate = f"//{parsed.netloc}{parsed.path}"
+    else:
+        candidate = parsed.path
+    return Path(unquote(candidate)).resolve()
+
+
+def _build_version_output() -> str:
+    try:
+        version = importlib_metadata.version("rqmd")
+    except importlib_metadata.PackageNotFoundError:
+        version = "unknown"
+
+    lines = [f"rqmd {version}"]
+    editable_source = _editable_source_path_from_distribution()
+    if editable_source is not None:
+        lines.append(f"editable source: {editable_source}")
+        lines.append(f"package path: {Path(__file__).resolve().parent}")
+    return "\n".join(lines)
+
+
+def _handle_version_option(
+    ctx: click.Context,
+    _param: click.Parameter,
+    value: bool,
+) -> None:
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(_build_version_output())
+    ctx.exit()
+
+
 def _build_snapshot_status_map(
     history_manager: HistoryManager,
     commit_hash: str,
@@ -1073,6 +1092,14 @@ def _filter_timeline_nodes(
     cls=FriendlyTopLevelCommand,
     context_settings={"help_option_names": ["-h", "--help"]},
     help=__doc__,
+)
+@click.option(
+    "--version",
+    is_flag=True,
+    is_eager=True,
+    expose_value=False,
+    callback=_handle_version_option,
+    help="Show the installed rqmd version and editable source path when applicable.",
 )
 @click.argument(
     "targets",
@@ -1553,7 +1580,7 @@ def _filter_timeline_nodes(
     "--bootstrap",
     "init_scaffold",
     is_flag=True,
-    help="Initialize docs scaffold (index + starter domain file) and exit.",
+    help="Compatibility alias: directly initialize the docs scaffold (index + starter domain file) and exit.",
 )
 @click.option(
     "--force-yes",
@@ -1742,6 +1769,36 @@ def main(
     if root_discovery_message and not json_output:
         click.echo(root_discovery_message)
 
+    positional_init_requested = len(targets) == 1 and str(targets[0]).strip().casefold() == "init"
+
+    if positional_init_requested:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode or init_scaffold:
+            raise click.ClickException(
+                "rqmd init is a chat-first onboarding surface and cannot be combined with verify/filter/update/tree/rollup or direct scaffold options."
+            )
+
+        normalized_init_prefixes = normalize_id_prefixes(id_prefixes) if id_prefixes else ()
+        from .ai_cli import _build_or_apply_init_payload
+
+        payload = _build_or_apply_init_payload(
+            repo_root=repo_root,
+            requirements_dir_input=requirements_dir,
+            id_prefixes=normalized_init_prefixes,
+            apply=False,
+            chat_mode=True,
+            bootstrap_answers=(),
+            force_legacy=False,
+        )
+        if json_output:
+            _emit_json_payload(payload)
+        else:
+            click.echo("rqmd init now uses the chat-first onboarding flow.")
+            click.echo("")
+            click.echo("Paste this into your AI chat:")
+            click.echo("")
+            click.echo(str(payload.get("handoff_prompt") or "Run `uv run rqmd-ai init --chat --json`."))
+        raise SystemExit(0)
+
     if init_scaffold:
         if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode or targets:
             raise click.ClickException(
@@ -1795,7 +1852,7 @@ def main(
     domain_files = iter_domain_files(repo_root, resolved_requirements_dir_input)
     if not domain_files:
         missing_msg = f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
-        hint_msg = "Hint: run 'rqmd --bootstrap' (interactive) or 'rqmd --bootstrap --force-yes' (automation) to create starter docs."
+        hint_msg = "Hint: run 'rqmd init' for the default chat-first setup flow, or use 'rqmd --bootstrap --force-yes' for the direct scaffold compatibility path."
 
         if confirm_yes:
             starter_prefix = requested_init_prefix or "REQ"
@@ -1848,13 +1905,10 @@ def main(
     # RQMD-PORTABILITY-009: validate files are readable before proceeding
     validate_files_readable(domain_files, repo_root)
 
-    duplicates = find_duplicate_requirement_ids(domain_files, id_prefixes=id_prefixes)
-    if duplicates:
-        _raise_duplicate_id_error(repo_root, duplicates)
-
     include_status_emojis = infer_include_status_emojis(domain_files)
 
     if next_id:
+        _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)
         if (
             check
             or filter_status
@@ -1922,6 +1976,7 @@ def main(
         raise SystemExit(0)
 
     if rename_id_prefix:
+        _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)
         if (
             check
             or filter_status
@@ -2018,6 +2073,7 @@ def main(
         raise click.ClickException("Use either --strip-status-icons or --restore-status-icons, not both.")
 
     if init_priorities:
+        _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)
         if (
             check
             or filter_status
@@ -2116,6 +2172,7 @@ def main(
         raise SystemExit(0)
 
     if strip_status_emojis or restore_status_emojis:
+        _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)
         if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode or targets:
             raise click.ClickException(
                 "Emoji strip/restore modes cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
@@ -2154,7 +2211,7 @@ def main(
         index_path = resolved_criteria_dir / "README.md"
         if not index_path.exists():
             click.echo(f"No requirements index found at: {format_path_display(index_path, repo_root)}", err=True)
-            click.echo("  Hint: run 'rqmd --bootstrap' to create a starter scaffold.", err=True)
+            click.echo("  Hint: run 'rqmd init' for the guided setup flow, or 'rqmd --bootstrap' for the direct scaffold compatibility path.", err=True)
             raise SystemExit(1)
         stale_links, orphan_files = check_index_sync(resolved_criteria_dir, index_path)
         issues: list[str] = []
@@ -3118,6 +3175,9 @@ def main(
     )
     if non_interactive_requested and positional_domain_file and not set_file and not set_file_input:
         set_file = format_path_display(positional_domain_file, repo_root)
+
+    if not non_interactive_requested:
+        _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)
 
     if non_interactive_requested:
         if check:

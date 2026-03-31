@@ -200,7 +200,7 @@ def iter_domain_files(repo_root: Path, requirements_dir_input: str) -> list[Path
     if not criteria_dir.exists():
         raise click.ClickException(
             f"Requirement docs directory not found: {format_path_display(criteria_dir, repo_root)}\n"
-            f"  Hint: run 'rqmd --bootstrap' to create a starter scaffold, or pass --docs-dir to select a different location."
+            f"  Hint: run 'rqmd init' to start the default guided setup flow, or use 'rqmd --bootstrap' for the direct scaffold compatibility path."
         )
 
     try:
@@ -455,6 +455,45 @@ def _render_init_template(template_name: str, values: dict[str, str]) -> str:
     for key, value in values.items():
         rendered = rendered.replace(f"{{{{{key}}}}}", value)
     return rendered
+
+
+def preview_requirements_scaffold(
+    repo_root: Path,
+    requirements_dir_input: str,
+    starter_prefix: str,
+) -> list[dict[str, str]]:
+    """Preview the starter requirements scaffold without writing files."""
+    criteria_dir = Path(requirements_dir_input)
+    if not criteria_dir.is_absolute():
+        criteria_dir = (repo_root / criteria_dir).resolve()
+
+    index_path = criteria_dir / REQUIREMENTS_INDEX_NAME
+    starter_domain_path = criteria_dir / "starter.md"
+    criteria_dir_display = criteria_dir.relative_to(repo_root).as_posix()
+    index_display = index_path.relative_to(repo_root).as_posix()
+    starter_display = starter_domain_path.relative_to(repo_root).as_posix()
+
+    template_values = {
+        "INDEX_DISPLAY": index_display,
+        "STARTER_DISPLAY": starter_display,
+        "CRITERIA_DIR_DISPLAY": criteria_dir_display,
+        "STARTER_PREFIX": starter_prefix,
+    }
+
+    return [
+        {
+            "path": index_display,
+            "title": "Requirements Index",
+            "description": "starter requirements index generated from the packaged init template",
+            "content": _render_init_template("README.md", template_values),
+        },
+        {
+            "path": starter_display,
+            "title": "Starter Requirements",
+            "description": "starter requirement seed generated from the packaged init template",
+            "content": _render_init_template("domain-example.md", template_values),
+        },
+    ]
 
 
 def initialize_requirements_scaffold(repo_root: Path, requirements_dir_input: str, starter_prefix: str) -> list[Path]:

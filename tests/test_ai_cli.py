@@ -7,6 +7,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
+from rqmd import ai_cli
 from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.cli import main as rqmd_main
 from rqmd.constants import JSON_SCHEMA_VERSION
@@ -115,6 +116,90 @@ def test_RQMD_AI_001b_json_alias_emits_read_only_guide(tmp_path: Path) -> None:
     assert payload["mode"] == "guide"
     assert payload["workflow_mode"] == "general"
     assert payload["read_only"] is True
+    _assert_schema_version(payload)
+
+
+def test_RQMD_AI_001c_version_option_reports_installed_version(monkeypatch) -> None:
+    runner = CliRunner()
+
+    monkeypatch.setattr(ai_cli.importlib_metadata, "version", lambda _name: "9.8.7")
+    monkeypatch.setattr(ai_cli, "_editable_source_path_from_distribution", lambda: None)
+
+    result = runner.invoke(main, ["--version"])
+
+    assert result.exit_code == 0
+    assert result.output.strip() == "rqmd-ai 9.8.7"
+
+
+def test_RQMD_AI_001d_version_option_reports_editable_source_path(tmp_path: Path, monkeypatch) -> None:
+    runner = CliRunner()
+    editable_root = tmp_path / "editable-repo"
+    editable_root.mkdir()
+
+    monkeypatch.setattr(ai_cli.importlib_metadata, "version", lambda _name: "1.2.3")
+    monkeypatch.setattr(ai_cli, "_editable_source_path_from_distribution", lambda: editable_root)
+
+    result = runner.invoke(main, ["--version"])
+
+    assert result.exit_code == 0
+    assert "rqmd-ai 1.2.3" in result.output
+    assert f"editable source: {editable_root}" in result.output
+    assert "package path:" in result.output
+
+
+def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "init",
+            "--chat",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "init-chat"
+    assert payload["workflow_mode"] == "init"
+    assert payload["strategy"]["selected"] == "starter-scaffold"
+    assert payload["bootstrap_chat"]["enabled"] is True
+    assert payload["handoff_prompt"]
+    assert payload["suggested_commands"]["init_preview"]
+    _assert_schema_version(payload)
+
+
+def test_RQMD_AI_001f_init_chat_can_force_legacy_strategy(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    (repo / "src" / "demo").mkdir(parents=True)
+    (repo / "src" / "demo" / "app.py").write_text("print('demo')\n", encoding="utf-8")
+
+    monkeypatch.setattr("rqmd.ai_cli.shutil.which", lambda name: None)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "init",
+            "--chat",
+            "--legacy",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["workflow_mode"] == "init"
+    assert payload["strategy"]["selected"] == "legacy-init"
+    assert payload["compatibility"]["legacy_flag"] == "--legacy"
+    assert payload["proposed_files"]
     _assert_schema_version(payload)
 
 
@@ -877,7 +962,7 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert payload["mode"] == "install-agent-bundle"
     assert payload["dry_run"] is True
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 14
+    assert payload["changed_count"] == 15
     assert payload["generated_skill_files"] == [
         ".github/skills/dev/SKILL.md",
         ".github/skills/test/SKILL.md",
@@ -890,6 +975,7 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert ".github/skills/rqmd-triage/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-export-context/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-implement/SKILL.md" in payload["created_files"]
+    assert ".github/skills/rqmd-init/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-init-legacy/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-status-maintenance/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-doc-sync/SKILL.md" in payload["created_files"]
@@ -922,12 +1008,13 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 19
+    assert first_payload["changed_count"] == 20
     assert (repo / ".github" / "copilot-instructions.md").exists()
     assert ".github/agents/rqmd-requirements.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-docs.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-history.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-bundle-maintainer.agent.md" not in first_payload["created_files"]
+    assert ".github/skills/rqmd-init/SKILL.md" in first_payload["created_files"]
     assert ".github/skills/rqmd-init-legacy/SKILL.md" in first_payload["created_files"]
     assert ".github/skills/dev/SKILL.md" in first_payload["created_files"]
     assert ".github/skills/test/SKILL.md" in first_payload["created_files"]
@@ -949,7 +1036,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 19
+    assert len(second_payload["skipped_existing"]) == 20
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
@@ -991,7 +1078,7 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
-    assert payload["changed_count"] == 19
+    assert payload["changed_count"] == 20
 
 
 def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
@@ -1017,7 +1104,7 @@ def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 14
+    assert payload["changed_count"] == 15
 
 
 def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_path: Path) -> None:

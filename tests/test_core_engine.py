@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd import cli
 from rqmd.markdown_io import scope_and_body_from_file
 from rqmd.req_parser import collect_sub_sections
@@ -122,6 +123,34 @@ This subsection body explains the query flow.
     assert sections[0]["count"] == 1
     assert sections[0]["body"] == "This subsection body explains the query flow."
     assert sections[1] == {"name": "Mutation API", "count": 1}
+
+
+def test_RQMD_core_020a_version_option_reports_installed_version(monkeypatch) -> None:
+    runner = CliRunner()
+
+    monkeypatch.setattr(cli.importlib_metadata, "version", lambda _name: "9.8.7")
+    monkeypatch.setattr(cli, "_editable_source_path_from_distribution", lambda: None)
+
+    result = runner.invoke(cli.main, ["--version"])
+
+    assert result.exit_code == 0
+    assert result.output.strip() == "rqmd 9.8.7"
+
+
+def test_RQMD_core_020b_version_option_reports_editable_source_path(tmp_path: Path, monkeypatch) -> None:
+    runner = CliRunner()
+    editable_root = tmp_path / "editable-repo"
+    editable_root.mkdir()
+
+    monkeypatch.setattr(cli.importlib_metadata, "version", lambda _name: "1.2.3")
+    monkeypatch.setattr(cli, "_editable_source_path_from_distribution", lambda: editable_root)
+
+    result = runner.invoke(cli.main, ["--version"])
+
+    assert result.exit_code == 0
+    assert "rqmd 1.2.3" in result.output
+    assert f"editable source: {editable_root}" in result.output
+    assert "package path:" in result.output
 
 
 def test_RQMD_core_026_duplicate_ids_fail_fast(tmp_path: Path) -> None:
@@ -404,7 +433,7 @@ def test_RQMD_core_009_missing_domain_docs_handling(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "No requirement markdown files found under" in result.output
-    assert "rqmd --bootstrap --force-yes" in result.output
+    assert "rqmd init" in result.output
 
 
 def test_RQMD_core_009_missing_domain_docs_yes_initializes_scaffold(tmp_path: Path) -> None:
@@ -449,6 +478,29 @@ def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(tmp_path: P
     assert result.exit_code == 0
     starter = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
     assert "### REQ-HELLO-001: Replace this starter requirement" in starter
+
+
+def test_RQMD_core_009g_positional_init_emits_chat_handoff_payload(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "init",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "init-chat"
+    assert payload["workflow_mode"] == "init"
+    assert payload["strategy"]["selected"] == "starter-scaffold"
+    assert payload["handoff_prompt"]
 
 
 def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(tmp_path: Path) -> None:

@@ -87,8 +87,9 @@ Then run:
 
 ```bash
 uv run rqmd --help
-uv run reqmd --help
 ```
+
+`reqmd` and `reqmd-ai` remain available as compatibility aliases, but the canonical commands are `rqmd` and `rqmd-ai`.
 
 Module entrypoint:
 
@@ -231,13 +232,21 @@ uv run rqmd --sort-profile status-focus
 uv run rqmd --sort-profile alpha-asc
 ```
 
-Initialize docs scaffold (index + starter domain file):
+Start rqmd in a new project with the default chat-first flow:
+
+```bash
+uv run rqmd init
+```
+
+`rqmd init` prints a copy/paste handoff prompt for your AI chat. That chat then runs `rqmd-ai init --chat --json`, asks the grouped interview questions, previews the generated files, and applies the bootstrap only after confirmation.
+
+Direct scaffold compatibility path:
 
 ```bash
 uv run rqmd --bootstrap
 ```
 
-`--bootstrap` prompts for a starter requirement key prefix (default: `REQ`; recommended to customize).
+`--bootstrap` remains available as a compatibility path when you want the immediate starter scaffold without the chat-first onboarding flow.
 Scaffold content is sourced from repository-managed templates in `init-docs/README.md` and `init-docs/domain-example.md`.
 
 Allocate the next sequential numeric requirement ID for the active namespace:
@@ -363,10 +372,11 @@ Guidance mode:
 uv run rqmd-ai --json
 uv run rqmd-ai --json --workflow-mode brainstorm
 uv run rqmd-ai --json --workflow-mode implement
-uv run rqmd-ai --json --workflow-mode init-legacy --show-guide
+uv run rqmd-ai init --chat --json
+uv run rqmd-ai --json --workflow-mode init --show-guide
 ```
 
-`--workflow-mode brainstorm` emits requirement-first planning guidance for turning notes into ranked proposals. `--workflow-mode implement` emits the execution loop for working the highest-priority proposed 1-3 items at a time, then re-checking `rqmd`, summaries, tests, changelog, and remaining priorities before the next batch. `--workflow-mode init-legacy` emits a legacy-bootstrap guide and can also preview or write a first-pass requirements folder for repositories that do not already have rqmd docs.
+`--workflow-mode brainstorm` emits requirement-first planning guidance for turning notes into ranked proposals. `--workflow-mode implement` emits the execution loop for working the highest-priority proposed 1-3 items at a time, then re-checking `rqmd`, summaries, tests, changelog, and remaining priorities before the next batch. `rqmd-ai init --chat` is the preferred onboarding entrypoint: it routes between starter scaffold mode and legacy-style repository seeding, emits a copy/paste AI handoff prompt, and keeps `--workflow-mode init-legacy` available only as a compatibility surface.
 
 By default, `rqmd-ai --json` now includes the packaged skill and agent definitions from `resources/bundle` when the rqmd bundle is not installed in the workspace. If the bundle is already installed, the guide payload stays concise and reports the active local definition files instead of duplicating the packaged content.
 
@@ -399,11 +409,13 @@ Bundle installs are idempotent by default and preserve existing customized instr
 
 Bundle install also scaffolds project-local `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` files based on detected repository commands. Treat those as a starting point: review and tighten the generated build, smoke, and validation commands so future `rqmd-dev` runs can rely on them instead of guessing.
 
-Bundle bootstrap can also be driven through a structured chat-style preview with `uv run rqmd-ai install --json --bundle-preset minimal --bootstrap-chat --dry-run`. That payload now includes grouped interview questions, multi-select command suggestions, custom-answer prompts, skip support, detected command sources, recommended choices, safe defaults, and preview content for the generated `/dev` and `/test` skills. Repeat `--bootstrap-answer FIELD=VALUE` to select multiple suggestions or add custom commands before writing.
+Bundle installation can also be driven through a structured chat-style preview with `uv run rqmd-ai install --json --bundle-preset minimal --chat --dry-run`. That payload now includes grouped interview questions, multi-select command suggestions, custom-answer prompts, skip support, detected command sources, recommended choices, safe defaults, and preview content for the generated `/dev` and `/test` skills. Repeat `--bootstrap-answer FIELD=VALUE` to select multiple suggestions or add custom commands before writing.
 
-Legacy bootstrap can be previewed with `uv run rqmd-ai --json --workflow-mode init-legacy --bootstrap-chat` and applied with `uv run rqmd-ai --json --workflow-mode init-legacy --bootstrap-chat --write`. The grouped interview covers catalog setup, developer workflows, repository understanding, backlog handling, and review notes, and its options include recommended choices, detected-from hints, and safe defaults. The generated starter catalog seeds a requirements index, developer workflow requirements, repository-area seed files, and an issue backlog file when `gh issue list` succeeds.
+New-project flow: run `uv run rqmd init`, paste the output into your AI chat, let that chat drive `rqmd-ai init --chat --json`, review the generated requirements catalog and any suggested bundle skill setup, and then start refining the resulting requirements docs.
 
-The installed bundle now includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, legacy bootstrap, docs-sync, history, bundle-management, and verification loops without rewriting those instructions in every workspace. Those skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
+Legacy-style repository seeding can still be previewed with `uv run rqmd-ai init --chat --json --legacy`; the older `--workflow-mode init-legacy --bootstrap-chat` form remains available as a compatibility alias. The grouped interview covers catalog setup, developer workflows, repository understanding, backlog handling, and review notes, and its options include recommended choices, detected-from hints, and safe defaults. The generated starter catalog seeds a requirements index, developer workflow requirements, repository-area seed files, and an issue backlog file when `gh issue list` succeeds.
+
+The installed bundle now includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, unified init, compatibility legacy bootstrap, docs-sync, history, bundle-management, and verification loops without rewriting those instructions in every workspace. Those skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
 
 The full bundle preset also installs specialized agents for requirement maintenance, docs sync, history investigation, and bundle maintenance so future agents can stay narrow and workflow-aware instead of overloading the single core agent with every repo-management task.
 

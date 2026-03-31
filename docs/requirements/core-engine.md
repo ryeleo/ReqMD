@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 12🔧 16✅ 0⛔ 0🗑️
+Summary: 0💡 14🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -77,9 +77,9 @@ Summary: 0💡 12🔧 16✅ 0⛔ 0🗑️
 - As a rqmd user when no domain markdown files are found
 - I want to run the command
 - So that reqmd prints a clear, actionable error message
-- So that it offers to initialize a starter requirements project in the current working directory (the same behavior as `--bootstrap`)
+- So that it offers the default `rqmd init` guided setup flow and still keeps the direct `--bootstrap` scaffold path available as a compatibility shortcut
 - So that the tool never creates files without explicit user confirmation: the initialization flow must prompt the user to confirm creation and allow a `--force-yes`/`--force-confirm` override for automation
-- So that in non-interactive or CI contexts the tool exits non-zero and prints the guidance to run `rqmd --bootstrap` or `rqmd --bootstrap --force-yes` to create starter files.
+- So that in non-interactive or CI contexts the tool exits non-zero and prints guidance to run `rqmd init` for the default flow or `rqmd --bootstrap --force-yes` for the direct scaffold compatibility path.
 
 ### RQMD-CORE-010: Blocked/deprecated reason extraction
 - **Status:** ✅ Verified
@@ -262,3 +262,22 @@ Summary: 0💡 12🔧 16✅ 0⛔ 0🗑️
 - I want sequential IDs to continue as `REQ-1000`, `REQ-1001`, and higher without rollover or truncation
 - So that 3 digits are treated as the default minimum width rather than a hard upper limit.
 - So that numeric ordering and human readability remain stable as the requirement set grows.
+
+### RQMD-CORE-029: Canonical init command with bootstrap compatibility alias
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a rqmd user starting a repository for the first time
+- I want the public CLI to standardize on `init` as the primary initialization term
+- So that the command surface is simpler, more conventional, and easier to remember than a long-term mix of `init` and `bootstrap` wording.
+- So that `rqmd init` becomes the canonical documented entrypoint for setup while existing `--bootstrap` behavior remains available as a compatibility alias during transition.
+- So that error hints, help text, generated copy, and README examples all converge on `init` as the main term instead of teaching both terms as equally first-class.
+
+### RQMD-CORE-030: Chat-first default onboarding from rqmd init
+- **Status:** 🔧 Implemented
+- **Priority:** 🔴 P0 - Critical
+- As a rqmd user opening a project that does not yet have rqmd set up
+- I want `rqmd init` to default to the AI-guided chat onboarding flow rather than dropping me into lower-level manual setup details
+- So that the first-run experience leads users through the strongest supported path with minimal decision overhead.
+- So that `rqmd init` can emit or launch the same copy-paste AI handoff prompt contract as `rqmd-ai init --chat` instead of making users discover a separate AI command family first.
+- So that the standard flow becomes: run `rqmd init`, paste the generated prompt into an AI chat, complete the grouped interview with that agent, and return to a working rqmd setup ready for refinement passes.
+- So that users who explicitly want non-chat or direct scaffold creation can still access those lower-level paths through named flags or compatibility commands without making them the default first-run UX.

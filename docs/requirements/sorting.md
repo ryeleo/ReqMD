@@ -3,7 +3,7 @@
 Scope: deterministic ordering, sort toggles, and priority-based ranking in interactive views.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 0🔧 9✅ 0⛔ 2🗑️
+Summary: 3💡 0🔧 9✅ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-SORTING-001: File ranking by priority buckets
@@ -122,3 +122,13 @@ Summary: 2💡 0🔧 9✅ 0⛔ 2🗑️
 - So that requirements with equal rank values fall back to the normal newest-first numeric ID ordering.
 - So that rank-aware ordering remains stable and deterministic across repeated renders, refreshes, and interactive transitions.
 - So that the contract works correctly when IDs grow past three digits (for example `REQ-1000` still sorts newer than `REQ-999` when rank values are equal).
+
+### RQMD-SORTING-014: Sparse default rank spacing
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when rqmd suggests or initializes rank values for ordering and backlog grooming
+- I want default rank assignments to leave intentional gaps between neighboring requirements
+- So that inserting a newly ranked item between two existing ranked items usually does not require renumbering both sides immediately.
+- So that the default seeded spacing uses a step of `1000` between adjacent canonical rank positions unless a future config explicitly overrides it.
+- So that rqmd can place up to `999` intervening requirements between two default-spaced neighbors before a full re-spacing pass is needed.
+- So that rank suggestions such as top, bottom, move one slot, and move one page use the same sparse spacing model instead of emitting tightly packed consecutive values.

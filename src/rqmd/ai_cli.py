@@ -14,12 +14,15 @@ from __future__ import annotations
 import importlib.resources
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
+from importlib import metadata as importlib_metadata
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 from uuid import uuid4
 
 import yaml
@@ -33,12 +36,14 @@ except ImportError:
 
 from .batch_inputs import parse_set_entry
 from .config import load_config, load_priorities_file, validate_config
-from .constants import JSON_SCHEMA_VERSION, PRIORITY_ORDER, REQUIREMENTS_INDEX_NAME
+from .constants import (JSON_SCHEMA_VERSION, PRIORITY_ORDER,
+                        REQUIREMENTS_INDEX_NAME)
 from .history import HistoryManager
 from .json_speedups import dumps_json
 from .markdown_io import (discover_project_root, format_path_display,
-                          iter_domain_files, resolve_requirements_dir,
-                          validate_files_readable)
+                          initialize_requirements_scaffold, iter_domain_files,
+                          preview_requirements_scaffold,
+                          resolve_requirements_dir, validate_files_readable)
 from .priority_model import configure_priority_catalog
 from .req_parser import (extract_blocking_id,
                          extract_requirement_block_with_lines,
@@ -56,7 +61,8 @@ _WORKFLOW_MODE_SKILLS: dict[str, str] = {
     "general": "rqmd-export-context",
     "brainstorm": "rqmd-brainstorm",
     "implement": "rqmd-implement",
-    "init-legacy": "rqmd-init-legacy",
+    "init": "rqmd-init",
+    "init-legacy": "rqmd-init",
 }
 
 _BUNDLE_RESOURCE_ROOT = ("resources", "bundle")
@@ -64,6 +70,68 @@ _GENERATED_PROJECT_SKILL_PATHS = (
     ".github/skills/dev/SKILL.md",
     ".github/skills/test/SKILL.md",
 )
+
+_STARTER_INIT_CHAT_FIELDS: tuple[str, ...] = (
+    "requirements_dir",
+    "id_prefix",
+    "starter_notes",
+)
+
+
+def _editable_source_path_from_distribution() -> Path | None:
+    try:
+        distribution = importlib_metadata.distribution("rqmd")
+    except importlib_metadata.PackageNotFoundError:
+        return None
+
+    direct_url_text = distribution.read_text("direct_url.json")
+    if not direct_url_text:
+        return None
+
+    try:
+        payload = json.loads(direct_url_text)
+    except json.JSONDecodeError:
+        return None
+
+    dir_info = payload.get("dir_info")
+    url = payload.get("url")
+    if not isinstance(dir_info, dict) or dir_info.get("editable") is not True or not isinstance(url, str):
+        return None
+
+    parsed = urlparse(url)
+    if parsed.scheme != "file":
+        return None
+
+    if parsed.netloc:
+        candidate = f"//{parsed.netloc}{parsed.path}"
+    else:
+        candidate = parsed.path
+    return Path(unquote(candidate)).resolve()
+
+
+def _build_version_output(command_name: str) -> str:
+    try:
+        version = importlib_metadata.version("rqmd")
+    except importlib_metadata.PackageNotFoundError:
+        version = "unknown"
+
+    lines = [f"{command_name} {version}"]
+    editable_source = _editable_source_path_from_distribution()
+    if editable_source is not None:
+        lines.append(f"editable source: {editable_source}")
+        lines.append(f"package path: {Path(__file__).resolve().parent}")
+    return "\n".join(lines)
+
+
+def _handle_version_option(
+    ctx: click.Context,
+    _param: click.Parameter,
+    value: bool,
+) -> None:
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(_build_version_output("rqmd-ai"))
+    ctx.exit()
 
 
 def _bundle_resource_base() -> object:
@@ -230,7 +298,7 @@ def _load_brainstorm_rules() -> dict[str, object]:
 
 
 def _load_legacy_init_rules() -> dict[str, object]:
-    relative_path, frontmatter = _load_skill_frontmatter("rqmd-init-legacy")
+    relative_path, frontmatter = _load_skill_frontmatter("rqmd-init")
     metadata = frontmatter.get("metadata")
     legacy_init = metadata.get("legacy_init") if isinstance(metadata, dict) else None
     if not isinstance(legacy_init, dict):
@@ -257,6 +325,325 @@ def _load_legacy_init_rules() -> dict[str, object]:
         "max_issue_requirements": max_issue_requirements,
         "max_source_areas": max_source_areas,
     }
+
+
+def _shell_join(parts: list[str]) -> str:
+    return " ".join(shlex.quote(part) for part in parts if str(part).strip())
+
+
+def _resolve_init_requirements_dir(repo_root: Path, requirements_dir_input: str | None) -> Path:
+    rules = _load_legacy_init_rules()
+    criteria_dir = Path(requirements_dir_input or str(rules["default_requirements_dir"]))
+    if not criteria_dir.is_absolute():
+        criteria_dir = (repo_root / criteria_dir).resolve()
+    return criteria_dir
+
+
+def _detect_init_strategy(
+    repo_root: Path,
+    requirements_dir_input: str | None,
+    *,
+    force_legacy: bool = False,
+) -> dict[str, object]:
+    criteria_dir = _resolve_init_requirements_dir(repo_root, requirements_dir_input)
+    reasons: list[str] = []
+
+    existing_markdown = sorted(criteria_dir.glob("*.md")) if criteria_dir.exists() else []
+    if existing_markdown:
+        reasons.append(
+            f"existing requirement markdown detected under `{format_path_display(criteria_dir, repo_root)}`"
+        )
+
+    established_markers = (
+        (repo_root / "src").exists(),
+        (repo_root / "app").exists(),
+        (repo_root / "lib").exists(),
+        (repo_root / "tests").exists(),
+        (repo_root / "test").exists(),
+        (repo_root / "docs").exists(),
+        (repo_root / "README.md").exists(),
+        (repo_root / "pyproject.toml").exists(),
+        (repo_root / "package.json").exists(),
+        (repo_root / "Cargo.toml").exists(),
+        (repo_root / "go.mod").exists(),
+    )
+    marker_count = sum(1 for present in established_markers if present)
+    if marker_count:
+        reasons.append(f"detected {marker_count} established-project signal(s) in the repository root")
+
+    selected = "legacy-init" if force_legacy or existing_markdown or marker_count >= 2 else "starter-scaffold"
+    if force_legacy:
+        reasons.insert(0, "explicit `--legacy` override requested")
+    if not reasons:
+        reasons.append("no strong established-project signals were detected, so starter scaffold mode was selected")
+
+    return {
+        "selected": selected,
+        "heuristic": "override" if force_legacy else "auto",
+        "reasons": reasons,
+        "requirements_dir": format_path_display(criteria_dir, repo_root),
+    }
+
+
+def _build_starter_init_chat_questions(
+    repo_root: Path,
+    requirements_dir: Path,
+    id_prefixes: tuple[str, ...],
+) -> list[dict[str, object]]:
+    inferred_prefix = id_prefixes[0] if id_prefixes else "REQ"
+    return [
+        _build_interview_question(
+            field="requirements_dir",
+            group_id="catalog_setup",
+            label="Requirements directory",
+            prompt="Where should rqmd create the starter requirements catalog?",
+            inferred_answers=[requirements_dir.as_posix()],
+            allow_multiple=False,
+            allow_custom=True,
+            allow_skip=False,
+            first_selected_is_canonical=True,
+            custom_answer_prompt="Type a custom requirements directory path.",
+            suggested_options=_legacy_init_requirements_dir_options(repo_root, requirements_dir),
+        ),
+        _build_interview_question(
+            field="id_prefix",
+            group_id="catalog_setup",
+            label="Requirement ID prefix",
+            prompt="Which requirement ID prefix should the starter scaffold use?",
+            inferred_answers=[inferred_prefix],
+            allow_multiple=False,
+            allow_custom=True,
+            allow_skip=False,
+            first_selected_is_canonical=True,
+            custom_answer_prompt="Type a custom requirement ID prefix.",
+            suggested_options=(
+                {"value": inferred_prefix, "label": inferred_prefix, "description": "Current inferred or configured prefix.", "recommended": True},
+                {"value": "REQ", "label": "REQ", "description": "Generic sequential requirement prefix.", "safe_default": True},
+                {"value": "RQMD", "label": "RQMD", "description": "Repository-level rqmd prefix."},
+                {"value": "AC", "label": "AC", "description": "Acceptance criteria style prefix."},
+            ),
+            recommended_values=[inferred_prefix],
+            safe_default_values=["REQ"],
+        ),
+        _build_interview_question(
+            field="starter_notes",
+            group_id="review_notes",
+            label="Starter scaffold notes",
+            prompt="What notes should guide the first refinement pass after the starter scaffold is created?",
+            inferred_answers=[],
+            allow_multiple=True,
+            allow_custom=True,
+            allow_skip=True,
+            first_selected_is_canonical=False,
+            custom_answer_prompt="Add another starter note.",
+        ),
+    ]
+
+
+def _build_starter_init_payload(
+    repo_root: Path,
+    requirements_dir_input: str | None,
+    id_prefixes: tuple[str, ...],
+    apply: bool,
+    chat_mode: bool,
+    bootstrap_answers: tuple[str, ...] = (),
+) -> dict[str, object]:
+    rules = _load_legacy_init_rules()
+    starter_answer_map = _collect_bootstrap_answers(bootstrap_answers, _STARTER_INIT_CHAT_FIELDS)
+    criteria_dir = Path(
+        requirements_dir_input
+        or str(starter_answer_map.get("requirements_dir", [str(rules["default_requirements_dir"])])[0])
+    )
+    if not criteria_dir.is_absolute():
+        criteria_dir = (repo_root / criteria_dir).resolve()
+
+    prefix = id_prefixes[0] if id_prefixes else str(starter_answer_map.get("id_prefix", ["REQ"])[0]).strip().upper().rstrip("-")
+    proposed_files = preview_requirements_scaffold(repo_root, str(criteria_dir), prefix)
+    questions = _build_starter_init_chat_questions(repo_root, criteria_dir.relative_to(repo_root), id_prefixes or (prefix,))
+    payload = {
+        "mode": "starter-init-apply" if apply else "starter-init-plan",
+        "workflow_mode": "init",
+        "read_only": not apply,
+        "repo_root": str(repo_root),
+        "requirements_dir": criteria_dir.relative_to(repo_root).as_posix(),
+        "starter_prefix": prefix,
+        "proposed_files": proposed_files,
+        "total_files": len(proposed_files),
+        "bootstrap_chat": {
+            "enabled": chat_mode,
+            "questions": questions if chat_mode else [],
+            "question_groups": _group_interview_questions(questions) if chat_mode else [],
+            "applied_answers": starter_answer_map,
+        },
+    }
+    if apply:
+        created_files = initialize_requirements_scaffold(repo_root, str(criteria_dir), prefix)
+        payload["created_files"] = [format_path_display(path, repo_root) for path in created_files]
+        payload["changed_count"] = len(created_files)
+    return payload
+
+
+def _build_rqmd_ai_init_command(
+    repo_root: Path,
+    requirements_dir_input: str | None,
+    id_prefixes: tuple[str, ...],
+    *,
+    chat_mode: bool,
+    force_legacy: bool,
+    apply: bool = False,
+) -> str:
+    parts = ["uv", "run", "rqmd-ai", "init"]
+    if chat_mode:
+        parts.append("--chat")
+    parts.append("--json")
+    parts.extend(["--project-root", str(repo_root)])
+    if force_legacy:
+        parts.append("--legacy")
+    if requirements_dir_input:
+        parts.extend(["--docs-dir", requirements_dir_input])
+    for prefix in id_prefixes:
+        parts.extend(["--id-namespace", prefix])
+    if apply:
+        parts.append("--write")
+    return _shell_join(parts)
+
+
+def _build_bundle_follow_up_command(repo_root: Path) -> str:
+    return _shell_join(
+        [
+            "uv",
+            "run",
+            "rqmd-ai",
+            "install",
+            "--bundle-preset",
+            "full",
+            "--chat",
+            "--json",
+            "--dry-run",
+            "--project-root",
+            str(repo_root),
+        ]
+    )
+
+
+def _build_init_handoff_prompt(
+    repo_root: Path,
+    *,
+    init_command: str,
+    apply_command: str,
+    strategy: dict[str, object],
+    bundle_state: dict[str, object],
+) -> str:
+    lines = [
+        f"You are helping initialize rqmd in the repository at {repo_root}.",
+        "",
+        f"1. Run `{init_command}`.",
+        "2. Read the JSON payload and report which init strategy was selected.",
+        "3. If `bootstrap_chat.question_groups` is present, ask the user the grouped follow-up questions in chat.",
+        "4. Rerun the same init command with repeated `--bootstrap-answer FIELD=VALUE` entries to apply the user's answers.",
+        "5. Review the proposed files with the user before writing anything.",
+        f"6. Apply only after explicit confirmation by running `{apply_command}`.",
+    ]
+
+    if not bool(bundle_state.get("installed")):
+        bundle_command = _build_bundle_follow_up_command(repo_root)
+        lines.extend(
+            [
+                f"7. Because the rqmd Copilot bundle is currently `{bundle_state.get('state', 'absent')}`, also run `{bundle_command}`.",
+                "8. Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills before finishing setup.",
+                "9. Apply the bundle install only after the user confirms the preview.",
+            ]
+        )
+        final_step = 10
+    else:
+        final_step = 7
+
+    lines.extend(
+        [
+            f"{final_step}. Finish by running `uv run rqmd --verify-summaries --no-walk --no-table`.",
+            f"{final_step + 1}. Tell the user the rqmd catalog is ready for refinement passes.",
+            "",
+            f"Selected strategy hint: {strategy.get('selected', 'unknown')}.",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _build_or_apply_init_payload(
+    repo_root: Path,
+    requirements_dir_input: str | None,
+    id_prefixes: tuple[str, ...],
+    apply: bool,
+    *,
+    chat_mode: bool = False,
+    bootstrap_answers: tuple[str, ...] = (),
+    force_legacy: bool = False,
+) -> dict[str, object]:
+    strategy = _detect_init_strategy(
+        repo_root,
+        requirements_dir_input,
+        force_legacy=force_legacy,
+    )
+    bundle_state = _detect_workspace_bundle_state(repo_root)
+
+    if strategy["selected"] == "legacy-init":
+        payload = _build_or_apply_legacy_init_payload(
+            repo_root=repo_root,
+            requirements_dir_input=requirements_dir_input,
+            id_prefixes=id_prefixes,
+            apply=apply,
+            bootstrap_chat=chat_mode,
+            bootstrap_answers=bootstrap_answers,
+        )
+    else:
+        payload = _build_starter_init_payload(
+            repo_root=repo_root,
+            requirements_dir_input=requirements_dir_input,
+            id_prefixes=id_prefixes,
+            apply=apply,
+            chat_mode=chat_mode,
+            bootstrap_answers=bootstrap_answers,
+        )
+
+    init_command = _build_rqmd_ai_init_command(
+        repo_root,
+        requirements_dir_input,
+        id_prefixes,
+        chat_mode=True,
+        force_legacy=force_legacy,
+        apply=False,
+    )
+    apply_command = _build_rqmd_ai_init_command(
+        repo_root,
+        requirements_dir_input,
+        id_prefixes,
+        chat_mode=True,
+        force_legacy=force_legacy,
+        apply=True,
+    )
+    payload["mode"] = "init-chat" if chat_mode and not apply else ("init-apply" if apply else "init-plan")
+    payload["workflow_mode"] = "init"
+    payload["strategy"] = strategy
+    payload["bundle_installation"] = bundle_state
+    payload["compatibility"] = {
+        "legacy_workflow_mode": "init-legacy",
+        "legacy_flag": "--legacy",
+        "bootstrap_chat_flag": "--bootstrap-chat",
+    }
+    if chat_mode:
+        payload["handoff_prompt"] = _build_init_handoff_prompt(
+            repo_root,
+            init_command=init_command,
+            apply_command=apply_command,
+            strategy=strategy,
+            bundle_state=bundle_state,
+        )
+        payload["suggested_commands"] = {
+            "init_preview": init_command,
+            "init_apply": apply_command,
+            "bundle_preview": _build_bundle_follow_up_command(repo_root),
+        }
+    return payload
 
 
 def _priority_label_for_rank(priority_labels: tuple[str, ...], rank: int) -> str:
@@ -1273,7 +1660,7 @@ def _build_legacy_init_readme(
         "# Requirements",
         "",
         "This document is the source-of-truth index for rqmd requirements.",
-        "Generated by `rqmd-ai --workflow-mode init-legacy`.",
+        "Generated by `rqmd-ai init --chat --legacy`.",
         "",
         "## How To Use",
         "",
@@ -1323,7 +1710,7 @@ def _render_legacy_source_domain(title: str, scope: str, evidence: str, requirem
     return (
         f"# {title} Requirements\n\n"
         f"Scope: {scope}\n\n"
-        "This file was generated by `rqmd-ai --workflow-mode init-legacy` as a starting point.\n"
+        "This file was generated by `rqmd-ai init --chat --legacy` as a starting point.\n"
         "Review the seed requirement below and replace it with more precise, testable requirements as you learn the repository.\n\n"
         f"### {requirement_id}: Refine the initial {title} requirements from existing code\n"
         "- **Status:** 💡 Proposed\n"
@@ -1340,7 +1727,7 @@ def _render_legacy_workflow_domain(scope: str, hints: dict[str, list[str]], requ
         "",
         f"Scope: {scope}",
         "",
-        "This file was generated by `rqmd-ai --workflow-mode init-legacy` from detected repository commands.",
+        "This file was generated by `rqmd-ai init --chat --legacy` from detected repository commands.",
         "Use it to lock down the canonical developer workflows before future agents rely on guesses.",
         "",
         f"### {setup_id}: Capture the canonical development workflow commands",
@@ -1372,7 +1759,7 @@ def _render_legacy_issue_domain(scope: str, issues: list[dict[str, object]], req
         "",
         f"Scope: {scope}",
         "",
-        "This file was generated from GitHub issues discovered during `rqmd-ai --workflow-mode init-legacy`.",
+        "This file was generated from GitHub issues discovered during `rqmd-ai init --chat --legacy`.",
         "Review, move, or delete these seeds once they are mapped into better domain files.",
         "",
     ]
@@ -2034,6 +2421,19 @@ def _emit(payload: dict[str, object], json_output: bool) -> None:
             if isinstance(files, list):
                 click.echo(f"packaged definitions embedded: {len(files)}")
         return
+        if mode in {"init-chat", "init-plan", "init-apply"}:
+            strategy = payload.get("strategy")
+            if isinstance(strategy, dict):
+                click.echo(f"selected strategy: {strategy.get('selected', 'unknown')}")
+                for reason in strategy.get("reasons", []):
+                    click.echo(f"- {reason}")
+            prompt = payload.get("handoff_prompt")
+            if isinstance(prompt, str) and prompt.strip():
+                click.echo("")
+                click.echo("Paste this into your AI chat:")
+                click.echo("")
+                click.echo(prompt)
+                return
     if mode == "brainstorm-plan":
         click.echo(f"source file: {payload.get('source_file')}")
         click.echo(f"total proposals: {payload.get('total_proposals')}")
@@ -2883,12 +3283,20 @@ def _plan_or_apply_updates(
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.argument("command_name", required=False)
+@click.option(
+    "--version",
+    is_flag=True,
+    is_eager=True,
+    expose_value=False,
+    callback=_handle_version_option,
+    help="Show the installed rqmd-ai version and editable source path when applicable.",
+)
 @click.option("--json", "--as-json", "json_output", is_flag=True, help="Emit machine-readable JSON output.")
 @click.option("--show-guide", "guide", is_flag=True, help="Print onboarding guidance for rqmd-ai workflows.")
 @click.option(
     "--workflow-mode",
     "workflow_mode",
-    type=click.Choice(["general", "brainstorm", "implement", "init-legacy"], case_sensitive=False),
+    type=click.Choice(["general", "brainstorm", "implement", "init", "init-legacy"], case_sensitive=False),
     default="general",
     show_default=True,
     help="Guide variant to emit for rqmd-ai workflow sequencing.",
@@ -2957,16 +3365,28 @@ def _plan_or_apply_updates(
     help="Bundle preset for `rqmd-ai install` / --install-agent-bundle.",
 )
 @click.option(
+    "--chat",
+    "chat_mode",
+    is_flag=True,
+    help="Emit the chat-first onboarding flow. Preferred with `rqmd-ai init` and accepted as a friendlier alias for --bootstrap-chat.",
+)
+@click.option(
     "--bootstrap-chat",
     "bootstrap_chat",
     is_flag=True,
-    help="Emit a structured interview and preview for AI-guided bundle or legacy bootstrap, including grouped questions, suggested options, and generated file previews.",
+    help="Compatibility alias for the older bootstrap-chat wording. Emits a structured interview and preview for AI-guided bundle or init flows.",
 )
 @click.option(
     "--bootstrap-answer",
     "bootstrap_answers",
     multiple=True,
     help="Answer one bootstrap interview field using FIELD=VALUE. Repeat to select multiple suggestions or add custom values.",
+)
+@click.option(
+    "--legacy",
+    "force_legacy_init",
+    is_flag=True,
+    help="Force the compatibility legacy-init strategy when using the unified `rqmd-ai init` entrypoint.",
 )
 @click.option("--overwrite-existing", "overwrite_existing", is_flag=True, help="Allow --install-agent-bundle to overwrite existing instruction files.")
 @click.option("--dry-run", "dry_run", is_flag=True, help="Preview --install-agent-bundle changes without writing files.")
@@ -2994,18 +3414,24 @@ def main(
     apply: bool,
     install_bundle: bool,
     bundle_preset: str,
+    chat_mode: bool,
     bootstrap_chat: bool,
     bootstrap_answers: tuple[str, ...],
+    force_legacy_init: bool,
     overwrite_existing: bool,
     dry_run: bool,
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
     workflow_mode = workflow_mode.lower()
+    chat_mode = chat_mode or bootstrap_chat
     if command_name:
         normalized_command = command_name.strip().lower()
-        if normalized_command not in {"install", "i"}:
+        if normalized_command in {"install", "i"}:
+            install_bundle = True
+        elif normalized_command == "init":
+            workflow_mode = "init"
+        else:
             raise click.ClickException(f"Unknown rqmd-ai command: {command_name}")
-        install_bundle = True
     if brainstorm_file is not None and workflow_mode != "brainstorm":
         raise click.ClickException("--brainstorm-file can only be used with --workflow-mode brainstorm.")
 
@@ -3019,13 +3445,13 @@ def main(
             preset=bundle_preset.lower(),
             overwrite_existing=overwrite_existing,
             dry_run=dry_run,
-            bootstrap_chat=bootstrap_chat,
+            bootstrap_chat=chat_mode,
             bootstrap_answers=bootstrap_answers,
         )
         _emit(payload, json_output=json_output)
         return
 
-    if workflow_mode == "init-legacy" and guide:
+    if workflow_mode in {"init", "init-legacy"} and guide:
         rules = _load_legacy_init_rules()
         guide_requirements_dir = Path(requirements_dir or str(rules["default_requirements_dir"]))
         if not guide_requirements_dir.is_absolute():
@@ -3041,6 +3467,25 @@ def main(
         )
         return
 
+    if workflow_mode == "init":
+        if brainstorm_file is not None:
+            raise click.ClickException("--brainstorm-file cannot be combined with --workflow-mode init.")
+        if set_entries or export_ids or export_files or export_status or history_ref or compare_refs or history_action or history_report:
+            raise click.ClickException(
+                "--workflow-mode init is an onboarding surface and cannot be combined with export, update, or history options."
+            )
+        payload = _build_or_apply_init_payload(
+            repo_root=repo_root,
+            requirements_dir_input=requirements_dir,
+            id_prefixes=id_prefixes,
+            apply=apply,
+            chat_mode=chat_mode,
+            bootstrap_answers=bootstrap_answers,
+            force_legacy=force_legacy_init,
+        )
+        _emit(payload, json_output=json_output)
+        return
+
     if workflow_mode == "init-legacy":
         if brainstorm_file is not None:
             raise click.ClickException("--brainstorm-file cannot be combined with --workflow-mode init-legacy.")
@@ -3053,7 +3498,7 @@ def main(
             requirements_dir_input=requirements_dir,
             id_prefixes=id_prefixes,
             apply=apply,
-            bootstrap_chat=bootstrap_chat,
+            bootstrap_chat=chat_mode,
             bootstrap_answers=bootstrap_answers,
         )
         _emit(payload, json_output=json_output)

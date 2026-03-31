@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli
 from rqmd.markdown_io import display_name_from_h1
 
@@ -484,7 +485,8 @@ def test_RQMD_packaging_001_to_005_metadata_and_layout() -> None:
 
     readme = (project_root / "README.md").read_text(encoding="utf-8")
     assert "rqmd --verify-summaries" in readme
-    assert "reqmd --help" in readme
+    assert "uv run rqmd --help" in readme
+    assert "`reqmd` and `reqmd-ai` remain available as compatibility aliases" in readme
     assert "uv sync --extra speedups" in readme
     assert "--project-root" in readme
     assert "--docs-dir" in readme

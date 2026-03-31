@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
+- Added a unified `rqmd-ai init` entrypoint with `--chat` and `--legacy` support, plus a new bundled `rqmd-init` skill and copy/paste AI handoff prompts that guide the default onboarding flow through grouped interview questions before any write step (RQMD-AI-025, RQMD-AI-026, RQMD-AI-027, RQMD-AI-028, RQMD-AI-029, RQMD-AI-030).
+- Added a chat-first `rqmd init` entrypoint that emits the same AI handoff contract as `rqmd-ai init --chat`, making guided onboarding the default public setup flow while keeping `--bootstrap` as a direct scaffold compatibility path (RQMD-CORE-029, RQMD-CORE-030).
 - Added bundle-aware default `rqmd-ai` guide output that embeds packaged skill and agent definitions from `resources/bundle` when no workspace bundle is installed, while suppressing those embedded definitions and reporting active local files once the rqmd bundle is present (RQMD-AI-016, RQMD-AI-017, RQMD-AI-018).
 - Added resource-backed brainstorm proposal title and ranking metadata so rqmd-ai brainstorm sorting/order guidance is no longer hard-coded in Python and can be tuned from the bundled skill definition.
 - Added project-local `dev` and `test` skill scaffolding during `rqmd-ai install`, using detected repository commands as a reviewable starting point, and updated `rqmd-dev` guidance to rely on those generated skills when present (RQMD-AI-019, RQMD-AI-021).
@@ -27,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed the recommended initialization vocabulary throughout the docs and bundle guidance to prefer `init` and the chat-first onboarding flow, while keeping `bootstrap`, `--bootstrap-chat`, and `init-legacy` as compatibility surfaces during transition.
 - Changed rqmd and rqmd-ai docs, help text, and generated bundle guidance to prefer `--json` as the standard machine-readable output flag while keeping `--as-json` as a backward-compatible alias.
 - Changed bootstrap-chat payloads for bundle install and `init-legacy` to expose grouped interview questions with multi-select suggestions, custom-answer prompts, skip support, recommended choices, detected-from hints, safe defaults, and answer-driven catalog generation.
 - Changed `rqmd-ai install` to load bundle templates from packaged resource files under `src/rqmd/resources/bundle/` instead of embedding the bundle contents directly in code, so the shipped bundle can be edited as normal files and installed from package data.
