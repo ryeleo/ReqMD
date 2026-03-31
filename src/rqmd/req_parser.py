@@ -15,13 +15,21 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-from .constants import (BLOCKED_REASON_PATTERN, DEFAULT_ID_PREFIXES,
-                        DEPRECATED_REASON_PATTERN, FLAGGED_PATTERN,
-                        GENERIC_REQUIREMENT_HEADER_PATTERN,
-                        H2_SUBSECTION_PATTERN, ID_PREFIX_PATTERN,
-                        LINK_ITEM_PATTERN, LINKS_HEADER_PATTERN,
-                        MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
-                        REQUIREMENTS_INDEX_NAME, STATUS_PATTERN)
+from .constants import (
+    BLOCKED_REASON_PATTERN,
+    DEFAULT_ID_PREFIXES,
+    DEPRECATED_REASON_PATTERN,
+    FLAGGED_PATTERN,
+    GENERIC_REQUIREMENT_HEADER_PATTERN,
+    H2_SUBSECTION_PATTERN,
+    ID_PREFIX_PATTERN,
+    LINK_ITEM_PATTERN,
+    LINKS_HEADER_PATTERN,
+    MARKDOWN_LINK_PATTERN,
+    PRIORITY_PATTERN,
+    REQUIREMENTS_INDEX_NAME,
+    STATUS_PATTERN,
+)
 from .priority_model import coerce_priority_label
 from .status_model import coerce_status_label
 
@@ -276,6 +284,19 @@ def next_sequential_requirement_id(
 
     width = max(min_width, len(str(next_number)))
     return f"{normalized_prefix}-{next_number:0{width}d}", next_number
+
+
+def requirement_newest_first_sort_key(requirement_id: str) -> tuple[int, int, str]:
+    """Return a sort key that prefers newer sequential IDs first.
+
+    Exact ``PREFIX-<digits>`` IDs sort ahead of non-numeric IDs using the
+    numeric component descending. Other IDs fall back to reverse lexical order.
+    """
+
+    match = re.fullmatch(r"(?P<prefix>[A-Z][A-Z0-9]*)-(?P<number>\d+)", requirement_id.upper())
+    if match:
+        return (0, -int(match.group("number")), requirement_id.upper())
+    return (1, 0, requirement_id.upper())
 
 
 def normalize_sub_domain_name(value: object | None) -> str:

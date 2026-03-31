@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 25🔧 10✅ 0⛔ 0🗑️
+Summary: 0💡 26🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -309,3 +309,13 @@ Summary: 0💡 25🔧 10✅ 0⛔ 0🗑️
 - So that mixed invocations such as `rqmd P1 core-engine`, `rqmd Proposed api`, or `rqmd Prop P1 core` are interpreted as filter-plus-target workflows rather than as alternate ID/domain-only lookups.
 - So that when a mixed invocation contains both positional filters and target tokens, rqmd first resolves the filters, then scopes the resulting requirement set by the remaining target tokens, and only then decides whether to launch a focused walk, tree/list output, or direct single-requirement action.
 - So that mixed positional status and priority filters narrow results across filter families, allowing `rqmd P1 Proposed` to return only requirements that match both `P1` and `Proposed`.
+
+### RQMD-AUTOMATION-036: Positional `all` target for newest-first overview
+- **Status:** 🔧 Implemented
+- **Priority:** 🟡 P2 - Medium
+- As a rqmd user when I want a quick overview of the whole tracked requirement set
+- I want `rqmd all` to resolve as a special positional target
+- So that rqmd selects all requirements regardless of status without needing a separate flag.
+- So that the resulting requirement set is ordered by newest ID first using descending numeric ID semantics for sequential IDs such as `REQ-001`, `REQ-010`, and `REQ-1000`.
+- So that `rqmd all` can drive the same JSON, tree/list, and focused interactive target workflows already used by explicit target tokens.
+- So that `all` is exposed in shell completion as a special positional target.

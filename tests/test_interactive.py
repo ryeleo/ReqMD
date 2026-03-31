@@ -8,6 +8,7 @@ from pathlib import Path
 import click
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli, menus
 
 
@@ -1801,6 +1802,10 @@ Scope: core-engine.
     assert "Proposed" in values
     assert "P1" in values
 
+    items_all = cli.shell_complete_target_tokens(ctx, param=None, incomplete="a")
+    values_all = [item.value if hasattr(item, "value") else str(item) for item in items_all]
+    assert "all" in values_all
+
 
 def test_RQMD_interactive_027_positional_status_filter_launches_filtered_walk(monkeypatch, tmp_path: Path) -> None:
     repo = tmp_path / "repo"
@@ -1845,6 +1850,56 @@ Scope: demo.
     assert result.exit_code == 0
     assert called["status"] == "💡 Proposed"
     assert called["domain_files"] == ["demo.md"]
+
+
+def test_RQMD_interactive_036_positional_all_launches_focused_walk(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### REQ-002: Older
+- **Status:** 💡 Proposed
+
+### REQ-1000: Newest
+- **Status:** 🔧 Implemented
+
+### REQ-010: Middle
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+
+    called: dict[str, object] = {}
+
+    def fake_focused(repo_root, domain_files, selected_items, target_tokens, emoji_columns, id_prefixes, resume_filter, state_dir, include_status_emojis, priority_mode, include_priority_summary):
+        called["targets"] = list(target_tokens)
+        called["ids"] = [str(requirement["id"]) for _path, requirement in selected_items]
+        return 0
+
+    monkeypatch.setattr(cli, "focused_target_interactive_loop", fake_focused)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "all",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--no-table",
+            "--id-namespace",
+            "REQ",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert called["targets"] == ["all"]
+    assert called["ids"] == ["REQ-1000", "REQ-010", "REQ-002"]
 
 
 def test_RQMD_interactive_filtered_walk_resumes_position_across_runs(tmp_path: Path) -> None:

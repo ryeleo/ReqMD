@@ -272,11 +272,12 @@ Batch updates can include `priority` fields, or combine `status` and `priority` 
 Use positional filters for fast narrowing without explicit flags:
 
 ```bash
+uv run rqmd all
 uv run rqmd P1 Proposed --json --no-walk --no-table
 uv run rqmd Proposed core-engine
 ```
 
-When positional status and priority filters are combined, rqmd narrows across both families, so `rqmd P1 Proposed` returns only proposed P1 requirements. Remaining positional tokens are then resolved as requirement IDs, domain tokens, or subsection tokens.
+`rqmd all` opens a whole-catalog overview ordered by newest requirement ID first. When positional status and priority filters are combined, rqmd narrows across both families, so `rqmd P1 Proposed` returns only proposed P1 requirements. Remaining positional tokens are then resolved as requirement IDs, domain tokens, or subsection tokens.
 
 Interactive entry panels can start in priority mode:
 

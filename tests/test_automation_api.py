@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli
 from rqmd.constants import JSON_SCHEMA_VERSION
 
@@ -2162,6 +2163,53 @@ Scope: api.
     assert payload["total"] == 1
     assert [file_entry["path"] for file_entry in payload["files"]] == ["docs/requirements/core-engine.md"]
     assert payload["files"][0]["requirements"][0]["id"] == "AC-CORE-001"
+
+
+def test_RQMD_automation_036_positional_all_targets_all_requirements_newest_first(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### REQ-002: Older
+- **Status:** 💡 Proposed
+
+### REQ-1000: Newest
+- **Status:** 🔧 Implemented
+
+### REQ-010: Middle
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "all",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--json",
+            "--no-walk",
+            "--no-table",
+            "--id-namespace",
+            "REQ",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-targets"
+    assert payload["targets"] == ["all"]
+    assert payload["total"] == 3
+    ids = [item["id"] for item in payload["files"][0]["requirements"]]
+    assert ids == ["REQ-1000", "REQ-010", "REQ-002"]
 
 
 def test_RQMD_automation_025_set_flagged_and_json_mode(repo_with_domain_docs: Path) -> None:

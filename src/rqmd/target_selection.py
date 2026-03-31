@@ -15,15 +15,12 @@ from pathlib import Path
 import click
 
 from .markdown_io import display_name_from_h1, format_path_display
-from .req_parser import (
-    collect_sub_sections,
-    find_requirement_by_id,
+from .req_parser import (collect_sub_sections, find_requirement_by_id,
+                         normalize_sub_domain_name, parse_requirements,
+                         requirement_newest_first_sort_key)
     normalize_sub_domain_name,
     parse_requirements,
-)
-
-
-def parse_target_token_file(repo_root: Path, file_path_input: str) -> list[str]:
+    requirement_newest_first_sort_key,
     """Parse target tokens from a file (TXT, CONF, or MD format).
 
     Args:
@@ -97,6 +94,8 @@ def collect_target_completion_candidates(
             return
         seen.add(normalized)
         ordered.append({"value": value, "kind": kind})
+
+    add("all", "special target")
 
     for path in domain_files:
         relative = format_path_display(path, repo_root)
@@ -273,6 +272,21 @@ def resolve_target_tokens(
         token = raw_token.strip()
         normalized_token = _normalized_token(token)
         if not normalized_token:
+            continue
+
+        if normalized_token == "all":
+            if len(raw_tokens) != 1:
+                ambiguous_tokens.append(f"{token} (cannot be combined with other target tokens)")
+                continue
+            all_requirements: list[tuple[Path, dict[str, object]]] = []
+            for path in domain_files:
+                for requirement in parse_requirements(path, id_prefixes=id_prefixes):
+                    all_requirements.append((path, requirement))
+            for path, requirement in sorted(
+                all_requirements,
+                key=lambda item: requirement_newest_first_sort_key(str(item[1]["id"])),
+            ):
+                append_requirement(path, requirement)
             continue
 
         id_matches: list[tuple[Path, dict[str, object]]] = []
