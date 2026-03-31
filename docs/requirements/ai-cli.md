@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 15🔧 0✅ 0⛔ 3🗑️
+Summary: 3💡 15🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -148,3 +148,29 @@ Summary: 0💡 15🔧 0✅ 0⛔ 3🗑️
 - I want rqmd-ai to detect the installed bundle and avoid redundantly embedding the packaged skill and agent definitions in default output
 - So that guidance stays concise and does not duplicate definitions that are already present in the local workspace.
 - So that bundle-aware default output can still explain which local skill or agent files are active without emitting the full packaged definitions again.
+
+### RQMD-AI-019: Project-specific dev and test skill scaffolding
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a maintainer installing the rqmd AI bundle into a real project
+- I want bundle bootstrap to help generate project-local `dev` and `test` skills tailored to that repository's actual commands and workflows
+- So that the installed `rqmd-dev` agent can delegate build, run, smoke-test, and test behavior to project-specific skills instead of relying on generic assumptions.
+- So that generated skill definitions can capture the repository's actual build/test/smoke commands, validation expectations, and any required environment setup.
+- So that teams can review and edit those generated skill files after bootstrap rather than keeping that project knowledge buried in agent prose.
+
+### RQMD-AI-020: Agent-driven bundle bootstrap chat
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a maintainer onboarding AI workflows in a new repository
+- I want the rqmd bundle bootstrap flow to be driveable through an AI-guided chat session
+- So that bundle install can interview the user about the project's build, run, dev, and test commands instead of forcing all customization through manual file edits.
+- So that the bootstrap chat can propose `dev` and `test` skill content, preview the generated files, and only write them after explicit review.
+- So that teams can adopt the bundle through a guided conversation even when they have not yet learned the exact customization file formats.
+
+### RQMD-AI-021: rqmd-dev delegation to project dev and test skills
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a maintainer using the installed `rqmd-dev` agent in a repository with project-local AI skills
+- I want `rqmd-dev` guidance to explicitly depend on repository-specific `dev` and `test` skills when they exist
+- So that implementation agents know where to find the canonical project commands for building, running, smoke-testing, and validating the work under development.
+- So that `rqmd-dev` can stay generally reusable while still becoming concretely useful once a repository has generated or customized those project-local skills.
