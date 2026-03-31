@@ -387,6 +387,40 @@ def _render_bundle_template(relative_path: str, replacements: dict[str, str]) ->
     return content
 
 
+_BOOTSTRAP_CHAT_FIELDS: tuple[str, ...] = (
+    "dev_environment",
+    "dev_build",
+    "dev_run",
+    "dev_smoke",
+    "test_primary",
+    "test_integration",
+    "test_lint",
+    "notes",
+)
+
+_BOOTSTRAP_CHAT_LABELS: dict[str, str] = {
+    "dev_environment": "Development environment setup",
+    "dev_build": "Build commands",
+    "dev_run": "Run or dev-server commands",
+    "dev_smoke": "Smoke-test commands",
+    "test_primary": "Primary automated test commands",
+    "test_integration": "Integration or end-to-end test commands",
+    "test_lint": "Lint and static check commands",
+    "notes": "Bootstrap notes",
+}
+
+_BOOTSTRAP_CHAT_PROMPTS: dict[str, str] = {
+    "dev_environment": "Which setup commands should /dev use before building or running this project?",
+    "dev_build": "Which build commands should /dev treat as canonical?",
+    "dev_run": "Which run or dev-server commands should /dev use?",
+    "dev_smoke": "Which smoke-test commands should /dev use for quick checks?",
+    "test_primary": "Which primary automated test commands should /test use?",
+    "test_integration": "Which integration or end-to-end test commands should /test use?",
+    "test_lint": "Which lint or static verification commands should /test use?",
+    "notes": "What review notes or caveats should be carried into the generated skills?",
+}
+
+
 def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
     detected_sources: list[str] = []
 
@@ -500,8 +534,7 @@ def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
     }
 
 
-def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
-    hints = _detect_project_command_hints(repo_root)
+def _render_project_skill_content_from_hints(hints: dict[str, list[str]]) -> dict[str, str]:
     return {
         ".github/skills/dev/SKILL.md": _render_bundle_template(
             "templates/dev-skill.md",
@@ -525,6 +558,63 @@ def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
             },
         ),
     }
+
+
+def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
+    hints = _detect_project_command_hints(repo_root)
+    return _render_project_skill_content_from_hints(hints)
+
+
+def _parse_bootstrap_answer_entry(raw: str) -> tuple[str, str]:
+    text = str(raw).strip()
+    if "=" not in text:
+        raise click.ClickException(
+            "--bootstrap-answer must use FIELD=VALUE format, for example --bootstrap-answer dev_run='npm run dev'."
+        )
+    field_raw, value_raw = text.split("=", 1)
+    field = field_raw.strip().lower()
+    value = value_raw.strip()
+    if field not in _BOOTSTRAP_CHAT_FIELDS:
+        allowed = ", ".join(_BOOTSTRAP_CHAT_FIELDS)
+        raise click.ClickException(
+            f"Unknown --bootstrap-answer field {field_raw!r}. Allowed fields: {allowed}."
+        )
+    if not value:
+        raise click.ClickException(f"--bootstrap-answer {field}=... requires a non-empty value.")
+    return field, value
+
+
+def _apply_bootstrap_answers(
+    hints: dict[str, list[str]],
+    bootstrap_answers: tuple[str, ...],
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+    updated: dict[str, list[str]] = {
+        key: list(value) if isinstance(value, list) else []
+        for key, value in hints.items()
+    }
+    collected_answers: dict[str, list[str]] = {field: [] for field in _BOOTSTRAP_CHAT_FIELDS}
+    for raw in bootstrap_answers:
+        field, value = _parse_bootstrap_answer_entry(raw)
+        collected_answers[field].append(value)
+    for field, values in collected_answers.items():
+        if values:
+            updated[field] = list(values)
+    return updated, {field: values for field, values in collected_answers.items() if values}
+
+
+def _build_bootstrap_chat_questions(hints: dict[str, list[str]]) -> list[dict[str, object]]:
+    questions: list[dict[str, object]] = []
+    for field in _BOOTSTRAP_CHAT_FIELDS:
+        inferred = hints.get(field) if isinstance(hints.get(field), list) else []
+        questions.append(
+            {
+                "field": field,
+                "label": _BOOTSTRAP_CHAT_LABELS[field],
+                "prompt": _BOOTSTRAP_CHAT_PROMPTS[field],
+                "inferred_answers": [str(item) for item in inferred if str(item).strip()],
+            }
+        )
+    return questions
 
 
 def _slugify_token(value: str) -> str:
@@ -1207,9 +1297,13 @@ def _install_agent_bundle(
     preset: str,
     overwrite_existing: bool,
     dry_run: bool,
+    bootstrap_chat: bool = False,
+    bootstrap_answers: tuple[str, ...] = (),
 ) -> dict[str, object]:
     files = _bundle_files_for_preset(preset)
-    generated_skill_files = _infer_project_skill_content(repo_root)
+    detected_hints = _detect_project_command_hints(repo_root)
+    resolved_hints, applied_answers = _apply_bootstrap_answers(detected_hints, bootstrap_answers)
+    generated_skill_files = _render_project_skill_content_from_hints(resolved_hints)
     files.update(generated_skill_files)
     created_files: list[str] = []
     overwritten_files: list[str] = []
@@ -1238,7 +1332,17 @@ def _install_agent_bundle(
         "preset": preset,
         "overwrite_existing": overwrite_existing,
         "dry_run": dry_run,
+        "bootstrap_chat": {
+            "enabled": bootstrap_chat,
+            "questions": _build_bootstrap_chat_questions(detected_hints) if bootstrap_chat else [],
+            "applied_answers": applied_answers,
+            "detected_sources": list(detected_hints.get("detected_sources", [])),
+        },
         "generated_skill_files": sorted(generated_skill_files),
+        "generated_skill_previews": [
+            {"path": path, "content": content}
+            for path, content in sorted(generated_skill_files.items())
+        ] if bootstrap_chat else [],
         "created_files": created_files,
         "overwritten_files": overwritten_files,
         "skipped_existing": skipped_existing,
@@ -2258,6 +2362,18 @@ def _plan_or_apply_updates(
     show_default=True,
     help="Bundle preset for `rqmd-ai install` / --install-agent-bundle.",
 )
+@click.option(
+    "--bootstrap-chat",
+    "bootstrap_chat",
+    is_flag=True,
+    help="Emit a structured interview and preview for AI-guided bundle bootstrap, including generated /dev and /test skills.",
+)
+@click.option(
+    "--bootstrap-answer",
+    "bootstrap_answers",
+    multiple=True,
+    help="Override one bootstrap interview field using FIELD=VALUE, for example --bootstrap-answer dev_run='npm run dev'.",
+)
 @click.option("--overwrite-existing", "overwrite_existing", is_flag=True, help="Allow --install-agent-bundle to overwrite existing instruction files.")
 @click.option("--dry-run", "dry_run", is_flag=True, help="Preview --install-agent-bundle changes without writing files.")
 def main(
@@ -2284,6 +2400,8 @@ def main(
     apply: bool,
     install_bundle: bool,
     bundle_preset: str,
+    bootstrap_chat: bool,
+    bootstrap_answers: tuple[str, ...],
     overwrite_existing: bool,
     dry_run: bool,
 ) -> None:
@@ -2307,6 +2425,8 @@ def main(
             preset=bundle_preset.lower(),
             overwrite_existing=overwrite_existing,
             dry_run=dry_run,
+            bootstrap_chat=bootstrap_chat,
+            bootstrap_answers=bootstrap_answers,
         )
         _emit(payload, json_output=json_output)
         return

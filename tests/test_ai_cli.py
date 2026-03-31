@@ -1069,6 +1069,93 @@ def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_pa
     assert "npm run test" in test_skill
 
 
+def test_RQMD_AI_020_install_bundle_bootstrap_chat_exposes_interview_and_previews(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+    (repo / "package.json").write_text(
+        json.dumps(
+            {
+                "name": "demo-app",
+                "scripts": {
+                    "dev": "vite",
+                    "build": "vite build",
+                    "test": "vitest run",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "install",
+            "--bundle-preset",
+            "minimal",
+            "--bootstrap-chat",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    assert payload["mode"] == "install-agent-bundle"
+    assert payload["bootstrap_chat"]["enabled"] is True
+    assert payload["bootstrap_chat"]["detected_sources"] == ["package.json scripts"]
+    questions = payload["bootstrap_chat"]["questions"]
+    assert any(item["field"] == "dev_run" and "`npm run dev`" in item["inferred_answers"] for item in questions)
+    preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
+    assert ".github/skills/dev/SKILL.md" in preview_map
+    assert "npm run dev" in preview_map[".github/skills/dev/SKILL.md"]
+    assert "npm run test" in preview_map[".github/skills/test/SKILL.md"]
+
+
+def test_RQMD_AI_020_install_bundle_bootstrap_chat_applies_answer_overrides(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+    (repo / "package.json").write_text(
+        json.dumps({"name": "demo-app", "scripts": {"dev": "vite"}}),
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "install",
+            "--bundle-preset",
+            "minimal",
+            "--bootstrap-chat",
+            "--bootstrap-answer",
+            "dev_run=python -m demo.app",
+            "--bootstrap-answer",
+            "test_primary=pytest -q",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    assert payload["bootstrap_chat"]["applied_answers"]["dev_run"] == ["python -m demo.app"]
+    assert payload["bootstrap_chat"]["applied_answers"]["test_primary"] == ["pytest -q"]
+    preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
+    assert "python -m demo.app" in preview_map[".github/skills/dev/SKILL.md"]
+    assert "pytest -q" in preview_map[".github/skills/test/SKILL.md"]
+
+
 def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"

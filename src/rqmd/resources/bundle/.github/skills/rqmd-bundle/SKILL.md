@@ -20,7 +20,9 @@ Use this skill when the work is about Copilot instructions, agents, skills, or b
 
 Workflow:
 - Preview bundle changes with `uv run rqmd-ai i --json --bundle-preset minimal --dry-run`.
+- For AI-guided onboarding, use `uv run rqmd-ai i --json --bundle-preset minimal --bootstrap-chat --dry-run` to get interview prompts plus generated `/dev` and `/test` skill previews.
 - Install the standard bundle with `uv run rqmd-ai install --json`.
+- Use `--bootstrap-answer FIELD=VALUE` overrides when the inferred build, run, smoke, or test commands need correction before writing.
 - Review the generated project-local `/dev` and `/test` skills after install and replace any weak command guesses with the repository's canonical workflows.
 - Use `--overwrite-existing` only when intentional replacement of workspace customization is desired.
 - Keep packaged bundle resources and checked-in workspace copies aligned if the repository ships its own bundle source.

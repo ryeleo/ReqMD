@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 20🔧 0✅ 0⛔ 3🗑️
+Summary: 0💡 21🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -159,7 +159,7 @@ Summary: 1💡 20🔧 0✅ 0⛔ 3🗑️
 - So that teams can review and edit those generated skill files after bootstrap rather than keeping that project knowledge buried in agent prose.
 
 ### RQMD-AI-020: Agent-driven bundle bootstrap chat
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a maintainer onboarding AI workflows in a new repository
 - I want the rqmd bundle bootstrap flow to be driveable through an AI-guided chat session
