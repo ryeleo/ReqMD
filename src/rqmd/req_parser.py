@@ -15,21 +15,13 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-from .constants import (
-    BLOCKED_REASON_PATTERN,
-    DEFAULT_ID_PREFIXES,
-    DEPRECATED_REASON_PATTERN,
-    FLAGGED_PATTERN,
-    GENERIC_REQUIREMENT_HEADER_PATTERN,
-    H2_SUBSECTION_PATTERN,
-    ID_PREFIX_PATTERN,
-    LINK_ITEM_PATTERN,
-    LINKS_HEADER_PATTERN,
-    MARKDOWN_LINK_PATTERN,
-    PRIORITY_PATTERN,
-    REQUIREMENTS_INDEX_NAME,
-    STATUS_PATTERN,
-)
+from .constants import (BLOCKED_REASON_PATTERN, DEFAULT_ID_PREFIXES,
+                        DEPRECATED_REASON_PATTERN, FLAGGED_PATTERN,
+                        GENERIC_REQUIREMENT_HEADER_PATTERN,
+                        H2_SUBSECTION_PATTERN, ID_PREFIX_PATTERN,
+                        LINK_ITEM_PATTERN, LINKS_HEADER_PATTERN,
+                        MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
+                        REQUIREMENTS_INDEX_NAME, STATUS_PATTERN)
 from .priority_model import coerce_priority_label
 from .status_model import coerce_status_label
 
@@ -225,6 +217,65 @@ def resolve_id_prefixes(
         return detected
 
     return DEFAULT_ID_PREFIXES
+
+
+def _iter_requirement_headers(
+    path: Path,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> list[tuple[str, int]]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    header_pattern = build_requirement_header_pattern(id_prefixes)
+    matches: list[tuple[str, int]] = []
+    for index, line in enumerate(lines, start=1):
+        header_match = header_pattern.match(line)
+        if header_match:
+            matches.append((header_match.group("id"), index))
+    return matches
+
+
+def find_duplicate_requirement_ids(
+    domain_files: list[Path],
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> dict[str, list[tuple[Path, int]]]:
+    """Return duplicate requirement IDs and their file/line locations."""
+
+    locations: dict[str, list[tuple[Path, int]]] = {}
+    for path in domain_files:
+        for requirement_id, line_number in _iter_requirement_headers(path, id_prefixes=id_prefixes):
+            locations.setdefault(requirement_id, []).append((path, line_number))
+    return {
+        requirement_id: entries
+        for requirement_id, entries in locations.items()
+        if len(entries) > 1
+    }
+
+
+def next_sequential_requirement_id(
+    domain_files: list[Path],
+    prefix: str,
+    *,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    min_width: int = 3,
+) -> tuple[str, int]:
+    """Allocate the next numeric requirement ID for a single namespace.
+
+    Only IDs in the exact form ``PREFIX-<digits>`` participate in numeric
+    allocation. Existing semantic IDs such as ``RQMD-CORE-001`` are ignored.
+    """
+
+    normalized_prefix = normalize_id_prefixes((prefix,))[0]
+    next_number = 1
+    pattern = re.compile(rf"^{re.escape(normalized_prefix)}-(?P<number>\d+)$")
+
+    for path in domain_files:
+        for requirement_id, _line_number in _iter_requirement_headers(path, id_prefixes=id_prefixes):
+            match = pattern.fullmatch(requirement_id)
+            if not match:
+                continue
+            next_number = max(next_number, int(match.group("number")) + 1)
+
+    width = max(min_width, len(str(next_number)))
+    return f"{normalized_prefix}-{next_number:0{width}d}", next_number
 
 
 def normalize_sub_domain_name(value: object | None) -> str:

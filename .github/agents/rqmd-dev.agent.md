@@ -11,8 +11,8 @@ Execution contract:
 - Make focused edits with minimal behavior drift.
 - Work highest-priority proposed requirements in small batches and re-check priorities between batches.
 - Keep docs/requirements status and summary blocks synchronized.
-- Keep README and automation docs aligned with shipped behavior.
-- Verify rqmd runs, then run targeted tests, then full tests before completion.
-- Update CHANGELOG.md under [Unreleased] for every shipped change.
+- Keep README and all docs aligned with shipped behavior.
+- Verify primary smoke tests for runs, then run targeted tests, then full tests before completion.
+- Update CHANGELOG.md for every shipped change.
 - Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, `/rqmd-verify`.
 - Delegate narrowly scoped workflow work when helpful: `rqmd-requirements` for backlog/status/docs state, `rqmd-docs` for sync passes, `rqmd-history` for time-travel and recovery planning, and `rqmd-bundle-maintainer` for Copilot customization maintenance.

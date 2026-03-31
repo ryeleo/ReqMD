@@ -30,21 +30,14 @@ from .batch_inputs import parse_set_entry
 from .constants import JSON_SCHEMA_VERSION
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (
-    discover_project_root,
-    format_path_display,
-    iter_domain_files,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
-from .req_parser import (
-    extract_blocking_id,
-    extract_requirement_block_with_lines,
-    normalize_id_prefixes,
-    parse_domain_priority_metadata,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .markdown_io import (discover_project_root, format_path_display,
+                          iter_domain_files, resolve_requirements_dir,
+                          validate_files_readable)
+from .req_parser import (extract_blocking_id,
+                         extract_requirement_block_with_lines,
+                         find_duplicate_requirement_ids, normalize_id_prefixes,
+                         parse_domain_priority_metadata, parse_requirements,
+                         resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 
@@ -169,8 +162,8 @@ Execution contract:
 - Make focused edits with minimal behavior drift.
 - Work highest-priority proposed requirements in small batches and re-check priorities between batches.
 - Keep docs/requirements status and summary blocks synchronized.
-- Keep README and automation docs aligned with shipped behavior.
-- Verify rqmd runs, then run targeted tests, then full tests before completion.
+- Keep README, Changelog, and all project MD docs aligned with shipped behavior.
+- Verify 'smoke tests' run (ask user to specify what a good smoke test is for their development efforts. Normally something like "build/run my app"), then run targeted tests, then full tests before completion.
 - Update CHANGELOG.md under [Unreleased] for every shipped change.
 - Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, `/rqmd-verify`.
 - Delegate narrowly scoped workflow work when helpful: `rqmd-requirements` for backlog/status/docs state, `rqmd-docs` for sync passes, and `rqmd-history` for time-travel and recovery planning.
@@ -878,6 +871,20 @@ def _emit_history_report(payload: dict[str, object], json_output: bool) -> None:
         click.echo(f"Added: {summary.get('added', 0)}")
         click.echo(f"Removed: {summary.get('removed', 0)}")
         click.echo(f"Unchanged: {summary.get('unchanged', 0)}")
+
+
+def _raise_duplicate_id_error(
+    repo_root: Path,
+    duplicates: dict[str, list[tuple[Path, int]]],
+) -> None:
+    duplicate_parts: list[str] = []
+    for requirement_id in sorted(duplicates):
+        locations = ", ".join(
+            f"{format_path_display(path, repo_root)}:{line_number}"
+            for path, line_number in duplicates[requirement_id]
+        )
+        duplicate_parts.append(f"{requirement_id} [{locations}]")
+    raise click.ClickException(f"Duplicate requirement IDs found: {'; '.join(duplicate_parts)}")
 
 
 def _build_history_state_report_payload(
@@ -1852,6 +1859,9 @@ def main(
             f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
         )
     validate_files_readable(domain_files, effective_repo_root)
+    duplicates = find_duplicate_requirement_ids(domain_files, id_prefixes=id_prefixes)
+    if duplicates:
+        _raise_duplicate_id_error(effective_repo_root, duplicates)
 
     if apply and not set_entries:
         raise click.ClickException("rqmd-ai --write requires at least one --update ID=STATUS update.")

@@ -240,6 +240,15 @@ uv run rqmd --bootstrap
 `--bootstrap` prompts for a starter requirement key prefix (default: `REQ`; recommended to customize).
 Scaffold content is sourced from repository-managed templates in `init-docs/README.md` and `init-docs/domain-example.md`.
 
+Allocate the next sequential numeric requirement ID for the active namespace:
+
+```bash
+uv run rqmd --id-namespace TEAM --next-id
+uv run rqmd --id-namespace TEAM --next-id --json
+```
+
+`--next-id` respects the active key prefix, uses at least 3 digits of zero-padding by default, and continues past `999` as `1000`, `1001`, and higher.
+
 Set one requirement non-interactively:
 
 ```bash

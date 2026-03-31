@@ -1,3 +1,23 @@
+## Special positional args
+
+`rqmd all`: shows all requirements in reverse sort order of ID (newest first) regardless of status. This is a good way to get a quick overview of all requirements, and see the most recent ones at the top.
+
+`rqmd ranked`
+
+## Ranking
+
+New sorting column/feture: "Rank"
+
+### Core Engine
+
+Make it so that there is an optional 0-based "rank: " field for each requirement. If provided and negative, move it "down" in rank. If provided and positive, move it "up" in rank. Otherwise, do normal reverse sort by ID. This way, users can easily specify a custom rank for requirements that they want to prioritize or deprioritize in the listing, without needing to change their IDs or statuses.
+
+### UX
+
+This allows us to treat rqmd as a sort of backlog that the user can easily reorder by setting rank values, without needing to go change IDs or statuses.
+
+A user should be able to easily move the REQ they are looking at to the top rank, or bottom rank. They should be able to move it up or down one rank easily.
+
 ## IDs
 
 What if we made IDs act like real IDs? Like just REQ-001 through REQ-999. That would provide a key metadata of when a requirement was created relative to all other requirements.

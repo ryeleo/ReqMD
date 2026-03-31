@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd import cli
 from rqmd.markdown_io import scope_and_body_from_file
 from rqmd.req_parser import collect_sub_sections
@@ -123,6 +122,160 @@ This subsection body explains the query flow.
     assert sections[0]["count"] == 1
     assert sections[0]["body"] == "This subsection body explains the query flow."
     assert sections[1] == {"name": "Mutation API", "count": 1}
+
+
+def test_RQMD_core_026_duplicate_ids_fail_fast(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "one.md").write_text(
+        """# One
+
+Scope: demo.
+
+### REQ-001: First
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    (criteria_dir / "two.md").write_text(
+        """# Two
+
+Scope: demo.
+
+### REQ-001: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--id-namespace",
+            "REQ",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Duplicate requirement IDs found" in result.output
+    assert "REQ-001" in result.output
+
+
+def test_RQMD_core_027_next_id_uses_custom_prefix_and_three_digit_padding(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "demo.md").write_text(
+        """# Demo
+
+Scope: demo.
+
+### TEAM-001: First
+- **Status:** 💡 Proposed
+
+### TEAM-002: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--id-namespace",
+            "TEAM",
+            "--next-id",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "next-id"
+    assert payload["prefix"] == "TEAM"
+    assert payload["requirement_id"] == "TEAM-003"
+    assert payload["next_number"] == 3
+    assert payload["min_width"] == 3
+
+
+def test_RQMD_core_028_next_id_overflows_past_999(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "demo.md").write_text(
+        """# Demo
+
+Scope: demo.
+
+### REQ-999: Large catalog
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--id-namespace",
+            "REQ",
+            "--next-id",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert result.output.strip().endswith("REQ-1000")
+
+
+def test_RQMD_core_027_next_id_requires_single_namespace(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "demo.md").write_text(
+        """# Demo
+
+Scope: demo.
+
+### AC-001: First
+- **Status:** 💡 Proposed
+
+### R-001: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--next-id",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "requires a single active ID namespace" in result.output
 
 
 def test_RQMD_core_019_domain_body_excludes_h2_subsection_content() -> None:

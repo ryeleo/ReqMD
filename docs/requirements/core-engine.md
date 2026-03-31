@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 9🔧 16✅ 0⛔ 0🗑️
+Summary: 0💡 12🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -238,7 +238,7 @@ Summary: 3💡 9🔧 16✅ 0⛔ 0🗑️
 - So that the initial shipped acceleration layer can focus on JSON export and audit-log serialization while remaining extensible for future parser/index speedups.
 
 ### RQMD-CORE-026: Stable immutable requirement IDs
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when requirement titles, domains, or surrounding metadata evolve over time
 - I want each requirement ID to behave as a stable identifier instead of an editable label
@@ -247,7 +247,7 @@ Summary: 3💡 9🔧 16✅ 0⛔ 0🗑️
 - So that any future ID-changing workflow is treated as an explicit migration operation with clear validation rather than a casual text edit.
 
 ### RQMD-CORE-027: Sequential numeric ID allocation
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when creating new requirements
 - I want rqmd to allocate IDs in a simple sequential numeric format such as `REQ-001`, `REQ-002`, `REQ-003`
@@ -256,7 +256,7 @@ Summary: 3💡 9🔧 16✅ 0⛔ 0🗑️
 - So that the default rendered format uses at least 3 digits of zero-padding for readability.
 
 ### RQMD-CORE-028: Sequential ID width overflow past 999
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a project grows beyond `REQ-999`
 - I want sequential IDs to continue as `REQ-1000`, `REQ-1001`, and higher without rollover or truncation

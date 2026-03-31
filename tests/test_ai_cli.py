@@ -5,7 +5,6 @@ import re
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd.ai_cli import main
 from rqmd.cli import main as rqmd_main
 from rqmd.constants import JSON_SCHEMA_VERSION
@@ -109,6 +108,52 @@ def test_RQMD_AI_001b_json_alias_emits_read_only_guide(tmp_path: Path) -> None:
     assert payload["workflow_mode"] == "general"
     assert payload["read_only"] is True
     _assert_schema_version(payload)
+
+
+def test_RQMD_AI_duplicate_ids_fail_export(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "one.md").write_text(
+        """# One
+
+Scope: demo.
+
+### REQ-001: First
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    (criteria_dir / "two.md").write_text(
+        """# Two
+
+Scope: demo.
+
+### REQ-001: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--id-namespace",
+            "REQ",
+            "--json",
+            "--dump-status",
+            "proposed",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Duplicate requirement IDs found" in result.output
+    assert "REQ-001" in result.output
 
 
 def test_RQMD_AI_015_implement_workflow_mode_emits_batch_guidance_json(tmp_path: Path) -> None:

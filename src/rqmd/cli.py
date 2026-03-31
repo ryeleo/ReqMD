@@ -77,106 +77,58 @@ except ImportError:
 
 from . import menus as menus_mod
 from . import workflows as workflows_mod
-from .batch_inputs import (
-    parse_batch_update_csv,
-    parse_batch_update_file,
-    parse_batch_update_jsonl,
-    parse_set_entry,
-    parse_set_flagged_entry,
-    parse_set_priority_entry,
-)
-from .config import (
-    load_config,
-    load_priorities_file,
-    load_statuses_file,
-    load_user_config,
-    validate_config,
-)
-from .constants import (
-    DEFAULT_ID_PREFIXES,
-    DEFAULT_REQUIREMENTS_DIR,
-    ID_PREFIX_PATTERN,
-    JSON_SCHEMA_VERSION,
-    PRIORITY_ORDER,
-    STATUS_ORDER,
-    STATUS_PATTERN,
-    SUMMARY_END,
-    SUMMARY_START,
-)
-from .history import HistoryManager, HistoryRestoreError, merge_retention_policies
+from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
+                           parse_batch_update_jsonl, parse_set_entry,
+                           parse_set_flagged_entry, parse_set_priority_entry)
+from .config import (load_config, load_priorities_file, load_statuses_file,
+                     load_user_config, validate_config)
+from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
+                        ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, PRIORITY_ORDER,
+                        STATUS_ORDER, STATUS_PATTERN, SUMMARY_END,
+                        SUMMARY_START)
+from .history import (HistoryManager, HistoryRestoreError,
+                      merge_retention_policies)
 from .json_speedups import dumps_json
-from .markdown_io import (
-    auto_detect_requirements_dir,
-    check_files_writable,
-    check_index_sync,
-    discover_project_root,
-    display_name_from_h1,
-    format_path_display,
-    initialize_requirements_scaffold,
-    iter_domain_files,
-    iter_requirements_search_roots,
-    parse_index_links,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
+from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
+                          check_index_sync, discover_project_root,
+                          display_name_from_h1, format_path_display,
+                          initialize_requirements_scaffold, iter_domain_files,
+                          iter_requirements_search_roots, parse_index_links,
+                          resolve_requirements_dir, validate_files_readable)
 from .menus import select_from_menu
-from .priority_model import configure_priority_catalog, normalize_priority_input
-from .req_parser import (
-    collect_requirements_by_filters,
-    collect_requirements_by_flagged,
-    collect_requirements_by_links,
-    collect_requirements_by_priority,
-    collect_requirements_by_status,
-    collect_requirements_by_sub_domain,
-    find_requirement_by_id,
-    normalize_id_prefixes,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .priority_model import (configure_priority_catalog,
+                             normalize_priority_input)
+from .req_parser import (collect_requirements_by_filters,
+                         collect_requirements_by_flagged,
+                         collect_requirements_by_links,
+                         collect_requirements_by_priority,
+                         collect_requirements_by_status,
+                         collect_requirements_by_sub_domain,
+                         find_duplicate_requirement_ids,
+                         find_requirement_by_id,
+                         next_sequential_requirement_id, normalize_id_prefixes,
+                         parse_requirements, resolve_id_prefixes)
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
-from .status_model import (
-    build_color_rollup_text,
-    configure_status_catalog,
-    normalize_status_input,
-    style_status_count,
-    style_status_label,
-)
-from .status_update import (
-    apply_status_change_by_id,
-    print_criterion_panel,
-    prompt_for_blocked_reason,
-    prompt_for_deprecated_reason,
-    update_criterion_status,
-)
-from .summary import (
-    UnknownStatusValueError,
-    build_summary_block,
-    build_summary_line,
-    build_summary_table,
-    collect_summary_rows,
-    count_statuses,
-    insert_or_replace_summary,
-    normalize_status_lines,
-    print_custom_rollup_table,
-    print_global_rollup_table,
-    print_summary_table,
-    process_file,
-)
-from .target_selection import (
-    complete_target_completion_candidates,
-    parse_target_token_file,
-    resolve_target_tokens,
-)
-from .workflows import (
-    build_filtered_criteria_payload,
-    build_summary_payload,
-    build_targeted_criteria_payload,
-    print_criteria_list,
-    print_criteria_tree,
-)
-from .workflows import (
-    focused_target_interactive_loop as focused_target_interactive_loop_impl,
-)
+from .status_model import (build_color_rollup_text, configure_status_catalog,
+                           normalize_status_input, style_status_count,
+                           style_status_label)
+from .status_update import (apply_status_change_by_id, print_criterion_panel,
+                            prompt_for_blocked_reason,
+                            prompt_for_deprecated_reason,
+                            update_criterion_status)
+from .summary import (UnknownStatusValueError, build_summary_block,
+                      build_summary_line, build_summary_table,
+                      collect_summary_rows, count_statuses,
+                      insert_or_replace_summary, normalize_status_lines,
+                      print_custom_rollup_table, print_global_rollup_table,
+                      print_summary_table, process_file)
+from .target_selection import (complete_target_completion_candidates,
+                               parse_target_token_file, resolve_target_tokens)
+from .workflows import (build_filtered_criteria_payload, build_summary_payload,
+                        build_targeted_criteria_payload)
+from .workflows import \
+    focused_target_interactive_loop as focused_target_interactive_loop_impl
+from .workflows import print_criteria_list, print_criteria_tree
 
 __all__ = [
     "SUMMARY_START",
@@ -433,6 +385,20 @@ def _raise_unknown_status_error(
         f"Nearest configured statuses: {suggestion_text}. "
         "Remediation: update status catalog config, add alias mapping, or run a one-time migration."
     )
+
+
+def _raise_duplicate_id_error(
+    repo_root: Path,
+    duplicates: dict[str, list[tuple[Path, int]]],
+) -> None:
+    duplicate_parts: list[str] = []
+    for requirement_id in sorted(duplicates):
+        locations = ", ".join(
+            f"{format_path_display(path, repo_root)}:{line_number}"
+            for path, line_number in duplicates[requirement_id]
+        )
+        duplicate_parts.append(f"{requirement_id} [{locations}]")
+    raise click.ClickException(f"Duplicate requirement IDs found: {'; '.join(duplicate_parts)}")
 
 
 def _expand_filter_values(raw_values: tuple[str, ...]) -> tuple[str, ...]:
@@ -1524,6 +1490,12 @@ def _filter_timeline_nodes(
     help="Check that the requirements index (README.md) links match actual domain files; report stale links and orphan files.",
 )
 @click.option(
+    "--next-id",
+    "next_id",
+    is_flag=True,
+    help="Print the next sequential numeric requirement ID for the active namespace and exit.",
+)
+@click.option(
     "--bootstrap",
     "init_scaffold",
     is_flag=True,
@@ -1609,6 +1581,7 @@ def main(
     requirements_dir: str | None,
     id_prefixes: tuple[str, ...],
     check_index: bool,
+    next_id: bool,
     init_scaffold: bool,
     confirm_yes: bool,
     targets: tuple[str, ...],
@@ -1821,7 +1794,78 @@ def main(
     # RQMD-PORTABILITY-009: validate files are readable before proceeding
     validate_files_readable(domain_files, repo_root)
 
+    duplicates = find_duplicate_requirement_ids(domain_files, id_prefixes=id_prefixes)
+    if duplicates:
+        _raise_duplicate_id_error(repo_root, duplicates)
+
     include_status_emojis = infer_include_status_emojis(domain_files)
+
+    if next_id:
+        if (
+            check
+            or filter_status
+            or filter_priority
+            or filter_flagged
+            or filter_no_flag
+            or filter_has_link
+            or filter_no_link
+            or filter_sub_domain
+            or filter_ids_file
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+            or undo_last
+            or redo_last
+            or show_timeline
+            or show_history
+            or history_discard_branch
+            or history_label_branch
+            or history_gc
+            or history_checkout_branch
+            or history_cherry_pick
+            or history_replay_branch
+            or tree
+            or list_output
+            or rollup_mode
+            or rename_id_prefix
+            or strip_status_emojis
+            or restore_status_emojis
+            or init_priorities
+            or check_index
+            or init_scaffold
+            or targets
+        ):
+            raise click.ClickException(
+                "--next-id cannot be combined with filter, mutation, history, tree/list, rollup, bootstrap, or positional-target modes."
+            )
+        if len(id_prefixes) != 1:
+            raise click.ClickException(
+                "--next-id requires a single active ID namespace. Re-run with --id-namespace PREFIX."
+            )
+
+        requirement_id, next_number = next_sequential_requirement_id(
+            domain_files,
+            id_prefixes[0],
+            id_prefixes=id_prefixes,
+        )
+        if json_output:
+            _emit_json_payload(
+                {
+                    "mode": "next-id",
+                    "criteria_dir": format_path_display(resolved_criteria_dir, repo_root),
+                    "prefix": id_prefixes[0],
+                    "requirement_id": requirement_id,
+                    "next_number": next_number,
+                    "min_width": 3,
+                }
+            )
+        else:
+            click.echo(requirement_id)
+        raise SystemExit(0)
 
     if rename_id_prefix:
         if (
