@@ -82,6 +82,12 @@ def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> 
     assert payload["mode"] == "guide"
     assert payload["workflow_mode"] == "general"
     assert payload["read_only"] is True
+    assert payload["bundle_installation"]["installed"] is False
+    assert payload["bundle_installation"]["state"] == "absent"
+    assert payload["bundled_definitions"]["source"] == "packaged-resources"
+    bundled_paths = {entry["path"] for entry in payload["bundled_definitions"]["files"]}
+    assert ".github/skills/rqmd-export-context/SKILL.md" in bundled_paths
+    assert ".github/agents/rqmd-dev.agent.md" in bundled_paths
     _assert_schema_version(payload)
 
 
@@ -108,6 +114,48 @@ def test_RQMD_AI_001b_json_alias_emits_read_only_guide(tmp_path: Path) -> None:
     assert payload["mode"] == "guide"
     assert payload["workflow_mode"] == "general"
     assert payload["read_only"] is True
+    _assert_schema_version(payload)
+
+
+def test_RQMD_AI_017_default_guide_suppresses_packaged_definitions_when_bundle_installed(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    install_result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "install",
+            "--bundle-preset",
+            "minimal",
+        ],
+    )
+    assert install_result.exit_code == 0
+
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "guide"
+    assert payload["bundle_installation"]["installed"] is True
+    assert payload["bundle_installation"]["preset"] == "minimal"
+    assert payload["bundle_installation"]["state"] == "minimal"
+    assert ".github/skills/rqmd-export-context/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
+    assert "bundled_definitions" not in payload
     _assert_schema_version(payload)
 
 

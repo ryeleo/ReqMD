@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 12🔧 0✅ 0⛔ 3🗑️
+Summary: 0💡 15🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -124,3 +124,27 @@ Summary: 0💡 12🔧 0✅ 0⛔ 3🗑️
 - So that the agent updates requirements, tests, and changelog entries as details become concrete rather than deferring documentation until the end.
 - So that each batch re-checks that `rqmd` still runs, the test suite passes, and the remaining proposal priorities are reviewed before continuing.
 - So that `rqmd-ai --workflow-mode implement` exposes this loop as an explicit read-only guide payload instead of burying it in generic onboarding text.
+
+### RQMD-AI-016: Resource-backed AI UX source of truth
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer evolving rqmd-ai onboarding and workflow guidance
+- I want the user-facing AI UX text for rqmd-ai to be sourced from editable package resource markdown/metadata instead of embedded Python constants
+- So that workflow summaries, examples, validation checks, and other guide text can be updated in one central resources/bundle location without code edits.
+- So that the shipped bundle skill files act as the primary editable source of truth for the AI guidance experience exposed by rqmd-ai.
+
+### RQMD-AI-017: Default bundled skill-definition export when bundle is absent
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer or AI operator invoking rqmd-ai in a workspace that has not installed the rqmd bundle
+- I want default rqmd-ai output to include the packaged skill and agent YAML/markdown definitions directly from resources
+- So that an AI consumer can bootstrap from the shipped definitions immediately without requiring a prior bundle-install step.
+- So that the default guidance payload can surface the exact resource-backed skill contracts that rqmd ships, rather than only summarizing them indirectly.
+
+### RQMD-AI-018: Bundle-aware suppression of duplicate default skill exports
+- **Status:** 🔧 Implemented
+- **Priority:** 🟡 P2 - Medium
+- As a user running rqmd-ai in a workspace where the rqmd bundle is already installed
+- I want rqmd-ai to detect the installed bundle and avoid redundantly embedding the packaged skill and agent definitions in default output
+- So that guidance stays concise and does not duplicate definitions that are already present in the local workspace.
+- So that bundle-aware default output can still explain which local skill or agent files are active without emitting the full packaged definitions again.

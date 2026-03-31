@@ -170,6 +170,88 @@ def _load_brainstorm_rules() -> dict[str, object]:
     }
 
 
+def _bundle_definition_kind(relative_path: str) -> str | None:
+    if relative_path == ".github/copilot-instructions.md":
+        return "instruction"
+    if relative_path.startswith(".github/skills/") and relative_path.endswith("/SKILL.md"):
+        return "skill"
+    if relative_path.startswith(".github/agents/") and relative_path.endswith(".agent.md"):
+        return "agent"
+    return None
+
+
+def _build_packaged_bundle_definitions(preset: str = "full") -> dict[str, object]:
+    entries: list[dict[str, str]] = []
+    for relative_path in _read_bundle_manifest(preset):
+        kind = _bundle_definition_kind(relative_path)
+        if kind is None:
+            continue
+        entries.append(
+            {
+                "path": relative_path,
+                "kind": kind,
+                "content": _read_bundle_resource_file(relative_path),
+            }
+        )
+    return {
+        "source": "packaged-resources",
+        "preset": preset,
+        "files": entries,
+    }
+
+
+def _detect_workspace_bundle_state(repo_root: Path) -> dict[str, object]:
+    minimal_manifest = _read_bundle_manifest("minimal")
+    full_manifest = _read_bundle_manifest("full")
+
+    def existing_entries(entries: tuple[str, ...]) -> list[str]:
+        return [
+            relative_path
+            for relative_path in entries
+            if (repo_root / relative_path).exists()
+        ]
+
+    existing_minimal = existing_entries(minimal_manifest)
+    existing_full = existing_entries(full_manifest)
+    definition_files = [
+        relative_path
+        for relative_path in existing_full
+        if _bundle_definition_kind(relative_path) is not None
+    ]
+
+    if len(existing_full) == len(full_manifest):
+        return {
+            "installed": True,
+            "preset": "full",
+            "state": "full",
+            "active_definition_files": definition_files,
+        }
+    if len(existing_minimal) == len(minimal_manifest):
+        return {
+            "installed": True,
+            "preset": "minimal",
+            "state": "minimal",
+            "active_definition_files": [
+                relative_path
+                for relative_path in existing_minimal
+                if _bundle_definition_kind(relative_path) is not None
+            ],
+        }
+    if definition_files:
+        return {
+            "installed": False,
+            "preset": None,
+            "state": "partial",
+            "active_definition_files": definition_files,
+        }
+    return {
+        "installed": False,
+        "preset": None,
+        "state": "absent",
+        "active_definition_files": [],
+    }
+
+
 def _build_guide_payload(
     repo_root: Path,
     requirements_dir: Path,
@@ -177,7 +259,8 @@ def _build_guide_payload(
     workflow_mode: str,
 ) -> dict[str, object]:
     guide = _load_workflow_guide(workflow_mode)
-    return {
+    bundle_state = _detect_workspace_bundle_state(repo_root)
+    payload = {
         "mode": "guide",
         "workflow_mode": workflow_mode,
         "read_only": read_only,
@@ -188,7 +271,11 @@ def _build_guide_payload(
         "examples": guide["examples"],
         "batch_policy": guide.get("batch_policy"),
         "validation_checks": guide.get("validation_checks"),
+        "bundle_installation": bundle_state,
     }
+    if not bool(bundle_state.get("installed")):
+        payload["bundled_definitions"] = _build_packaged_bundle_definitions("full")
+    return payload
 
 
 def _bundle_files_for_preset(preset: str) -> dict[str, str]:
@@ -517,6 +604,14 @@ def _emit(payload: dict[str, object], json_output: bool) -> None:
             click.echo("validation checks:")
             for item in validation_checks:
                 click.echo(f"- {item}")
+        bundle_installation = payload.get("bundle_installation")
+        if isinstance(bundle_installation, dict):
+            click.echo(f"workspace bundle: {bundle_installation.get('state', 'unknown')}")
+        bundled_definitions = payload.get("bundled_definitions")
+        if isinstance(bundled_definitions, dict):
+            files = bundled_definitions.get("files")
+            if isinstance(files, list):
+                click.echo(f"packaged definitions embedded: {len(files)}")
         return
     if mode == "brainstorm-plan":
         click.echo(f"source file: {payload.get('source_file')}")
