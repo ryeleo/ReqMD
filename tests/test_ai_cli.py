@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.cli import main as rqmd_main
 from rqmd.constants import JSON_SCHEMA_VERSION

@@ -33,27 +33,18 @@ except ImportError:
 
 from .batch_inputs import parse_set_entry
 from .config import load_config, load_priorities_file, validate_config
-from .constants import (JSON_SCHEMA_VERSION, PRIORITY_ORDER,
-                        REQUIREMENTS_INDEX_NAME)
+from .constants import JSON_SCHEMA_VERSION, PRIORITY_ORDER, REQUIREMENTS_INDEX_NAME
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (
-    discover_project_root,
-    format_path_display,
-    iter_domain_files,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
+from .markdown_io import (discover_project_root, format_path_display,
+                          iter_domain_files, resolve_requirements_dir,
+                          validate_files_readable)
 from .priority_model import configure_priority_catalog
-from .req_parser import (
-    extract_blocking_id,
-    extract_requirement_block_with_lines,
-    find_duplicate_requirement_ids,
-    normalize_id_prefixes,
-    parse_domain_priority_metadata,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .req_parser import (extract_blocking_id,
+                         extract_requirement_block_with_lines,
+                         find_duplicate_requirement_ids, normalize_id_prefixes,
+                         parse_domain_priority_metadata, parse_requirements,
+                         resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 from .summary import process_file
