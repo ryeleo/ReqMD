@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 15🔧 0✅ 0⛔ 3🗑️
+Summary: 4💡 17🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -150,7 +150,7 @@ Summary: 3💡 15🔧 0✅ 0⛔ 3🗑️
 - So that bundle-aware default output can still explain which local skill or agent files are active without emitting the full packaged definitions again.
 
 ### RQMD-AI-019: Project-specific dev and test skill scaffolding
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a maintainer installing the rqmd AI bundle into a real project
 - I want bundle bootstrap to help generate project-local `dev` and `test` skills tailored to that repository's actual commands and workflows
@@ -168,9 +168,33 @@ Summary: 3💡 15🔧 0✅ 0⛔ 3🗑️
 - So that teams can adopt the bundle through a guided conversation even when they have not yet learned the exact customization file formats.
 
 ### RQMD-AI-021: rqmd-dev delegation to project dev and test skills
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a maintainer using the installed `rqmd-dev` agent in a repository with project-local AI skills
 - I want `rqmd-dev` guidance to explicitly depend on repository-specific `dev` and `test` skills when they exist
 - So that implementation agents know where to find the canonical project commands for building, running, smoke-testing, and validating the work under development.
 - So that `rqmd-dev` can stay generally reusable while still becoming concretely useful once a repository has generated or customized those project-local skills.
+
+### RQMD-AI-022: Legacy-repo init skill and workflow
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a maintainer introducing rqmd into a repository that has never used it before
+- I want an `init-legacy` AI skill or workflow that helps bootstrap rqmd from the repository's existing reality
+- So that adoption can start from the current codebase, docs, backlog, and conventions instead of requiring a blank-slate scaffold.
+- So that rqmd-ai can guide the user through a legacy-init flow focused on first-use setup rather than generic bundle installation alone.
+
+### RQMD-AI-023: Useful first-pass requirements folder for legacy repos
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a maintainer initializing rqmd in an established repository
+- I want the legacy-init flow to produce a useful first-pass `requirements/` folder that I can immediately start editing and using
+- So that the resulting requirements docs reflect the repository's current product areas, workflows, and likely work streams instead of only a generic starter example.
+- So that the flow can propose an initial requirements structure, starter domain files, and seed content for review before writing.
+
+### RQMD-AI-024: Optional GitHub issue discovery during legacy init
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a maintainer bootstrapping rqmd in a repository that uses GitHub issues
+- I want the legacy-init workflow to try using `gh` to inspect repository issues when the GitHub CLI is available and authenticated
+- So that rqmd can incorporate the existing issue backlog into its first-pass requirement suggestions instead of ignoring a major source of project intent.
+- So that the workflow remains optional and graceful when `gh` is missing, unauthenticated, or the repository has no accessible issue data.

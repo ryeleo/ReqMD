@@ -19,4 +19,5 @@ Execution contract:
 - Verify the primary smoke path when the project has one, then run targeted tests, then broader validation before finishing.
 - Update CHANGELOG.md for every shipped change.
 - Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, `/rqmd-verify`.
+- When project-local `/dev` and `/test` skills exist, treat them as the canonical source for repository-specific build, run, smoke, and validation commands instead of guessing from layout alone.
 - Delegate narrowly scoped workflow work when helpful: `rqmd-requirements` for backlog/status/docs state, `rqmd-docs` for sync passes, `rqmd-history` for time-travel and recovery planning, and `rqmd-bundle-maintainer` for Copilot customization maintenance.

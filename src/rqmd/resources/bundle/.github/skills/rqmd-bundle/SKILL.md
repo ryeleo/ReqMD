@@ -21,6 +21,7 @@ Use this skill when the work is about Copilot instructions, agents, skills, or b
 Workflow:
 - Preview bundle changes with `uv run rqmd-ai i --json --bundle-preset minimal --dry-run`.
 - Install the standard bundle with `uv run rqmd-ai install --json`.
+- Review the generated project-local `/dev` and `/test` skills after install and replace any weak command guesses with the repository's canonical workflows.
 - Use `--overwrite-existing` only when intentional replacement of workspace customization is desired.
 - Keep packaged bundle resources and checked-in workspace copies aligned if the repository ships its own bundle source.
 - Explain clearly that skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.

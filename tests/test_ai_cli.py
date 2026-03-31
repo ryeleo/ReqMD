@@ -718,9 +718,15 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert payload["mode"] == "install-agent-bundle"
     assert payload["dry_run"] is True
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 11
+    assert payload["changed_count"] == 13
+    assert payload["generated_skill_files"] == [
+        ".github/skills/dev/SKILL.md",
+        ".github/skills/test/SKILL.md",
+    ]
     assert ".github/copilot-instructions.md" in payload["created_files"]
     assert ".github/agents/rqmd-dev.agent.md" in payload["created_files"]
+    assert ".github/skills/dev/SKILL.md" in payload["created_files"]
+    assert ".github/skills/test/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-brainstorm/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-triage/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-export-context/SKILL.md" in payload["created_files"]
@@ -756,12 +762,14 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 16
+    assert first_payload["changed_count"] == 18
     assert (repo / ".github" / "copilot-instructions.md").exists()
     assert ".github/agents/rqmd-requirements.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-docs.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-history.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-bundle-maintainer.agent.md" not in first_payload["created_files"]
+    assert ".github/skills/dev/SKILL.md" in first_payload["created_files"]
+    assert ".github/skills/test/SKILL.md" in first_payload["created_files"]
 
     second = runner.invoke(
         main,
@@ -780,7 +788,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 16
+    assert len(second_payload["skipped_existing"]) == 18
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
@@ -822,7 +830,7 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
-    assert payload["changed_count"] == 16
+    assert payload["changed_count"] == 18
 
 
 def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
@@ -848,7 +856,94 @@ def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 11
+    assert payload["changed_count"] == 13
+
+
+def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+    (repo / "package.json").write_text(
+        json.dumps(
+            {
+                "name": "demo-app",
+                "scripts": {
+                    "dev": "vite",
+                    "build": "vite build",
+                    "test": "vitest run",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    smoke_dir = repo / "scripts"
+    smoke_dir.mkdir(parents=True)
+    (smoke_dir / "local-smoke.sh").write_text("#!/bin/sh\necho smoke\n", encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--as-json",
+            "install",
+            "--bundle-preset",
+            "minimal",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    assert ".github/skills/dev/SKILL.md" in payload["created_files"]
+    assert ".github/skills/test/SKILL.md" in payload["created_files"]
+
+    dev_skill = (repo / ".github" / "skills" / "dev" / "SKILL.md").read_text(encoding="utf-8")
+    test_skill = (repo / ".github" / "skills" / "test" / "SKILL.md").read_text(encoding="utf-8")
+    assert "npm run dev" in dev_skill
+    assert "npm run build" in dev_skill
+    assert "./scripts/local-smoke.sh" in dev_skill
+    assert "package.json scripts" in dev_skill
+    assert "npm run test" in test_skill
+
+
+def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    install_result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "install",
+            "--bundle-preset",
+            "minimal",
+        ],
+    )
+    assert install_result.exit_code == 0
+
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert ".github/skills/dev/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
+    assert ".github/skills/test/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
 
 
 def test_RQMD_TIME_001_export_context_from_history_entry(tmp_path: Path) -> None:

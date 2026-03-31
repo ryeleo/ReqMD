@@ -56,6 +56,10 @@ _WORKFLOW_MODE_SKILLS: dict[str, str] = {
 }
 
 _BUNDLE_RESOURCE_ROOT = ("resources", "bundle")
+_GENERATED_PROJECT_SKILL_PATHS = (
+    ".github/skills/dev/SKILL.md",
+    ".github/skills/test/SKILL.md",
+)
 
 
 def _bundle_resource_base() -> object:
@@ -72,6 +76,12 @@ def _read_bundle_manifest(preset: str) -> tuple[str, ...]:
 def _read_bundle_resource_file(relative_path: str) -> str:
     resource = _bundle_resource_base().joinpath(*relative_path.split("/"))
     return resource.read_text(encoding="utf-8")
+
+
+def _read_text_if_exists(path: Path) -> str | None:
+    if not path.exists() or not path.is_file():
+        return None
+    return path.read_text(encoding="utf-8")
 
 
 def _parse_frontmatter(markdown_text: str) -> dict[str, object]:
@@ -255,6 +265,210 @@ def _build_packaged_bundle_definitions(preset: str = "full") -> dict[str, object
     }
 
 
+def _workspace_definition_files(repo_root: Path) -> list[str]:
+    root = repo_root / ".github"
+    results: list[str] = []
+
+    instructions_path = root / "copilot-instructions.md"
+    if instructions_path.exists():
+        results.append(".github/copilot-instructions.md")
+
+    skills_root = root / "skills"
+    if skills_root.exists():
+        for path in sorted(skills_root.glob("*/SKILL.md")):
+            results.append(path.relative_to(repo_root).as_posix())
+
+    agents_root = root / "agents"
+    if agents_root.exists():
+        for path in sorted(agents_root.glob("*.agent.md")):
+            results.append(path.relative_to(repo_root).as_posix())
+
+    return results
+
+
+def _append_unique(items: list[str], value: str | None) -> None:
+    if value and value not in items:
+        items.append(value)
+
+
+def _format_command(command: str) -> str:
+    return f"`{command}`"
+
+
+def _extract_make_targets(repo_root: Path) -> set[str]:
+    makefile = repo_root / "Makefile"
+    text = _read_text_if_exists(makefile)
+    if text is None:
+        return set()
+
+    targets: set[str] = set()
+    for line in text.splitlines():
+        if not line or line.startswith(("\t", " ", "#")):
+            continue
+        match = re.match(r"^(?P<target>[A-Za-z0-9_.-]+)\s*:", line)
+        if match:
+            targets.add(match.group("target"))
+    return targets
+
+
+def _load_package_json_scripts(repo_root: Path) -> dict[str, str]:
+    package_json = repo_root / "package.json"
+    text = _read_text_if_exists(package_json)
+    if text is None:
+        return {}
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return {}
+    scripts = data.get("scripts") if isinstance(data, dict) else None
+    if not isinstance(scripts, dict):
+        return {}
+    return {
+        str(name): str(command)
+        for name, command in scripts.items()
+        if isinstance(name, str) and isinstance(command, str)
+    }
+
+
+def _markdown_list(items: list[str], fallback: str) -> str:
+    if not items:
+        return f"- {fallback}"
+    return "\n".join(f"- {item}" for item in items)
+
+
+def _render_bundle_template(relative_path: str, replacements: dict[str, str]) -> str:
+    content = _read_bundle_resource_file(relative_path)
+    for key, value in replacements.items():
+        content = content.replace(f"{{{{{key}}}}}", value)
+    return content
+
+
+def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
+    detected_sources: list[str] = []
+
+    dev_environment: list[str] = []
+    dev_build: list[str] = []
+    dev_run: list[str] = []
+    dev_smoke: list[str] = []
+
+    test_primary: list[str] = []
+    test_integration: list[str] = []
+    test_lint: list[str] = []
+    notes: list[str] = []
+
+    package_scripts = _load_package_json_scripts(repo_root)
+    if package_scripts:
+        _append_unique(detected_sources, "package.json scripts")
+        for script_name in ("dev", "start", "serve"):
+            if script_name in package_scripts:
+                _append_unique(dev_run, _format_command(f"npm run {script_name}"))
+        for script_name in ("build",):
+            if script_name in package_scripts:
+                _append_unique(dev_build, _format_command(f"npm run {script_name}"))
+        for script_name in ("smoke",):
+            if script_name in package_scripts:
+                _append_unique(dev_smoke, _format_command(f"npm run {script_name}"))
+        for script_name in ("test", "test:unit", "unit"):
+            if script_name in package_scripts:
+                _append_unique(test_primary, _format_command(f"npm run {script_name}"))
+        for script_name in ("test:integration", "integration", "e2e"):
+            if script_name in package_scripts:
+                _append_unique(test_integration, _format_command(f"npm run {script_name}"))
+        for script_name in ("lint", "check"):
+            if script_name in package_scripts:
+                _append_unique(test_lint, _format_command(f"npm run {script_name}"))
+        if (repo_root / "package-lock.json").exists() or (repo_root / "pnpm-lock.yaml").exists() or (repo_root / "yarn.lock").exists():
+            _append_unique(dev_environment, _format_command("npm install"))
+
+    make_targets = _extract_make_targets(repo_root)
+    if make_targets:
+        _append_unique(detected_sources, "Makefile targets")
+        for target in ("dev", "run", "start"):
+            if target in make_targets:
+                _append_unique(dev_run, _format_command(f"make {target}"))
+        for target in ("build",):
+            if target in make_targets:
+                _append_unique(dev_build, _format_command(f"make {target}"))
+        for target in ("smoke",):
+            if target in make_targets:
+                _append_unique(dev_smoke, _format_command(f"make {target}"))
+        for target in ("test", "check"):
+            if target in make_targets:
+                _append_unique(test_primary, _format_command(f"make {target}"))
+        for target in ("integration", "e2e", "ci"):
+            if target in make_targets:
+                _append_unique(test_integration, _format_command(f"make {target}"))
+        for target in ("lint",):
+            if target in make_targets:
+                _append_unique(test_lint, _format_command(f"make {target}"))
+
+    pyproject_text = _read_text_if_exists(repo_root / "pyproject.toml")
+    if pyproject_text is not None:
+        _append_unique(detected_sources, "pyproject.toml")
+        if (repo_root / "uv.lock").exists() or "uv run" in pyproject_text:
+            _append_unique(dev_environment, _format_command("uv sync --extra dev"))
+        elif "[project]" in pyproject_text or "[build-system]" in pyproject_text:
+            _append_unique(dev_environment, _format_command("python -m pip install -e ."))
+
+    if (repo_root / "tests").exists() or (repo_root / "pytest.ini").exists() or (pyproject_text and "pytest" in pyproject_text):
+        if (repo_root / "uv.lock").exists() or (pyproject_text and "[tool.pytest.ini_options]" in pyproject_text):
+            _append_unique(test_primary, _format_command("uv run --extra dev pytest -q"))
+        else:
+            _append_unique(test_primary, _format_command("pytest -q"))
+
+    smoke_script = repo_root / "scripts" / "local-smoke.sh"
+    if smoke_script.exists():
+        _append_unique(detected_sources, "scripts/local-smoke.sh")
+        _append_unique(dev_smoke, _format_command("./scripts/local-smoke.sh"))
+
+    if (repo_root / "manage.py").exists():
+        _append_unique(detected_sources, "manage.py")
+        _append_unique(dev_run, _format_command("python manage.py runserver"))
+        _append_unique(test_primary, _format_command("python manage.py test"))
+
+    if (repo_root / "Cargo.toml").exists():
+        _append_unique(detected_sources, "Cargo.toml")
+        _append_unique(dev_build, _format_command("cargo build"))
+        _append_unique(test_primary, _format_command("cargo test"))
+
+    if (repo_root / "go.mod").exists():
+        _append_unique(detected_sources, "go.mod")
+        _append_unique(dev_build, _format_command("go build ./..."))
+        _append_unique(test_primary, _format_command("go test ./..."))
+
+    if not test_integration and dev_smoke:
+        notes.append("Smoke coverage was detected under the development skill; keep `/test` focused on repeatable automated checks.")
+    if not detected_sources:
+        notes.append("No common project-command sources were detected automatically; replace the placeholders below with the repository's real commands.")
+    else:
+        notes.append("Review the generated commands and tighten them to the repository's canonical workflows before relying on them in automation.")
+
+    return {
+        ".github/skills/dev/SKILL.md": _render_bundle_template(
+            "templates/dev-skill.md",
+            {
+                "DETECTED_SOURCES": _markdown_list(detected_sources, "No common command source files were detected automatically."),
+                "ENVIRONMENT_SETUP": _markdown_list(dev_environment, "No canonical environment setup command was detected yet. Replace this with the repository's real setup step."),
+                "BUILD_COMMANDS": _markdown_list(dev_build, "No canonical build command was detected yet. Replace this with the repository's real build step."),
+                "RUN_COMMANDS": _markdown_list(dev_run, "No canonical run or dev-server command was detected yet. Replace this with the repository's real run step."),
+                "SMOKE_COMMANDS": _markdown_list(dev_smoke, "No smoke-test command was detected yet. Add the repository's primary smoke path here if one exists."),
+                "NOTES": _markdown_list(notes, "Review and edit this generated skill after bootstrap."),
+            },
+        ),
+        ".github/skills/test/SKILL.md": _render_bundle_template(
+            "templates/test-skill.md",
+            {
+                "DETECTED_SOURCES": _markdown_list(detected_sources, "No common command source files were detected automatically."),
+                "PRIMARY_TEST_COMMANDS": _markdown_list(test_primary, "No primary automated test command was detected yet. Replace this with the repository's real test command."),
+                "INTEGRATION_TEST_COMMANDS": _markdown_list(test_integration, "No dedicated integration or end-to-end test command was detected yet. Add one here if the repository has it."),
+                "LINT_AND_CHECK_COMMANDS": _markdown_list(test_lint, "No lint or check command was detected yet. Add one here if the repository uses it."),
+                "NOTES": _markdown_list(notes, "Review and edit this generated skill after bootstrap."),
+            },
+        ),
+    }
+
+
 def _detect_workspace_bundle_state(repo_root: Path) -> dict[str, object]:
     minimal_manifest = _read_bundle_manifest("minimal")
     full_manifest = _read_bundle_manifest("full")
@@ -268,11 +482,7 @@ def _detect_workspace_bundle_state(repo_root: Path) -> dict[str, object]:
 
     existing_minimal = existing_entries(minimal_manifest)
     existing_full = existing_entries(full_manifest)
-    definition_files = [
-        relative_path
-        for relative_path in existing_full
-        if _bundle_definition_kind(relative_path) is not None
-    ]
+    definition_files = _workspace_definition_files(repo_root)
 
     if len(existing_full) == len(full_manifest):
         return {
@@ -286,11 +496,7 @@ def _detect_workspace_bundle_state(repo_root: Path) -> dict[str, object]:
             "installed": True,
             "preset": "minimal",
             "state": "minimal",
-            "active_definition_files": [
-                relative_path
-                for relative_path in existing_minimal
-                if _bundle_definition_kind(relative_path) is not None
-            ],
+            "active_definition_files": definition_files,
         }
     if definition_files:
         return {
@@ -557,6 +763,8 @@ def _install_agent_bundle(
     dry_run: bool,
 ) -> dict[str, object]:
     files = _bundle_files_for_preset(preset)
+    generated_skill_files = _infer_project_skill_content(repo_root)
+    files.update(generated_skill_files)
     created_files: list[str] = []
     overwritten_files: list[str] = []
     skipped_existing: list[str] = []
@@ -584,6 +792,7 @@ def _install_agent_bundle(
         "preset": preset,
         "overwrite_existing": overwrite_existing,
         "dry_run": dry_run,
+        "generated_skill_files": sorted(generated_skill_files),
         "created_files": created_files,
         "overwritten_files": overwritten_files,
         "skipped_existing": skipped_existing,

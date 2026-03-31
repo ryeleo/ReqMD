@@ -17,6 +17,7 @@ Operational notes:
 - Existing files are preserved unless `--overwrite-existing` is used.
 - Skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.
 - The rqmd source repository also keeps a repo-local `rqmd-bundle-maintainer` agent for maintaining the bundle itself; `rqmd-ai install` does not install that self-maintenance agent into target workspaces.
+- Bundle install also generates project-local `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` scaffolds based on detected repository commands; review and customize them after install.
 
 Useful commands:
 - `rqmd-ai install`

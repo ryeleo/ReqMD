@@ -396,6 +396,8 @@ uv run rqmd-ai --json --install-agent-bundle --bundle-preset full --overwrite-ex
 
 Bundle installs are idempotent by default and preserve existing customized instruction files unless `--overwrite-existing` is explicitly passed.
 
+Bundle install also scaffolds project-local `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` files based on detected repository commands. Treat those as a starting point: review and tighten the generated build, smoke, and validation commands so future `rqmd-dev` runs can rely on them instead of guessing.
+
 The installed bundle now includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, docs-sync, history, bundle-management, and verification loops without rewriting those instructions in every workspace. Those skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
 
 The full bundle preset also installs specialized agents for requirement maintenance, docs sync, history investigation, and bundle maintenance so future agents can stay narrow and workflow-aware instead of overloading the single core agent with every repo-management task.
