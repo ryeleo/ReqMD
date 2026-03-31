@@ -18,9 +18,9 @@ from .markdown_io import display_name_from_h1, format_path_display
 from .req_parser import (collect_sub_sections, find_requirement_by_id,
                          normalize_sub_domain_name, parse_requirements,
                          requirement_newest_first_sort_key)
-    normalize_sub_domain_name,
-    parse_requirements,
-    requirement_newest_first_sort_key,
+
+
+def parse_target_token_file(repo_root: Path, file_path_input: str) -> list[str]:
     """Parse target tokens from a file (TXT, CONF, or MD format).
 
     Args:

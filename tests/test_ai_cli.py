@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd.ai_cli import main
 from rqmd.cli import main as rqmd_main
 from rqmd.constants import JSON_SCHEMA_VERSION
@@ -274,6 +275,21 @@ def test_RQMD_AI_014_brainstorm_mode_builds_ranked_proposals_from_note_file(tmp_
     assert second["proposal"]["target_file"] == "docs/requirements/core-engine.md"
     assert second["proposal"]["suggested_id"] == "RQMD-CORE-002"
     assert second["proposal"]["priority"] == "🟢 P3 - Low"
+
+
+def test_RQMD_AI_bundle_skill_files_match_checked_in_workspace_copies() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "skills"
+    workspace_root = repo_root / ".github" / "skills"
+
+    resource_files = sorted(resource_root.glob("*/SKILL.md"))
+    assert resource_files
+
+    for resource_file in resource_files:
+        relative = resource_file.relative_to(resource_root)
+        workspace_file = workspace_root / relative
+        assert workspace_file.exists(), f"Missing workspace skill copy for {relative.as_posix()}"
+        assert workspace_file.read_text(encoding="utf-8") == resource_file.read_text(encoding="utf-8")
 
 
 def test_RQMD_AI_014_brainstorm_file_requires_brainstorm_mode(tmp_path: Path) -> None:

@@ -20,6 +20,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
+import yaml
+
 try:
     import click
 except ImportError:
@@ -31,101 +33,25 @@ from .batch_inputs import parse_set_entry
 from .constants import JSON_SCHEMA_VERSION
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (
-    discover_project_root,
-    format_path_display,
-    iter_domain_files,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
-from .req_parser import (
-    extract_blocking_id,
-    extract_requirement_block_with_lines,
-    find_duplicate_requirement_ids,
-    normalize_id_prefixes,
-    parse_domain_priority_metadata,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .markdown_io import (discover_project_root, format_path_display,
+                          iter_domain_files, resolve_requirements_dir,
+                          validate_files_readable)
+from .req_parser import (extract_blocking_id,
+                         extract_requirement_block_with_lines,
+                         find_duplicate_requirement_ids, normalize_id_prefixes,
+                         parse_domain_priority_metadata, parse_requirements,
+                         resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 
 HISTORY_REPO_RELATIVE = Path(".rqmd") / "history" / "rqmd-history"
 AUDIT_LOG_RELATIVE = HISTORY_REPO_RELATIVE / "audit.jsonl"
 
-_WORKFLOW_GUIDES: dict[str, dict[str, object]] = {
-    "general": {
-        "summary": "Default read-only rqmd-ai workflow for context export, preview, and guarded apply.",
-        "workflow": [
-            "Export context with --dump-id/--dump-status/--dump-file.",
-            "Draft updates using --update ID=STATUS without --write to preview.",
-            "Apply only after review by adding --write.",
-        ],
-        "examples": [
-            "rqmd-ai --json --dump-status proposed",
-            "rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body",
-            "rqmd-ai --json --dump-file ai-cli.md --include-domain-markdown",
-            "rqmd-ai --json --dump-status proposed --history-ref 0",
-            "rqmd-ai --update RQMD-CORE-001=implemented",
-            "rqmd-ai --update RQMD-CORE-001=implemented --write",
-        ],
-    },
-    "brainstorm": {
-        "summary": "Turn loose planning notes into ranked requirement proposals before implementation starts.",
-        "workflow": [
-            "Start from raw planning notes such as docs/brainstorm.md or targeted requirement exports.",
-            "Promote brainstorm items into tracked requirement proposals with target docs, IDs, statuses, and priorities.",
-            "Keep the output read-only so requirement changes can be reviewed before any implementation work begins.",
-        ],
-        "examples": [
-            "rqmd-ai --json --workflow-mode brainstorm",
-            "rqmd-ai --json --dump-file ai-cli.md --include-domain-markdown",
-            "rqmd-ai --json --dump-status proposed",
-        ],
-    },
-    "implement": {
-        "summary": "Work highest-priority proposed requirements in small validated batches.",
-        "workflow": [
-            "Start by reviewing proposed requirements and choose the highest-priority 1-3 items for the next batch.",
-            "Update requirements, tests, and CHANGELOG entries as implementation details become concrete instead of deferring doc updates until the end.",
-            "Before taking the next batch, verify rqmd still runs, verify summaries, run the test suite, and re-check remaining proposal priorities.",
-        ],
-        "examples": [
-            "rqmd-ai --json --workflow-mode implement",
-            "rqmd-ai --json --dump-status proposed",
-            "rqmd --verify-summaries --no-walk --no-table",
-            "uv run --extra dev pytest -q",
-        ],
-        "batch_policy": {
-            "max_items": 3,
-            "selection_order": "highest-priority proposed first",
-        },
-        "validation_checks": [
-            "rqmd runs without startup errors",
-            "requirement summaries verify cleanly",
-            "full test suite passes",
-            "remaining proposal priorities are reviewed before continuing",
-        ],
-    },
+_WORKFLOW_MODE_SKILLS: dict[str, str] = {
+    "general": "rqmd-export-context",
+    "brainstorm": "rqmd-brainstorm",
+    "implement": "rqmd-implement",
 }
-
-_BRAINSTORM_SECTION_TARGETS: tuple[tuple[tuple[str, ...], str], ...] = (
-    (("ai workflow", "agent", "skill"), "ai-cli.md"),
-    (("ux", "interactive", "ctrl + z"), "interactive-ux.md"),
-    (("screen write", "scroll"), "screen-write.md"),
-    (("priority",), "priority.md"),
-    (("filter", "schema version"), "automation-api.md"),
-    (("readme", "rename key", "external links", "blocking"), "core-engine.md"),
-    (("reqmd", "rename", "pypi"), "packaging.md"),
-    (("debug why rqmd fails", "desktop-verified", "user story"), "portability.md"),
-    (("performance", "rust", "native"), "core-engine.md"),
-)
-
-_BRAINSTORM_PRIORITY_HINTS: tuple[tuple[tuple[str, ...], str], ...] = (
-    (("critical", "p0", "must", "crash", "fails", "regression"), "🔴 P0 - Critical"),
-    (("implement", "workflow", "agent", "ai", "summary", "readme", "blocking"), "🟠 P1 - High"),
-    (("priority", "filter", "link", "schema", "user story", "screen"), "🟡 P2 - Medium"),
-)
 
 _BUNDLE_RESOURCE_ROOT = ("resources", "bundle")
 
@@ -146,13 +72,111 @@ def _read_bundle_resource_file(relative_path: str) -> str:
     return resource.read_text(encoding="utf-8")
 
 
+def _parse_skill_frontmatter(markdown_text: str) -> dict[str, object]:
+    if not markdown_text.startswith("---\n"):
+        return {}
+
+    closing_index = markdown_text.find("\n---\n", 4)
+    if closing_index == -1:
+        return {}
+
+    frontmatter_text = markdown_text[4:closing_index]
+    data = yaml.safe_load(frontmatter_text)
+    return data if isinstance(data, dict) else {}
+
+
+def _load_skill_frontmatter(skill_name: str) -> tuple[str, dict[str, object]]:
+    relative_path = f".github/skills/{skill_name}/SKILL.md"
+    frontmatter = _parse_skill_frontmatter(_read_bundle_resource_file(relative_path))
+    return relative_path, frontmatter
+
+
+def _load_workflow_guide(workflow_mode: str) -> dict[str, object]:
+    skill_name = _WORKFLOW_MODE_SKILLS[workflow_mode]
+    relative_path, frontmatter = _load_skill_frontmatter(skill_name)
+
+    metadata = frontmatter.get("metadata")
+    guide = metadata.get("guide") if isinstance(metadata, dict) else None
+    summary = guide.get("summary") if isinstance(guide, dict) else None
+    workflow = guide.get("workflow") if isinstance(guide, dict) else None
+    examples = guide.get("examples") if isinstance(guide, dict) else None
+    if not isinstance(summary, str) or not isinstance(workflow, list) or not isinstance(examples, list):
+        raise click.ClickException(
+            f"Bundle workflow guide metadata missing or invalid for mode '{workflow_mode}' in {relative_path}."
+        )
+
+    batch_policy = guide.get("batch_policy") if isinstance(guide, dict) else None
+    validation_checks = guide.get("validation_checks") if isinstance(guide, dict) else None
+    return {
+        "summary": summary,
+        "workflow": [str(item) for item in workflow],
+        "examples": [str(item) for item in examples],
+        "batch_policy": batch_policy if isinstance(batch_policy, dict) else None,
+        "validation_checks": [str(item) for item in validation_checks] if isinstance(validation_checks, list) else None,
+    }
+
+
+def _load_brainstorm_rules() -> dict[str, object]:
+    relative_path, frontmatter = _load_skill_frontmatter("rqmd-brainstorm")
+    metadata = frontmatter.get("metadata")
+    brainstorm = metadata.get("brainstorm") if isinstance(metadata, dict) else None
+    if not isinstance(brainstorm, dict):
+        raise click.ClickException(
+            f"Bundle brainstorm metadata missing or invalid in {relative_path}."
+        )
+
+    default_target_file = brainstorm.get("default_target_file")
+    default_priority = brainstorm.get("default_priority")
+    section_targets_raw = brainstorm.get("section_targets")
+    priority_hints_raw = brainstorm.get("priority_hints")
+    if not isinstance(default_target_file, str) or not isinstance(default_priority, str):
+        raise click.ClickException(
+            f"Bundle brainstorm metadata missing default target or priority in {relative_path}."
+        )
+    if not isinstance(section_targets_raw, list) or not isinstance(priority_hints_raw, list):
+        raise click.ClickException(
+            f"Bundle brainstorm metadata missing section targets or priority hints in {relative_path}."
+        )
+
+    section_targets: list[tuple[tuple[str, ...], str]] = []
+    for item in section_targets_raw:
+        if not isinstance(item, dict):
+            raise click.ClickException(f"Invalid brainstorm section target entry in {relative_path}.")
+        tokens = item.get("tokens")
+        target_file = item.get("target_file")
+        if not isinstance(tokens, list) or not isinstance(target_file, str):
+            raise click.ClickException(f"Invalid brainstorm section target entry in {relative_path}.")
+        normalized_tokens = tuple(str(token).casefold() for token in tokens if str(token).strip())
+        if normalized_tokens:
+            section_targets.append((normalized_tokens, target_file))
+
+    priority_hints: list[tuple[tuple[str, ...], str]] = []
+    for item in priority_hints_raw:
+        if not isinstance(item, dict):
+            raise click.ClickException(f"Invalid brainstorm priority hint entry in {relative_path}.")
+        tokens = item.get("tokens")
+        priority = item.get("priority")
+        if not isinstance(tokens, list) or not isinstance(priority, str):
+            raise click.ClickException(f"Invalid brainstorm priority hint entry in {relative_path}.")
+        normalized_tokens = tuple(str(token).casefold() for token in tokens if str(token).strip())
+        if normalized_tokens:
+            priority_hints.append((normalized_tokens, priority))
+
+    return {
+        "default_target_file": default_target_file,
+        "default_priority": default_priority,
+        "section_targets": tuple(section_targets),
+        "priority_hints": tuple(priority_hints),
+    }
+
+
 def _build_guide_payload(
     repo_root: Path,
     requirements_dir: Path,
     read_only: bool,
     workflow_mode: str,
 ) -> dict[str, object]:
-    guide = _WORKFLOW_GUIDES[workflow_mode]
+    guide = _load_workflow_guide(workflow_mode)
     return {
         "mode": "guide",
         "workflow_mode": workflow_mode,
@@ -242,11 +266,12 @@ def _extract_brainstorm_blocks(brainstorm_path: Path) -> list[dict[str, str | No
 
 
 def _suggest_priority_for_brainstorm(text: str, section: str | None, subsection: str | None) -> str:
+    rules = _load_brainstorm_rules()
     haystack = " ".join(filter(None, [section, subsection, text])).casefold()
-    for tokens, priority in _BRAINSTORM_PRIORITY_HINTS:
+    for tokens, priority in rules["priority_hints"]:
         if any(token in haystack for token in tokens):
             return priority
-    return "🟢 P3 - Low"
+    return str(rules["default_priority"])
 
 
 def _suggest_target_doc_for_brainstorm(
@@ -255,15 +280,18 @@ def _suggest_target_doc_for_brainstorm(
     subsection: str | None,
     domain_paths_by_name: dict[str, Path],
 ) -> Path:
+    rules = _load_brainstorm_rules()
     haystack = " ".join(filter(None, [section, subsection, text])).casefold()
-    for tokens, filename in _BRAINSTORM_SECTION_TARGETS:
+    for tokens, filename in rules["section_targets"]:
         if any(token in haystack for token in tokens):
             target = domain_paths_by_name.get(filename)
             if target is not None:
                 return target
-    fallback = domain_paths_by_name.get("ai-cli.md")
+    fallback = domain_paths_by_name.get(str(rules["default_target_file"]))
     if fallback is None:
-        raise click.ClickException("Could not locate ai-cli.md while building brainstorm suggestions.")
+        raise click.ClickException(
+            f"Could not locate {rules['default_target_file']} while building brainstorm suggestions."
+        )
     return fallback
 
 

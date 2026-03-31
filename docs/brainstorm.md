@@ -1,3 +1,9 @@
+## If you want, the next natural step is
+
+centralize the remaining brainstorm proposal-ranking knobs into skill metadata too
+add a similar sync check for the bundled agent files once you’re ready to standardize those as well
+
+
 ## Special positional args
 
 `rqmd all`: shows all requirements in reverse sort order of ID (newest first) regardless of status. This is a good way to get a quick overview of all requirements, and see the most recent ones at the top.
@@ -16,7 +22,15 @@ Make it so that there is an optional 0-based "rank: " field for each requirement
 
 This allows us to treat rqmd as a sort of backlog that the user can easily reorder by setting rank values, without needing to go change IDs or statuses.
 
-A user should be able to easily move the REQ they are looking at to the top rank, or bottom rank. They should be able to move it up or down one rank easily.
+Rank should be settable with a keystroke in normal UX, and proposed ranks should be suggested that would put it top, bottom, or one slot up or down from its current position, or offer to put it above another requirement that the user can search for instead.
+
+#### Backlog Grooming Tooling
+
+`rqmd rank` should run rqmd in a backlog grooming mode, where the focus is on setting rankings.
+
+When viewing A user should be able to easily see REQs listed in rank order. They should be able to move the REQ they have selected with their cursor to the top rank, or bottom rank, move it up or down one rank easily, or move it up/down one "page" easily.
+
+The focus of this mode is ranking, so the output should be "oneline" style, just the title of requirements. There should be an easy way to open the normal detailed view of a requirement if they want to see more context before deciding how to rank it, and even make arbitrary edits to the requirement before ranking it.
 
 
 ## Dedup IDs

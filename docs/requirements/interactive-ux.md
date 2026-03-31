@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 9🔧 18✅ 0⛔ 4🗑️
+Summary: 2💡 9🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -333,3 +333,22 @@ colors:
 - So that when both positional status and priority filter tokens are present, the resulting walk narrows to requirements that satisfy each filter family rather than broadening across them.
 - So that the resulting interactive session preserves the same navigation, resume, summary-refresh, and filtered-context behavior already defined for explicit status/priority walks.
 - So that the UI clearly surfaces which positional filters were resolved before the user begins editing requirements.
+
+### RQMD-INTERACTIVE-028: Dedicated interactive rank mode
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I want to groom backlog order instead of editing statuses
+- I want a dedicated `rqmd rank` interactive mode
+- So that rqmd opens directly into a ranking-focused workflow rather than the standard status-editing flow.
+- So that requirements are displayed in rank-aware order using a compact one-line presentation optimized for fast reordering.
+- So that this mode focuses on moving items up or down in backlog order while preserving access to the existing detailed requirement view when needed.
+
+### RQMD-INTERACTIVE-029: Rank-editing shortcuts and placement suggestions
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I am reviewing requirements in either the standard interactive flow or the dedicated rank mode
+- I want rank to be editable with direct keyboard shortcuts plus guided placement suggestions
+- So that I can move the selected requirement to the top, to the bottom, up one slot, down one slot, up one page, or down one page without manually calculating rank values.
+- So that rqmd can suggest concrete resulting rank values for those actions before applying them.
+- So that I can also choose to place a requirement above another requirement by searching for that target by ID or title text.
+- So that after using a rank shortcut I can optionally open the normal detailed requirement view, inspect more context, make other edits, and then return to the ranking flow without losing my place.

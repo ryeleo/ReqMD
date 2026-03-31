@@ -3,7 +3,7 @@
 Scope: deterministic ordering, sort toggles, and priority-based ranking in interactive views.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 0🔧 9✅ 0⛔ 2🗑️
+Summary: 2💡 0🔧 9✅ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-SORTING-001: File ranking by priority buckets
@@ -102,3 +102,23 @@ Summary: 0💡 0🔧 9✅ 0⛔ 2🗑️
 - So that the active column label is rendered in bold and an ASCII arrow indicator is shown to indicate direction (`↑` for ascending, `↓` for descending)
 - So that in file-list sort headers, non-`name` column labels are right-aligned for quick scanning while `name` remains left-aligned
 - So that the same visual cue is present in file and requirement list headers and any columnized views so users can quickly identify the current sort context.
+
+### RQMD-SORTING-012: Per-requirement rank metadata field
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I want to prioritize or deprioritize individual requirements without changing IDs or statuses
+- I want each requirement to support an optional first-class `**Rank:**` field with a signed integer value
+- So that rank can be stored directly in requirement markdown alongside other editable metadata.
+- So that missing rank is treated as `0` for ordering purposes.
+- So that positive rank values move items earlier in rank-aware lists and negative values move items later.
+- So that rank metadata round-trips through parser, JSON export, and write-back without being mistaken for body text.
+
+### RQMD-SORTING-013: Rank-aware requirement ordering semantics
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when rank-aware ordering is active
+- I want requirements to be ordered deterministically using rank before default ID recency
+- So that items with higher rank values appear before items with lower rank values.
+- So that requirements with equal rank values fall back to the normal newest-first numeric ID ordering.
+- So that rank-aware ordering remains stable and deterministic across repeated renders, refreshes, and interactive transitions.
+- So that the contract works correctly when IDs grow past three digits (for example `REQ-1000` still sorts newer than `REQ-999` when rank values are equal).
