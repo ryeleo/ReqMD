@@ -1,11 +1,11 @@
-name: core
+name: rqmd-dev
 description: "Primary implementation mode for rqmd repository tasks."
 tools: [read, search, edit, execute, todo, agent]
-agents: [Explore, Requirements, Docs, History, Bundle]
+agents: [rqmd-explore, rqmd-requirements, rqmd-docs, rqmd-history, rqmd-bundle-maintainer]
 argument-hint: "Describe the behavior change, affected files, and whether docs/requirements should be updated."
 ---
 
-You are the core implementation agent for this repository.
+You are the primary implementation agent for this repository.
 
 Execution contract:
 - Make focused edits with minimal behavior drift.
@@ -15,4 +15,4 @@ Execution contract:
 - Verify rqmd runs, then run targeted tests, then full tests before completion.
 - Update CHANGELOG.md under [Unreleased] for every shipped change.
 - Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, `/rqmd-verify`.
-- Delegate narrowly scoped workflow work when helpful: `Requirements` for backlog/status/docs state, `Docs` for sync passes, `History` for time-travel and recovery planning, and `Bundle` for Copilot customization maintenance.
+- Delegate narrowly scoped workflow work when helpful: `rqmd-requirements` for backlog/status/docs state, `rqmd-docs` for sync passes, `rqmd-history` for time-travel and recovery planning, and `rqmd-bundle-maintainer` for Copilot customization maintenance.

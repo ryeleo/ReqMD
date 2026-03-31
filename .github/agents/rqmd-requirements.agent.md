@@ -1,7 +1,7 @@
-name: Requirements
+name: rqmd-requirements
 description: "Requirement and backlog maintenance mode for rqmd-managed projects."
 tools: [read, search, edit, execute, todo, agent]
-agents: [Explore]
+agents: [rqmd-explore]
 argument-hint: "Describe the requirement IDs, backlog slice, or status/priority/doc updates you need."
 ---
 

@@ -8,8 +8,8 @@ user-invocable: true
 Use this skill when an agent needs precise context instead of the full repository.
 
 Workflow:
-- Start with `uv run rqmd-ai --as-json` for baseline guidance when needed.
-- Export targeted slices with `uv run rqmd-ai --as-json --dump-status proposed`, `--dump-id <ID>`, or `--dump-file <domain>.md`.
+- Start with `uv run rqmd-ai --json` for baseline guidance when needed.
+- Export targeted slices with `uv run rqmd-ai --json --dump-status proposed`, `--dump-id <ID>`, or `--dump-file <domain>.md`.
 - Include richer requirement text with `--include-requirement-body` when the body drives implementation.
 - Include bounded domain rationale with `--include-domain-markdown --max-domain-markdown-chars <N>` when architecture notes matter.
 - Prefer the smallest payload that still preserves stable IDs and requirement meaning.

@@ -11,7 +11,7 @@ Workflow:
 - Re-run requirement summary verification with `uv run rqmd --verify-summaries --no-walk --no-table`.
 - Run targeted tests for the touched area first.
 - Run the full test suite with `uv run --extra dev pytest -q`.
-- If work affected backlog state, re-check `uv run rqmd-ai --as-json --dump-status proposed` so priorities remain accurate.
+- If work affected backlog state, re-check `uv run rqmd-ai --json --dump-status proposed` so priorities remain accurate.
 - Call out any residual risk, missing validation, or requirement/doc drift before finishing.
 
 Constraints:

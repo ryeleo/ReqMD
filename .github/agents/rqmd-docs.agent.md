@@ -1,7 +1,7 @@
-name: Docs
+name: rqmd-docs
 description: "Documentation synchronization mode for README, changelog, and requirement-doc updates."
 tools: [read, search, edit, execute, todo, agent]
-agents: [Explore]
+agents: [rqmd-explore]
 argument-hint: "Describe the behavior change and which docs may be stale or need alignment."
 ---
 

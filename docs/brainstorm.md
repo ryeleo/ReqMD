@@ -1,3 +1,11 @@
+## IDs
+
+What if we made IDs act like real IDs? Like just REQ-001 through REQ-999. That would provide a key metadata of when a requirement was created relative to all other requirements.
+
+Right now, it seems like the ID is more of a label that can be changed at any time, which makes it less useful as a stable identifier. If we enforce that IDs are unique and immutable once created, then they can serve as a more reliable reference point for linking between requirements, tracking changes over time, and providing context in discussions.
+
+
+
 ## UX updates
 
 "setting: priority"  column should still be left aligned within itself, even if it is the right column.

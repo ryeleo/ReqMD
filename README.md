@@ -263,7 +263,7 @@ Batch updates can include `priority` fields, or combine `status` and `priority` 
 Use positional filters for fast narrowing without explicit flags:
 
 ```bash
-uv run rqmd P1 Proposed --as-json --no-walk --no-table
+uv run rqmd P1 Proposed --json --no-walk --no-table
 uv run rqmd Proposed core-engine
 ```
 
@@ -289,14 +289,14 @@ Filter by priority in tree, JSON, or interactive walk modes:
 
 ```bash
 uv run rqmd --priority critical --as-tree
-uv run rqmd --priority p1 --as-json --no-walk
+uv run rqmd --priority p1 --json --no-walk
 ```
 
 Filter by subsection name with case-insensitive prefix matching:
 
 ```bash
 uv run rqmd --sub-domain query --as-tree
-uv run rqmd --sub-domain api --as-json --no-walk
+uv run rqmd --sub-domain api --json --no-walk
 ```
 
 Combine filters for slicing/dicing requirements:
@@ -306,17 +306,17 @@ Combine filters for slicing/dicing requirements:
 
 ```bash
 uv run rqmd --status proposed --priority p0 --as-tree
-uv run rqmd --no-flag --as-json --no-walk
-uv run rqmd --has-link --as-json --no-walk
-uv run rqmd --status proposed --status implemented --as-json --no-walk
-uv run rqmd --sub-domain query --sub-domain api --as-json --no-walk
+uv run rqmd --no-flag --json --no-walk
+uv run rqmd --has-link --json --no-walk
+uv run rqmd --status proposed --status implemented --json --no-walk
+uv run rqmd --sub-domain query --sub-domain api --json --no-walk
 ```
 
 Target an explicit worklist from CLI tokens or a reusable file:
 
 ```bash
 uv run rqmd demo "Query API"
-uv run rqmd --targets-file tmp/focus.txt --as-json --no-walk
+uv run rqmd --targets-file tmp/focus.txt --json --no-walk
 ```
 
 `--targets-file` accepts `.txt`, `.conf`, or `.md` files with one-per-line or whitespace/comma-separated tokens, and supports `#` comments.
@@ -341,7 +341,7 @@ uv run rqmd --update AC-EXAMPLE-001=implemented --update AC-EXAMPLE-002=verified
 
 Recommended AI change loop for brainstorm-driven work:
 
-1. Export focused context first with `rqmd-ai --as-json` or a targeted `--dump-*` command.
+1. Export focused context first with `rqmd-ai --json` or a targeted `--dump-*` command.
 2. Update tracked requirement docs, the requirement index, and `CHANGELOG.md` before code when the brainstorm changes product behavior or workflow.
 3. Review the read-only plan preview from `rqmd-ai --update ...`.
 4. Apply explicitly with `--write` only after the preview matches the intended requirement/doc changes.
@@ -350,9 +350,9 @@ Recommended AI change loop for brainstorm-driven work:
 Guidance mode:
 
 ```bash
-uv run rqmd-ai --as-json
-uv run rqmd-ai --as-json --workflow-mode brainstorm
-uv run rqmd-ai --as-json --workflow-mode implement
+uv run rqmd-ai --json
+uv run rqmd-ai --json --workflow-mode brainstorm
+uv run rqmd-ai --json --workflow-mode implement
 ```
 
 `--workflow-mode brainstorm` emits requirement-first planning guidance for turning notes into ranked proposals. `--workflow-mode implement` emits the execution loop for working the highest-priority proposed 1-3 items at a time, then re-checking `rqmd`, summaries, tests, changelog, and remaining priorities before the next batch.
@@ -362,24 +362,24 @@ Brainstorm mode can read `docs/brainstorm.md` by default or a custom markdown no
 Export context for prompts:
 
 ```bash
-uv run rqmd-ai --as-json --dump-status proposed
-uv run rqmd-ai --as-json --dump-id RQMD-CORE-001 --include-requirement-body
-uv run rqmd-ai --as-json --dump-file ai-cli.md --include-domain-markdown --max-domain-markdown-chars 2000
+uv run rqmd-ai --json --dump-status proposed
+uv run rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
+uv run rqmd-ai --json --dump-file ai-cli.md --include-domain-markdown --max-domain-markdown-chars 2000
 ```
 
 Plan first, then apply explicitly:
 
 ```bash
-uv run rqmd-ai --as-json --update RQMD-CORE-001=implemented
-uv run rqmd-ai --as-json --write --update RQMD-CORE-001=implemented
+uv run rqmd-ai --json --update RQMD-CORE-001=implemented
+uv run rqmd-ai --json --write --update RQMD-CORE-001=implemented
 ```
 
 Install a standard AI agent/skill instruction bundle (minimal or full preset):
 
 ```bash
-uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset minimal --dry-run
-uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset full
-uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset full --overwrite-existing
+uv run rqmd-ai --json --install-agent-bundle --bundle-preset minimal --dry-run
+uv run rqmd-ai --json --install-agent-bundle --bundle-preset full
+uv run rqmd-ai --json --install-agent-bundle --bundle-preset full --overwrite-existing
 ```
 
 Bundle installs are idempotent by default and preserve existing customized instruction files unless `--overwrite-existing` is explicitly passed.
@@ -432,33 +432,33 @@ uv run rqmd --status proposed --as-tree
 Filter as JSON for automation/AI parsing:
 
 ```bash
-uv run rqmd --status proposed --as-json
+uv run rqmd --status proposed --json
 ```
 
 Filter JSON includes requirement body content and line metadata by default:
 
 ```bash
-uv run rqmd --status proposed --as-json
+uv run rqmd --status proposed --json
 ```
 
 Use compact output without bodies:
 
 ```bash
-uv run rqmd --status proposed --as-json --no-requirement-body
+uv run rqmd --status proposed --json --no-requirement-body
 ```
 
 Summary/check/set JSON examples:
 
 ```bash
-uv run rqmd --as-json --no-walk
-uv run rqmd --verify-summaries --as-json --no-walk
-uv run rqmd --update-id AC-EXAMPLE-001 --update-status verified --as-json
-uv run rqmd --totals --as-json --no-walk
+uv run rqmd --json --no-walk
+uv run rqmd --verify-summaries --json --no-walk
+uv run rqmd --update-id AC-EXAMPLE-001 --update-status verified --json
+uv run rqmd --totals --json --no-walk
 ```
 
 ### JSON contract (stable keys)
 
-When `--as-json` is used, top-level keys are stable by mode.
+When `--json` is used, top-level keys are stable by mode.
 All JSON payloads include `schema_version` (current value: `1.0.0`) and follow semantic versioning (`major.minor.patch`).
 
 - `summary`: `mode`, `schema_version`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
@@ -501,7 +501,7 @@ uv run rqmd --totals --totals-map "C1=I+V" --totals-map "C2=P" --no-walk
 Custom roll-up columns from config (`.json`, `.yml`, `.yaml`):
 
 ```bash
-uv run rqmd --totals --totals-config .rqmd.yml --as-json --no-walk
+uv run rqmd --totals --totals-config .rqmd.yml --json --no-walk
 ```
 
 Example project config for a repo that defines a custom status catalog and wants RQMD-ROLLUP-007 roll-up buckets:

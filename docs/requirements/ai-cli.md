@@ -24,7 +24,7 @@ Summary: 0💡 12🔧 0✅ 0⛔ 3🗑️
 - **Status:** 🗑️ Deprecated
 - **Priority:** 🟢 P3 - Low
 - As an automation user when integrating with CI or bots
-- I want rqmd-ai --as-json to emit a stable schema with deterministic ordering
+- I want rqmd-ai --json to emit a stable schema with deterministic ordering
 - So that downstream tooling can parse and diff outputs reliably.
 - Superseded by `RQMD-AUTOMATION-010`, `RQMD-AUTOMATION-011`, `RQMD-AUTOMATION-012`, and `RQMD-AUTOMATION-013`, which should define the shared machine-output contract for both `rqmd` and any future `rqmd-ai` surface.
 

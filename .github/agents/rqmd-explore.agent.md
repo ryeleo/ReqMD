@@ -1,4 +1,4 @@
-name: Explore
+name: rqmd-explore
 description: "Read-only exploration mode for locating files, symbols, tests, and requirement references."
 tools: [read, search, execute]
 agents: []

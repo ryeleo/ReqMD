@@ -2,7 +2,7 @@
 
 Purpose:
 - Keep requirement docs, summaries, and status lines synchronized.
-- Prefer machine-readable workflows (`--as-json`) for automation.
+- Prefer machine-readable workflows (`--json`; `--as-json` remains supported) for automation.
 
 Repository conventions:
 - Requirements index: docs/requirements/README.md
@@ -16,12 +16,15 @@ AI workflow defaults:
 - For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
 - After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
 - Prefer the installed Copilot skills for repeatable workflows such as `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify`.
-- When the full bundle preset is installed, specialized agents are also available for requirements, docs sync, history inspection, and bundle maintenance.
+- The standard bundle install includes specialized agents for exploration, requirements, docs sync, and history inspection. Use `--bundle-preset minimal` when you only want the lean bundle.
+- This repository also keeps a local `rqmd-bundle-maintainer` agent for maintaining the bundle source itself; `rqmd-ai install` does not copy that self-maintenance agent into other workspaces.
 - Skills improve workflow discovery and reuse, but they do not bypass terminal/tool approval prompts.
 
 Useful commands:
-- uv run rqmd-ai --as-json --workflow-mode implement
-- uv run rqmd-ai --as-json --dump-status proposed
-- uv run rqmd-ai --as-json --dump-id RQMD-CORE-001 --include-requirement-body
-- uv run rqmd-ai --as-json --update RQMD-CORE-001=implemented
-- uv run rqmd-ai --as-json --write --update RQMD-CORE-001=implemented
+- uv run rqmd-ai install --json
+- uv run rqmd-ai i --json --bundle-preset minimal --dry-run
+- uv run rqmd-ai --json --workflow-mode implement
+- uv run rqmd-ai --json --dump-status proposed
+- uv run rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
+- uv run rqmd-ai --json --update RQMD-CORE-001=implemented
+- uv run rqmd-ai --json --write --update RQMD-CORE-001=implemented

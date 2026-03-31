@@ -368,6 +368,31 @@ def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> N
     assert second_payload["created_files"] == []
 
 
+def test_RQMD_core_011f_init_yes_json_alias_emits_json_payload(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--bootstrap",
+            "--force-yes",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "init"
+    assert payload["starter_prefix"] == "REQ"
+    assert payload["created_count"] == 2
+
+
 def test_RQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:
     path = tmp_path / "demo.md"
     path.write_text(

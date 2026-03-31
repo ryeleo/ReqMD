@@ -8,9 +8,9 @@ user-invocable: true
 Use this skill when the work starts as notes instead of tracked requirements.
 
 Workflow:
-- Export planning guidance with `uv run rqmd-ai --as-json --workflow-mode brainstorm`.
+- Export planning guidance with `uv run rqmd-ai --json --workflow-mode brainstorm`.
 - Read the brainstorm source, usually `docs/brainstorm.md`.
-- Cross-check existing backlog with `uv run rqmd-ai --as-json --dump-status proposed`.
+- Cross-check existing backlog with `uv run rqmd-ai --json --dump-status proposed`.
 - Convert viable ideas into tracked proposals with target requirement docs, suggested IDs, canonical `💡 Proposed` status, and priorities.
 - Update requirement docs, the requirements index, and `CHANGELOG.md` before code when the proposal changes shipped behavior or workflow.
 

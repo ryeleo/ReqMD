@@ -1,7 +1,7 @@
-name: History
+name: rqmd-history
 description: "History and time-travel investigation mode for rqmd timeline, detached exports, and recovery planning."
 tools: [read, search, execute, todo, agent]
-agents: [Explore]
+agents: [rqmd-explore]
 argument-hint: "Describe the history question, refs, branch, or recovery path you need to inspect."
 ---
 

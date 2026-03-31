@@ -187,7 +187,7 @@ if blocked_match and current and current["status_line"] is not None:
 
 ### Stable Top-Level Keys By Mode
 
-When `--as-json` is used, top-level keys are stable by mode:
+When `--json` is used, top-level keys are stable by mode:
 
 - `summary`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
 - `check`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`

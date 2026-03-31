@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added explicit requirement-first AI workflow guidance to the README and AI CLI requirements, codifying the brainstorm -> requirements/docs -> preview -> apply -> verify loop for agent-assisted changes (RQMD-AI-013).
 - Added terminology-neutral requirement document wording in scaffolded and generated indexes so teams can treat requirement markdown files as domains, user stories, feature areas, or other project-specific groupings without changing the parser contract (RQMD-PORTABILITY-019).
 - Added positional status/priority filter tokens with filter-first precedence over requirement/domain lookup, deterministic prefix matching for IDs and domains, mixed filter-plus-target scoping such as `rqmd P1 core-engine`, and shell completion entries for positional filter values alongside IDs, domains, and subsection tokens (RQMD-AUTOMATION-035, RQMD-INTERACTIVE-027, RQMD-PACKAGING-011).
+
+### Changed
+
+- Changed rqmd and rqmd-ai docs, help text, and generated bundle guidance to prefer `--json` as the standard machine-readable output flag while keeping `--as-json` as a backward-compatible alias.
 - Added policy-aware history retention defaults and config overrides (`history_retention.retain_last`, `retain_days`, `max_size_kib`), and wired `rqmd --history-gc` to trim persisted history state before pack/prune maintenance while reporting the active policy in `--history` and `--history-gc` outputs (RQMD-UNDO-008).
 - Added `rqmd --history-gc` with optional `--history-prune-now`, plus explicit confirmation and JSON/text reporting for safe maintenance of the hidden `rqmd-history` repository (progress toward RQMD-UNDO-007).
 - Added interactive `g` and `G` history-browser actions for confirmed history gc and immediate-prune maintenance from the entry detail view (progress toward RQMD-UNDO-007).

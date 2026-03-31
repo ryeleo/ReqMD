@@ -8,8 +8,8 @@ user-invocable: true
 Use this skill when the work is about Copilot instructions, agents, skills, or bundle installation rather than the application itself.
 
 Workflow:
-- Preview bundle changes with `uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset minimal --dry-run`.
-- Install the standard bundle with `uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset full`.
+- Preview bundle changes with `uv run rqmd-ai i --json --bundle-preset minimal --dry-run`.
+- Install the standard bundle with `uv run rqmd-ai install --json`.
 - Use `--overwrite-existing` only when intentional replacement of workspace customization is desired.
 - Keep generated bundle text and checked-in workspace copies aligned if the repository ships its own bundle source.
 - Explain clearly that skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.

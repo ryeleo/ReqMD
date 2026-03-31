@@ -85,6 +85,32 @@ def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> 
     _assert_schema_version(payload)
 
 
+def test_RQMD_AI_001b_json_alias_emits_read_only_guide(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "guide"
+    assert payload["workflow_mode"] == "general"
+    assert payload["read_only"] is True
+    _assert_schema_version(payload)
+
+
 def test_RQMD_AI_015_implement_workflow_mode_emits_batch_guidance_json(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
@@ -452,7 +478,7 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert payload["preset"] == "minimal"
     assert payload["changed_count"] == 11
     assert ".github/copilot-instructions.md" in payload["created_files"]
-    assert ".github/agents/core.agent.md" in payload["created_files"]
+    assert ".github/agents/rqmd-dev.agent.md" in payload["created_files"]
     assert ".github/skills/rqmd-brainstorm/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-triage/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-export-context/SKILL.md" in payload["created_files"]
@@ -488,12 +514,12 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 17
+    assert first_payload["changed_count"] == 16
     assert (repo / ".github" / "copilot-instructions.md").exists()
-    assert ".github/agents/Requirements.agent.md" in first_payload["created_files"]
-    assert ".github/agents/Docs.agent.md" in first_payload["created_files"]
-    assert ".github/agents/History.agent.md" in first_payload["created_files"]
-    assert ".github/agents/Bundle.agent.md" in first_payload["created_files"]
+    assert ".github/agents/rqmd-requirements.agent.md" in first_payload["created_files"]
+    assert ".github/agents/rqmd-docs.agent.md" in first_payload["created_files"]
+    assert ".github/agents/rqmd-history.agent.md" in first_payload["created_files"]
+    assert ".github/agents/rqmd-bundle-maintainer.agent.md" not in first_payload["created_files"]
 
     second = runner.invoke(
         main,
@@ -512,7 +538,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 17
+    assert len(second_payload["skipped_existing"]) == 16
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
@@ -554,6 +580,32 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
+    assert payload["changed_count"] == 16
+
+
+def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--as-json",
+            "i",
+            "--bundle-preset",
+            "minimal",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    assert payload["mode"] == "install-agent-bundle"
+    assert payload["preset"] == "minimal"
     assert payload["changed_count"] == 11
 
 
