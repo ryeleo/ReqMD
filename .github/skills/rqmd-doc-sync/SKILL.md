@@ -3,6 +3,17 @@ name: rqmd-doc-sync
 description: Synchronize rqmd requirement docs, summaries, README guidance, and changelog entries after behavior changes. Use when shipped behavior, requirement status, or workflow guidance changed and repo docs must stay coherent.
 argument-hint: Describe what changed and which docs or requirement files may now be out of sync.
 user-invocable: true
+metadata:
+  guide:
+    summary: Synchronize shipped behavior with requirement docs, README guidance, and changelog entries.
+    workflow:
+      - Update the affected requirement docs first.
+      - Keep README, changelog, and bundle guidance aligned with the shipped behavior.
+      - Re-run summary verification before finishing.
+    examples:
+      - rqmd --verify-summaries --no-walk --no-table
+      - rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
+      - rqmd-ai --json --workflow-mode implement
 ---
 
 Use this skill when code changes are done but documentation and requirement state may have drifted.

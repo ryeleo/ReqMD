@@ -3,6 +3,17 @@ name: rqmd-verify
 description: Verify rqmd requirement/documentation sync and post-change validation. Use after edits to re-run summary verification, targeted tests, full tests, and any final requirement-status checks before completion.
 argument-hint: Describe what changed and whether you want targeted validation, a full verification pass, or both.
 user-invocable: true
+metadata:
+  guide:
+    summary: Run the finish-pass verification loop after edits land.
+    workflow:
+      - Re-run summary verification first.
+      - Run targeted tests for the touched area.
+      - Run the full test suite before calling the batch complete.
+    examples:
+      - rqmd --verify-summaries --no-walk --no-table
+      - uv run --extra dev pytest tests/test_ai_cli.py -q
+      - uv run --extra dev pytest -q
 ---
 
 Use this skill when changes are already in progress and you need a disciplined finish pass.

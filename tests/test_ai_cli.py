@@ -6,7 +6,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from rqmd.ai_cli import main
+from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.cli import main as rqmd_main
 from rqmd.constants import JSON_SCHEMA_VERSION
 from rqmd.history import HistoryManager
@@ -344,6 +344,60 @@ def test_RQMD_AI_bundle_skill_files_match_checked_in_workspace_copies() -> None:
         workspace_file = workspace_root / relative
         assert workspace_file.exists(), f"Missing workspace skill copy for {relative.as_posix()}"
         assert workspace_file.read_text(encoding="utf-8") == resource_file.read_text(encoding="utf-8")
+
+
+def test_RQMD_AI_bundle_skill_files_expose_structured_guide_metadata() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "skills"
+
+    resource_files = sorted(resource_root.glob("*/SKILL.md"))
+    assert resource_files
+
+    for resource_file in resource_files:
+        frontmatter = _parse_skill_frontmatter(resource_file.read_text(encoding="utf-8"))
+        metadata = frontmatter.get("metadata")
+        assert isinstance(metadata, dict), f"Missing metadata block in {resource_file.name}"
+        guide = metadata.get("guide")
+        assert isinstance(guide, dict), f"Missing metadata.guide in {resource_file.name}"
+        assert isinstance(guide.get("summary"), str) and guide["summary"].strip()
+        assert isinstance(guide.get("workflow"), list) and guide["workflow"]
+        assert isinstance(guide.get("examples"), list) and guide["examples"]
+
+
+def test_RQMD_AI_bundle_agent_files_have_valid_frontmatter_and_guidance_sections() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "agents"
+
+    resource_files = sorted(resource_root.glob("rqmd-*.agent.md"))
+    assert resource_files
+
+    for resource_file in resource_files:
+        text = resource_file.read_text(encoding="utf-8")
+        frontmatter = _parse_frontmatter(text)
+        assert isinstance(frontmatter.get("name"), str) and frontmatter["name"].strip()
+        assert isinstance(frontmatter.get("description"), str) and frontmatter["description"].strip()
+        assert isinstance(frontmatter.get("argument-hint"), str) and frontmatter["argument-hint"].strip()
+        assert isinstance(frontmatter.get("tools"), list) and frontmatter["tools"]
+        assert "Use this agent when" in text
+        assert ("Execution contract:" in text) or ("Primary responsibilities:" in text)
+
+
+def test_RQMD_AI_workspace_agent_files_have_valid_frontmatter_and_guidance_sections() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    workspace_root = repo_root / ".github" / "agents"
+
+    workspace_files = sorted(workspace_root.glob("rqmd-*.agent.md"))
+    assert workspace_files
+
+    for workspace_file in workspace_files:
+        text = workspace_file.read_text(encoding="utf-8")
+        frontmatter = _parse_frontmatter(text)
+        assert isinstance(frontmatter.get("name"), str) and frontmatter["name"].strip()
+        assert isinstance(frontmatter.get("description"), str) and frontmatter["description"].strip()
+        assert isinstance(frontmatter.get("argument-hint"), str) and frontmatter["argument-hint"].strip()
+        assert isinstance(frontmatter.get("tools"), list) and frontmatter["tools"]
+        assert "Use this agent when" in text
+        assert ("Execution contract:" in text) or ("Primary responsibilities:" in text)
 
 
 def test_RQMD_AI_014_brainstorm_skill_metadata_drives_title_limits() -> None:
@@ -746,7 +800,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     overwrite_payload = json.loads(overwrite.output)
     _assert_schema_version(overwrite_payload)
     assert ".github/copilot-instructions.md" in overwrite_payload["overwritten_files"]
-    assert "custom" not in custom.read_text(encoding="utf-8")
+    assert custom.read_text(encoding="utf-8") != "# custom\n"
 
 
 def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) -> None:

@@ -1,3 +1,4 @@
+---
 name: rqmd-bundle-maintainer
 description: "Maintain the Copilot bundle itself: agent files, skill files, install presets, and bundle docs."
 tools: [read, search, edit, execute, todo, agent]
@@ -6,6 +7,8 @@ argument-hint: "Describe the agent/skill/instruction change, bundle preset, or i
 ---
 
 You maintain the Copilot bundle shipped with rqmd-managed workspaces.
+
+Use this agent when the task is about packaged AI UX, bundle manifests, or workspace copies rather than application behavior.
 
 Primary responsibilities:
 - Maintain checked-in customization files under `.github/agents`, `.github/skills`, and `.github/copilot-instructions.md`.
@@ -16,6 +19,7 @@ Primary responsibilities:
 Execution contract:
 - Use this agent when the task is about the bundle packaging itself rather than application behavior.
 - Prefer `/rqmd-bundle` when the task is about installation, dry-run preview, overwrite behavior, or approval-model explanation.
+- Treat `src/rqmd/resources/bundle/` as the installable source of truth for bundled content.
 - Keep minimal/full preset boundaries explicit and documented.
 - Preserve the distinction between workflow packaging and approval behavior: skills and agents do not bypass tool approvals.
 - Validate bundle behavior with the install-bundle tests before finishing.

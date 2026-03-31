@@ -74,7 +74,7 @@ def _read_bundle_resource_file(relative_path: str) -> str:
     return resource.read_text(encoding="utf-8")
 
 
-def _parse_skill_frontmatter(markdown_text: str) -> dict[str, object]:
+def _parse_frontmatter(markdown_text: str) -> dict[str, object]:
     if not markdown_text.startswith("---\n"):
         return {}
 
@@ -87,9 +87,13 @@ def _parse_skill_frontmatter(markdown_text: str) -> dict[str, object]:
     return data if isinstance(data, dict) else {}
 
 
+def _parse_skill_frontmatter(markdown_text: str) -> dict[str, object]:
+    return _parse_frontmatter(markdown_text)
+
+
 def _load_skill_frontmatter(skill_name: str) -> tuple[str, dict[str, object]]:
     relative_path = f".github/skills/{skill_name}/SKILL.md"
-    frontmatter = _parse_skill_frontmatter(_read_bundle_resource_file(relative_path))
+    frontmatter = _parse_frontmatter(_read_bundle_resource_file(relative_path))
     return relative_path, frontmatter
 
 

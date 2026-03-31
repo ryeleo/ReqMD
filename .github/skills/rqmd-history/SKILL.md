@@ -3,6 +3,17 @@ name: rqmd-history
 description: Inspect rqmd history, timeline, detached snapshots, comparisons, and replay previews. Use for undo/redo investigation, time-travel debugging, historical diffs, and planning restore or replay actions without mutating the current worktree.
 argument-hint: Describe the history question, refs, or time window you want to inspect.
 user-invocable: true
+metadata:
+  guide:
+    summary: Inspect detached history and recovery plans without mutating the working catalog.
+    workflow:
+      - Start with rqmd --history or rqmd --timeline for high-level inspection.
+      - Use detached rqmd-ai exports for point-in-time reads, comparisons, and recovery previews.
+      - Keep the flow read-only unless a recovery action is explicitly requested.
+    examples:
+      - rqmd --history --json
+      - rqmd-ai --json --history-ref 0 --dump-status proposed
+      - rqmd-ai --json --compare-refs 0..1
 ---
 
 Use this skill when the important question is when a requirement changed, what changed between snapshots, or how to recover prior state.
