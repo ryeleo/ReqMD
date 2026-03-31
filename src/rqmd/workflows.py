@@ -16,27 +16,57 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
-                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
-                        PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
+from .constants import (
+    DEFAULT_ID_PREFIXES,
+    MENU_REFRESH,
+    MENU_TOGGLE_DIRECTION,
+    MENU_TOGGLE_SORT,
+    PRIORITY_ORDER,
+    STATUS_ORDER,
+    STATUS_PATTERN,
+)
 from .history import HistoryManager
-from .markdown_io import (display_name_from_h1, format_path_display,
-                          iter_domain_files, scope_and_body_from_file)
-from .menus import (apply_background_preserving_styles,
-                    right_align_menu_suffix, select_from_menu, truncate_text,
-                    visible_length)
+from .markdown_io import (
+    display_name_from_h1,
+    format_path_display,
+    iter_domain_files,
+    scope_and_body_from_file,
+)
+from .menus import (
+    apply_background_preserving_styles,
+    right_align_menu_suffix,
+    select_from_menu,
+    truncate_text,
+    visible_length,
+)
 from .priority_model import coerce_priority_label, style_priority_label
-from .req_parser import (collect_sub_sections,
-                         extract_requirement_block_with_lines,
-                         find_requirement_by_id, normalize_sub_domain_name,
-                         parse_requirements)
-from .status_model import (build_color_rollup_text, status_emoji,
-                           style_status_label, style_status_line)
-from .status_update import (format_criterion_panel, prompt_for_blocked_reason,
-                            prompt_for_deprecated_reason,
-                            prompt_for_links_flow, update_criterion_status)
-from .summary import (collect_summary_rows, count_priorities, count_statuses,
-                      print_summary_table, process_file)
+from .req_parser import (
+    collect_sub_sections,
+    extract_requirement_block_with_lines,
+    find_requirement_by_id,
+    normalize_sub_domain_name,
+    parse_requirements,
+)
+from .status_model import (
+    build_color_rollup_text,
+    status_emoji,
+    style_status_label,
+    style_status_line,
+)
+from .status_update import (
+    format_criterion_panel,
+    prompt_for_blocked_reason,
+    prompt_for_deprecated_reason,
+    prompt_for_links_flow,
+    update_criterion_status,
+)
+from .summary import (
+    collect_summary_rows,
+    count_priorities,
+    count_statuses,
+    print_summary_table,
+    process_file,
+)
 
 SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
     "standard": {
@@ -331,11 +361,21 @@ def _build_sort_compact_footer() -> str:
 def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts: bool = False) -> str:
     base = "keys: 1-9 select"
     if include_priority_shortcuts:
+        status_shortcuts = " | ".join(
+            f"{index}={label}" for index, (label, _) in enumerate(STATUS_ORDER, start=1)
+        )
+        base = f"keys: {status_shortcuts}"
+    if include_priority_shortcuts:
         base += " | !=p0 | @=p1 | #=p2 | $=p3"
     base += " | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
     if not allow_nav:
         return base
     nav = "keys: 1-9 select"
+    if include_priority_shortcuts:
+        status_shortcuts = " | ".join(
+            f"{index}={label}" for index, (label, _) in enumerate(STATUS_ORDER, start=1)
+        )
+        nav = f"keys: {status_shortcuts}"
     if include_priority_shortcuts:
         nav += " | !=p0 | @=p1 | #=p2 | $=p3"
     return nav + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"

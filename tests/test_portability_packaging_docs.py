@@ -6,8 +6,8 @@ from pathlib import Path
 import click
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli
+from rqmd.markdown_io import display_name_from_h1
 
 
 def test_RQMD_portability_001_and_002_repo_root_and_criteria_dir_flags(tmp_path: Path) -> None:
@@ -111,6 +111,16 @@ Scope: generic.
         ["--project-root", str(repo), "--docs-dir", "docs/requirements", "--no-walk", "--no-table"],
     )
     assert result.exit_code == 0
+
+
+def test_RQMD_portability_display_name_strips_plural_requirements_prefix(tmp_path: Path) -> None:
+    path = tmp_path / "open-risks-and-docs.md"
+    path.write_text(
+        "# Requirements Open Risks and Docs\n\n### AC-001: Demo\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+
+    assert display_name_from_h1(path) == "Open Risks and Docs"
 
 
 def test_RQMD_portability_017_unknown_status_reports_actionable_guidance(tmp_path: Path) -> None:

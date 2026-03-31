@@ -329,8 +329,11 @@ def display_name_from_h1(path: Path) -> str:
     for line in text.splitlines():
         if line.startswith("# "):
             title = line[2:].strip()
-            shortened = title.replace("Requirement", "").strip()
-            shortened = shortened.replace("Requirements", "").strip()
+            shortened = title
+            for prefix in ("Requirements", "Requirement"):
+                if shortened.startswith(prefix):
+                    shortened = shortened[len(prefix):].strip()
+                    break
             if shortened:
                 return shortened
             if title:

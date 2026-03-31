@@ -8,7 +8,6 @@ from pathlib import Path
 import click
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli, menus
 
 
@@ -1196,6 +1195,11 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
     assert captured["extra_keys"]["$"] == "priority-shortcut:🟢 P3 - Low"
     assert captured["extra_keys_help"]["!"] == "critical"
     assert captured["extra_keys_help"]["@"] == "high"
+    assert "1=💡 Proposed" in captured["footer_legend"]
+    assert "2=🔧 Implemented" in captured["footer_legend"]
+    assert "3=✅ Verified" in captured["footer_legend"]
+    assert "4=⛔ Blocked" in captured["footer_legend"]
+    assert "5=🗑️ Deprecated" in captured["footer_legend"]
     assert "!=p0" in captured["footer_legend"]
     assert "@=p1" in captured["footer_legend"]
     assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
