@@ -675,6 +675,7 @@ If no prefixes are discovered, it falls back to `AC-`, `R-`, and `RQMD-`.
 
 To avoid repeating CLI flags across team members, use a single project config file at the project root: `.rqmd.yml` (preferred).
 Accepted extensions are `.rqmd.yml`, `.rqmd.yaml`, or `.rqmd.json`.
+`rqmd init --scaffold` and `rqmd-ai init --write` now create `.rqmd.yml` by default so the repository's requirements path, ID prefix, and canonical status/priority catalogs are explicit from day one.
 
 Example:
 

@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 9🔧 18✅ 0⛔ 4🗑️
+Summary: 3💡 9🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -352,3 +352,13 @@ colors:
 - So that rqmd can suggest concrete resulting rank values for those actions before applying them.
 - So that I can also choose to place a requirement above another requirement by searching for that target by ID or title text.
 - So that after using a rank shortcut I can optionally open the normal detailed requirement view, inspect more context, make other edits, and then return to the ranking flow without losing my place.
+
+### RQMD-INTERACTIVE-030: Open current requirement in VS Code
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I am focused on a requirement in the interactive UI
+- I want a direct keyboard action that opens the current requirement in VS Code at its source location
+- So that I can jump from the interactive review flow to the exact markdown block without manually searching for the file and requirement ID.
+- So that the action targets the current requirement heading line, or the closest stable source location for that requirement, in the active workspace.
+- So that the UI surfaces the shortcut clearly and reports a graceful fallback when VS Code integration is unavailable.
+- So that after opening the editor location I can return to rqmd without losing my interactive context.

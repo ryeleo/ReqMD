@@ -174,6 +174,8 @@ def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_pat
     assert payload["interview"]["interaction_contract"]["presentation"] == "one-question-at-a-time"
     assert payload["interview"]["flow"]
     assert payload["interview"]["flow"][0]["presentation"] == "one-question-at-a-time"
+    proposed_paths = [entry["path"] for entry in payload["proposed_files"]]
+    assert ".rqmd.yml" in proposed_paths
     assert payload["suggested_commands"]["init_preview"].startswith("rqmd-ai init --chat --json")
     assert payload["suggested_commands"]["bundle_preview"].startswith("rqmd-ai install --bundle-preset full --chat --json --dry-run")
     assert payload["suggested_commands"]["init_preview_artifact"].startswith("rqmd-ai init --chat --json")
@@ -454,8 +456,11 @@ def test_RQMD_AI_023_init_legacy_plan_seeds_reviewable_requirements(tmp_path: Pa
     assert payload["issue_discovery"]["used"] is False
     assert payload["issue_discovery"]["reason"] == "gh CLI not found"
     proposed_paths = [entry["path"] for entry in payload["proposed_files"]]
+    assert ".rqmd.yml" in proposed_paths
     assert "docs/requirements/README.md" in proposed_paths
     assert "docs/requirements/developer-workflows.md" in proposed_paths
+    config_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == ".rqmd.yml")
+    assert "id_prefix: RQMD" in config_entry["content"]
     workflow_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "docs/requirements/developer-workflows.md")
     assert "npm run dev" in workflow_entry["content"]
     assert "npm run build" in workflow_entry["content"]
@@ -509,7 +514,10 @@ def test_RQMD_AI_024_init_legacy_apply_can_seed_issue_backlog_from_gh(tmp_path: 
     assert payload["mode"] == "legacy-init-apply"
     assert payload["read_only"] is False
     assert payload["issue_discovery"]["used"] is True
+    assert ".rqmd.yml" in payload["created_files"]
     assert "docs/requirements/issue-backlog.md" in payload["created_files"]
+    config_text = (repo / ".rqmd.yml").read_text(encoding="utf-8")
+    assert "id_prefix: RQMD" in config_text
     issue_backlog = (repo / "docs" / "requirements" / "issue-backlog.md").read_text(encoding="utf-8")
     assert "GitHub issue #17" in issue_backlog
     assert "Issue labels: docs, automation" in issue_backlog

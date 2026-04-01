@@ -3,7 +3,7 @@
 Scope: deterministic ordering, sort toggles, and priority-based ranking in interactive views.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 0🔧 9✅ 0⛔ 2🗑️
+Summary: 4💡 0🔧 9✅ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-SORTING-001: File ranking by priority buckets
@@ -129,6 +129,15 @@ Summary: 3💡 0🔧 9✅ 0⛔ 2🗑️
 - As a rqmd user when rqmd suggests or initializes rank values for ordering and backlog grooming
 - I want default rank assignments to leave intentional gaps between neighboring requirements
 - So that inserting a newly ranked item between two existing ranked items usually does not require renumbering both sides immediately.
-- So that the default seeded spacing uses a step of `1000` between adjacent canonical rank positions unless a future config explicitly overrides it.
-- So that rqmd can place up to `999` intervening requirements between two default-spaced neighbors before a full re-spacing pass is needed.
-- So that rank suggestions such as top, bottom, move one slot, and move one page use the same sparse spacing model instead of emitting tightly packed consecutive values.
+- So that the default seeded spacing uses a step of `10000` between adjacent canonical rank positions unless a future config explicitly overrides it.
+- So that rqmd can place up to `9999` intervening requirements between two default-spaced neighbors before a full re-spacing pass is needed.
+- So that rank changes such as "top", "bottom", "page up" and "page down" move in steps of `10000` to preserve this spacing property and minimize the need for renumbering when reprioritizing items.
+- So that even if this rank model is put into a int32 system, the system will support the user doing "top ranking" on more than 100,000 requirements. (10000*X=2^31-1 => X=214748 default-spaced items between any two rank values, which should be sufficient for most use cases, and if not, compression could easily happen in the future to make more space while preserving relative order).
+
+### RQMD-SORTING-015: Rank Compression if Int32 Overflow Detected
+- **Status:** 💡 Proposed
+- **Priority:** P3
+- As a rqmd user when the system detects that rank values are approaching int32 overflow due to requirement rank going above 2,147,483,647 or below -2,147,483,648,
+- I want rqmd to automatically compress rank values to make space for more ranked items
+- So that the system can maintain the relative order of all existing ranked items while reassigning new rank values that fit within the int32 range.
+- So that the compression algorithm intelligently compresses MORE around requirements with statuses that indicate rank will no longer change (for example, `done` items at the bottom of the list only seperated by `100` instead of `10000`).

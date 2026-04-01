@@ -551,8 +551,9 @@ def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> N
     first_payload = json.loads(first.output)
     assert first_payload["mode"] == "init"
     assert first_payload["starter_prefix"] == "REQ"
-    assert first_payload["created_count"] == 2
+    assert first_payload["created_count"] == 3
     assert sorted(first_payload["created_files"]) == [
+        ".rqmd.yml",
         "docs/requirements/README.md",
         "docs/requirements/starter.md",
     ]
@@ -600,7 +601,7 @@ def test_RQMD_core_011f_init_yes_json_alias_emits_json_payload(tmp_path: Path) -
     payload = json.loads(result.output)
     assert payload["mode"] == "init"
     assert payload["starter_prefix"] == "REQ"
-    assert payload["created_count"] == 2
+    assert payload["created_count"] == 3
 
 
 def test_RQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:
@@ -651,12 +652,19 @@ def test_RQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path:
     )
 
     assert result.exit_code == 0
+    config_path = repo / ".rqmd.yml"
     index_path = repo / "docs" / "requirements" / "README.md"
     starter_path = repo / "docs" / "requirements" / "starter.md"
+    assert config_path.exists()
     assert index_path.exists()
     assert starter_path.exists()
 
+    config_text = config_path.read_text(encoding="utf-8")
     starter_text = starter_path.read_text(encoding="utf-8")
+    assert "requirements_dir: docs/requirements" in config_text
+    assert "id_prefix: REQ" in config_text
+    assert "statuses:" in config_text
+    assert "priorities:" in config_text
     assert "### REQ-HELLO-001: Replace this starter requirement" in starter_text
     assert "placeholder" in starter_text.lower()
     assert cli.SUMMARY_START in starter_text
@@ -681,7 +689,9 @@ def test_RQMD_core_012b_init_scaffold_allows_custom_starter_key(tmp_path: Path) 
     )
 
     assert result.exit_code == 0
+    config_text = (repo / ".rqmd.yml").read_text(encoding="utf-8")
     starter_text = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
+    assert "id_prefix: TEAM" in config_text
     assert "### TEAM-HELLO-001: Replace this starter requirement" in starter_text
 
 
@@ -769,8 +779,10 @@ def test_RQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Pat
     )
 
     assert result.exit_code == 0
+    config_text = (repo / ".rqmd.yml").read_text(encoding="utf-8")
     assert (repo / "custom" / "ac" / "README.md").exists()
     assert (repo / "custom" / "ac" / "starter.md").exists()
+    assert "requirements_dir: custom/ac" in config_text
 
 
 def test_RQMD_core_011d_init_cannot_be_combined_with_check(tmp_path: Path) -> None:

@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 14🔧 16✅ 0⛔ 0🗑️
+Summary: 1💡 15🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -281,3 +281,22 @@ Summary: 0💡 14🔧 16✅ 0⛔ 0🗑️
 - So that `rqmd init` can emit or launch the same copy-paste AI handoff prompt contract as `rqmd-ai init --chat` instead of making users discover a separate AI command family first.
 - So that the standard flow becomes: run `rqmd init`, paste the generated prompt into an AI chat, complete the grouped interview with that agent, and return to a working rqmd setup ready for refinement passes.
 - So that users who explicitly want non-chat or direct scaffold creation can still access those lower-level paths through named flags or compatibility commands without making them the default first-run UX.
+
+### RQMD-CORE-031: First-class user-story and Given/When/Then blocks
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I am authoring or maintaining a requirement
+- I want each requirement to fully support both a user-story block and a Given/When/Then acceptance block as first-class structured content
+- So that the requirement can communicate both product intent and executable acceptance behavior without forcing teams to choose one style over the other.
+- So that rqmd parsing, export, write-back, and summary maintenance preserve both blocks deterministically and do not confuse them with generic body prose.
+- So that teams can use either block independently, but the model strongly supports requirements that include both styles together.
+- So that future validation and AI-assisted maintenance workflows can detect when the two blocks drift semantically and surface that mismatch explicitly.
+
+### RQMD-CORE-032: Init scaffolds explicit project config by default
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I initialize rqmd in a repository
+- I want init flows to create a `.rqmd.yml` file at the project root by default
+- So that the chosen requirements directory, ID prefix, status catalog, and priority catalog are explicit for both humans and AI agents from the first run.
+- So that `rqmd init --scaffold`, `rqmd-ai init`, and legacy-init apply flows all converge on the same project-root config convention instead of leaving those defaults implicit.
+- So that the generated config uses the canonical built-in status and priority models as the starting point while remaining easy for teams to customize afterward.

@@ -42,6 +42,7 @@ from .history import HistoryManager
 from .json_speedups import dumps_json
 from .markdown_io import (discover_project_root, format_path_display,
                           initialize_requirements_scaffold, iter_domain_files,
+                          preview_project_config_scaffold,
                           preview_requirements_scaffold,
                           resolve_requirements_dir, validate_files_readable)
 from .priority_model import configure_priority_catalog
@@ -2055,6 +2056,14 @@ def _build_legacy_init_files(
         domain_files_for_index,
         interview_notes=legacy_answer_map,
     )
+    config_entry = preview_project_config_scaffold(
+        repo_root,
+        requirements_dir.as_posix(),
+        prefix,
+    )
+    if config_entry is not None:
+        proposed_files.append(config_entry)
+
     proposed_files.append(
         {
             "path": f"{requirements_dir.as_posix()}/{REQUIREMENTS_INDEX_NAME}",
@@ -2088,7 +2097,7 @@ def _write_legacy_init_files(repo_root: Path, proposed_files: list[dict[str, str
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
         created_files.append(relative_path)
-        if target.name != REQUIREMENTS_INDEX_NAME:
+        if target.suffix == ".md" and target.name != REQUIREMENTS_INDEX_NAME:
             domain_paths.append(target)
     for domain_path in domain_paths:
         process_file(domain_path, check_only=False)

@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 30🔧 0✅ 0⛔ 3🗑️
+Summary: 1💡 30🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -287,3 +287,12 @@ Summary: 0💡 30🔧 0✅ 0⛔ 3🗑️
 - So that the receiving AI presents a real one-question-at-a-time multi-choice session instead of summarizing the JSON and asking for freeform answers after every step.
 - So that the payload can expose machine-readable instructions for presentation style, checked-default behavior, rerun timing, and recap timing rather than leaving those behaviors implicit in `question_groups` alone.
 - So that the payload can also expose a precomputed interview flow with ordered groups and questions, making the intended question order and UI style explicit for agents that do not want to infer it themselves.
+
+### RQMD-AI-034: Encourage dual user-story and Given/When/Then requirement authoring
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a maintainer using `rqmd-ai` to draft, refine, or implement requirements
+- I want rqmd-ai guidance and editing workflows to actively encourage requirements that include both a user story and a Given/When/Then acceptance block when both are useful
+- So that generated or edited requirements are easier to understand at both the product-intent and implementation-detail levels.
+- So that rqmd-ai can treat the two blocks as related views of the same requirement and help keep them semantically aligned instead of letting them drift silently.
+- So that AI-facing prompts, review flows, and requirement-edit suggestions nudge contributors toward maintaining both blocks together rather than treating one style as disposable prose.
