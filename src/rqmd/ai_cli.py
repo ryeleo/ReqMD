@@ -420,25 +420,11 @@ def _build_starter_init_chat_questions(
             custom_answer_prompt="Type a custom requirements directory path.",
             suggested_options=_legacy_init_requirements_dir_options(repo_root, requirements_dir),
         ),
-        _build_interview_question(
-            field="id_prefix",
+        _build_id_prefix_question(
+            repo_root=repo_root,
             group_id="catalog_setup",
-            label="Requirement ID prefix",
             prompt="Which requirement ID prefix should the starter scaffold use?",
-            inferred_answers=[inferred_prefix],
-            allow_multiple=False,
-            allow_custom=True,
-            allow_skip=False,
-            first_selected_is_canonical=True,
-            custom_answer_prompt="Type a custom requirement ID prefix.",
-            suggested_options=(
-                {"value": inferred_prefix, "label": inferred_prefix, "description": "Current inferred or configured prefix.", "recommended": True},
-                {"value": "REQ", "label": "REQ", "description": "Generic sequential requirement prefix.", "safe_default": True},
-                {"value": "RQMD", "label": "RQMD", "description": "Repository-level rqmd prefix."},
-                {"value": "AC", "label": "AC", "description": "Acceptance criteria style prefix."},
-            ),
-            recommended_values=[inferred_prefix],
-            safe_default_values=["REQ"],
+            inferred_prefix=inferred_prefix,
         ),
         _build_interview_question(
             field="starter_notes",
@@ -453,6 +439,92 @@ def _build_starter_init_chat_questions(
             custom_answer_prompt="Add another starter note.",
         ),
     ]
+
+
+def _derive_project_specific_prefix(repo_root: Path) -> str | None:
+    tokens = [segment for segment in re.split(r"[^A-Za-z0-9]+", repo_root.name.upper()) if segment]
+    if not tokens:
+        return None
+
+    candidate = "".join(tokens)
+    if len(candidate) < 3:
+        candidate = "".join(token[:3] for token in tokens)
+    candidate = re.sub(r"[^A-Z0-9]", "", candidate)
+    if len(candidate) < 3:
+        return None
+    return candidate[:8]
+
+
+def _build_id_prefix_question(
+    *,
+    repo_root: Path,
+    group_id: str,
+    prompt: str,
+    inferred_prefix: str,
+) -> dict[str, object]:
+    project_specific_prefix = _derive_project_specific_prefix(repo_root)
+    recommended_values: list[str] = []
+    inferred_prefix_recommended = True
+    inferred_description = "Current inferred or configured prefix."
+    suggested_options: list[dict[str, str]] = []
+
+    if project_specific_prefix and project_specific_prefix.casefold() != inferred_prefix.casefold():
+        suggested_options.append(
+            {
+                "value": project_specific_prefix,
+                "label": project_specific_prefix,
+                "description": "Recommended project-specific short key inferred from the repository name. Prefer this over generic fallbacks when it fits your team.",
+                "recommended": True,
+            }
+        )
+        recommended_values.append(project_specific_prefix)
+        inferred_prefix_recommended = False
+        inferred_description = "Current inferred or configured prefix. A project-specific short key is usually a better long-term choice when you want clearer requirement IDs."
+    else:
+        recommended_values.append(inferred_prefix)
+
+    suggested_options.extend(
+        [
+            {
+                "value": inferred_prefix,
+                "label": inferred_prefix,
+                "description": inferred_description,
+                "recommended": inferred_prefix_recommended,
+            },
+            {
+                "value": "REQ",
+                "label": "REQ",
+                "description": "Generic sequential requirement prefix. Use this if you do not want a project-specific key yet.",
+                "safe_default": True,
+            },
+            {
+                "value": "RQMD",
+                "label": "RQMD",
+                "description": "Repository-level rqmd prefix. Useful as a generic fallback.",
+            },
+            {
+                "value": "AC",
+                "label": "AC",
+                "description": "Acceptance criteria style prefix. Useful when matching existing team language.",
+            },
+        ]
+    )
+
+    return _build_interview_question(
+        field="id_prefix",
+        group_id=group_id,
+        label="Requirement ID prefix",
+        prompt=f"{prompt} Prefer a short project-specific key when possible so IDs stay recognizable and avoid collisions across catalogs.",
+        inferred_answers=[inferred_prefix],
+        allow_multiple=False,
+        allow_custom=True,
+        allow_skip=False,
+        first_selected_is_canonical=True,
+        custom_answer_prompt="Type a custom project-specific requirement ID prefix, for example `ACCLI`.",
+        suggested_options=tuple(suggested_options),
+        recommended_values=recommended_values,
+        safe_default_values=["REQ"],
+    )
 
 
 def _build_starter_init_payload(
@@ -484,12 +556,12 @@ def _build_starter_init_payload(
         "starter_prefix": prefix,
         "proposed_files": proposed_files,
         "total_files": len(proposed_files),
-        "interview": {
-            "enabled": chat_mode,
-            "questions": questions if chat_mode else [],
-            "question_groups": _group_interview_questions(questions) if chat_mode else [],
-            "applied_answers": starter_answer_map,
-        },
+        "interaction_contract": _build_interview_interaction_contract(),
+        "interview": _build_interview_payload(
+            enabled=chat_mode,
+            questions=questions,
+            applied_answers=starter_answer_map,
+        ),
     }
     if apply:
         created_files = initialize_requirements_scaffold(repo_root, str(criteria_dir), prefix)
@@ -561,25 +633,26 @@ def _build_init_handoff_prompt(
         f"1. Run `{init_command}`.",
         f"2. If your terminal wrapper truncates stdout, rerun it as `{init_command} --json-output-file {shlex.quote(str(init_artifact_path))}` and read that file directly.",
         "3. Read the JSON payload and report which init strategy was selected.",
-        "4. If `interview.question_groups` is present, ask the user the grouped follow-up questions in chat.",
-        "5. Rerun the same init command with repeated `--answer FIELD=VALUE` entries to apply the user's answers.",
-        "6. Review the proposed files with the user before writing anything.",
-        f"7. Apply only after explicit confirmation by running `{apply_command}`.",
+        "4. If `interview.question_groups` is present, switch into an interactive one-question-at-a-time multi-choice interview instead of paraphrasing the payload.",
+        "5. Start any `option_annotations.default_checked_values` as already selected, allow custom answers only when the question says so, and avoid recapping all prior answers after each question unless the user asks.",
+        "6. Collect the interview answers first, then rerun the same init command with repeated `--answer FIELD=VALUE` entries to apply them.",
+        "7. Review the proposed files with the user before writing anything.",
+        f"8. Apply only after explicit confirmation by running `{apply_command}`.",
     ]
 
     if not bool(bundle_state.get("installed")):
         bundle_command = _build_bundle_follow_up_command(repo_root)
         lines.extend(
             [
-                f"8. Because the rqmd Copilot bundle is currently `{bundle_state.get('state', 'absent')}`, also run `{bundle_command}`.",
-                f"9. If that preview is truncated too, rerun it as `{bundle_command} --json-output-file {shlex.quote(str(bundle_artifact_path))}` and read that file directly.",
-                "10. Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills before finishing setup.",
-                "11. Apply the bundle install only after the user confirms the preview.",
+                f"9. Because the rqmd Copilot bundle is currently `{bundle_state.get('state', 'absent')}`, also run `{bundle_command}`.",
+                f"10. If that preview is truncated too, rerun it as `{bundle_command} --json-output-file {shlex.quote(str(bundle_artifact_path))}` and read that file directly.",
+                "11. Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills before finishing setup.",
+                "12. Apply the bundle install only after the user confirms the preview.",
             ]
         )
-        final_step = 12
+        final_step = 13
     else:
-        final_step = 8
+        final_step = 9
 
     lines.extend(
         [
@@ -1130,6 +1203,12 @@ def _build_interview_question(
             safe_default=bool(option.get("safe_default")) if "safe_default" in option else None,
         )
 
+    default_checked_values = [
+        str(option["value"])
+        for option in options
+        if allow_multiple and (option.get("kind") == "suggested" or option.get("recommended") is True)
+    ]
+
     return {
         "field": field,
         "group_id": group_id,
@@ -1149,6 +1228,7 @@ def _build_interview_question(
             "recommended_values": [str(item) for item in recommended_values if str(item).strip()],
             "safe_default_values": [str(item) for item in safe_default_values if str(item).strip()],
             "detected_from": list(normalized_detected_from),
+            "default_checked_values": default_checked_values,
         },
     }
 
@@ -1169,6 +1249,78 @@ def _group_interview_questions(questions: list[dict[str, object]]) -> list[dict[
     ordered = [group_id for group_id in _INTERVIEW_GROUP_ORDER if group_id in grouped]
     ordered.extend(group_id for group_id in ordered_groups if group_id not in ordered)
     return [grouped[group_id] for group_id in ordered]
+
+
+def _build_interview_interaction_contract() -> dict[str, object]:
+    return {
+        "interaction_mode": "ask-user",
+        "preferred_ui": "multi-choice",
+        "presentation": "one-question-at-a-time",
+        "next_action": "collect-answers-before-rerun",
+        "confirmation_policy": "defer-recaps-until-review",
+        "selection_behavior": "show-default-checked-values",
+        "instructions": [
+            "Present each question as an interactive multi-choice selection instead of paraphrasing the payload.",
+            "Start any values from option_annotations.default_checked_values as already selected.",
+            "Ask one question at a time in the provided flow order and only accept custom answers when the question allows them.",
+            "Do not recap all prior selections after each question unless the user asks for a summary.",
+            "Collect the interview answers first, then rerun rqmd-ai with repeated --answer FIELD=VALUE entries.",
+        ],
+    }
+
+
+def _build_interview_flow(question_groups: list[dict[str, object]]) -> list[dict[str, object]]:
+    flow: list[dict[str, object]] = []
+    for step_index, group in enumerate(question_groups, start=1):
+        questions = group.get("questions") if isinstance(group.get("questions"), list) else []
+        flow.append(
+            {
+                "step": step_index,
+                "group_id": str(group.get("id") or ""),
+                "group_label": str(group.get("label") or ""),
+                "presentation": "one-question-at-a-time",
+                "preferred_ui": "multi-choice",
+                "question_fields": [
+                    str(question.get("field") or "")
+                    for question in questions
+                    if isinstance(question, dict) and str(question.get("field") or "").strip()
+                ],
+                "questions": [
+                    {
+                        "field": str(question.get("field") or ""),
+                        "label": str(question.get("label") or ""),
+                        "allow_multiple": bool((question.get("selection_model") or {}).get("allow_multiple")),
+                        "allow_custom": bool((question.get("selection_model") or {}).get("allow_custom")),
+                        "allow_skip": bool((question.get("selection_model") or {}).get("allow_skip")),
+                        "default_checked_values": list((question.get("option_annotations") or {}).get("default_checked_values") or []),
+                    }
+                    for question in questions
+                    if isinstance(question, dict)
+                ],
+            }
+        )
+    return flow
+
+
+def _build_interview_payload(
+    *,
+    enabled: bool,
+    questions: list[dict[str, object]],
+    applied_answers: dict[str, list[str]],
+    extras: dict[str, object] | None = None,
+) -> dict[str, object]:
+    question_groups = _group_interview_questions(questions) if enabled else []
+    payload: dict[str, object] = {
+        "enabled": enabled,
+        "questions": questions if enabled else [],
+        "question_groups": question_groups,
+        "applied_answers": applied_answers,
+        "interaction_contract": _build_interview_interaction_contract(),
+        "flow": _build_interview_flow(question_groups) if enabled else [],
+    }
+    if extras:
+        payload.update(extras)
+    return payload
 
 
 def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
@@ -1451,25 +1603,11 @@ def _build_legacy_init_chat_questions(
         )
     )
     questions.append(
-        _build_interview_question(
-            field="id_prefix",
+        _build_id_prefix_question(
+            repo_root=repo_root,
             group_id=_LEGACY_INIT_GROUPS["id_prefix"],
-            label=_LEGACY_INIT_LABELS["id_prefix"],
             prompt=_LEGACY_INIT_PROMPTS["id_prefix"],
-            inferred_answers=[inferred_prefix],
-            allow_multiple=False,
-            allow_custom=True,
-            allow_skip=False,
-            first_selected_is_canonical=True,
-            custom_answer_prompt="Type a custom requirement ID prefix.",
-            suggested_options=(
-                {"value": inferred_prefix, "label": inferred_prefix, "description": "Current inferred or configured prefix.", "recommended": True},
-                {"value": "REQ", "label": "REQ", "description": "Generic sequential requirement prefix.", "safe_default": True},
-                {"value": "RQMD", "label": "RQMD", "description": "Repository-level rqmd prefix."},
-                {"value": "AC", "label": "AC", "description": "Acceptance criteria style prefix."},
-            ),
-            recommended_values=[inferred_prefix],
-            safe_default_values=["REQ"],
+            inferred_prefix=inferred_prefix,
         )
     )
 
@@ -2010,18 +2148,20 @@ def _build_or_apply_legacy_init_payload(
         "issue_discovery": plan["issue_discovery"],
         "proposed_files": plan["proposed_files"],
         "total_files": len(plan["proposed_files"]),
-        "interview": {
-            "enabled": chat_mode,
-            "questions": legacy_questions if chat_mode else [],
-            "question_groups": _group_interview_questions(legacy_questions) if chat_mode else [],
-            "applied_answers": plan.get("interview_answers", {}),
-            "detected_sources": list(plan["detected_context"].get("detected_command_sources", [])),
-            "detected_source_areas": [
-                str(area.get("title") or "")
-                for area in plan["detected_context"].get("source_areas", [])
-                if str(area.get("title") or "").strip()
-            ],
-        },
+        "interaction_contract": _build_interview_interaction_contract(),
+        "interview": _build_interview_payload(
+            enabled=chat_mode,
+            questions=legacy_questions,
+            applied_answers=plan.get("interview_answers", {}),
+            extras={
+                "detected_sources": list(plan["detected_context"].get("detected_command_sources", [])),
+                "detected_source_areas": [
+                    str(area.get("title") or "")
+                    for area in plan["detected_context"].get("source_areas", [])
+                    if str(area.get("title") or "").strip()
+                ],
+            },
+        ),
     }
     if apply:
         payload["created_files"] = _write_legacy_init_files(repo_root, plan["proposed_files"])
@@ -2359,13 +2499,15 @@ def _install_agent_bundle(
         "preset": preset,
         "overwrite_existing": overwrite_existing,
         "dry_run": dry_run,
-        "interview": {
-            "enabled": chat_mode,
-            "questions": bootstrap_questions if chat_mode else [],
-            "question_groups": _group_interview_questions(bootstrap_questions) if chat_mode else [],
-            "applied_answers": applied_answers,
-            "detected_sources": list(detected_hints.get("detected_sources", [])),
-        },
+        "interaction_contract": _build_interview_interaction_contract(),
+        "interview": _build_interview_payload(
+            enabled=chat_mode,
+            questions=bootstrap_questions,
+            applied_answers=applied_answers,
+            extras={
+                "detected_sources": list(detected_hints.get("detected_sources", [])),
+            },
+        ),
         "generated_skill_files": sorted(generated_skill_files),
         "generated_skill_previews": [
             {"path": path, "content": content}

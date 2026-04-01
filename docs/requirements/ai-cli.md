@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 27🔧 0✅ 0⛔ 3🗑️
+Summary: 0💡 30🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -260,3 +260,30 @@ Summary: 0💡 27🔧 0✅ 0⛔ 3🗑️
 - So that the product teaches the strongest end-to-end flow by default instead of expecting users to discover it from scattered flags and examples.
 - So that messages about initialization point users toward `rqmd init` or `rqmd-ai init --chat` as the primary path and relegate lower-level compatibility forms to secondary documentation.
 - So that the suggested flow is explicit: run the init command, paste the generated prompt into an AI chat, answer the grouped interview, let the agent apply the bootstrap, and then begin refining the generated requirements catalog.
+
+### RQMD-AI-031: Init interview recommends a project-specific ID prefix
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer initializing rqmd in a new or existing repository
+- I want the `rqmd-ai init` interview to strongly recommend a short project-specific ID prefix instead of only generic fallbacks such as `REQ`, `RQMD`, or `AC`
+- So that requirement IDs are easier to recognize, less likely to collide with other catalogs, and more meaningful in discussion and documentation.
+- So that the init payload can still expose generic fallback prefixes, but clearly frame them as secondary options when a project-specific short key can be inferred or typed.
+- So that the custom-answer guidance and prompt text make the project-specific recommendation obvious to any receiving AI or user reviewing the JSON interview payload.
+
+### RQMD-AI-032: Init interview exposes default-checked suggested choices
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer reviewing the `rqmd-ai init` interview through another AI chat or structured prompt UI
+- I want multi-select init questions to declare which suggested or recommended options should start checked by default
+- So that users can plainly see what the workflow intends to pick unless they actively uncheck those defaults.
+- So that the init payload does not force those values silently, but instead exposes explicit preselected choices alongside the existing recommended and safe-default metadata.
+- So that receiving tools can render consistent multi-choice prompts where suggested or recommended init options begin selected while still allowing opt-out before any write step.
+
+### RQMD-AI-033: Explicit interactive interview contract for receiving agents
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer pasting `rqmd-ai init --chat --json` output into another AI system
+- I want the payload to explicitly declare that the receiver should switch into a structured interactive interview mode
+- So that the receiving AI presents a real one-question-at-a-time multi-choice session instead of summarizing the JSON and asking for freeform answers after every step.
+- So that the payload can expose machine-readable instructions for presentation style, checked-default behavior, rerun timing, and recap timing rather than leaving those behaviors implicit in `question_groups` alone.
+- So that the payload can also expose a precomputed interview flow with ordered groups and questions, making the intended question order and UI style explicit for agents that do not want to infer it themselves.

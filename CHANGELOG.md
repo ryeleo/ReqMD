@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
+- Added an explicit interactive interview contract and ordered interview flow metadata to chat-mode `rqmd-ai` payloads so receiving agents are told to run a one-question-at-a-time multi-choice session with checked defaults and deferred recap behavior instead of summarizing answers after every question (RQMD-AI-033).
+- Added stronger `rqmd-ai init` interview guidance for requirement ID prefixes by recommending a short project-specific key when one can be inferred, and added explicit default-checked selection metadata for suggested or recommended multi-select init choices (RQMD-AI-031, RQMD-AI-032).
 - Added a unified `rqmd-ai init` entrypoint with `--chat` and `--legacy` support, plus a new bundled `rqmd-init` skill and copy/paste AI handoff prompts that guide the default onboarding flow through grouped interview questions before any write step (RQMD-AI-025, RQMD-AI-026, RQMD-AI-027, RQMD-AI-028, RQMD-AI-029, RQMD-AI-030).
 - Added a chat-first `rqmd init` entrypoint that emits the same AI handoff contract as `rqmd-ai init --chat`, making guided onboarding the default public setup flow while keeping `--bootstrap` as a direct scaffold compatibility path (RQMD-CORE-029, RQMD-CORE-030).
 - Added bundle-aware default `rqmd-ai` guide output that embeds packaged skill and agent definitions from `resources/bundle` when no workspace bundle is installed, while suppressing those embedded definitions and reporting active local files once the rqmd bundle is present (RQMD-AI-016, RQMD-AI-017, RQMD-AI-018).

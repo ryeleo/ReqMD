@@ -169,11 +169,18 @@ def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_pat
     assert payload["strategy"]["selected"] == "starter-scaffold"
     assert payload["interview"]["enabled"] is True
     assert payload["handoff_prompt"]
+    assert payload["interaction_contract"]["preferred_ui"] == "multi-choice"
+    assert payload["interaction_contract"]["confirmation_policy"] == "defer-recaps-until-review"
+    assert payload["interview"]["interaction_contract"]["presentation"] == "one-question-at-a-time"
+    assert payload["interview"]["flow"]
+    assert payload["interview"]["flow"][0]["presentation"] == "one-question-at-a-time"
     assert payload["suggested_commands"]["init_preview"].startswith("rqmd-ai init --chat --json")
     assert payload["suggested_commands"]["bundle_preview"].startswith("rqmd-ai install --bundle-preset full --chat --json --dry-run")
     assert payload["suggested_commands"]["init_preview_artifact"].startswith("rqmd-ai init --chat --json")
     assert "--json-output-file" in payload["suggested_commands"]["init_preview_artifact"]
     assert "--json-output-file" in payload["handoff_prompt"]
+    assert "one-question-at-a-time multi-choice interview" in payload["handoff_prompt"]
+    assert "avoid recapping all prior answers after each question" in payload["handoff_prompt"]
     assert "uv run" not in payload["handoff_prompt"]
     _assert_schema_version(payload)
 
@@ -1227,6 +1234,8 @@ def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path
     assert payload["mode"] == "install-agent-bundle"
     assert payload["interview"]["enabled"] is True
     assert payload["interview"]["detected_sources"] == ["package.json scripts"]
+    assert payload["interview"]["interaction_contract"]["next_action"] == "collect-answers-before-rerun"
+    assert payload["interview"]["flow"]
     questions = payload["interview"]["questions"]
     question_groups = payload["interview"]["question_groups"]
     assert [group["id"] for group in question_groups] == [
@@ -1240,6 +1249,7 @@ def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path
     assert dev_run_question["selection_model"]["allow_skip"] is True
     assert dev_run_question["selection_model"]["first_selected_is_canonical"] is True
     assert dev_run_question["option_annotations"]["detected_from"] == ["package.json scripts"]
+    assert dev_run_question["option_annotations"]["default_checked_values"] == ["`npm run dev`"]
     dev_run_option = next(option for option in dev_run_question["options"] if option["value"] == "`npm run dev`")
     assert dev_run_option["recommended"] is True
     assert dev_run_option["safe_default"] is True
@@ -1315,6 +1325,8 @@ def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, 
     _assert_schema_version(payload)
     assert payload["mode"] == "init-chat"
     assert payload["interview"]["enabled"] is True
+    assert payload["interview"]["interaction_contract"]["preferred_ui"] == "multi-choice"
+    assert payload["interview"]["flow"]
     assert [group["id"] for group in payload["interview"]["question_groups"]] == [
         "catalog_setup",
         "developer_workflows",
@@ -1328,6 +1340,12 @@ def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, 
     )
     assert requirements_dir_question["selection_model"]["allow_multiple"] is False
     assert requirements_dir_question["selection_model"]["allow_custom"] is True
+    id_prefix_question = next(
+        item for item in payload["interview"]["questions"] if item["field"] == "id_prefix"
+    )
+    assert "project-specific key" in id_prefix_question["prompt"]
+    assert "project-specific" in str(id_prefix_question["custom_answer_prompt"])
+    assert any(option["value"] == "REPO" and option["recommended"] is True for option in id_prefix_question["options"])
     docs_dir_option = next(option for option in requirements_dir_question["options"] if option["value"] == "docs/requirements")
     assert docs_dir_option["safe_default"] is True
     domain_focus_question = next(
@@ -1336,7 +1354,34 @@ def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, 
     assert domain_focus_question["selection_model"]["allow_multiple"] is True
     assert domain_focus_question["option_annotations"]["detected_from"]
     assert any(option["recommended"] is True for option in domain_focus_question["options"])
+    assert domain_focus_question["option_annotations"]["default_checked_values"]
     assert payload["interview"]["detected_source_areas"]
+
+
+def test_RQMD_AI_022b_init_starter_chat_recommends_project_specific_prefix(tmp_path: Path) -> None:
+    repo = tmp_path / "ac-cli"
+    repo.mkdir(parents=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "init",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    id_prefix_question = next(
+        item for item in payload["interview"]["questions"] if item["field"] == "id_prefix"
+    )
+    assert "project-specific key" in id_prefix_question["prompt"]
+    assert "project-specific" in str(id_prefix_question["custom_answer_prompt"])
+    assert any(option["value"] == "ACCLI" and option["recommended"] is True for option in id_prefix_question["options"])
 
 
 def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypatch) -> None:
