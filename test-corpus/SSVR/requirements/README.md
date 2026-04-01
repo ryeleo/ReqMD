@@ -1,4 +1,4 @@
-# Acceptance Criteria
+# Requirements Index
 
 This document is a core product-behavior spec for Speed Steel VR.
 
@@ -11,7 +11,16 @@ Use it to define exactly how game features should behave in a testable format.
 - Add criteria here when behavior is agreed upon.
 - If behavior changes, update the existing criterion instead of creating contradictory duplicates.
 - Keep brainstorm notes in `docs/brainstorm.md`, but treat this file as the acceptance source of truth.
-- Treat this file as the index. Domain criteria live under `docs/acceptance-criteria/`.
+- Treat this file as the index. Domain criteria live under `docs/requirements/`.
+- Keep using the existing `AC-*` domain prefixes in this repository; do not introduce a second parallel requirement-id namespace for normal catalog work.
+
+## rqmd Workflow
+
+- Treat this populated catalog as the live rqmd catalog; do not rerun legacy-init writes into `docs/requirements/`.
+- Use `rqmd --verify-summaries --no-walk --no-table` after requirement edits to confirm the catalog structure still verifies.
+- Use `rqmd-ai --json --dump-status proposed` when you want the next backlog slice for refinement or implementation.
+- Treat `rqmd` as the only supported summary-verification workflow for this catalog.
+- Prefer refining the existing domain files over generating coarse seed requirements.
 
 ## Organization
 
@@ -30,61 +39,64 @@ Criterion template:
 
 Status metadata template:
 
-- **Status:** `💡 Proposed`, `🔧 Implemented`, or `✅ Verified`
+Example status line: **Status:** 🔧 Implemented
 
 Status meanings:
 
 - `💡 Proposed`: Desired behavior is agreed enough to document, but is not yet fully implemented.
 - `🔧 Implemented`: Behavior exists in code/docs, but has not yet been explicitly verified in dedicated QA.
-- `✅ Verified`: Behavior has been explicitly validated in testing or other strong confirmation.
+- `💻 Desktop-Verified`: Behavior has been explicitly validated in desktop testing.
+- `🎮 VR-Verified`: Behavior has been explicitly validated in VR/headset testing.
+- `✅ Done`: Behavior is complete and accepted as done.
+- `⛔ Blocked`: Work is understood but currently blocked by another dependency or decision.
+- `🗑️ Deprecated`: Criterion is kept for historical context but should no longer drive new implementation.
 
 Optional future statuses:
 
-- `⛔ Blocked`: Work is understood but currently blocked by another dependency or decision.
-- `🗑️ Deprecated`: Criterion is kept for historical context but should no longer drive new implementation.
+- None currently; all supported statuses are listed above.
 
 ---
 
 ## Domain Documents
 
 ### Gameplay Core
-- [Main Menu](docs/acceptance-criteria/main-menu.md) — startup menu, Practice/Rogue mode selection, stage-select flows
-- [Pause Menu](docs/acceptance-criteria/pause-menu.md) — in-game pause, slow motion, Adjust Aim entry
-- [Shot Timer](docs/acceptance-criteria/shot-timer.md) — string timing contract, start/stop triggers, display, precision
-- [Scorecards](docs/acceptance-criteria/scorecards.md) — scorecard presentation, retry/attempt history, review flow
-- [Leaderboards](docs/acceptance-criteria/leaderboards.md) — per-stage ranking, pause-menu panel, drilldown to scorecard
-- [Rogue](docs/acceptance-criteria/rogue.md) — Rogue mode start/load flow, world-state persistence, duel progression
-- [Boss AI](docs/acceptance-criteria/boss-ai.md) — boss placement, concurrent duel behavior, AI parameters, replay-backed bosses
+- [Main Menu](main-menu.md) — startup menu, Practice/Rogue mode selection, stage-select flows
+- [Pause Menu](pause-menu.md) — in-game pause, slow motion, Adjust Aim entry
+- [Shot Timer](shot-timer.md) — string timing contract, start/stop triggers, display, precision
+- [Scorecards](scorecards.md) — scorecard presentation, retry/attempt history, review flow
+- [Leaderboards](leaderboards.md) — per-stage ranking, pause-menu panel, drilldown to scorecard
+- [Rogue](rogue.md) — Rogue mode start/load flow, world-state persistence, duel progression
+- [Boss AI](boss-ai.md) — boss placement, concurrent duel behavior, AI parameters, replay-backed bosses
 
 ### Firearm And Input
-- [Firearm](docs/acceptance-criteria/firearm.md) — firing contract, bullet trace, ballistic origin, reflex sight trust
-- [Firearm Reloading](docs/acceptance-criteria/firearm-reloading.md) — reload state machine, magazine contract, feedback, edge cases
-- [Aim-Adjust Stage](docs/acceptance-criteria/aim-adjust-stage.md) — ephemeral calibration bay, playable aim-adjust modes
-- [Controls](docs/acceptance-criteria/controls.md) — control schemes, input mappings, platform-specific behavior
-- [Locomotion](docs/acceptance-criteria/locomotion.md) — teleport, snap-turn, suppression rules, desktop camera, XR rig
-- [Teleport Undo/Redo](docs/acceptance-criteria/teleport-undo-redo.md) — teleport position history, undo/redo stack, pause menu controls
+- [Firearm](firearm.md) — firing contract, bullet trace, ballistic origin, reflex sight trust
+- [Firearm Reloading](firearm-reloading.md) — reload state machine, magazine contract, feedback, edge cases
+- [Aim-Adjust Stage](aim-adjust-stage.md) — ephemeral calibration bay, playable aim-adjust modes
+- [Controls](controls.md) — control schemes, input mappings, platform-specific behavior
+- [Locomotion](locomotion.md) — teleport, snap-turn, suppression rules, desktop camera, XR rig
+- [Teleport Undo/Redo](teleport-undo-redo.md) — teleport position history, undo/redo stack, pause menu controls
 
 ### World And Stages
-- [Stage Generation](docs/acceptance-criteria/stage-generation.md) — stage build lifecycle, difficulty model, scene tool output
-- [Stage Descriptions](docs/acceptance-criteria/stage-descriptions.md) — `.stage` file format, parser behavior, runtime consumption
-- [Bay](docs/acceptance-criteria/bay.md) — bay layout, surface theming, target arrangement, transitions
-- [Steel Target](docs/acceptance-criteria/steel-target.md) — target types, hit detection, audio/physics response, stage integration
+- [Stage Generation](stage-generation.md) — stage build lifecycle, difficulty model, scene tool output
+- [Stage Descriptions](stage-descriptions.md) — `.stage` file format, parser behavior, runtime consumption
+- [Bay](bay.md) — bay layout, surface theming, target arrangement, transitions
+- [Steel Target](steel-target.md) — target types, hit detection, audio/physics response, stage integration
 
 ### Menu UI Components
-- [Gong Button](docs/acceptance-criteria/gong-button.md) — individual gong-button rendering, state feedback, hit detection
-- [Gong Button Array](docs/acceptance-criteria/gong-array.md) — multi-button grid layout, dynamic population, refresh behavior
+- [Gong Button](gong-button.md) — individual gong-button rendering, state feedback, hit detection
+- [Gong Button Array](gong-array.md) — multi-button grid layout, dynamic population, refresh behavior
 
 ### Data And Persistence
-- [String Replays](docs/acceptance-criteria/string-replays.md) — capture contract, schema semantics, telemetry upload, scorecard parent contract
-- [Save System](docs/acceptance-criteria/save-system.md) — save slot model, auto-save, world-state and calibration persistence
-- [Telemetry](docs/acceptance-criteria/telemetry.md) — event logging, replay recording, data integrity
+- [String Replays](string-replays.md) — capture contract, schema semantics, telemetry upload, scorecard parent contract
+- [Save System](save-system.md) — save slot model, auto-save, world-state and calibration persistence
+- [Telemetry](telemetry.md) — event logging, replay recording, data integrity
 
 ### Polish And Platform
-- [Audio Design](docs/acceptance-criteria/audio-design.md) — audio resource organization, random sampling, dB level standards, procedural fallback
-- [Visual Effects](docs/acceptance-criteria/visual-effects.md) — splatters, brass ejection, spray cleaning, muzzle flash, hit particles
-- [Accessibility](docs/acceptance-criteria/accessibility.md) — assistive features, input accommodations, sensory options
-- [Performance](docs/acceptance-criteria/performance.md) — frame rate targets, rendering budgets, memory management
-- [Development Tools](docs/acceptance-criteria/devtools.md) — editor tooling, debugging utilities, logging infrastructure
+- [Audio Design](audio-design.md) — audio resource organization, random sampling, dB level standards, procedural fallback
+- [Visual Effects](visual-effects.md) — splatters, brass ejection, spray cleaning, muzzle flash, hit particles
+- [Accessibility](accessibility.md) — assistive features, input accommodations, sensory options
+- [Performance](performance.md) — frame rate targets, rendering budgets, memory management
+- [Development Tools](devtools.md) — editor tooling, debugging utilities, logging infrastructure
 
 
 ## ID Prefixes
@@ -124,5 +136,5 @@ Optional future statuses:
 - Every acceptance criterion should include exactly one bold `**Status:**` line directly below its heading.
 - Prefer moving `💡 Proposed` -> `🔧 Implemented` -> `✅ Verified` as confidence increases.
 - If implementation regresses, lower the status instead of deleting the criterion.
-- Run `./scripts/update_acceptance_status_summaries.py` to regenerate per-file summary blocks from the real criterion statuses.
-- Run `./scripts/update_acceptance_status_summaries.py --check` to verify summaries are in sync.
+- Keep the `acceptance-status-summary` comment blocks accurate when requirement statuses change.
+- Run `rqmd --verify-summaries --no-walk --no-table` before closing a requirement-editing pass.

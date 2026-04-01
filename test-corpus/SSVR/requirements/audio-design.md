@@ -1,10 +1,13 @@
-# Audio Design Acceptance Criteria
+# Audio Design 
 
 Scope: audio resource organization, random sampling for variety, dB level standards for audio mixing, and procedural fallback behavior across all gameplay SFX.
 
 <!-- acceptance-status-summary:start -->
-Summary: 9💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 6💡 5🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
+
+
+
 
 ---
 
@@ -20,14 +23,15 @@ This document establishes standards for:
 
 ## Resource Organization
 
-### AC-AUDIO-ORG-001: Audio folder structure by category
-- **Status:** 💡 Proposed
+### SSVR-0019: Audio folder structure by category
+- **Status:** 🔧 Implemented
 - Given audio assets are distributed across gameplay categories
 - When placing new audio files
 - Then place them in one of the following organized locations:
   - `Assets/Resources/Audio/Gunshots/` — real firearm discharge recordings
   - `Assets/Resources/Audio/Plates/` — steel target impact sounds (prefix-sorted by size: `8in_`, `10in_`, `12in_`, `14in_`, `gong_`)
   - `Assets/Resources/Audio/range-officer/` — timer/range-officer call-outs (e.g., `shot-timer_*.wav`, `shooter-ready-*.wav`)
+  - `Assets/Resources/Audio/range-officer-2/` — additional timer/range-officer call-outs that belong in the same playback pool
   - `Assets/Resources/Audio/small gunshots/` — secondary gunshot library for variant playback
 - And files follow lowercase naming with underscores for multi-word identifiers.
 
@@ -35,22 +39,22 @@ This document establishes standards for:
 
 ## Random Audio Sampling
 
-### AC-AUDIO-RANDOM-001: Random sampling for repeated gameplay events
-- **Status:** 💡 Proposed
+### SSVR-0020: Random sampling for repeated gameplay events
+- **Status:** 🔧 Implemented
 - Given a gameplay event fires multiple times per session (e.g., start timer beeps, target rings)
 - When the event is triggered
 - Then the audio system selects a random clip from an available sample pool
 - And sequential plays of the same event use different samples (acoustic variety)
-- And the system falls back to procedurally generated audio if no real samples exist.
+- And non-gunshot events fall back to procedurally generated audio if no real samples exist.
 
 > **Examples:**
-> - `RandomStartBeep()` selects one of `shot-timer_01.wav` through `shot-timer_10.wav`.
-> - `RandomPlateImpact()` returns random samples from the `Plates` folder.
+> - `RandomStartBeep()` selects one of the loaded range-officer / shot-timer callout samples.
+> - `RandomPlateImpact()` returns random samples from the `Plates` folder or related root-audio matches.
 > - `RandomLoadedGunshot()` returns random real gunshot samples.
 
-### AC-AUDIO-RANDOM-002: Fallback behavior when samples unavailable
-- **Status:** 💡 Proposed
-- Given a random-sampling audio method is called
+### SSVR-0021: Non-gunshot fallback behavior when samples are unavailable
+- **Status:** 🔧 Implemented
+- Given a non-gunshot random-sampling audio method is called
 - When the sample pool is empty (no assets loaded)
 - Then the system automatically generates a synthetic procedural tone as fallback
 - And the fallback tone has equivalent loudness to real samples for mix consistency.
@@ -59,22 +63,42 @@ This document establishes standards for:
 > - `RandomStartBeep()` → falls back to `StartBeep()` (1000 Hz tone, 0.11s duration, 0.55 amplitude).
 > - `RandomPlateImpact()` → falls back to `TargetRing()` (1400 Hz tone, 0.22s duration, 0.35 amplitude).
 
-### AC-AUDIO-RANDOM-003: Prefix-based random clip selection
+### SSVR-0022: Gunshot playback prefers real authored clips and never synthesizes a fake gunshot fallback
+- **Status:** 🔧 Implemented
+- Given firearm discharge audio is triggered
+- When the game resolves which clip to play
+- Then an explicitly assigned firearm `shotClip` is preferred first
+- And otherwise the game selects from real gunshot assets loaded from `Resources/Audio`
+- And the gunshot path does not fall back to a procedural synthetic gunshot tone.
+
+### SSVR-0023: Local gunshot playback preserves authored clip fidelity
+- **Status:** 🔧 Implemented
+- Given a real gunshot WAV is used for the local in-hand firearm
+- When that clip is imported and played back in Unity
+- Then the import path keeps the clip unnormalized, non-3D, PCM, preserve-sample-rate, and decompress-on-load
+- And the local firearm `AudioSource` plays it as a non-spatialized in-hand sound without doppler or reverb coloration
+- And the runtime does not accidentally make the shot sound pitched-up, phasey, or overprocessed relative to the source asset.
+
+> **Implementation notes:** `CreateStageSceneTool.FirearmFactory` now enforces the gunshot importer settings during scene/firearm generation, and `FirearmController.ConfigureAudioSourceForLocalGunshotPlayback()` neutralizes local-source playback settings for the player's own gunshot.
+
+### SSVR-0024: Prefix-based random clip selection
 - **Status:** 💡 Proposed
+- **Priority:** 🔵 P4 - Eventually
 - Given steel target sounds are organized by size prefix (e.g., `8in_`, `12in_`, `gong_`)
 - When a target is hit
 - Then the audio system retrieves clips matching the target's size category
 - And returns a random sample from that bucket
 - And falls back to a broader category (e.g., `12in_` as universal fallback) if the preferred size has no samples.
 
-> **See also:** [AC-STEELTARGET-AUDIO-001](steel-target.md#ac-steeltarget-audio-001-steel-ring-sound-signature-by-size) — Steel ring sound by size.
+> **See also:** [SSVR-0369](steel-target.md#ssvr-0369-steel-ring-sound-signature-by-size) — Steel ring sound by size.
 
 ---
 
 ## dB Level Standards
 
-### AC-AUDIO-LEVELS-001: Standard loudness dB target
+### SSVR-0025: Standard loudness dB target
 - **Status:** 💡 Proposed
+- **Priority:** 🔵 P4 - Eventually
 - Given audio is mixed for consistent gameplay clarity
 - When recording or processing audio samples
 - Then normalize master clips to **−14 dBFS ± 1 dB** (−13 dBFS to −15 dBFS acceptable range)
@@ -82,8 +106,9 @@ This document establishes standards for:
 
 > **Rationale:** −14 dBFS provides adequate headroom (~10 dB) before digital clipping in a standard QA environment while maintaining perceived loudness. Individual gameplay events (gunshot, impact) can peak within −3 dBFS to −6 dBFS without causing listener fatigue.
 
-### AC-AUDIO-LEVELS-002: Loud/emphasized event dB target
+### SSVR-0026: Loud/emphasized event dB target
 - **Status:** 💡 Proposed
+- **Priority:** 🔵 P4 - Eventually
 - Given certain audio events signal critical gameplay moments (e.g., false-start warning, boss activation)
 - When these events are recorded or processed
 - Then normalize them to **−9 dBFS ± 1 dB** (−8 dBFS to −10 dBFS acceptable range)
@@ -91,8 +116,9 @@ This document establishes standards for:
 
 > **Rationale:** This provides ~5 dB of perceived loudness increase vs. standard (≈1.4× perception), creating clear auditory distinction for warnings without aggressive clipping.
 
-### AC-AUDIO-LEVELS-003: dB is exponential, not linear
+### SSVR-0027: dB is exponential, not linear
 - **Status:** 💡 Proposed
+- **Priority:** 🔵 P4 - Eventually
 - Given audio engineers must account for logarithmic change in amplitude
 - When adjusting dB levels for mixing or mastery
 - Then calibrate expectations with the following reference:
@@ -106,8 +132,9 @@ This document establishes standards for:
 > - Loud: −9 dBFS (amplitude = 10^(−9/20) ≈ 0.35) → 1.75× the amplitude, ≈1.2× louder perception.
 > - Comparison: −3 dBFS (amplitude = 10^(−3/20) ≈ 0.71) vs. −14 dBFS → ~3.5× amplitude, ≈2.5× louder perception.
 
-### AC-AUDIO-LEVELS-004: Procedural fallback tone levels
+### SSVR-0028: Procedural fallback tone levels
 - **Status:** 💡 Proposed
+- **Priority:** 🔵 P4 - Eventually
 - Given procedurally generated tones serve as fallback for missing real audio
 - When `DefaultAudioClips` synthesizes tones
 - Then calibrate their amplitude parameter to match expected dB mixing targets
@@ -123,8 +150,9 @@ This document establishes standards for:
 
 ## Fallback and Mixing
 
-### AC-AUDIO-MIXING-001: Never silent — fallback to procedural tone
+### SSVR-0029: Never silent — fallback to procedural tone
 - **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
 - Given the game depends on audio feedback for immersion and accessibility
 - When a gameplay event requires audio feedback
 - Then the audio system must never play silence
@@ -148,9 +176,9 @@ When adding new audio categories or sample pools:
 
 ## Related Audio Criteria
 
-- [AC-GONGBUTTON-AUDIO-001](gong-button.md#ac-gongbutton-audio-001-gong-strike-sound-signature) — Gong strike sound auditory feedback.
-- [AC-STEELTARGET-AUDIO-001](steel-target.md#ac-steeltarget-audio-001-steel-ring-sound-signature-by-size) — Steel target impact audio by size.
-- [AC-STEELTARGET-AUDIO-003](steel-target.md#ac-steeltarget-audio-003-repeated-impact-audio-variation) — Impact audio variation for repeated hits.
-- [AC-STEELTARGET-AUDIO-004](steel-target.md#ac-steeltarget-audio-004-steel-ring-sound-sourced-from-wav-asset) — Steel ring sound must use a WAV asset, not a procedural tone.
-- [AC-STEELTARGET-AUDIO-005](steel-target.md#ac-steeltarget-audio-005-per-shot-pitch-variation-on-ring-sound) — Per-shot pitch randomization for ring sound naturalness.
-- [AC-ACCESSIBILITY-FEEDBACK-002](accessibility.md#ac-accessibility-feedback-002-audio-cue-customization) — Audio cue customization for accessibility.
+- [SSVR-0146](gong-button.md#ssvr-0146-gong-strike-sound-signature) — Gong strike sound auditory feedback.
+- [SSVR-0369](steel-target.md#ssvr-0369-steel-ring-sound-signature-by-size) — Steel target impact audio by size.
+- [SSVR-0371](steel-target.md#ssvr-0371-repeated-impact-audio-variation) — Impact audio variation for repeated hits.
+- [SSVR-0372](steel-target.md#ssvr-0372-steel-ring-sound-sourced-from-wav-asset) — Steel ring sound must use a WAV asset, not a procedural tone.
+- [SSVR-0373](steel-target.md#ssvr-0373-per-shot-pitch-variation-on-ring-sound) — Per-shot pitch randomization for ring sound naturalness.
+- [SSVR-0006](accessibility.md#ssvr-0006-audio-cue-customization) — Audio cue customization for accessibility.

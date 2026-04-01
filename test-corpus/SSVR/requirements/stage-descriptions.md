@@ -1,4 +1,4 @@
-# Stage Descriptions Acceptance Criteria
+# Stage Descriptions 
 
 Scope: `.stage` file authoring format, parser behavior, defaults, and runtime consumption contract.
 
@@ -7,21 +7,24 @@ Summary: 2💡 1🔧 0💻 0🎮 15✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
+
+
+
 ## File Location And Discovery
 
-### AC-STAGEDESC-FILE-001: Stage files live under resources stage path
+### SSVR-0341: Stage files live under resources stage path
 - **Status:** ✅ Done
 - Given stage descriptions are authored for runtime discovery
 - When they are added to the project
 - Then `.stage` files are stored under `Assets/Resources/Stages/` so Unity can load them as text assets.
 
-### AC-STAGEDESC-FILE-002: Stage builder can consume assigned stage file
+### SSVR-0342: Stage builder can consume assigned stage file
 - **Status:** ✅ Done
 - Given a `.stage` text asset is assigned to `StageBuilder`
 - When stage build is triggered
 - Then the assigned stage file is parsed and used as the source stage definition.
 
-### AC-STAGEDESC-FILE-003: Fallback behavior without assigned stage file
+### SSVR-0343: Fallback behavior without assigned stage file
 - **Status:** ✅ Done
 - Given no stage file is assigned to `StageBuilder`
 - When stage build is triggered
@@ -29,27 +32,28 @@ Summary: 2💡 1🔧 0💻 0🎮 15✅ 0⛔ 0🗑️
 
 ## Top-Level File Structure
 
-### AC-STAGEDESC-STRUCT-001: Stage file uses name and targets sections
+### SSVR-0344: Stage file uses name and targets sections
 - **Status:** ✅ Done
 - Given a valid `.stage` file
 - When the parser reads the file
 - Then it supports a top-level `name:` field and a top-level `targets:` section.
 
-### AC-STAGEDESC-STRUCT-002: Targets section must be indented under column-zero key
+### SSVR-0345: Targets section must be indented under column-zero key
 - **Status:** ✅ Done
 - Given a `.stage` file contains target entries
 - When the parser evaluates structure
 - Then the `targets:` key is expected at column 0
 - And individual target lines are expected to be indented beneath it.
 
-### AC-STAGEDESC-STRUCT-003: Comments are ignored
+### SSVR-0346: Comments are ignored
 - **Status:** ✅ Done
 - Given a `.stage` file contains comment lines beginning with `#`
 - When parsing occurs
 - Then those comment lines do not affect the resulting stage definition.
 
-### AC-STAGEDESC-STRUCT-004: Stage file supports optional description field
+### SSVR-0347: Stage file supports optional description field
 - **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
 - Given a `.stage` file is authored
 - When a top-level `description:` field is present
 - Then the parser reads it as a free-form string
@@ -57,14 +61,15 @@ Summary: 2💡 1🔧 0💻 0🎮 15✅ 0⛔ 0🗑️
 
 ## Target Specification Syntax
 
-### AC-STAGEDESC-TARGET-001: Target specs are quoted pipe-separated strings
+### SSVR-0348: Target specs are quoted pipe-separated strings
 - **Status:** ✅ Done
 - Given a target entry is defined in a `.stage` file
 - When it is parsed
 - Then the target value is a quoted string containing three or four pipe-separated fields.
 
-### AC-STAGEDESC-TARGET-002: Size field supports canonical target sizes
+### SSVR-0349: Size field supports canonical target sizes
 - **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
 - Given plates are round with a diameter, and gongs are 18x24 portrait rectangles
 - When the parser evaluates targetsize
 - Then it supports sizes valid Target sizes: 
@@ -87,32 +92,32 @@ Summary: 2💡 1🔧 0💻 0🎮 15✅ 0⛔ 0🗑️
     - `2in` or `2`,
 
 
-### AC-STAGEDESC-TARGET-003: Distance field uses yards
+### SSVR-0350: Distance field uses yards
 - **Status:** 🔧 Implemented
 - Given a target spec distance field is provided
 - When the parser evaluates distance
 - Then yard-based formats like `7yd`, `7 yd`, `7 yard`, and `7 yards` are accepted as equivalent meanings.
 
-### AC-STAGEDESC-TARGET-004: Offset field supports left, right, and center forms
+### SSVR-0351: Offset field supports left, right, and center forms
 - **Status:** ✅ Done
 - Given a target spec offset field is provided
 - When the parser evaluates lateral offset
 - Then left and right offsets in feet are accepted
 - And centered forms like `center`, `centered`, or `0` are accepted.
 
-### AC-STAGEDESC-TARGET-005: Decimal feet are the preferred new-file notation
+### SSVR-0352: Decimal feet are the preferred new-file notation
 - **Status:** ✅ Done
 - Given new `.stage` files are authored
 - When offsets or heights are written
 - Then decimal feet are treated as the preferred notation for clarity and compute-friendliness.
 
-### AC-STAGEDESC-TARGET-006: Optional height field is supported
+### SSVR-0353: Optional height field is supported
 - **Status:** ✅ Done
 - Given a target spec includes a fourth pipe-separated field
 - When the parser evaluates the target
 - Then that fourth field is interpreted as target center height above ground.
 
-### AC-STAGEDESC-TARGET-007: Omitted target height uses target-type defaults
+### SSVR-0354: Omitted target height uses target-type defaults
 - **Status:** ✅ Done
 - Given a target spec omits the optional height field
 - When the target is parsed
@@ -120,7 +125,7 @@ Summary: 2💡 1🔧 0💻 0🎮 15✅ 0⛔ 0🗑️
 
 ## Stop Plate Semantics
 
-### AC-STAGEDESC-STOP-001: Stop Plate label is auto-detected
+### SSVR-0355: Stop Plate label is auto-detected
 - **Status:** ✅ Done
 - Given a target label is `Stop Plate` or `stop`
 - When the parser builds target definitions
@@ -128,13 +133,13 @@ Summary: 2💡 1🔧 0💻 0🎮 15✅ 0⛔ 0🗑️
 
 ## Runtime Consumption Contract
 
-### AC-STAGEDESC-RUNTIME-001: Stage definitions feed stage scene geometry
+### SSVR-0356: Stage definitions feed stage scene geometry
 - **Status:** ✅ Done
 - Given a stage definition has been parsed successfully
 - When `StageBuilder` consumes it
 - Then the parsed stage definition is used to build the scene geometry for that stage.
 
-### AC-STAGEDESC-RUNTIME-002: Bay theming is not authored in stage files
+### SSVR-0357: Bay theming is not authored in stage files
 - **Status:** ✅ Done
 - Given a `.stage` file is authored
 - When bay materials and surface theming are configured
