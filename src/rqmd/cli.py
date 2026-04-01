@@ -28,6 +28,7 @@ Status model:
 - 💡 Proposed
 - 🔧 Implemented
 - ✅ Verified
+- ⚠️ Janky
 - ⛔ Blocked
 - 🗑️ Deprecated
 

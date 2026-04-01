@@ -21,7 +21,7 @@ This package extracts the markdown status-tracking workflow used in this reposit
 
 ```md
 <!-- acceptance-status-summary:start -->
-Summary: 10💡 2🔧 3✅ 0⛔ 1🗑️
+Summary: 10💡 2🔧 3✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 ```
 
@@ -32,9 +32,12 @@ Requirement bodies can be as short as a title plus status line, or include riche
 
 ## Status model
 
+The built-in default status and priority catalogs ship as packaged YAML resources under `src/rqmd/resources/catalogs/`, so changing the shipped defaults no longer requires touching multiple Python tables.
+
 - `💡 Proposed`
 - `🔧 Implemented`
 - `✅ Verified`
+- `⚠️ Janky`
 - `⛔ Blocked`
 - `🗑️ Deprecated`
 
@@ -60,6 +63,8 @@ Example requirement with priority:
 Priority is optional; requirements without a priority line parse successfully with `priority: None`.
 
 Priority values are normalized case-insensitively, so `p0`, `P0`, `critical`, and `CRITICAL` all map to `🔴 P0 - Critical`.
+
+Project config can still override these built-ins with `.rqmd.yml`, `.rqmd.json`, or standalone status/priority catalog files.
 
 ## Install (local development)
 

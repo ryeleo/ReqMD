@@ -12,6 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import NamedTuple
 
+from .constants import STATUS_ORDER
 from .markdown_io import display_name_from_h1, iter_domain_files
 from .summary import count_statuses
 
@@ -42,15 +43,8 @@ def extract_domain_summaries(repo_root: Path, criteria_dir: str, id_prefixes: tu
         counts = count_statuses(content)
         label = display_name_from_h1(path)
         
-        # Build emoji summary: P I Ver Blk Dep
-        # Note: count_statuses returns counts with full label as key like "💡 Proposed"
-        status_order = [
-            ("💡 Proposed", "💡"),
-            ("🔧 Implemented", "🔧"),
-            ("✅ Verified", "✅"),
-            ("⛔ Blocked", "⛔"),
-            ("🗑️ Deprecated", "🗑️"),
-        ]
+        # Keep README emoji rollups aligned with the shared built-in catalog order.
+        status_order = [(full_label, full_label.split()[0]) for full_label, _ in STATUS_ORDER]
         
         emoji_parts = []
         for full_label, emoji in status_order:

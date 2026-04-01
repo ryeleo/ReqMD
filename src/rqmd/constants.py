@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import re
 
+from .default_catalogs import (load_default_priority_catalog_resource,
+                               load_default_status_catalog_resource)
+
 SUMMARY_START = "<!-- acceptance-status-summary:start -->"
 SUMMARY_END = "<!-- acceptance-status-summary:end -->"
 DEFAULT_ID_PREFIXES = ("AC", "R", "RQMD")
@@ -9,38 +12,68 @@ DEFAULT_REQUIREMENTS_DIR = "docs/requirements"
 REQUIREMENTS_INDEX_NAME = "README.md"
 JSON_SCHEMA_VERSION = "1.0.0"
 
-STATUS_ORDER = [
-    ("💡 Proposed", "proposed"),
-    ("🔧 Implemented", "implemented"),
-    ("✅ Verified", "verified"),
-    ("⛔ Blocked", "blocked"),
-    ("🗑️ Deprecated", "deprecated"),
-]
-STATUS_TERSE_HEADERS_ASCII = ["P", "I", "Ver", "Blk", "Dep"]
+
+def _catalog_entry_label(entry: dict[str, str]) -> str:
+    return f"{entry['emoji']} {entry['name']}".strip()
+
+
+def _normalize_catalog_entries(
+    raw_entries: object,
+    *,
+    required_keys: tuple[str, ...],
+    entry_kind: str,
+) -> list[dict[str, str]]:
+    if not isinstance(raw_entries, list) or not raw_entries:
+        raise RuntimeError(f"Packaged default {entry_kind} catalog must be a non-empty list")
+
+    entries: list[dict[str, str]] = []
+    for index, item in enumerate(raw_entries, start=1):
+        if not isinstance(item, dict):
+            raise RuntimeError(f"Packaged default {entry_kind} item #{index} must be a mapping")
+        normalized = {key: str(item.get(key, "")).strip() for key in required_keys}
+        missing = [key for key, value in normalized.items() if not value]
+        if missing:
+            missing_display = ", ".join(missing)
+            raise RuntimeError(
+                f"Packaged default {entry_kind} item #{index} missing required keys: {missing_display}"
+            )
+        entries.append(normalized)
+    return entries
+
+
+_STATUS_DEFAULTS = load_default_status_catalog_resource()
+DEFAULT_STATUS_CATALOG = _normalize_catalog_entries(
+    _STATUS_DEFAULTS.get("statuses"),
+    required_keys=("name", "shortcode", "emoji", "slug", "terse_header"),
+    entry_kind="status",
+)
+
+_PRIORITY_DEFAULTS = load_default_priority_catalog_resource()
+DEFAULT_PRIORITY_CATALOG = _normalize_catalog_entries(
+    _PRIORITY_DEFAULTS.get("priorities"),
+    required_keys=("name", "shortcode", "emoji", "slug"),
+    entry_kind="priority",
+)
+
+STATUS_ORDER = [(_catalog_entry_label(entry), entry["slug"]) for entry in DEFAULT_STATUS_CATALOG]
+STATUS_TERSE_HEADERS_ASCII = [entry["terse_header"] for entry in DEFAULT_STATUS_CATALOG]
 STATUS_ALIASES = {
-    "✅ Done": "✅ Verified",
+    str(alias_from): str(alias_to)
+    for alias_from, alias_to in dict(_STATUS_DEFAULTS.get("aliases") or {}).items()
 }
 STATUS_PARSE_ALIASES = {
-    "proposal": "💡 Proposed",
-    "propose": "💡 Proposed",
+    str(alias_from): str(alias_to)
+    for alias_from, alias_to in dict(_STATUS_DEFAULTS.get("parse_aliases") or {}).items()
 }
 
-PRIORITY_ORDER = [
-    ("🔴 P0 - Critical", "p0"),
-    ("🟠 P1 - High", "p1"),
-    ("🟡 P2 - Medium", "p2"),
-    ("🟢 P3 - Low", "p3"),
-]
-PRIORITY_ALIASES = {}
+PRIORITY_ORDER = [(_catalog_entry_label(entry), entry["slug"]) for entry in DEFAULT_PRIORITY_CATALOG]
+PRIORITY_ALIASES = {
+    str(alias_from): str(alias_to)
+    for alias_from, alias_to in dict(_PRIORITY_DEFAULTS.get("aliases") or {}).items()
+}
 PRIORITY_PARSE_ALIASES = {
-    "critical": "🔴 P0 - Critical",
-    "p0": "🔴 P0 - Critical",
-    "high": "🟠 P1 - High",
-    "p1": "🟠 P1 - High",
-    "medium": "🟡 P2 - Medium",
-    "p2": "🟡 P2 - Medium",
-    "low": "🟢 P3 - Low",
-    "p3": "🟢 P3 - Low",
+    str(alias_from): str(alias_to)
+    for alias_from, alias_to in dict(_PRIORITY_DEFAULTS.get("parse_aliases") or {}).items()
 }
 
 MENU_UP = "u"

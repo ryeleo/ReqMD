@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 9🔧 20✅ 0⛔ 4🗑️
+Summary: 3💡 9🔧 20✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -375,3 +375,12 @@ colors:
 - So that rqmd recognizes repo-local markdown links and inline requirement-ID references that resolve to another requirement in the current catalog.
 - So that opening the linked requirement keeps me inside the interactive workflow and preserves enough history that I can return to the originating requirement after making related updates.
 - So that unresolved or external links fail gracefully with clear feedback instead of interrupting the current review flow.
+
+### RQMD-INTERACTIVE-032: Grapheme-safe menu alignment for emoji-rich labels
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a rqmd user when interactive status or priority labels contain emoji with unusual grapheme-width behavior such as `⚠️`
+- I want menu alignment and padding logic to account for terminal grapheme-cluster display width more robustly
+- So that labels do not visually swallow following spaces or collapse adjacent columns in terminals such as VS Code's integrated terminal.
+- So that the right-hand preview column remains aligned even when emoji presentation selectors or font-specific rendering quirks are involved.
+- So that width calculations prefer a terminal-grapheme-aware model over brittle Unicode-range heuristics where practical.

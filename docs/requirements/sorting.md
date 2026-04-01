@@ -3,7 +3,7 @@
 Scope: deterministic ordering, sort toggles, and priority-based ranking in interactive views.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 0🔧 9✅ 0⛔ 2🗑️
+Summary: 5💡 0🔧 9✅ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-SORTING-001: File ranking by priority buckets
@@ -141,3 +141,12 @@ Summary: 4💡 0🔧 9✅ 0⛔ 2🗑️
 - I want rqmd to automatically compress rank values to make space for more ranked items
 - So that the system can maintain the relative order of all existing ranked items while reassigning new rank values that fit within the int32 range.
 - So that the compression algorithm intelligently compresses MORE around requirements with statuses that indicate rank will no longer change (for example, `done` items at the bottom of the list only seperated by `100` instead of `10000`).
+
+### RQMD-SORTING-016: Positional `ranked` target for backlog grooming
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I want to jump directly into rank-aware backlog grooming
+- I want `rqmd ranked` to resolve as a first-class positional target
+- So that rqmd can open the dedicated rank-focused interactive mode without requiring a separate flag sequence.
+- So that the resulting view orders requirements with rank-aware semantics first and deterministic fallback ordering second.
+- So that `ranked` is exposed in help text and shell completion alongside other special positional targets such as `all`.

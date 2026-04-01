@@ -153,20 +153,23 @@ if blocked_match and current and current["status_line"] is not None:
 
 | Label | Emoji | Shortcode | Internal | Aliases |
 |-------|-------|-----------|----------|---------|
-| Proposed | 💡 | P | proposed | proposal, propose |
-| Implemented | 🔧 | I | implemented | — |
-| Verified | ✅ | V | verified | done |
-| Blocked | ⛔ | B | blocked | — |
-| Deprecated | 🗑️ | D | deprecated | — |
+| Proposed | 💡 | PRO | proposed | proposal, propose |
+| Implemented | 🔧 | IMP | implemented | — |
+| Verified | ✅ | VER | verified | done |
+| Janky | ⚠️ | J | janky | — |
+| Blocked | ⛔ | BLK | blocked | — |
+| Deprecated | 🗑️ | DEP | deprecated | — |
 
 ### Canonical Priority Order
 
 | Label | Emoji | Shortcode | Internal | Aliases |
 |-------|-------|-----------|----------|---------|
-| P0 - Critical | 🔴 | C | p0 | critical |
-| P1 - High | 🟠 | H | p1 | high |
-| P2 - Medium | 🟡 | M | p2 | medium |
-| P3 - Low | 🟢 | L | p3 | low |
+| P0 - Critical | 🔴 | P0 | p0 | critical |
+| P1 - High | 🟠 | P1 | p1 | high |
+| P2 - Medium | 🟡 | P2 | p2 | medium |
+| P3 - Low | 🟢 | P3 | p3 | low |
+
+The shipped built-in catalogs are packaged as YAML resources under `src/rqmd/resources/catalogs/statuses.yml` and `src/rqmd/resources/catalogs/priorities.yml`. Project-level config can override them, but those packaged files are now the single source for rqmd's built-in defaults.
 
 ### Coercion Rules
 

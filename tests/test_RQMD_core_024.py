@@ -3,11 +3,9 @@
 from pathlib import Path
 
 import pytest
-from rqmd.readme_gen import (
-    extract_domain_summaries,
-    generate_readme_section,
-    sync_readme_from_domains,
-)
+
+from rqmd.readme_gen import (extract_domain_summaries, generate_readme_section,
+                             sync_readme_from_domains)
 
 
 def test_RQMD_core_024_extract_domain_summaries(tmp_path: Path):
@@ -33,7 +31,7 @@ requirement content.
 - **Status:** ✅ Verified
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 0🔧 1✅ 0⛔ 0🗑️
+Summary: 1💡 0🔧 1✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 """)
     
@@ -117,7 +115,7 @@ def test_RQMD_core_024_idempotent_updates(tmp_path: Path):
 - **Status:** 💡 Proposed
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 1💡 0🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 """)
     

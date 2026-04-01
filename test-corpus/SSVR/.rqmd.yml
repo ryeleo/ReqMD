@@ -15,6 +15,9 @@ statuses:
   - name: Done
     shortcode: D
     emoji: "✅"
+  - name: "Janky"
+    shortcode: J
+    emoji: "⚠️"
   - name: Blocked
     shortcode: B
     emoji: "⛔"
@@ -22,8 +25,28 @@ statuses:
     shortcode: X
     emoji: "🗑️"
 
+priorities:
+  - name: Critical
+    shortcode: p0
+    emoji: "🔴"
+  - name: High
+    shortcode: p1
+    emoji: "🟠"
+  - name: Medium
+    shortcode: p2
+    emoji: "🟡"
+  - name: Low
+    shortcode: p3
+    emoji: "🟢"
+  - name: Eventually
+    shortcode: p4
+    emoji: "🔵"
+  - name: Dreams
+    shortcode: p5
+    emoji: "☁️"
+
 rollup_map:
-  Proposed: [proposed]
+  Proposed: [proposed, janky]
   Build-Ready: [implemented, desktop-verified]
   Complete: [vr-verified, done]
   Parked: [blocked, deprecated]

@@ -123,6 +123,8 @@ def style_status_count(status_label: str, value: object) -> str:
         return click.style(text, fg=configured_color)
     if status_label == "✅ Verified":
         return click.style(text, fg="green")
+    if status_label == "⚠️ Janky":
+        return click.style(text, fg="yellow")
     if status_label == "💡 Proposed":
         return f"{PROPOSED_FG}{text}{ANSI_RESET}"
     if status_label in ("⛔ Blocked", "🗑️ Deprecated"):
@@ -144,6 +146,8 @@ def style_status_label(status_label: str) -> str:
         return click.style(status_label, fg=configured_color)
     if status_label == "✅ Verified":
         return click.style(status_label, fg="green")
+    if status_label == "⚠️ Janky":
+        return click.style(status_label, fg="yellow")
     if status_label == "💡 Proposed":
         return f"{PROPOSED_FG}{status_label}{ANSI_RESET}"
     if status_label in ("⛔ Blocked", "🗑️ Deprecated"):
@@ -166,6 +170,8 @@ def style_status_line(status_label: str, text: str) -> str:
         return click.style(text, fg=configured_color)
     if status_label == "✅ Verified":
         return click.style(text, fg="green")
+    if status_label == "⚠️ Janky":
+        return click.style(text, fg="yellow")
     if status_label == "💡 Proposed":
         return f"{PROPOSED_FG}{text}{ANSI_RESET}"
     if status_label in ("⛔ Blocked", "🗑️ Deprecated"):

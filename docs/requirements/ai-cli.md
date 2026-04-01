@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 30🔧 2✅ 0⛔ 3🗑️
+Summary: 2💡 31🔧 2✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -307,3 +307,31 @@ Summary: 0💡 30🔧 2✅ 0⛔ 3🗑️
 - So that `Up next` includes the full markdown bodies of the highest-priority proposed requirements rather than only listing requirement IDs as rendered markdown and not code blocks -- do not put each requirement within "```" blocks!!!
 - So that `Direction` gives a concrete next recommendation derived from the active backlog state instead of a vague generic follow-up.
 - So that this formatting becomes the default style installed by `rqmd-ai init` while still allowing repositories to customize the final instructions after install.
+
+### RQMD-AI-036: Long-running priority-first development agent
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a maintainer when I want an AI agent to keep working through the backlog for an extended session
+- I want rqmd to ship a `rqmd-dev-longrunning` agent variant that explicitly tries to continue making progress for as long as feasible
+- So that the agent works proposed requirements in priority order, keeps reassessing the backlog after each validated batch, and stops only when it reaches a real blocker, exhausts feasible work, or completes the active slice.
+- So that the long-running mode remains requirement-first and still updates requirements, tests, verification results, and changelog entries as it goes instead of treating persistence as permission to skip quality gates.
+- So that the guidance explicitly favors autonomous follow-through and repeated re-triage over early handoff when there is still clear work available.
+
+### RQMD-AI-037: Easy-first low-hanging-fruit development agent
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a maintainer when I want quick backlog progress without sending an AI agent into the hardest architectural work immediately
+- I want rqmd to ship a `rqmd-dev-easy` agent variant that focuses on low-risk, high-confidence requirement slices first
+- So that the agent preferentially picks low-hanging-fruit proposed requirements where it can make clean progress with minimal exploratory risk.
+- So that the easy-first mode can still respect overall requirement priority order, but only within the subset of items that appear straightforward enough to implement, validate, and document in small batches.
+- So that maintainers can choose between a broad long-running executor and a conservative easy-wins executor depending on how much autonomy or risk they want in a given session.
+
+### RQMD-AI-038: Legacy-init installs local schema guidance into generated requirement indexes
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer bootstrapping rqmd in an existing repository through `rqmd-ai init`
+- I want the generated `docs/requirements/README.md` or `requirements/README.md` to include the current local rqmd schema guidance that AI agents need during follow-up work
+- So that the initialized repository contains a nearby, tool-owned schema reference instead of forcing humans or AI agents to rely on memory, external docs, or a missing side file.
+- So that legacy-init and other init apply paths install or embed the schema content deterministically as part of the generated requirements index experience rather than treating schema visibility as optional tribal knowledge.
+- So that the generated requirements index clearly points at the local schema source of truth and keeps that source synchronized with the shipped rqmd contract templates.
+- So that AI agents working only from local repository files can reliably discover the requirement markdown contract during later implementation and review sessions.

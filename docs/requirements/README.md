@@ -16,6 +16,7 @@ Status workflow:
 - 💡 Proposed
 - 🔧 Implemented
 - ✅ Verified
+- ⚠️ Janky
 - ⛔ Blocked
 - 🗑️ Deprecated
 

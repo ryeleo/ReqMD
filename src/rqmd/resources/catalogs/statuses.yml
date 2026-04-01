@@ -1,0 +1,38 @@
+statuses:
+  - name: Proposed
+    shortcode: PRO
+    emoji: "💡"
+    slug: proposed
+    terse_header: P
+  - name: Implemented
+    shortcode: IMP
+    emoji: "🔧"
+    slug: implemented
+    terse_header: I
+  - name: Verified
+    shortcode: VER
+    emoji: "✅"
+    slug: verified
+    terse_header: Ver
+  - name: Janky
+    shortcode: J
+    emoji: "⚠️"
+    slug: janky
+    terse_header: Jnk
+  - name: Blocked
+    shortcode: BLK
+    emoji: "⛔"
+    slug: blocked
+    terse_header: Blk
+  - name: Deprecated
+    shortcode: DEP
+    emoji: "🗑️"
+    slug: deprecated
+    terse_header: Dep
+
+aliases:
+  "✅ Done": "✅ Verified"
+
+parse_aliases:
+  proposal: "💡 Proposed"
+  propose: "💡 Proposed"

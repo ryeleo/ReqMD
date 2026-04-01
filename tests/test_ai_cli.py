@@ -542,6 +542,9 @@ def test_RQMD_AI_024_init_legacy_apply_can_seed_issue_backlog_from_gh(tmp_path: 
     assert "Issue labels: docs, automation" in issue_backlog
     index_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
     assert "Issue Backlog Requirements" in index_text
+    assert "Generated from init-docs/README.md." in index_text
+    assert "## Schema Reference" in index_text
+    assert "This section is intentionally included in the generated requirements index" in index_text
     _assert_schema_version(payload)
 
 
@@ -1464,6 +1467,9 @@ def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypat
     assert "requirements/custom-domain.md" in [entry["path"] for entry in payload["proposed_files"]]
     readme_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "requirements/README.md")
     assert "Bootstrap Interview Notes" in readme_entry["content"]
+    assert "Generated from init-docs/README.md." in readme_entry["content"]
+    assert "## Schema Reference" in readme_entry["content"]
+    assert "filter-sub-domain" in readme_entry["content"]
 
 
 def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_path: Path) -> None:

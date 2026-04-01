@@ -370,6 +370,7 @@ def test_RQMD_core_006_count_statuses_model() -> None:
             "- **Status:** 💡 Proposed",
             "- **Status:** 🔧 Implemented",
             "- **Status:** ✅ Verified",
+            "- **Status:** ⚠️ Janky",
             "- **Status:** ⛔ Blocked",
             "- **Status:** 🗑️ Deprecated",
         ]
@@ -378,20 +379,22 @@ def test_RQMD_core_006_count_statuses_model() -> None:
     assert counts["💡 Proposed"] == 1
     assert counts["🔧 Implemented"] == 1
     assert counts["✅ Verified"] == 1
+    assert counts["⚠️ Janky"] == 1
     assert counts["⛔ Blocked"] == 1
     assert counts["🗑️ Deprecated"] == 1
 
 
-def test_RQMD_core_006b_build_summary_block_uses_five_status_order() -> None:
+def test_RQMD_core_006b_build_summary_block_uses_builtin_status_order() -> None:
     counts = {label: 0 for label, _ in cli.STATUS_ORDER}
     counts["💡 Proposed"] = 2
     counts["🔧 Implemented"] = 3
     counts["✅ Verified"] = 4
+    counts["⚠️ Janky"] = 6
     counts["⛔ Blocked"] = 1
     counts["🗑️ Deprecated"] = 5
 
     summary = cli.build_summary_block(counts)
-    assert "Summary: 2💡 3🔧 4✅ 1⛔ 5🗑️" in summary
+    assert "Summary: 2💡 3🔧 4✅ 6⚠️ 1⛔ 5🗑️" in summary
 
 
 def test_RQMD_core_008_process_file_idempotent(tmp_path: Path) -> None:
@@ -434,6 +437,28 @@ def test_RQMD_core_009_missing_domain_docs_handling(tmp_path: Path) -> None:
     assert result.exit_code == 1
     assert "No requirement markdown files found under" in result.output
     assert "rqmd init" in result.output
+
+
+def test_RQMD_core_009_missing_requirements_index_shows_first_time_setup_guidance(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "No requirement docs found. Expected to find docs/requirements/README.md or requirements/README.md." in result.output
+    assert "First time setup?" in result.output
+    assert "rqmd init" in result.output
+    assert "rqmd init --scaffold" in result.output
 
 
 def test_RQMD_core_009_missing_domain_docs_yes_initializes_scaffold(tmp_path: Path) -> None:

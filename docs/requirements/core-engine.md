@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 15🔧 16✅ 0⛔ 0🗑️
+Summary: 4💡 15🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -300,3 +300,33 @@ Summary: 1💡 15🔧 16✅ 0⛔ 0🗑️
 - So that the chosen requirements directory, ID prefix, status catalog, and priority catalog are explicit for both humans and AI agents from the first run.
 - So that `rqmd init --scaffold`, `rqmd-ai init`, and legacy-init apply flows all converge on the same project-root config convention instead of leaving those defaults implicit.
 - So that the generated config uses the canonical built-in status and priority models as the starting point while remaining easy for teams to customize afterward.
+- So that those canonical built-in status and priority models come from packaged resource catalogs instead of duplicated hard-coded Python tables, making future default-catalog changes easier to ship consistently.
+
+### RQMD-CORE-033: Versioned requirement markdown schema and migration path
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd maintainer when the tracked markdown catalog format evolves over time
+- I want rqmd-managed requirement files and generated scaffolds to carry an explicit markdown schema version marker
+- So that rqmd can detect older catalog formats deterministically instead of guessing from incidental document shape.
+- So that startup, verification, and migration flows can offer or apply safe upgrades when a repository is on an older catalog schema.
+- So that machine-readable exports can report both the CLI contract version and the catalog markdown schema version when relevant.
+- So that schema-migration failures produce actionable guidance and suggested recovery steps instead of opaque parse or compatibility errors.
+
+### RQMD-CORE-034: Guided duplicate-ID repair workflow
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when duplicate requirement IDs are discovered across the catalog
+- I want rqmd to offer a guided repair workflow instead of only failing fast
+- So that the tool can preview safe rename or reassignment options for each collision before writing changes.
+- So that startup, verify, and automation modes can surface the exact conflicting files and recommend deterministic repairs instead of leaving the user to hand-edit all collisions.
+- So that when an ID is reassigned, linked references, blocking relationships, and other rqmd-managed requirement references are updated consistently.
+
+### RQMD-CORE-035: Packaged-resource source of truth for shipped templates and built-in catalogs
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd maintainer when I need to change shipped default catalogs, scaffold text, or other built-in authoring assets
+- I want rqmd to keep those shipped defaults in packaged resource files rather than scattered Python literals
+- So that built-in statuses, priorities, scaffold templates, schema snippets, and other shipped markdown or YAML defaults can be edited as data with fewer code touchpoints.
+- So that runtime code loads those packaged resources through one consistent helper path, similar to the existing bundle-resource pattern, instead of duplicating parallel hard-coded tables and strings.
+- So that init flows, generated requirement indexes, and other scaffold outputs consume the same packaged resource source of truth the application uses internally.
+- So that future default-catalog or template changes are less error-prone because docs, scaffolds, and built-in runtime defaults are less likely to drift.

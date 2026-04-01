@@ -24,23 +24,9 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import PRIORITY_ORDER, REQUIREMENTS_INDEX_NAME, STATUS_ORDER
+from .constants import (DEFAULT_PRIORITY_CATALOG, DEFAULT_STATUS_CATALOG,
+                        REQUIREMENTS_INDEX_NAME)
 from .summary import process_file
-
-_DEFAULT_STATUS_SHORTCODES = {
-    "Proposed": "PRO",
-    "Implemented": "IMP",
-    "Verified": "VER",
-    "Blocked": "BLK",
-    "Deprecated": "DEP",
-}
-
-_DEFAULT_PRIORITY_SHORTCODES = {
-    "P0 - Critical": "P0",
-    "P1 - High": "P1",
-    "P2 - Medium": "P2",
-    "P3 - Low": "P3",
-}
 
 
 def format_path_display(path: Path, repo_root: Path) -> str:
@@ -74,26 +60,22 @@ def render_default_project_config(requirements_dir_input: str, starter_prefix: s
         "statuses:",
     ]
 
-    for label, _slug in STATUS_ORDER:
-        emoji, name = label.split(" ", 1)
-        shortcode = _DEFAULT_STATUS_SHORTCODES.get(name, name[:3].upper())
+    for entry in DEFAULT_STATUS_CATALOG:
         lines.extend(
             [
-                f"  - name: {name}",
-                f"    shortcode: {shortcode}",
-                f"    emoji: \"{emoji}\"",
+                f"  - name: {entry['name']}",
+                f"    shortcode: {entry['shortcode']}",
+                f"    emoji: \"{entry['emoji']}\"",
             ]
         )
 
     lines.extend(["", "priorities:"])
-    for label, _slug in PRIORITY_ORDER:
-        emoji, name = label.split(" ", 1)
-        shortcode = _DEFAULT_PRIORITY_SHORTCODES.get(name, name.split(" ", 1)[0].upper())
+    for entry in DEFAULT_PRIORITY_CATALOG:
         lines.extend(
             [
-                f"  - name: {name}",
-                f"    shortcode: {shortcode}",
-                f"    emoji: \"{emoji}\"",
+                f"  - name: {entry['name']}",
+                f"    shortcode: {entry['shortcode']}",
+                f"    emoji: \"{entry['emoji']}\"",
             ]
         )
 
@@ -266,7 +248,10 @@ def resolve_requirements_dir(repo_root: Path, requirements_dir_input: str | None
     detected, detected_display = auto_detect_requirements_dir(repo_root)
     if detected is None:
         raise click.ClickException(
-            "No requirement docs found. Tried auto-detecting docs/requirements/README.md and requirements/README.md from the current working path. "
+            "No requirement docs found. Expected to find docs/requirements/README.md or requirements/README.md.\n\n"
+            "First time setup?\n\n"
+            "- AI-driven (recommended): run `rqmd init`, then paste the generated prompt into your AI chat to get started.\n"
+            "- Manual / compatibility: run `rqmd init --scaffold` to create starter requirement docs directly.\n\n"
             "Pass --docs-dir to select a different location."
         )
     return detected, f"Auto-selected requirement docs: {detected_display}"
@@ -549,6 +534,48 @@ def _render_init_template(template_name: str, values: dict[str, str]) -> str:
     return rendered
 
 
+def _render_requirement_documents_section(entries: list[dict[str, str]]) -> str:
+    lines: list[str] = []
+    for entry in entries:
+        lines.append(f"### {entry['title']}")
+        lines.append(f"- [{entry['title']}]({entry['path']}) - {entry['description']}")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def render_requirements_index(
+    *,
+    index_display: str,
+    criteria_dir_display: str,
+    starter_display: str,
+    starter_prefix: str,
+    requirement_document_entries: list[dict[str, str]] | None = None,
+    extra_sections: list[str] | None = None,
+) -> str:
+    """Render the shared requirements index template used by init flows."""
+    document_entries = requirement_document_entries or [
+        {
+            "title": "Starter",
+            "path": starter_display,
+            "description": "bootstrap requirement for first-run setup",
+        }
+    ]
+    extra_section_text = "\n\n".join(section.strip() for section in (extra_sections or []) if section.strip())
+    if extra_section_text:
+        extra_section_text = f"{extra_section_text}\n"
+    return _render_init_template(
+        "README.md",
+        {
+            "INDEX_DISPLAY": index_display,
+            "STARTER_DISPLAY": starter_display,
+            "CRITERIA_DIR_DISPLAY": criteria_dir_display,
+            "STARTER_PREFIX": starter_prefix,
+            "INDEX_EXTRA_SECTIONS": extra_section_text,
+            "REQUIREMENT_DOCUMENTS_SECTION": _render_requirement_documents_section(document_entries),
+        },
+    )
+
+
 def preview_requirements_scaffold(
     repo_root: Path,
     requirements_dir_input: str,
@@ -565,25 +592,31 @@ def preview_requirements_scaffold(
     index_display = index_path.relative_to(repo_root).as_posix()
     starter_display = starter_domain_path.relative_to(repo_root).as_posix()
 
-    template_values = {
-        "INDEX_DISPLAY": index_display,
-        "STARTER_DISPLAY": starter_display,
-        "CRITERIA_DIR_DISPLAY": criteria_dir_display,
-        "STARTER_PREFIX": starter_prefix,
-    }
-
     entries = [
         {
             "path": index_display,
             "title": "Requirements Index",
             "description": "starter requirements index generated from the packaged init template",
-            "content": _render_init_template("README.md", template_values),
+            "content": render_requirements_index(
+                index_display=index_display,
+                criteria_dir_display=criteria_dir_display,
+                starter_display=starter_display,
+                starter_prefix=starter_prefix,
+            ),
         },
         {
             "path": starter_display,
             "title": "Starter Requirements",
             "description": "starter requirement seed generated from the packaged init template",
-            "content": _render_init_template("domain-example.md", template_values),
+            "content": _render_init_template(
+                "domain-example.md",
+                {
+                    "INDEX_DISPLAY": index_display,
+                    "STARTER_DISPLAY": starter_display,
+                    "CRITERIA_DIR_DISPLAY": criteria_dir_display,
+                    "STARTER_PREFIX": starter_prefix,
+                },
+            ),
         },
     ]
 
@@ -622,23 +655,35 @@ def initialize_requirements_scaffold(repo_root: Path, requirements_dir_input: st
 
     created_paths: list[Path] = []
 
-    template_values = {
-        "INDEX_DISPLAY": index_display,
-        "STARTER_DISPLAY": starter_display,
-        "CRITERIA_DIR_DISPLAY": criteria_dir_display,
-        "STARTER_PREFIX": starter_prefix,
-    }
-
     config_path = initialize_project_config_scaffold(repo_root, criteria_dir_display, starter_prefix)
     if config_path is not None:
         created_paths.append(config_path)
 
     if not index_path.exists():
-        index_path.write_text(_render_init_template("README.md", template_values), encoding="utf-8")
+        index_path.write_text(
+            render_requirements_index(
+                index_display=index_display,
+                criteria_dir_display=criteria_dir_display,
+                starter_display=starter_display,
+                starter_prefix=starter_prefix,
+            ),
+            encoding="utf-8",
+        )
         created_paths.append(index_path)
 
     if not starter_domain_path.exists():
-        starter_domain_path.write_text(_render_init_template("domain-example.md", template_values), encoding="utf-8")
+        starter_domain_path.write_text(
+            _render_init_template(
+                "domain-example.md",
+                {
+                    "INDEX_DISPLAY": index_display,
+                    "STARTER_DISPLAY": starter_display,
+                    "CRITERIA_DIR_DISPLAY": criteria_dir_display,
+                    "STARTER_PREFIX": starter_prefix,
+                },
+            ),
+            encoding="utf-8",
+        )
         process_file(starter_domain_path, check_only=False)
         created_paths.append(starter_domain_path)
 

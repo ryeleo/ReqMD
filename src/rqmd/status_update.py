@@ -41,6 +41,8 @@ def _rule_style_kwargs(status_label: str) -> dict:
     """
     if status_label == "✅ Verified":
         return {"fg": "green"}
+    if status_label == "⚠️ Janky":
+        return {"fg": "yellow"}
     if status_label == "💡 Proposed":
         return {"fg": "bright_blue"}
     if status_label in ("⛔ Blocked", "🗑️ Deprecated"):

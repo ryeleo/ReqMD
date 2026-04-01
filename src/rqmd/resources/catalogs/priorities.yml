@@ -1,0 +1,29 @@
+priorities:
+  - name: P0 - Critical
+    shortcode: P0
+    emoji: "🔴"
+    slug: p0
+  - name: P1 - High
+    shortcode: P1
+    emoji: "🟠"
+    slug: p1
+  - name: P2 - Medium
+    shortcode: P2
+    emoji: "🟡"
+    slug: p2
+  - name: P3 - Low
+    shortcode: P3
+    emoji: "🟢"
+    slug: p3
+
+aliases: {}
+
+parse_aliases:
+  critical: "🔴 P0 - Critical"
+  p0: "🔴 P0 - Critical"
+  high: "🟠 P1 - High"
+  p1: "🟠 P1 - High"
+  medium: "🟡 P2 - Medium"
+  p2: "🟡 P2 - Medium"
+  low: "🟢 P3 - Low"
+  p3: "🟢 P3 - Low"

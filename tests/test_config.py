@@ -9,6 +9,8 @@ from click.testing import CliRunner
 
 from rqmd import cli
 from rqmd.config import load_config, load_statuses_file, validate_config
+from rqmd.constants import DEFAULT_PRIORITY_CATALOG, DEFAULT_STATUS_CATALOG
+from rqmd.markdown_io import render_default_project_config
 from rqmd.status_model import (_STATUS_COLORS, configure_status_catalog,
                                style_status_label)
 
@@ -473,6 +475,22 @@ def test_RQMD_portability_007_load_statuses_file_returns_none_when_absent(tmp_pa
   assert result is None
 
 
+def test_RQMD_portability_020_packaged_default_catalogs_drive_scaffold() -> None:
+  assert [entry["name"] for entry in DEFAULT_STATUS_CATALOG] == [
+    "Proposed",
+    "Implemented",
+    "Verified",
+    "Janky",
+    "Blocked",
+    "Deprecated",
+  ]
+  assert [entry["shortcode"] for entry in DEFAULT_PRIORITY_CATALOG] == ["P0", "P1", "P2", "P3"]
+
+  rendered = render_default_project_config("docs/requirements", "RQMD")
+  assert "  - name: Janky\n    shortcode: J\n    emoji: \"⚠️\"" in rendered
+  assert "  - name: P0 - Critical\n    shortcode: P0\n    emoji: \"🔴\"" in rendered
+
+
 def test_RQMD_portability_007_cli_status_config_overrides_unified_config(tmp_path: Path) -> None:
   """--status-config file takes precedence over statuses in .rqmd.yml."""
   repo = tmp_path / "repo"
@@ -630,5 +648,7 @@ def test_RQMD_portability_012_user_config_precedence_cli_over_user(tmp_path: Pat
   
   assert result.exit_code == 0
   payload = json.loads(result.output)
+  # Color from project config is applied
+  assert payload["files"][0]["requirements"][0]["id"] == "AC-001"
   # Color from project config is applied
   assert payload["files"][0]["requirements"][0]["id"] == "AC-001"

@@ -57,6 +57,7 @@ Canonical status progression:
 - `💡 Proposed`
 - `🔧 Implemented`
 - `✅ Verified`
+- `⚠️ Janky`
 - `⛔ Blocked`
 - `🗑️ Deprecated`
 
@@ -125,7 +126,8 @@ Each file entry in filter/summary outputs includes:
 
 For detailed parser semantics, keep an extended `schema.md` in your repository if you need stricter local contracts.
 
+{{INDEX_EXTRA_SECTIONS}}
+
 ## Requirement Documents
 
-### Starter
-- [Starter]({{STARTER_DISPLAY}}) - bootstrap requirement for first-run setup
+{{REQUIREMENT_DOCUMENTS_SECTION}}

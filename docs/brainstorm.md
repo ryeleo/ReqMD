@@ -1,191 +1,67 @@
-## If you want, the next natural step is
+## Brainstorm Triage
 
-centralize the remaining brainstorm proposal-ranking knobs into skill metadata too
-add a similar sync check for the bundled agent files once you’re ready to standardize those as well
+This file is now a checkpointed backlog scratchpad rather than a raw dump. Ideas that are already shipped or already tracked should move out of the way quickly so the remaining notes are easier to act on.
 
+## Already tracked or shipped
 
-## Special positional args
+- Nicer missing-doc startup guidance: `RQMD-CORE-009`.
+- Project-specific ID-key recommendation during AI init: `RQMD-AI-031`.
+- `rqmd all` positional overview: `RQMD-AUTOMATION-036`.
+- Rank metadata and rank-first backlog grooming: `RQMD-SORTING-012` through `RQMD-SORTING-016`, plus `RQMD-INTERACTIVE-028` and `RQMD-INTERACTIVE-029`.
+- Duplicate IDs fail fast and next-ID allocation already exist: `RQMD-CORE-026`, `RQMD-CORE-027`, and `RQMD-CORE-028`.
+- External links, blocked-by linking, and global key renaming: `RQMD-CORE-021`, `RQMD-CORE-022`, and `RQMD-CORE-023`.
+- README generation from requirement docs: `RQMD-CORE-024`.
+- User-story terminology and dual user-story + Given/When/Then guidance: `RQMD-PORTABILITY-019`, `RQMD-AI-034`, and `RQMD-CORE-031`.
+- AI workflow split between brainstorm and implement modes: `RQMD-AI-014` and `RQMD-AI-015`.
+- Agent/skill instruction install bundle: `RQMD-AI-012`.
+- Combinable filter semantics and `--update-flagged`: `RQMD-AUTOMATION-025`, `RQMD-AUTOMATION-032`, `RQMD-AUTOMATION-034`, and `RQMD-AUTOMATION-035`.
+- Screen-write vs scrolling UI: `RQMD-UI-001` and `RQMD-UI-003`.
+- Undo/redo with persistent history: `RQMD-UNDO-001` and `RQMD-UNDO-002`.
+- `ReqMD` rename exploration: `RQMD-PACKAGING-012`.
+- JSON schema versioning: `RQMD-AUTOMATION-033`.
 
-`rqmd all`: shows all requirements in reverse sort order of ID (newest first) regardless of status. This is a good way to get a quick overview of all requirements, and see the most recent ones at the top.
+## Newly promoted from this pass
 
-`rqmd ranked`
+- `RQMD-AI-036`: long-running priority-first development agent (`rqmd-dev-longrunning`).
+- `RQMD-AI-037`: easy-first low-hanging-fruit development agent (`rqmd-dev-easy`).
+- `RQMD-CORE-033`: versioned requirement markdown schema and migration path.
+- `RQMD-CORE-034`: guided duplicate-ID repair workflow.
+- `RQMD-SORTING-016`: positional `rqmd ranked` target for backlog grooming.
+- `RQMD-INTERACTIVE-032`: grapheme-safe menu alignment for emoji-rich labels like `⚠️ Janky`.
 
-## Ranking
+## Clarified notes
 
-New sorting column/feture: "Rank"
+### Startup UX
 
-### Core Engine
+The bare `rqmd` no-docs startup path should stay requirement-driven and point users at the current canonical onboarding flow.
 
-Make it so that there is an optional 0-based "rank: " field for each requirement. If provided and negative, move it "down" in rank. If provided and positive, move it "up" in rank. Otherwise, do normal reverse sort by ID. This way, users can easily specify a custom rank for requirements that they want to prioritize or deprioritize in the listing, without needing to change their IDs or statuses.
+Desired behavior:
 
-### UX
+```text
+$ rqmd
 
-This allows us to treat rqmd as a sort of backlog that the user can easily reorder by setting rank values, without needing to go change IDs or statuses.
+No requirement docs found. Expected to find docs/requirements/README.md or requirements/README.md.
 
-Rank should be settable with a keystroke in normal UX, and proposed ranks should be suggested that would put it top, bottom, or one slot up or down from its current position, or offer to put it above another requirement that the user can search for instead.
+First time setup?
 
-#### Backlog Grooming Tooling
-
-`rqmd rank` should run rqmd in a backlog grooming mode, where the focus is on setting rankings.
-
-When viewing A user should be able to easily see REQs listed in rank order. They should be able to move the REQ they have selected with their cursor to the top rank, or bottom rank, move it up or down one rank easily, or move it up/down one "page" easily.
-
-The focus of this mode is ranking, so the output should be "oneline" style, just the title of requirements. There should be an easy way to open the normal detailed view of a requirement if they want to see more context before deciding how to rank it, and even make arbitrary edits to the requirement before ranking it.
-
-
-## Dedup IDs
-
-Add a dedicated duplicate-ID repair workflow so rqmd can help rename or reassign collisions instead of only reporting them. Do on startup automatically if needed.
-
-
-## IDs
-
-What if we made IDs act like real IDs? Like just REQ-001 through REQ-999. That would provide a key metadata of when a requirement was created relative to all other requirements.
-
-Right now, it seems like the ID is more of a label that can be changed at any time, which makes it less useful as a stable identifier. If we enforce that IDs are unique and immutable once created, then they can serve as a more reliable reference point for linking between requirements, tracking changes over time, and providing context in discussions.
-
-
-
-## UX updates
-
-"setting: priority"  column should still be left aligned within itself, even if it is the right column.
-
-Also, the zebra striping to show which status is selected should be seperate from zebra striping to show which prioirty is currently selected! (Same logic where color of priority determines color of zebra stripe please!)
-
-Also, could we attempt to render markdown a bit using terminal? At least bold? Can H2 be very large? Can H3 be large but not too large? Maybe use ascii art for H2? Maybe use bold for H3?
-
-## User Story based??
-
-Hmm... we should add support/documentation for changing "Requirment Domains" to "User Stories" I think. And mayb
-Add a companion requirement for shell completion so positional filter tokens complete alongside IDs and domains.
-Start implementing the parser for this proposal.
-
-
-## AI Workflow
-
-Update AI to have two primary worker skills:
-
-### Brainstorm
-
-1. User does planning in brainstorm.md
-2. Then creates requirements from their brainstorm.md with hepl from AI agent.
-
-### Implement
-
-1. AI agent, making sure to update requirements and tests as they go.
-2. After implementing a feature make sure:
-    1. The tool itself runs
-    2. All tests pass
-    3. Changlog is updated
-    4. Requirements are updated (using `rqmd --update...` or directly editing the markdown files)
-
-
-## Performance Improvements
-
-MAybe use Rust to reimplement this whole solution.
-
-Maybe use Rust where possible to speedup this code (I know that's why `uv` is so fast, for example). Maybe we can have a Rust core for parsing and JSON contract generation, and then a thin Python wrapper for the CLI and interactive features? This would be a big undertaking but could make the tool much more performant, especially for large requirement sets.
-
-##
-
-
-RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
-
-## Priority for domain and sub-domain
-
-Unsure if it makes sense, but might be nice to add priority to domains and subdomains... right?
-
-## Option to add Agent and Skill instructions for AI Agents
-
-Rqmd should offer to install a core set of agent and skill instructions for AI agents to use when working with the tool. This would include instructions for how to interpret the JSON contract, how to use the `rqmd` CLI in various modes, and how to update requirements and documentation as part of implementation work. This would help ensure that AI agents can effectively contribute to the project without needing extensive manual guidance on how to interact with the tool and maintain alignment between code, tests, requirements, and documentation.
-
-## Filter support at CLI
-
-- should be able to combine filters.
-- OR between different filter flags, AND within the same flag.
-
-- Should be able to filter on anything:
-    - "--has-link" (and the inverse, "--no-link")
-    - "--has-flag" (and the inverse, "--no-flag")
-    - "--priority"
-
-
-
-## External Links
-
-Core-engine: Add a "Links" section to each Requirement, so that ppl can add links to their requirements. This way, external systems (e.g. github issues, TDX, Jira) can easily be linked to requirements, and users can quickly jump to related work in other systems from these requirement docs (if gh-cli is enabled, the AI agent could even make updates directly to linked GH issues, just saying).
-
-Core-engine: Make links as a top-level field, so it is very easy.
-
-UX: Let the user enter url or markdown hyperlink -- if they skip the markdown formatting and just use url, offer to optionally take 'label: ' next and automatically turn it into a hyperlink!
-
-
-
-## Schema Versioning
-
-The schema for rqmd **is** version of this rqmd pakcckag. The rqdmmdersion should be part of the json contract and shnoudl be in requirements/README.md.
-
-
-## Debug why rqmd fails for Speed Shooting VR
-
-- ValueError: Unrecognized status value: 💻 Desktop-Verified
-
-## TODO
-
-follow-on requirement for --update-flagged ID=true|false so automation can mutate flagged state directly too.
-
-## codify the "implement all proposed items" approach in the README and contribution guidelines
-
-This works great with AI agents!
-
-```
-Continue! Try to implement all 48 proposed RQMDs this time if you can! Make sure to check your priorities after every 3-5 or so depending on how complicated the work is and how interdependent they might be.
-
-Do the easier ones first so we see how far you get before running into something you cannot do.
-
-I've set `chat.agent.maxRequests=1500` so you can go for a while!
-
-Make sure to check that `rqmd` runs for you, and there aren't regressions in our test suite as you go! And update the test suite as you go! And update requirements as you go using `rqmd --update...`! And update requirements directly if they change as you go!
+- AI-driven (recommended): run `rqmd init`, then paste the generated prompt into your AI chat to get started.
+- Manual / compatibility: run `rqmd init --scaffold` to create starter requirement docs directly.
 ```
 
+### SSVR custom-status failure note
 
-continue updating reqs!
-Then continue implementing features with tests and making sure you keep requirements well docuemnted as you go as details reveal themselves!
+The `Speed Shooting VR` status issue is not a generic parser incompatibility. It only fails when rqmd is pointed at `test-corpus/SSVR/requirements` while the project root stays at this repository, which means the corpus-local `.rqmd.yml` is not loaded. If we want cross-root `--docs-dir` flows to auto-discover a neighboring config, that is a separate future requirement.
 
+## Still worth triaging later
 
-## Screen Write vs Scroll?
+- Add even more agent-opinionated interview/prompt payload hints, for example `render_as_checkbox_prompt`, `do_not_summarize_after_each_answer`, or similar explicit downstream UX knobs.
+- Improve terminal markdown rendering beyond the current lightweight bold/headings support.
+- Consider explicit `Ctrl+Z` / `Ctrl+Y` bindings on top of the existing undo/redo feature set.
+- Decide whether README generation should eventually become a stronger "tool-owned index" policy rather than marker-bounded sync.
+- Explore whether cross-root config discovery should follow `--docs-dir` targets when users intentionally point rqmd at another repository's requirement catalog.
+- Revisit native acceleration later if the current Python implementation becomes a real bottleneck despite the existing optional speedups path.
 
-Consider if we should change the UI to be screen write instead of scrolling style. That would make the UI much more snappy, and capable of handling page changes more gracefully, which we do a lot of in this CLI tool.
+## Workflow prompt note
 
-## Full Blocking Implementation
-
-Upgrdaing "block reason" to provide the user an option of which other requirement it is blocked by. This will be optional, but a quick way to insert a MD hyperlink to another REQ.
-Implementaiotn wise, hold an index at runtime of all issues 'search tokens', so that the user can easily quickly type in any word from the title the title or id REQ to find it easily then select it.
-Consider making this app no longer a scrolling app but a fixed terminal 
-Add to the schema for requirements/.md docs to include this field as an optional field. Then add the ability to edit it in interactive mode when setting status to blocked, and also to edit or remove it when changing status from blocked to something else.
-
-
-
-
-## ctrl + z
-
-Add a path to capture "^Z" and treat it as an undo for the whole app!
-
-ctrl+y or ctrl+shift+z for redo!
-
-This becons the idea of saving a state change log, so that undo/redo persists after a crash too...
-
-
-## README.md should be fully generated
-
-This file should be a true index of the last time the tool ran.
-Maybe even we should "assume that all updates to the markdown files are made via the tool."
-
-## ReqMD instead of rqmd?
-
-I think ReqMD is nicer really tbh. This can be done at some point before first release, or after I guess if no one is name squatting `reqmd` on pypi.org.
-
-## Rename Key feature?
-
-Finally, Probably should also have a feature for easily changing the key for all files for quickly renaming from the default of "REQ-" to something more project specific. Add a new requirement, but don't 
+The "implement all proposed items" style prompt still works well, but the shipped rqmd AI workflow deliberately prefers small validated batches with re-triage between batches instead of one giant uninterrupted backlog sweep.
 

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
+- Added proposed backlog requirements to continue moving shipped defaults toward a packaged-resource source of truth and to ensure legacy-init installs local schema guidance into generated requirement indexes for AI-friendly repository-local onboarding (RQMD-CORE-035, RQMD-AI-038).
+- Added proposed backlog requirements for long-running and easy-first rqmd development agents, markdown catalog schema versioning, duplicate-ID repair, positional `rqmd ranked` grooming entry, and grapheme-safe emoji alignment in interactive menus; also cleaned the brainstorm and bug notes to point at tracked follow-up work (RQMD-AI-036, RQMD-AI-037, RQMD-CORE-033, RQMD-CORE-034, RQMD-SORTING-016, RQMD-INTERACTIVE-032).
 - Added default `.rqmd.yml` scaffolding during `rqmd init --scaffold` and both rqmd-ai init apply paths so newly initialized repositories get an explicit root config with the selected requirements directory, ID prefix, and canonical status/priority catalogs for human and AI consumers (RQMD-CORE-032).
 - Added rqmd-ai guidance that now prefers pairing a short user-story block with Given/When/Then acceptance bullets when both clarify a requirement, across the installed AI bundle and starter authoring templates (RQMD-AI-034).
 - Added default markdown closeout guidance to the bundled `.github/copilot-instructions.md` template installed by `rqmd-ai init` and `rqmd-ai install`, preferring `# What got done`, `# Up next`, and `# Direction` with rendered requirement bodies in `Up next` instead of fenced code blocks (RQMD-AI-035).
@@ -29,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed legacy-init README generation to use the same packaged requirements-index template as scaffold init, so init workflows now install a consistent schema-bearing requirements index instead of maintaining divergent README builders.
+- Changed the built-in default status and priority catalogs to load from packaged YAML resources under `src/rqmd/resources/catalogs/`, and updated scaffold generation to consume those same resources so future default-catalog edits are data-driven instead of scattered across Python constants.
+- Added `⚠️ Janky` as a built-in default status after `✅ Verified`, propagated the new six-status order through generated summaries, README sync rollups, scaffolds, and interactive status shortcuts so teams can mark verified-but-rough work without custom catalog setup.
+- Changed the bare no-docs startup error to print a clearer first-time setup message that recommends the canonical `rqmd init` AI-driven onboarding flow while still surfacing `rqmd init --scaffold` as the manual compatibility path (RQMD-CORE-009).
 - Changed the GitHub release publishing workflow to require a stable semver release tag that matches `project.version`, and switched PyPI publication to GitHub trusted publishing instead of a repository-stored API token (RQMD-PACKAGING-008).
 - Added explicit `rqmd-ai --workflow-mode` guidance variants for `general`, `brainstorm`, and `implement`, including a proposal-batch implement loop that tells agents to work the highest-priority 1-3 proposed requirements at a time and re-run rqmd/tests/priority checks between batches (RQMD-AI-015).
 - Added proposed requirement backlog entries for an AI brainstorm mode, proposal-batch implement mode, optional native acceleration hot paths, and a pre-release `ReqMD` rename/alias evaluation so those brainstorm items are now ranked in the tracked requirement set.
