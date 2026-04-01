@@ -1,18 +1,16 @@
 """Tests for priority-focused CLI and interactive behavior."""
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli
 from rqmd.req_parser import parse_requirements
-from rqmd.summary import (
-    build_summary_block,
-    collect_summary_rows,
-    count_priorities,
-    process_file,
-)
+from rqmd.summary import (build_summary_block, collect_summary_rows,
+                          count_priorities, process_file)
 
 
 @pytest.fixture
@@ -222,7 +220,7 @@ class TestRQMDPriority004ModeFlag:
 
         assert result == 0
         assert titles
-        assert titles[0].startswith("Set priority for AC-001")
+        assert re.sub(r"\x1b\[[0-9;]*m", "", titles[0]).startswith("Choose Status or Priority for AC-001.")
 
     def test_main_forwards_priority_mode_to_interactive_wrapper(self, monkeypatch, tmp_path: Path):
         repo = tmp_path / "repo"

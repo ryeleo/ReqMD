@@ -10,6 +10,7 @@ import pytest
 from click.testing import CliRunner
 
 from rqmd import cli, menus
+from rqmd.priority_model import configure_priority_catalog
 
 
 def test_RQMD_interactive_002_single_key_selection(monkeypatch) -> None:
@@ -141,8 +142,8 @@ Scope: demo.
                 return 0
             return "up"
 
-        if title.startswith("Set status for "):
-            status_visits.append(title.removeprefix("Set status for ").splitlines()[0])
+        if title.startswith("Choose Status or Priority for "):
+            status_visits.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
             return next(status_actions)
 
         return None
@@ -1073,7 +1074,7 @@ Scope: demo.
             if state["req_calls"] == 1:
                 return "jump-subsection"
             return None
-        if title.startswith("Set status for"):
+        if title.startswith("Choose Status or Priority for"):
             assert kwargs.get("prefix_text") == "PANEL:AC-DEMO-002"
             return "up"
         return None
@@ -1105,6 +1106,7 @@ def test_RQMD_interactive_021b_requirement_menu_receives_panel_prefix() -> None:
         captured["title"] = title
         captured["prefix_text"] = kwargs.get("prefix_text")
         captured["right_labels"] = list(kwargs.get("option_right_labels") or [])
+        captured["right_label_layout"] = kwargs.get("right_label_layout")
         return "up"
 
     requirement = {
@@ -1122,10 +1124,12 @@ def test_RQMD_interactive_021b_requirement_menu_receives_panel_prefix() -> None:
     )
 
     assert result == ("up", None)
-    assert captured["title"].startswith("Set status for RQMD-AUTOMATION-019 [1/5]\n")
-    assert "setting: status" in captured["title"]
-    assert "setting: priority" in captured["title"]
+    plain_title = re.sub(r"\x1b\[[0-9;]*m", "", captured["title"])
+    assert plain_title.startswith("Choose Status or Priority for RQMD-AUTOMATION-019 [1/5].\n")
+    assert "Status" in plain_title
+    assert "Priority" in plain_title
     assert captured["prefix_text"] == "\nPANEL BODY\n=========="
+    assert captured["right_label_layout"] == "adjacent"
     assert len(captured["right_labels"]) == 5
     assert captured["right_labels"][0].startswith("  !)")
     assert captured["right_labels"][2].startswith("  #)")
@@ -1194,6 +1198,7 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
     assert captured["extra_keys"]["@"] == "priority-shortcut:🟠 P1 - High"
     assert captured["extra_keys"]["#"] == "priority-shortcut:🟡 P2 - Medium"
     assert captured["extra_keys"]["$"] == "priority-shortcut:🟢 P3 - Low"
+    assert "priority-shortcut:" not in captured["extra_keys"].get("%", "")
     assert captured["extra_keys_help"]["!"] == "critical"
     assert captured["extra_keys_help"]["@"] == "high"
     assert "1=💡 Proposed" in captured["footer_legend"]
@@ -1215,6 +1220,70 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
     widths = [menus.visible_length(item) for item in captured["right_labels"] if item]
     assert len(set(widths)) == 1
     assert "\x1b[48;5;178m" in captured["right_labels"][2]
+
+
+def test_RQMD_interactive_021cad_status_menu_shows_custom_priorities_beyond_shortcuts() -> None:
+    captured: dict[str, object] = {}
+    custom_priorities = [
+        {"name": "Critical", "shortcode": "p0", "emoji": "🔴"},
+        {"name": "High", "shortcode": "p1", "emoji": "🟠"},
+        {"name": "Medium", "shortcode": "p2", "emoji": "🟡"},
+        {"name": "Low", "shortcode": "p3", "emoji": "🟢"},
+        {"name": "Eventually", "shortcode": "p4", "emoji": "🔵"},
+        {"name": "Someday", "shortcode": "p5", "emoji": "⚪"},
+        {"name": "Deep Backlog", "shortcode": "p6", "emoji": "🟣"},
+        {"name": "Icebox", "shortcode": "p7", "emoji": "🟤"},
+    ]
+
+    def fake_select(title, options, **kwargs):
+        captured["extra_keys"] = kwargs.get("extra_keys")
+        captured["footer_legend"] = kwargs.get("footer_legend")
+        captured["compact_footer"] = kwargs.get("compact_footer")
+        captured["right_labels"] = list(kwargs.get("option_right_labels") or [])
+        return "up"
+
+    requirement = {
+        "id": "RQMD-INTERACTIVE-007",
+        "title": "Status menu custom priority preview",
+        "status": "💡 Proposed",
+        "priority": "🔵 Eventually",
+    }
+
+    configure_priority_catalog(custom_priorities)
+    try:
+        result = cli.workflows_mod._prompt_for_requirement_action(
+            requirement,
+            "status",
+            fake_select,
+        )
+    finally:
+        configure_priority_catalog(None)
+
+    assert result == ("up", None)
+    right_labels_plain = [re.sub(r"\x1b\[[0-9;]*m", "", item).rstrip() for item in captured["right_labels"]]
+    assert right_labels_plain == [
+        "  !) 🔴 Critical",
+        "  @) 🟠 High",
+        "  #) 🟡 Medium",
+        "  $) 🟢 Low",
+        "→ %) 🔵 Eventually",
+        "  ^) ⚪ Someday",
+        "  &) 🟣 Deep Backlog",
+        "  *) 🟤 Icebox",
+    ]
+    assert captured["extra_keys"]["%"] == "priority-shortcut:🔵 Eventually"
+    assert captured["extra_keys"]["^"] == "priority-shortcut:⚪ Someday"
+    assert captured["extra_keys"]["&"] == "priority-shortcut:🟣 Deep Backlog"
+    assert captured["extra_keys"]["*"] == "priority-shortcut:🟤 Icebox"
+    assert "!=p0" in captured["footer_legend"]
+    assert "@=p1" in captured["footer_legend"]
+    assert "#=p2" in captured["footer_legend"]
+    assert "$=p3" in captured["footer_legend"]
+    assert "%=p4" in captured["footer_legend"]
+    assert "^=p5" in captured["footer_legend"]
+    assert "&=p6" in captured["footer_legend"]
+    assert "*=p7" in captured["footer_legend"]
+    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..*=p7 | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
 
 
 def test_RQMD_interactive_021cc_split_status_and_priority_highlights(monkeypatch, capsys) -> None:
@@ -1239,6 +1308,7 @@ def test_RQMD_interactive_021cc_split_status_and_priority_highlights(monkeypatch
         selected_option_index=0,
         selected_option_bg="\x1b[48;5;27m",
         separate_right_label_background=True,
+        right_label_layout="adjacent",
     )
     rendered = "\n".join(rendered_lines)
 
@@ -1247,7 +1317,31 @@ def test_RQMD_interactive_021cc_split_status_and_priority_highlights(monkeypatch
     assert "→ @) \x1b[43m🟠 P1 - High\x1b[0m" in rendered
 
 
-def test_RQMD_interactive_021cb_priority_shortcut_advances_to_next_requirement(tmp_path: Path) -> None:
+def test_RQMD_interactive_021cd_adjacent_right_labels_stay_near_left_column(monkeypatch) -> None:
+    keys = iter(["q"])
+    rendered_lines: list[str] = []
+
+    monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
+    monkeypatch.setattr(menus.click, "echo", lambda message="", *args, **kwargs: rendered_lines.append(message if isinstance(message, str) else str(message)))
+
+    result = menus.select_from_menu(
+        "Status",
+        ["💡 Proposed", "🔧 Implemented"],
+        allow_paging_nav=False,
+        option_right_labels=[
+            "  !) 🔴 Critical",
+            "→ @) 🟠 High",
+        ],
+        right_label_layout="adjacent",
+    )
+
+    assert result is None
+    first_option_line = next(line for line in rendered_lines if "1) 💡 Proposed" in line)
+    plain_line = re.sub(r"\x1b\[[0-9;]*m", "", first_option_line)
+    assert re.search(r"1\) 💡 Proposed\s{2,12}!\) 🔴 Critical", plain_line)
+
+
+def test_RQMD_interactive_021cb_priority_shortcut_keeps_current_requirement_visible(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1280,8 +1374,8 @@ def test_RQMD_interactive_021cb_priority_shortcut_advances_to_next_requirement(t
             if state["requirement_calls"] == 1:
                 return 0
             return "up"
-        if title.startswith("Set status for "):
-            requirement_id = title.removeprefix("Set status for ").splitlines()[0]
+        if title.startswith("Choose Status or Priority for "):
+            requirement_id = title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix(".")
             visits.append(requirement_id)
             if len(visits) == 1:
                 return "priority-shortcut:🟠 P1 - High"
@@ -1304,7 +1398,7 @@ def test_RQMD_interactive_021cb_priority_shortcut_advances_to_next_requirement(t
     updated_text = domain_file.read_text(encoding="utf-8")
 
     assert result == 0
-    assert visits == ["AC-DEMO-002", "AC-DEMO-001"]
+    assert visits == ["AC-DEMO-002", "AC-DEMO-002"]
     assert "### AC-DEMO-002: Second\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High" in updated_text
 
 
@@ -1924,7 +2018,7 @@ Scope: demo.
     first_actions = iter(["nav-next", None])
 
     def first_select(title, options, **kwargs):
-        if title.startswith("Set status for"):
+        if title.startswith("Choose Status or Priority for"):
             return next(first_actions)
         return None
 
@@ -1953,7 +2047,7 @@ Scope: demo.
     seen_titles: list[str] = []
 
     def second_select(title, options, **kwargs):
-        if title.startswith("Set status for"):
+        if title.startswith("Choose Status or Priority for"):
             seen_titles.append(title)
             return None
         return None
@@ -2002,7 +2096,7 @@ Scope: demo.
     actions = iter(["nav-last", "nav-first", "nav-next", "nav-prev", "up"])
 
     def fake_select(title, options, **kwargs):
-        if title.startswith("Set status for"):
+        if title.startswith("Choose Status or Priority for"):
             seen_titles.append(title)
             return next(actions)
         return None
@@ -2045,7 +2139,7 @@ Scope: demo.
     actions = iter(["nav-last", "nav-next", "up"])
 
     def fake_select(title, options, **kwargs):
-        if title.startswith("Set status for"):
+        if title.startswith("Choose Status or Priority for"):
             return next(actions)
         return None
 
@@ -2062,7 +2156,159 @@ Scope: demo.
 
     output = capsys.readouterr().out
     assert result == 0
-    assert "No more 🔧 Implemented requirements." in output
+    assert "No more 🔧 Implemented requirements in this session list." in output
+
+
+def test_RQMD_interactive_filtered_priority_walk_keeps_stable_membership_after_priority_change(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    domain_file = domain / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+
+### AC-DEMO-002: Second
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+""",
+        encoding="utf-8",
+    )
+
+    seen_ids: list[str] = []
+    actions = iter(["apply", "nav-next", "up"])
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Choose Status or Priority for "):
+            seen_ids.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            action = next(actions)
+            if action == "apply":
+                return 2
+            return action
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    result = cli.filtered_priority_interactive_loop(
+        repo_root=repo,
+        domain_files=[domain_file],
+        target_priority="🟠 P1 - High",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+        resume_filter=False,
+        priority_mode=True,
+    )
+
+    updated_text = domain_file.read_text(encoding="utf-8")
+
+    assert result == 0
+    assert seen_ids == ["AC-DEMO-001 [1/2]", "AC-DEMO-001 [1/2]", "AC-DEMO-002 [2/2]"]
+    assert "### AC-DEMO-001: First\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium" in updated_text
+
+
+def test_RQMD_interactive_filtered_status_walk_keeps_current_requirement_visible_after_update(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    domain_file = domain / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 🔧 Implemented
+
+### AC-DEMO-002: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    seen_ids: list[str] = []
+    actions = iter([2, "nav-next", "up"])
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Choose Status or Priority for "):
+            seen_ids.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            return next(actions)
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    result = cli.filtered_interactive_loop(
+        repo_root=repo,
+        domain_files=[domain_file],
+        target_status="🔧 Implemented",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+        resume_filter=False,
+    )
+
+    updated_text = domain_file.read_text(encoding="utf-8")
+
+    assert result == 0
+    assert seen_ids == ["AC-DEMO-001 [1/2]", "AC-DEMO-001 [1/2]", "AC-DEMO-002 [2/2]"]
+    assert "### AC-DEMO-001: First\n- **Status:** ✅ Verified" in updated_text
+
+
+def test_RQMD_interactive_019_focused_walk_keeps_current_requirement_visible_after_update(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    domain_file = domain / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 💡 Proposed
+
+### AC-DEMO-002: Second
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    selected_items = [
+        (domain_file, {"id": "AC-DEMO-001", "status": "💡 Proposed", "title": "First"}),
+        (domain_file, {"id": "AC-DEMO-002", "status": "💡 Proposed", "title": "Second"}),
+    ]
+    seen_ids: list[str] = []
+    actions = iter([2, "nav-next", "up"])
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Choose Status or Priority for "):
+            seen_ids.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            return next(actions)
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    result = cli.focused_target_interactive_loop(
+        repo_root=repo,
+        domain_files=[domain_file],
+        selected_items=selected_items,
+        target_tokens=["AC-DEMO-001", "AC-DEMO-002"],
+        emoji_columns=False,
+        id_prefixes=("AC",),
+        resume_filter=False,
+        include_status_emojis=True,
+        priority_mode=False,
+        include_priority_summary=False,
+    )
+
+    updated_text = domain_file.read_text(encoding="utf-8")
+
+    assert result == 0
+    assert seen_ids == ["AC-DEMO-001 [1/2]", "AC-DEMO-001 [1/2]", "AC-DEMO-002 [2/2]"]
+    assert "### AC-DEMO-001: First\n- **Status:** ✅ Verified" in updated_text
 
 
 def test_RQMD_interactive_filtered_walk_project_local_state_dir_writes_under_repo(tmp_path: Path) -> None:
@@ -2294,9 +2540,9 @@ def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkey
 
     # File menu under default descending name sort: j (page2), k (page1), j (page2), 2 (pick file 01)
     # Requirement menu: 1 (pick first requirement)
-    # Status menus: 2 (Implemented), 3 (Verified)
+    # Status menus: 2 (Implemented), j (next requirement), 3 (Verified)
     # Then unwind: u (from wrapped status menu), u (from requirement menu), q (quit file menu)
-    keys = iter(["j", "k", "j", "2", "1", "2", "3", "u", "u", "q"])
+    keys = iter(["j", "k", "j", "2", "1", "2", "j", "3", "u", "u", "q"])
     monkeypatch.setattr(menus.click, "getchar", lambda: next(keys))
 
     runner = CliRunner()

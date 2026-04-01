@@ -16,57 +16,27 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (
-    DEFAULT_ID_PREFIXES,
-    MENU_REFRESH,
-    MENU_TOGGLE_DIRECTION,
-    MENU_TOGGLE_SORT,
-    PRIORITY_ORDER,
-    STATUS_ORDER,
-    STATUS_PATTERN,
-)
+from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
+                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
+                        PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
 from .history import HistoryManager
-from .markdown_io import (
-    display_name_from_h1,
-    format_path_display,
-    iter_domain_files,
-    scope_and_body_from_file,
-)
-from .menus import (
-    apply_background_preserving_styles,
-    right_align_menu_suffix,
-    select_from_menu,
-    truncate_text,
-    visible_length,
-)
+from .markdown_io import (display_name_from_h1, format_path_display,
+                          iter_domain_files, scope_and_body_from_file)
+from .menus import (apply_background_preserving_styles,
+                    right_align_menu_suffix, select_from_menu, truncate_text,
+                    visible_length)
 from .priority_model import coerce_priority_label, style_priority_label
-from .req_parser import (
-    collect_sub_sections,
-    extract_requirement_block_with_lines,
-    find_requirement_by_id,
-    normalize_sub_domain_name,
-    parse_requirements,
-)
-from .status_model import (
-    build_color_rollup_text,
-    status_emoji,
-    style_status_label,
-    style_status_line,
-)
-from .status_update import (
-    format_criterion_panel,
-    prompt_for_blocked_reason,
-    prompt_for_deprecated_reason,
-    prompt_for_links_flow,
-    update_criterion_status,
-)
-from .summary import (
-    collect_summary_rows,
-    count_priorities,
-    count_statuses,
-    print_summary_table,
-    process_file,
-)
+from .req_parser import (collect_sub_sections,
+                         extract_requirement_block_with_lines,
+                         find_requirement_by_id, normalize_sub_domain_name,
+                         parse_requirements)
+from .status_model import (build_color_rollup_text, status_emoji,
+                           style_status_label, style_status_line)
+from .status_update import (format_criterion_panel, prompt_for_blocked_reason,
+                            prompt_for_deprecated_reason,
+                            prompt_for_links_flow, update_criterion_status)
+from .summary import (collect_summary_rows, count_priorities, count_statuses,
+                      print_summary_table, process_file)
 
 SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
     "standard": {
@@ -366,7 +336,9 @@ def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts
         )
         base = f"keys: {status_shortcuts}"
     if include_priority_shortcuts:
-        base += " | !=p0 | @=p1 | #=p2 | $=p3"
+        shortcut_legend = _priority_shortcut_footer_legend()
+        if shortcut_legend:
+            base += f" | {shortcut_legend}"
     base += " | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
     if not allow_nav:
         return base
@@ -377,7 +349,9 @@ def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts
         )
         nav = f"keys: {status_shortcuts}"
     if include_priority_shortcuts:
-        nav += " | !=p0 | @=p1 | #=p2 | $=p3"
+        shortcut_legend = _priority_shortcut_footer_legend()
+        if shortcut_legend:
+            nav += f" | {shortcut_legend}"
     return nav + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
 
 
@@ -385,11 +359,15 @@ def _build_requirement_action_compact_footer(allow_nav: bool, include_priority_s
     if not allow_nav:
         base = "keys: 1-9 select"
         if include_priority_shortcuts:
-            base += " | !=p0..$=p3"
+            shortcut_legend = _priority_shortcut_compact_footer_legend()
+            if shortcut_legend:
+                base += f" | {shortcut_legend}"
         return base + " | :=help | u=up | q=quit"
     base = "keys: 1-9 select"
     if include_priority_shortcuts:
-        base += " | !=p0..$=p3"
+        shortcut_legend = _priority_shortcut_compact_footer_legend()
+        if shortcut_legend:
+            base += f" | {shortcut_legend}"
     return base + " | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
 
 
@@ -874,7 +852,7 @@ def _priority_highlight_bg(priority: str) -> str:
 
 
 ENTRY_FIELDS = ("status", "priority", "flagged", "links")
-PRIORITY_SHORTCUT_KEYS = ("!", "@", "#", "$")
+PRIORITY_SHORTCUT_KEYS = ("!", "@", "#", "$", "%", "^", "&", "*")
 
 
 def _next_entry_field(current: str) -> str:
@@ -892,6 +870,34 @@ def _priority_shortcut_bindings() -> dict[str, str]:
             break
         bindings[key] = PRIORITY_ORDER[index][0]
     return bindings
+
+
+def _priority_shortcut_footer_legend() -> str:
+    parts = [f"{key}={slug}" for key, (_label, slug) in zip(PRIORITY_SHORTCUT_KEYS, PRIORITY_ORDER)]
+    return " | ".join(parts)
+
+
+def _priority_shortcut_compact_footer_legend() -> str:
+    bindings = _priority_shortcut_bindings()
+    if not bindings:
+        return ""
+    keys = list(bindings)
+    labels = list(bindings.values())
+    if len(bindings) == 1:
+        key = keys[0]
+        return f"{key}={_priority_slug_for_footer(labels[0])}"
+    first_key = keys[0]
+    last_key = keys[-1]
+    first_slug = _priority_slug_for_footer(labels[0])
+    last_slug = _priority_slug_for_footer(labels[-1])
+    return f"{first_key}={first_slug}..{last_key}={last_slug}"
+
+
+def _priority_slug_for_footer(label: str) -> str:
+    for candidate_label, slug in PRIORITY_ORDER:
+        if candidate_label == label:
+            return slug
+    return label
 
 
 def _priority_shortcut_help_labels() -> dict[str, str]:
@@ -919,26 +925,31 @@ def _build_status_priority_preview(
         current_priority = ""
     raw_right_labels: list[tuple[str, bool, str]] = []
 
-    for index, _status in enumerate(STATUS_ORDER):
-        if index >= len(PRIORITY_ORDER) or index >= len(PRIORITY_SHORTCUT_KEYS):
+    row_count = max(len(STATUS_ORDER), len(PRIORITY_ORDER))
+    for index in range(row_count):
+        if index >= len(PRIORITY_ORDER):
             raw_right_labels.append(("", False, ""))
             continue
 
         priority_label = PRIORITY_ORDER[index][0]
         is_current = priority_label == current_priority
         marker = "→" if is_current else " "
-        shortcut = PRIORITY_SHORTCUT_KEYS[index]
-        raw_right_labels.append(
-            (f"{marker} {shortcut}) {style_priority_label(priority_label)}", is_current, priority_label)
-        )
+        shortcut = PRIORITY_SHORTCUT_KEYS[index] if index < len(PRIORITY_SHORTCUT_KEYS) else None
+        prefix = f"{marker} {shortcut}) " if shortcut is not None else f"{marker}    "
+        raw_right_labels.append((f"{prefix}{style_priority_label(priority_label)}", is_current, priority_label))
 
+    priority_heading = click.style("Priority", bold=True)
+    status_heading = click.style("Status", bold=True)
     column_width = max(
-        [visible_length("setting: priority")] + [visible_length(label) for label, _is_current, _priority_label in raw_right_labels]
+        [visible_length("Priority")] + [visible_length(label) for label, _is_current, _priority_label in raw_right_labels]
     )
-    term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
-    left_title = "setting: status"
-    right_title = f"{'setting: priority'}{' ' * max(0, column_width - visible_length('setting: priority'))}"
-    spacer = max(2, term_width - visible_length(left_title) - column_width)
+    left_title = status_heading
+    left_column_width = max(
+        visible_length(f"  {index + 1}) {label}")
+        for index, (label, _slug) in enumerate(STATUS_ORDER)
+    )
+    right_title = f"{priority_heading}{' ' * max(0, column_width - visible_length('Priority'))}"
+    spacer = max(2, left_column_width - visible_length("Status") + 2)
     title = f"{left_title}{' ' * spacer}{right_title}"
 
     right_labels: list[str] = []
@@ -956,13 +967,14 @@ def _build_requirement_field_menu(
     active_field: str,
     title_suffix: str = "",
 ) -> tuple[str, list[str], list[str], int | None, str]:
+    chooser_title = f"Choose Status or Priority for {requirement['id']}{title_suffix}."
     if active_field == "flagged":
         labels = ["true", "false"]
         options = ["Flagged: true", "Flagged: false"]
         current_flagged = requirement.get("flagged")
         current_index = 0 if current_flagged is True else 1 if current_flagged is False else None
         highlight_bg = "\x1b[48;5;88m" if current_flagged is True else "\x1b[48;5;238m"
-        title = f"Set flagged for {requirement['id']}{title_suffix}\nsetting: flagged"
+        title = f"Set flagged for {requirement['id']}{title_suffix}\n{click.style('Flagged', bold=True)}"
         return title, labels, options, current_index, highlight_bg
 
     if active_field == "priority":
@@ -974,7 +986,7 @@ def _build_requirement_field_menu(
         except ValueError:
             current_index = None
         highlight_bg = _priority_highlight_bg(current_value)
-        title = f"Set priority for {requirement['id']}{title_suffix}\nsetting: priority"
+        title = f"{chooser_title}\n{click.style('Priority', bold=True)}"
         return title, labels, options, current_index, highlight_bg
 
     if active_field == "links":
@@ -983,7 +995,7 @@ def _build_requirement_field_menu(
         count_str = f"{link_count} link{'s' if link_count != 1 else ''}" if link_count else "no links"
         labels = ["manage"]
         options = [f"🔗 Manage links ({count_str})\u2026"]
-        title = f"Edit links for {requirement['id']}{title_suffix}\nsetting: links"
+        title = f"Edit links for {requirement['id']}{title_suffix}\n{click.style('Links', bold=True)}"
         return title, labels, options, None, "\x1b[48;5;25m"
 
     labels = [label for label, _ in STATUS_ORDER]
@@ -1003,7 +1015,7 @@ def _build_requirement_field_menu(
         highlight_bg = "\x1b[48;5;238m"
 
     priority_title, _option_right_labels = _build_status_priority_preview(requirement)
-    title = f"Set status for {requirement['id']}{title_suffix}\n{priority_title}"
+    title = f"{chooser_title}\n{priority_title}"
     return title, labels, options, current_index, highlight_bg
 
 
@@ -1044,6 +1056,7 @@ def _prompt_for_requirement_action(
         selected_option_bg=selected_bg,
         option_right_labels=option_right_labels,
         separate_right_label_background=include_priority_shortcuts,
+        right_label_layout="adjacent" if include_priority_shortcuts else "edge",
         footer_legend=_build_requirement_action_footer(allow_nav, include_priority_shortcuts=include_priority_shortcuts),
         compact_footer=_build_requirement_action_compact_footer(allow_nav, include_priority_shortcuts=include_priority_shortcuts),
         prefix_text=panel_text,
@@ -1555,11 +1568,12 @@ def focused_target_interactive_loop(
         )
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
-        if index < len(flat_list) - 1:
-            index += 1
-        else:
-            index = 0
-        save_current(flat_list, index)
+        flat_list = build_flat_list()
+        if not flat_list:
+            click.echo("No more requirements in the selected target list.")
+            return 0
+        refreshed_index = min(index, len(flat_list) - 1)
+        save_current(flat_list, refreshed_index)
 
 
 def interactive_update_loop(
@@ -1979,20 +1993,12 @@ def interactive_update_loop(
             )
             cur_id = str(selected_criterion["id"])
             new_idx = next((i for i, c in enumerate(criteria_after) if str(c["id"]) == cur_id), criterion_index)
-            if new_idx < len(criteria_after) - 1:
-                criterion_index = new_idx + 1
-                del history[history_pos + 1:]
-                history.append(criterion_index)
-                history_pos = len(history) - 1
+            if criteria_after:
+                criterion_index = new_idx
+                history[history_pos] = criterion_index
             else:
-                if criteria_after:
-                    criterion_index = 0
-                    del history[history_pos + 1:]
-                    history.append(criterion_index)
-                    history_pos = len(history) - 1
-                else:
-                    criterion_index = None
-                continue
+                criterion_index = None
+            continue
 
 
 def filtered_interactive_loop(
@@ -2069,12 +2075,20 @@ def filtered_interactive_loop(
                 return i
         return 0
 
+    flat_list = [
+        (path, requirement)
+        for path in domain_files
+        for requirement in parse_requirements(path, id_prefixes=id_prefixes)
+        if str(requirement.get("status") or "") == target_status
+    ]
+    membership = [(path, str(requirement["id"])) for path, requirement in flat_list]
+
     def build_flat_list() -> list[tuple[Path, dict[str, object]]]:
         result: list[tuple[Path, dict[str, object]]] = []
-        for path in domain_files:
-            for crit in parse_requirements(path, id_prefixes=id_prefixes):
-                if crit["status"] == target_status:
-                    result.append((path, crit))
+        for path, requirement_id in membership:
+            refreshed = find_requirement_by_id(path, requirement_id, id_prefixes=id_prefixes)
+            if refreshed:
+                result.append((path, refreshed))
         return result
 
     flat_list = build_flat_list()
@@ -2092,7 +2106,7 @@ def filtered_interactive_loop(
     while True:
         flat_list = build_flat_list()
         if not flat_list:
-            click.echo("No more requirements with this status.")
+            click.echo("All filtered requirements in this session list are unavailable.")
             return 0
         index = min(index, len(flat_list) - 1)
         save_current(flat_list, index)
@@ -2155,7 +2169,7 @@ def filtered_interactive_loop(
             if index < len(flat_list) - 1:
                 index += 1
             else:
-                click.echo(f"No more {target_status} requirements.")
+                click.echo(f"No more {target_status} requirements in this session list.")
                 save_current(flat_list, index)
                 continue
             save_current(flat_list, index)
@@ -2213,10 +2227,11 @@ def filtered_interactive_loop(
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
         flat_after = build_flat_list()
-        if target_entry_field == "status" and changed and selected_value != target_status:
-            if not flat_after:
-                click.echo("All filtered requirements reviewed.")
-                return 0
+        if flat_after:
+            save_current(flat_after, min(index, len(flat_after) - 1))
+        else:
+            click.echo("All filtered requirements in this session list are unavailable.")
+            return 0
 
 
 def filtered_priority_interactive_loop(
@@ -2293,12 +2308,20 @@ def filtered_priority_interactive_loop(
                 return index
         return 0
 
+    flat_list = [
+        (path, requirement)
+        for path in domain_files
+        for requirement in parse_requirements(path, id_prefixes=id_prefixes)
+        if str(requirement.get("priority") or "") == target_priority
+    ]
+    membership = [(path, str(requirement["id"])) for path, requirement in flat_list]
+
     def build_flat_list() -> list[tuple[Path, dict[str, object]]]:
         result: list[tuple[Path, dict[str, object]]] = []
-        for path in domain_files:
-            for crit in parse_requirements(path, id_prefixes=id_prefixes):
-                if crit.get("priority") == target_priority:
-                    result.append((path, crit))
+        for path, requirement_id in membership:
+            refreshed = find_requirement_by_id(path, requirement_id, id_prefixes=id_prefixes)
+            if refreshed:
+                result.append((path, refreshed))
         return result
 
     flat_list = build_flat_list()
@@ -2379,7 +2402,7 @@ def filtered_priority_interactive_loop(
             if index < len(flat_list) - 1:
                 index += 1
             else:
-                click.echo(f"No more {target_priority} requirements.")
+                click.echo(f"No more {target_priority} requirements in this session list.")
                 save_current(flat_list, index)
                 continue
             save_current(flat_list, index)
@@ -2437,23 +2460,11 @@ def filtered_priority_interactive_loop(
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
         flat_after = build_flat_list()
-        if target_entry_field == "priority" and changed and selected_value != target_priority:
-            if not flat_after:
-                click.echo("All filtered requirements reviewed.")
-                return 0
-            index = min(index, len(flat_after) - 1)
-            save_current(flat_after, index)
+        if flat_after:
+            save_current(flat_after, min(index, len(flat_after) - 1))
         else:
-            if flat_after and index < len(flat_after) - 1:
-                index += 1
-                save_current(flat_after, index)
-            elif flat_after:
-                click.echo("End of filtered list, wrapping to first.")
-                index = 0
-                save_current(flat_after, index)
-            else:
-                click.echo("All filtered requirements reviewed.")
-                return 0
+            click.echo("All filtered requirements in this session list are unavailable.")
+            return 0
 
 
 def lookup_criterion_interactive(

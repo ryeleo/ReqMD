@@ -24,16 +24,9 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (
-    ANSI_ESCAPE_PATTERN,
-    ANSI_RESET,
-    MENU_NEXT,
-    MENU_PAGE_SIZE,
-    MENU_PREV,
-    MENU_QUIT,
-    MENU_UP,
-    ZEBRA_BG,
-)
+from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, MENU_NEXT,
+                        MENU_PAGE_SIZE, MENU_PREV, MENU_QUIT, MENU_UP,
+                        ZEBRA_BG)
 from .render_heuristics import RenderModeController
 
 _SCREEN_WRITE_ENABLED = False
@@ -388,6 +381,7 @@ def select_from_menu(
     initial_window_start: int | None = None,
     selected_option_bg: str | None = None,
     separate_right_label_background: bool = False,
+    right_label_layout: str = "edge",
     footer_legend: str | None = None,
     compact_footer: str | None = None,
     help_legend: str | None = None,
@@ -412,6 +406,7 @@ def select_from_menu(
         initial_window_start: Optional initial top-of-window global index.
         selected_option_bg: Background ANSI code for selected option.
         separate_right_label_background: If True, render any right-hand label styling independently from the left option highlight.
+        right_label_layout: Layout for right-hand labels: "edge" keeps them terminal-right aligned, "adjacent" keeps them close to the left column.
         footer_legend: Optional legend text displayed at menu footer, or full help legend when compact_footer is provided.
         compact_footer: Optional compact footer shown during normal menu rendering.
         help_legend: Optional full help legend shown when help is toggled open.
@@ -485,6 +480,17 @@ def select_from_menu(
             click.echo(title)
             if show_page_indicator and total_pages > 1:
                 click.echo(f"Page {current_page}/{total_pages}")
+            adjacent_right_column_width = 0
+            if option_right_labels and right_label_layout == "adjacent":
+                for idx, option in enumerate(page_items):
+                    global_idx = start + idx
+                    if global_idx >= len(option_right_labels):
+                        continue
+                    if not option_right_labels[global_idx]:
+                        continue
+                    selection_marker = "→" if current_selected_index is not None and global_idx == current_selected_index else " "
+                    left = f"{selection_marker} {idx + 1}) {option}"
+                    adjacent_right_column_width = max(adjacent_right_column_width, visible_length(left))
             for idx, option in enumerate(page_items):
                 global_idx = start + idx
                 selection_marker = "→" if current_selected_index is not None and global_idx == current_selected_index else " "
@@ -493,7 +499,10 @@ def select_from_menu(
                 if option_right_labels and global_idx < len(option_right_labels):
                     raw_right = option_right_labels[global_idx]
                     right = raw_right if separate_right_label_background or ANSI_ESCAPE_PATTERN.search(raw_right) else click.style(raw_right, dim=True)
-                    pad = term_width - visible_length(left) - visible_length(right)
+                    if right_label_layout == "adjacent" and raw_right:
+                        pad = max(2, adjacent_right_column_width - visible_length(left) + 2)
+                    else:
+                        pad = term_width - visible_length(left) - visible_length(right)
                     if pad >= 2:
                         if _COLORIZED_REDRAW_ENABLED and current_selected_index is not None and global_idx == current_selected_index and selected_option_bg:
                             left = apply_background_preserving_styles(left, selected_option_bg)

@@ -288,8 +288,12 @@ def prompt_for_priority() -> str:
     click.echo("Select a priority:")
     for i, (label, _) in enumerate(PRIORITY_ORDER, 1):
         click.echo(f"  {i}. {label}")
-    
-    choice = click.prompt("Priority choice (1-4, or press Enter to skip)", default="", show_default=False).strip()
+
+    choice = click.prompt(
+        f"Priority choice (1-{len(PRIORITY_ORDER)}, or press Enter to skip)",
+        default="",
+        show_default=False,
+    ).strip()
     if not choice:
         return ""
     

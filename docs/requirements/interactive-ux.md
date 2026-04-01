@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 9🔧 18✅ 0⛔ 4🗑️
+Summary: 4💡 9🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -51,6 +51,8 @@ Summary: 3💡 9🔧 18✅ 0⛔ 4🗑️
 - So that `k` returns to the previously visited requirement context.
 - So that filtered walkthroughs support `g` (beginning) and `G` (end) jump shortcuts.
 - So that reaching the end of a filtered walkthrough with next-navigation keeps the session open and displays a clear "no more <target> requirements" message.
+- So that once a filtered walkthrough session starts, its membership remains stable for that session even if an edited requirement no longer matches the original status or priority filter, allowing immediate backtracking to the just-edited requirement.
+- So that editing a requirement during a filtered walkthrough does not implicitly advance away from that requirement; advancing remains an explicit next-navigation action.
 
 ### RQMD-INTERACTIVE-005: Sort toggles
 - **Status:** 🗑️ Deprecated
@@ -88,18 +90,19 @@ Summary: 3💡 9🔧 18✅ 0⛔ 4🗑️
 - So that blue/proposed, green/completed, normal/in-progress, and dimmed/blocked+deprecated buckets are visually distinct
 - So that zebra striping remains visible even when inline ANSI status colors are present
 
-### RQMD-INTERACTIVE-007: Auto-advance after update
+### RQMD-INTERACTIVE-007: Keep current requirement visible after update
 - **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
-- As a rqmd user when a requirement status is changed in interactive flow
+- As a rqmd user when a requirement status or priority is changed in interactive flow
 - I want the update to succeed
-- So that the interface advances to the next requirement
+- So that the currently edited requirement remains visible after the change
+- So that I can explicitly press down arrow or `j` when I am ready to move to the next requirement
 - So that summary table refreshes with updated counts.
-- So that status-first entry panels can also assign priority directly with `!`, `@`, `#`, and `$` for `P0` through `P3` without toggling away from the status panel.
+- So that status-first entry panels can also assign priority directly with shifted number-row shortcuts such as `!`, `@`, `#`, `$`, `%`, `^`, `&`, and `*` for the first configured priorities without toggling away from the status panel.
 - So that the status-first view renders those priority choices as a clearly aligned second column, with the currently assigned priority visibly marked even while status remains the active selection.
 - So that the priority preview column stays left-aligned within its own fixed-width block, rather than jittering by priority-label length.
 - So that the active status highlight and the current-priority highlight render independently, allowing users to see both selections at once.
-- So that those direct priority shortcuts also auto-advance to the next requirement, while `k` still makes it easy to step back and set status afterward if needed.
+- So that those direct priority shortcuts update the current requirement in place without auto-advancing away from it.
 
 ### RQMD-INTERACTIVE-008: Optional reason prompts
 - **Status:** ✅ Verified
@@ -150,7 +153,7 @@ Summary: 3💡 9🔧 18✅ 0⛔ 4🗑️
 - As a rqmd user when I only want to work a specific subset of requirements
 - I want to provide an explicit target list at CLI (via positional args or `--targets-file`) and launch a focused interactive walk
 - So that the workflow behaves similarly to `--status` navigation but uses user-provided membership instead of status-based filtering.
-- So that `j`/`k` traversal, resume behavior, and update flows work consistently within the explicit list scope.
+- So that `j`/`k` traversal, resume behavior, and update flows work consistently within the explicit list scope, including keeping the edited requirement visible until the user explicitly navigates onward.
 - So that target lists can mix requirement IDs and domain identifiers (filename, stem, or display name), where domain tokens expand deterministically into that domain's requirements.
 - So that positional arguments and `--targets-file` use the same token parser, expansion rules, ordering semantics, duplicate handling, and validation behavior.
 - So that missing/invalid tokens are reported clearly before entering the walk.
@@ -362,3 +365,13 @@ colors:
 - So that the action targets the current requirement heading line, or the closest stable source location for that requirement, in the active workspace.
 - So that the UI surfaces the shortcut clearly and reports a graceful fallback when VS Code integration is unavailable.
 - So that after opening the editor location I can return to rqmd without losing my interactive context.
+
+### RQMD-INTERACTIVE-031: Open linked requirement references from interactive detail view
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I am reading a requirement in the interactive detail view and it references another local requirement ID
+- I want to click or otherwise activate that referenced requirement link and have rqmd offer to open the referenced requirement immediately
+- So that I can jump quickly to related requirements such as `See also` links, blocking links, or other cross-references without manually searching by ID.
+- So that rqmd recognizes repo-local markdown links and inline requirement-ID references that resolve to another requirement in the current catalog.
+- So that opening the linked requirement keeps me inside the interactive workflow and preserves enough history that I can return to the originating requirement after making related updates.
+- So that unresolved or external links fail gracefully with clear feedback instead of interrupting the current review flow.
