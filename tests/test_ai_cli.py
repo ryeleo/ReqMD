@@ -169,7 +169,39 @@ def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_pat
     assert payload["strategy"]["selected"] == "starter-scaffold"
     assert payload["interview"]["enabled"] is True
     assert payload["handoff_prompt"]
-    assert payload["suggested_commands"]["init_preview"]
+    assert payload["suggested_commands"]["init_preview"].startswith("rqmd-ai init --chat --json")
+    assert payload["suggested_commands"]["bundle_preview"].startswith("rqmd-ai install --bundle-preset full --chat --json --dry-run")
+    assert payload["suggested_commands"]["init_preview_artifact"].startswith("rqmd-ai init --chat --json")
+    assert "--json-output-file" in payload["suggested_commands"]["init_preview_artifact"]
+    assert "--json-output-file" in payload["handoff_prompt"]
+    assert "uv run" not in payload["handoff_prompt"]
+    _assert_schema_version(payload)
+
+
+def test_RQMD_AI_001g_json_output_file_writes_artifact_without_redirect(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    output_path = repo / "tmp" / "rqmd-init-preview.json"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json-output-file",
+            str(output_path),
+            "init",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Paste this into your AI chat:" in result.output
+    assert output_path.exists()
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["mode"] == "init-chat"
+    assert payload["workflow_mode"] == "init"
+    assert payload["interview"]["enabled"] is True
     _assert_schema_version(payload)
 
 

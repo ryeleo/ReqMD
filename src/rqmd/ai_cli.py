@@ -331,6 +331,21 @@ def _shell_join(parts: list[str]) -> str:
     return " ".join(shlex.quote(part) for part in parts if str(part).strip())
 
 
+def _default_json_artifact_path(repo_root: Path, name: str) -> Path:
+    return (repo_root / "tmp" / f"{name}.json").resolve()
+
+
+def _serialize_json_payload(payload: dict[str, object]) -> str:
+    if "schema_version" not in payload:
+        payload["schema_version"] = JSON_SCHEMA_VERSION
+    return dumps_json(payload, indent=2)
+
+
+def _write_json_payload_file(payload: dict[str, object], output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(_serialize_json_payload(payload) + "\n", encoding="utf-8")
+
+
 def _resolve_init_requirements_dir(repo_root: Path, requirements_dir_input: str | None) -> Path:
     rules = _load_legacy_init_rules()
     criteria_dir = Path(requirements_dir_input or str(rules["default_requirements_dir"]))
@@ -491,8 +506,9 @@ def _build_rqmd_ai_init_command(
     chat_mode: bool,
     force_legacy: bool,
     apply: bool = False,
+    json_output_file: Path | None = None,
 ) -> str:
-    parts = ["uv", "run", "rqmd-ai", "init"]
+    parts = ["rqmd-ai", "init"]
     if chat_mode:
         parts.append("--chat")
     parts.append("--json")
@@ -505,24 +521,27 @@ def _build_rqmd_ai_init_command(
         parts.extend(["--id-namespace", prefix])
     if apply:
         parts.append("--write")
+    if json_output_file is not None:
+        parts.extend(["--json-output-file", str(json_output_file)])
     return _shell_join(parts)
 
 
-def _build_bundle_follow_up_command(repo_root: Path) -> str:
+def _build_bundle_follow_up_command(repo_root: Path, *, json_output_file: Path | None = None) -> str:
+    parts = [
+        "rqmd-ai",
+        "install",
+        "--bundle-preset",
+        "full",
+        "--chat",
+        "--json",
+        "--dry-run",
+        "--project-root",
+        str(repo_root),
+    ]
+    if json_output_file is not None:
+        parts.extend(["--json-output-file", str(json_output_file)])
     return _shell_join(
-        [
-            "uv",
-            "run",
-            "rqmd-ai",
-            "install",
-            "--bundle-preset",
-            "full",
-            "--chat",
-            "--json",
-            "--dry-run",
-            "--project-root",
-            str(repo_root),
-        ]
+        parts
     )
 
 
@@ -534,29 +553,33 @@ def _build_init_handoff_prompt(
     strategy: dict[str, object],
     bundle_state: dict[str, object],
 ) -> str:
+    init_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-init-preview")
+    bundle_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-bundle-preview")
     lines = [
         f"You are helping initialize rqmd in the repository at {repo_root}.",
         "",
         f"1. Run `{init_command}`.",
-        "2. Read the JSON payload and report which init strategy was selected.",
-        "3. If `interview.question_groups` is present, ask the user the grouped follow-up questions in chat.",
-        "4. Rerun the same init command with repeated `--answer FIELD=VALUE` entries to apply the user's answers.",
-        "5. Review the proposed files with the user before writing anything.",
-        f"6. Apply only after explicit confirmation by running `{apply_command}`.",
+        f"2. If your terminal wrapper truncates stdout, rerun it as `{init_command} --json-output-file {shlex.quote(str(init_artifact_path))}` and read that file directly.",
+        "3. Read the JSON payload and report which init strategy was selected.",
+        "4. If `interview.question_groups` is present, ask the user the grouped follow-up questions in chat.",
+        "5. Rerun the same init command with repeated `--answer FIELD=VALUE` entries to apply the user's answers.",
+        "6. Review the proposed files with the user before writing anything.",
+        f"7. Apply only after explicit confirmation by running `{apply_command}`.",
     ]
 
     if not bool(bundle_state.get("installed")):
         bundle_command = _build_bundle_follow_up_command(repo_root)
         lines.extend(
             [
-                f"7. Because the rqmd Copilot bundle is currently `{bundle_state.get('state', 'absent')}`, also run `{bundle_command}`.",
-                "8. Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills before finishing setup.",
-                "9. Apply the bundle install only after the user confirms the preview.",
+                f"8. Because the rqmd Copilot bundle is currently `{bundle_state.get('state', 'absent')}`, also run `{bundle_command}`.",
+                f"9. If that preview is truncated too, rerun it as `{bundle_command} --json-output-file {shlex.quote(str(bundle_artifact_path))}` and read that file directly.",
+                "10. Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills before finishing setup.",
+                "11. Apply the bundle install only after the user confirms the preview.",
             ]
         )
-        final_step = 10
+        final_step = 12
     else:
-        final_step = 7
+        final_step = 8
 
     lines.extend(
         [
@@ -621,6 +644,9 @@ def _build_or_apply_init_payload(
         force_legacy=force_legacy,
         apply=True,
     )
+    init_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-init-preview")
+    apply_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-init-apply")
+    bundle_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-bundle-preview")
     payload["mode"] = "init-chat" if chat_mode and not apply else ("init-apply" if apply else "init-plan")
     payload["workflow_mode"] = "init"
     payload["strategy"] = strategy
@@ -641,6 +667,28 @@ def _build_or_apply_init_payload(
             "init_preview": init_command,
             "init_apply": apply_command,
             "bundle_preview": _build_bundle_follow_up_command(repo_root),
+            "init_preview_artifact": _build_rqmd_ai_init_command(
+                repo_root,
+                requirements_dir_input,
+                id_prefixes,
+                chat_mode=True,
+                force_legacy=force_legacy,
+                apply=False,
+                json_output_file=init_artifact_path,
+            ),
+            "init_apply_artifact": _build_rqmd_ai_init_command(
+                repo_root,
+                requirements_dir_input,
+                id_prefixes,
+                chat_mode=True,
+                force_legacy=force_legacy,
+                apply=True,
+                json_output_file=apply_artifact_path,
+            ),
+            "bundle_preview_artifact": _build_bundle_follow_up_command(
+                repo_root,
+                json_output_file=bundle_artifact_path,
+            ),
         }
     return payload
 
@@ -2385,11 +2433,12 @@ def _extract_domain_body(path: Path, id_prefixes: tuple[str, ...], max_chars: in
     }
 
 
-def _emit(payload: dict[str, object], json_output: bool) -> None:
+def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path | None = None) -> None:
+    if json_output_file is not None:
+        _write_json_payload_file(payload, json_output_file)
+
     if json_output:
-        if "schema_version" not in payload:
-            payload["schema_version"] = JSON_SCHEMA_VERSION
-        click.echo(dumps_json(payload, indent=2))
+        click.echo(_serialize_json_payload(payload))
         return
 
     mode = payload.get("mode", "unknown")
@@ -3294,6 +3343,13 @@ def _plan_or_apply_updates(
     help="Show the installed rqmd-ai version and editable source path when applicable.",
 )
 @click.option("--json", "--as-json", "json_output", is_flag=True, help="Emit machine-readable JSON output.")
+@click.option(
+    "--json-output-file",
+    "json_output_file",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Also write the JSON payload to a file. Useful when a terminal wrapper truncates stdout.",
+)
 @click.option("--show-guide", "guide", is_flag=True, help="Print onboarding guidance for rqmd-ai workflows.")
 @click.option(
     "--workflow-mode",
@@ -3389,6 +3445,7 @@ def _plan_or_apply_updates(
 def main(
     command_name: str | None,
     json_output: bool,
+    json_output_file: Path | None,
     guide: bool,
     workflow_mode: str,
     brainstorm_file: str | None,
@@ -3444,7 +3501,7 @@ def main(
             chat_mode=chat_mode,
             interview_answers=interview_answers,
         )
-        _emit(payload, json_output=json_output)
+        _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 
     if workflow_mode in {"init", "init-legacy"} and guide:
@@ -3460,6 +3517,7 @@ def main(
                 workflow_mode=workflow_mode,
             ),
             json_output=json_output,
+            json_output_file=json_output_file,
         )
         return
 
@@ -3479,7 +3537,7 @@ def main(
             interview_answers=interview_answers,
             force_legacy=force_legacy_init,
         )
-        _emit(payload, json_output=json_output)
+        _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 
     if workflow_mode == "init-legacy":
@@ -3497,7 +3555,7 @@ def main(
             chat_mode=chat_mode,
             interview_answers=interview_answers,
         )
-        _emit(payload, json_output=json_output)
+        _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 
     resolved_criteria_dir, _message = resolve_requirements_dir(repo_root, requirements_dir)
@@ -3524,7 +3582,7 @@ def main(
             action_spec=history_action,
             id_prefixes=id_prefixes,
         )
-        _emit(payload, json_output=json_output)
+        _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 
     if compare_refs:
@@ -3555,7 +3613,7 @@ def main(
                 json_output=json_output,
             )
         else:
-            _emit(payload, json_output=json_output)
+            _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 
     effective_repo_root, domain_files, history_source, history_tempdir, history_manager, resolved_history_entry = _resolve_history_view(
@@ -3609,7 +3667,7 @@ def main(
         )
         if history_tempdir is not None:
             history_tempdir.cleanup()
-        _emit(payload, json_output=json_output)
+        _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 
     if guide:
@@ -3623,6 +3681,7 @@ def main(
                 workflow_mode=workflow_mode,
             ),
             json_output=json_output,
+            json_output_file=json_output_file,
         )
         return
 
@@ -3638,7 +3697,7 @@ def main(
             apply=apply,
             file_scope=file_scope,
         )
-        _emit(payload, json_output=json_output)
+        _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 
     if export_ids or export_files or export_status:
@@ -3663,7 +3722,7 @@ def main(
             history_source=history_source,
             history_activity=history_activity,
         )
-        _emit(payload, json_output=json_output)
+        _emit(payload, json_output=json_output, json_output_file=json_output_file)
         if history_tempdir is not None:
             history_tempdir.cleanup()
         return
@@ -3678,6 +3737,7 @@ def main(
             workflow_mode=workflow_mode,
         ),
         json_output=json_output,
+        json_output_file=json_output_file,
     )
 
 
