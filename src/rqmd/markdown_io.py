@@ -17,6 +17,8 @@ import re
 import sys
 from pathlib import Path
 
+import yaml
+
 try:
     import click
 except ImportError:
@@ -521,6 +523,10 @@ def _render_init_template(template_name: str, values: dict[str, str]) -> str:
     for key, value in values.items():
         rendered = rendered.replace(f"{{{{{key}}}}}", value)
     return rendered
+
+
+def load_init_yaml(template_name: str) -> object:
+    return yaml.safe_load(_load_init_template(template_name))
 
 
 def _render_requirement_documents_section(entries: list[dict[str, str]]) -> str:

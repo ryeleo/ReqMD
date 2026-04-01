@@ -1459,6 +1459,17 @@ def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, 
     assert domain_focus_question["option_annotations"]["detected_from"]
     assert any(option["recommended"] is True for option in domain_focus_question["options"])
     assert domain_focus_question["option_annotations"]["default_checked_values"]
+    docs_review_question = next(
+        item for item in payload["interview"]["questions"] if item["field"] == "docs_review"
+    )
+    assert docs_review_question["label"] == "Docs review strategy"
+    assert "first-pass catalog" in docs_review_question["prompt"]
+    assert docs_review_question["custom_answer_prompt"] == "Add a custom docs-review note or rule."
+    assert any(
+        option["value"] == "use-current-docs"
+        and option["label"] == "Use the current docs as source material"
+        for option in docs_review_question["options"]
+    )
     assert payload["interview"]["detected_source_areas"]
 
 

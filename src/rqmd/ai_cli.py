@@ -42,6 +42,7 @@ from .history import HistoryManager
 from .json_speedups import dumps_json
 from .markdown_io import (discover_project_root, format_path_display,
                           initialize_requirements_scaffold, iter_domain_files,
+                          load_init_yaml,
                           preview_project_config_scaffold,
                           preview_requirements_scaffold,
                           render_legacy_issue_domain,
@@ -919,14 +920,30 @@ _LEGACY_INIT_CHAT_FIELDS: tuple[str, ...] = (
     "legacy_notes",
 )
 
+_INIT_INTERVIEW_CONFIG = load_init_yaml("init-interview.yml")
+if not isinstance(_INIT_INTERVIEW_CONFIG, dict):
+    raise click.ClickException("Invalid init interview config: expected a mapping in init-interview.yml.")
+
+_RAW_INTERVIEW_GROUP_LABELS = _INIT_INTERVIEW_CONFIG.get("group_labels")
+if not isinstance(_RAW_INTERVIEW_GROUP_LABELS, dict):
+    raise click.ClickException("Invalid init interview config: missing group_labels mapping.")
 _INTERVIEW_GROUP_LABELS: dict[str, str] = {
-    "catalog_setup": "Catalog setup",
-    "developer_workflows": "Developer workflows",
-    "validation_workflows": "Validation workflows",
-    "repository_understanding": "Repository understanding",
-    "backlog_sources": "Backlog sources",
-    "review_notes": "Review notes",
+    str(key): str(value)
+    for key, value in _RAW_INTERVIEW_GROUP_LABELS.items()
 }
+
+_RAW_LEGACY_INIT_CONFIG = _INIT_INTERVIEW_CONFIG.get("legacy_init")
+if not isinstance(_RAW_LEGACY_INIT_CONFIG, dict):
+    raise click.ClickException("Invalid init interview config: missing legacy_init mapping.")
+
+_RAW_LEGACY_INIT_LABELS = _RAW_LEGACY_INIT_CONFIG.get("labels")
+_RAW_LEGACY_INIT_PROMPTS = _RAW_LEGACY_INIT_CONFIG.get("prompts")
+_RAW_LEGACY_INIT_FIELD_DEFAULTS = _RAW_LEGACY_INIT_CONFIG.get("field_defaults")
+_RAW_LEGACY_INIT_OPTION_SETS = _RAW_LEGACY_INIT_CONFIG.get("option_sets")
+if not isinstance(_RAW_LEGACY_INIT_LABELS, dict) or not isinstance(_RAW_LEGACY_INIT_PROMPTS, dict):
+    raise click.ClickException("Invalid init interview config: legacy_init labels/prompts must be mappings.")
+if not isinstance(_RAW_LEGACY_INIT_FIELD_DEFAULTS, dict) or not isinstance(_RAW_LEGACY_INIT_OPTION_SETS, dict):
+    raise click.ClickException("Invalid init interview config: legacy_init field_defaults/option_sets must be mappings.")
 
 _INTERVIEW_GROUP_ORDER: tuple[str, ...] = (
     "catalog_setup",
@@ -971,25 +988,13 @@ _BOOTSTRAP_CHAT_PROMPTS: dict[str, str] = {
 }
 
 _LEGACY_INIT_LABELS: dict[str, str] = {
-    "requirements_dir": "Requirements directory",
-    "id_prefix": "Requirement ID prefix",
-    "docs_review": "Docs review strategy",
-    "source_grokking": "Source understanding depth",
-    "test_grokking": "Test understanding depth",
-    "domain_focus": "Starter domain focus",
-    "issue_backlog": "Issue backlog handling",
-    "legacy_notes": "Legacy bootstrap notes",
+    str(key): str(value)
+    for key, value in _RAW_LEGACY_INIT_LABELS.items()
 }
 
 _LEGACY_INIT_PROMPTS: dict[str, str] = {
-    "requirements_dir": "Where should rqmd create the starter requirements catalog?",
-    "id_prefix": "Which requirement ID prefix should legacy-init use for the starter catalog?",
-    "docs_review": "How should legacy-init treat existing repository docs when seeding the first-pass catalog?",
-    "source_grokking": "How deeply should the AI spend effort understanding the source tree during legacy bootstrap?",
-    "test_grokking": "How deeply should the AI spend effort understanding the repository's test strategy during legacy bootstrap?",
-    "domain_focus": "Which detected areas should become starter requirement files first?",
-    "issue_backlog": "How should legacy-init handle GitHub issue discovery and backlog seeding?",
-    "legacy_notes": "What extra review notes or caveats should be carried into the generated starter catalog?",
+    str(key): str(value)
+    for key, value in _RAW_LEGACY_INIT_PROMPTS.items()
 }
 
 _LEGACY_INIT_GROUPS: dict[str, str] = {
@@ -1004,133 +1009,22 @@ _LEGACY_INIT_GROUPS: dict[str, str] = {
 }
 
 _LEGACY_INIT_FIELD_DEFAULTS: dict[str, dict[str, object]] = {
-    "requirements_dir": {
-        "allow_multiple": False,
-        "allow_custom": True,
-        "allow_skip": False,
-        "first_selected_is_canonical": True,
-        "custom_answer_prompt": "Type a custom requirements directory path.",
-    },
-    "id_prefix": {
-        "allow_multiple": False,
-        "allow_custom": True,
-        "allow_skip": False,
-        "first_selected_is_canonical": True,
-        "custom_answer_prompt": "Type a custom requirement ID prefix.",
-    },
-    "docs_review": {
-        "allow_multiple": True,
-        "allow_custom": True,
-        "allow_skip": True,
-        "first_selected_is_canonical": False,
-        "custom_answer_prompt": "Add a custom docs-review note or rule.",
-    },
-    "source_grokking": {
-        "allow_multiple": False,
-        "allow_custom": True,
-        "allow_skip": True,
-        "first_selected_is_canonical": True,
-        "custom_answer_prompt": "Add a custom source-understanding preference.",
-    },
-    "test_grokking": {
-        "allow_multiple": False,
-        "allow_custom": True,
-        "allow_skip": True,
-        "first_selected_is_canonical": True,
-        "custom_answer_prompt": "Add a custom test-understanding preference.",
-    },
-    "domain_focus": {
-        "allow_multiple": True,
-        "allow_custom": True,
-        "allow_skip": True,
-        "first_selected_is_canonical": False,
-        "custom_answer_prompt": "Add a custom source area or subsystem to seed.",
-    },
-    "issue_backlog": {
-        "allow_multiple": False,
-        "allow_custom": True,
-        "allow_skip": True,
-        "first_selected_is_canonical": True,
-        "custom_answer_prompt": "Add a custom backlog-handling note.",
-    },
-    "legacy_notes": {
-        "allow_multiple": True,
-        "allow_custom": True,
-        "allow_skip": True,
-        "first_selected_is_canonical": False,
-        "custom_answer_prompt": "Add another legacy-bootstrap note.",
-    },
+    str(key): dict(value)
+    for key, value in _RAW_LEGACY_INIT_FIELD_DEFAULTS.items()
+    if isinstance(value, dict)
 }
 
 _LEGACY_INIT_OPTION_SETS: dict[str, tuple[dict[str, str], ...]] = {
-    "docs_review": (
+    str(key): tuple(
         {
-            "value": "use-current-docs",
-            "label": "Use the current docs as source material",
-            "description": "Let the bootstrap seed requirements from the repo's present docs and READMEs.",
-        },
-        {
-            "value": "avoid-stale-docs",
-            "label": "Treat stale or legacy docs cautiously",
-            "description": "Bias the bootstrap toward current source and tests when docs look outdated.",
-        },
-        {
-            "value": "readmes-first",
-            "label": "Read top-level READMEs first",
-            "description": "Favor README-style docs before broader markdown sweeps.",
-        },
-    ),
-    "source_grokking": (
-        {
-            "value": "focused-pass",
-            "label": "Focused pass",
-            "description": "Spend a bounded pass on the most relevant source areas only.",
-        },
-        {
-            "value": "broad-pass",
-            "label": "Broad pass",
-            "description": "Spend extra time building a wider mental model of the source tree.",
-        },
-        {
-            "value": "quick-scan",
-            "label": "Quick scan",
-            "description": "Prefer a lighter scan and let the generated seeds stay coarse.",
-        },
-    ),
-    "test_grokking": (
-        {
-            "value": "focused-tests",
-            "label": "Focused test pass",
-            "description": "Inspect the core test workflow and representative tests.",
-        },
-        {
-            "value": "deep-tests",
-            "label": "Deep test pass",
-            "description": "Spend extra time understanding test helpers, fixtures, and coverage patterns.",
-        },
-        {
-            "value": "light-tests",
-            "label": "Light test scan",
-            "description": "Infer the test strategy from surface signals unless something looks unusual.",
-        },
-    ),
-    "issue_backlog": (
-        {
-            "value": "use-gh-if-available",
-            "label": "Use GitHub issues when available",
-            "description": "Seed a backlog file from `gh issue list` when the CLI is installed and authenticated.",
-        },
-        {
-            "value": "skip-gh-issues",
-            "label": "Skip GitHub issue seeding",
-            "description": "Do not create issue-derived starter requirements.",
-        },
-        {
-            "value": "issues-as-signals-only",
-            "label": "Treat issues as weak signals",
-            "description": "Use issues to inform the initial catalog, but keep the generated backlog conservative.",
-        },
-    ),
+            str(option_key): str(option_value)
+            for option_key, option_value in option.items()
+        }
+        for option in value
+        if isinstance(option, dict)
+    )
+    for key, value in _RAW_LEGACY_INIT_OPTION_SETS.items()
+    if isinstance(value, list)
 }
 
 
@@ -1173,8 +1067,12 @@ def _build_interview_question(
         normalized = text.casefold()
         if normalized in seen:
             existing = options[option_index_by_key[normalized]]
+            if label_text and (existing.get("label") in {None, "", text} or existing.get("kind") == "inferred"):
+                existing["label"] = label_text
             if description and not existing.get("description"):
                 existing["description"] = description
+            if kind == "suggested" and existing.get("kind") == "inferred":
+                existing["kind"] = "suggested"
             if kind == "inferred" and normalized_detected_from:
                 existing_detected = existing.get("detected_from")
                 merged_detected = list(existing_detected) if isinstance(existing_detected, list) else []

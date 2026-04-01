@@ -1,0 +1,116 @@
+group_labels:
+  catalog_setup: Catalog setup
+  developer_workflows: Developer workflows
+  validation_workflows: Validation workflows
+  repository_understanding: Repository understanding
+  backlog_sources: Backlog sources
+  review_notes: Review notes
+legacy_init:
+  labels:
+    requirements_dir: Requirements directory
+    id_prefix: Requirement ID prefix
+    docs_review: Docs review strategy
+    source_grokking: Source understanding depth
+    test_grokking: Test understanding depth
+    domain_focus: Starter domain focus
+    issue_backlog: Issue backlog handling
+    legacy_notes: Legacy bootstrap notes
+  prompts:
+    requirements_dir: Where should rqmd create the starter requirements catalog?
+    id_prefix: Which requirement ID prefix should legacy-init use for the starter catalog?
+    docs_review: How should legacy-init treat existing repository docs when seeding the first-pass catalog?
+    source_grokking: How deeply should the AI spend effort understanding the source tree during legacy bootstrap?
+    test_grokking: How deeply should the AI spend effort understanding the repository's test strategy during legacy bootstrap?
+    domain_focus: Which detected areas should become starter requirement files first?
+    issue_backlog: How should legacy-init handle GitHub issue discovery and backlog seeding?
+    legacy_notes: What extra review notes or caveats should be carried into the generated starter catalog?
+  field_defaults:
+    requirements_dir:
+      allow_multiple: false
+      allow_custom: true
+      allow_skip: false
+      first_selected_is_canonical: true
+      custom_answer_prompt: Type a custom requirements directory path.
+    id_prefix:
+      allow_multiple: false
+      allow_custom: true
+      allow_skip: false
+      first_selected_is_canonical: true
+      custom_answer_prompt: Type a custom requirement ID prefix.
+    docs_review:
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: false
+      custom_answer_prompt: Add a custom docs-review note or rule.
+    source_grokking:
+      allow_multiple: false
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Add a custom source-understanding preference.
+    test_grokking:
+      allow_multiple: false
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Add a custom test-understanding preference.
+    domain_focus:
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: false
+      custom_answer_prompt: Add a custom source area or subsystem to seed.
+    issue_backlog:
+      allow_multiple: false
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Add a custom backlog-handling note.
+    legacy_notes:
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: false
+      custom_answer_prompt: Add another legacy-bootstrap note.
+  option_sets:
+    docs_review:
+      - value: use-current-docs
+        label: Use the current docs as source material
+        description: Let the bootstrap seed requirements from the repo's present docs and READMEs.
+      - value: avoid-stale-docs
+        label: Treat stale or legacy docs cautiously
+        description: Bias the bootstrap toward current source and tests when docs look outdated.
+      - value: readmes-first
+        label: Read top-level READMEs first
+        description: Favor README-style docs before broader markdown sweeps.
+    source_grokking:
+      - value: focused-pass
+        label: Focused pass
+        description: Spend a bounded pass on the most relevant source areas only.
+      - value: broad-pass
+        label: Broad pass
+        description: Spend extra time building a wider mental model of the source tree.
+      - value: quick-scan
+        label: Quick scan
+        description: Prefer a lighter scan and let the generated seeds stay coarse.
+    test_grokking:
+      - value: focused-tests
+        label: Focused test pass
+        description: Inspect the core test workflow and representative tests.
+      - value: deep-tests
+        label: Deep test pass
+        description: Spend extra time understanding test helpers, fixtures, and coverage patterns.
+      - value: light-tests
+        label: Light test scan
+        description: Infer the test strategy from surface signals unless something looks unusual.
+    issue_backlog:
+      - value: use-gh-if-available
+        label: Use GitHub issues when available
+        description: Seed a backlog file from `gh issue list` when the CLI is installed and authenticated.
+      - value: skip-gh-issues
+        label: Skip GitHub issue seeding
+        description: Do not create issue-derived starter requirements.
+      - value: issues-as-signals-only
+        label: Treat issues as weak signals
+        description: Use issues to inform the initial catalog, but keep the generated backlog conservative.
