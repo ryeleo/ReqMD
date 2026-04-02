@@ -24,3 +24,13 @@ Execution contract:
 - Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-history`, `/rqmd-pin`, `/rqmd-bundle`, `/rqmd-verify`.
 - When project-local `/dev` and `/test` skills exist, treat them as the canonical source for repository-specific build, run, smoke, and validation commands instead of guessing from layout alone.
 - Delegate narrowly scoped workflow work when helpful: `rqmd-requirements` for backlog/status/docs state, `rqmd-docs` for sync passes, and `rqmd-history` for time-travel and recovery planning.
+
+AI output defaults:
+- Keep outputs technical but user-friendly, written like a web article worth reading rather than a dump of internal notes.
+- Use headings consistently: start at h1 and do not skip heading levels when headings improve the result.
+- Prefer smaller sections over one oversized section.
+- Introduce acronyms and jargon on first use, and add Info, Note, and Warning callouts when readers may need extra context.
+- Prefer descriptive hyperlinks over raw pasted URLs.
+- Use ordered or unordered lists to break up dense prose when they improve scanning.
+- Use Info, Note, and Warning callouts deliberately to separate optional context, important reminders, and critical warnings.
+- Use this exact markdown shape for callouts when examples or authored output need one: `> **Info:** ...`, `> **Note:** ...`, `> **Warning:** ...`.

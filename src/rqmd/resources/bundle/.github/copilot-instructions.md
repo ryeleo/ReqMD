@@ -34,6 +34,16 @@ AI workflow defaults:
 - Bundle install also scaffolds project-local `/dev` and `/test` skills based on detected repository commands so implementation agents have a concrete starting point for build, smoke, and validation workflows.
 - Skills improve workflow discovery and reuse, but they do not bypass terminal/tool approval prompts.
 
+AI output defaults:
+- Keep outputs technical but user-friendly, written like a web article worth reading rather than a dump of internal notes.
+- Use headings consistently: start at h1 and do not skip heading levels when headings improve the result.
+- Prefer smaller sections over one oversized section.
+- Introduce acronyms and jargon on first use, and add Info, Note, and Warning callouts when readers may need extra context.
+- Prefer descriptive hyperlinks over raw pasted URLs.
+- Use ordered or unordered lists to break up dense prose when they improve scanning.
+- Use Info, Note, and Warning callouts deliberately to separate optional context, important reminders, and critical warnings.
+- Use this exact markdown shape for callouts when examples or authored output need one: `> **Info:** ...`, `> **Note:** ...`, `> **Warning:** ...`.
+
 Useful commands:
 - rqmd-ai install --json
 - rqmd-ai i --json --bundle-preset minimal --dry-run

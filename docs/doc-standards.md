@@ -21,7 +21,7 @@ Any additional context or connotations that the reader might like to know about,
 Example: 
 Authorization, Authentication and Accounting (AAA)
 
-> **ℹ️ Info:** "The authentication, authorization, and accounting (AAA) Service Framework provides a single point of contact for all the authentication, authorization, accounting, address assignment, and dynamic request services that the router supports for network access. The framework supports authentication and authorization through external servers, such as RADIUS."
+> **Info:** "The authentication, authorization, and accounting (AAA) Service Framework provides a single point of contact for all the authentication, authorization, accounting, address assignment, and dynamic request services that the router supports for network access. The framework supports authentication and authorization through external servers, such as RADIUS."
 >
 > from ["AAA Service Framework Overview" Juniper Networks Docs](https://www.juniper.net/documentation/en_US/junos/topics/concept/aaa-service-framework-overview.html)
 
@@ -52,13 +52,21 @@ Sometimes, it is useful to turn long unordered lists into ordered lists. Why? It
 These three macros should be used where they help make the document easier to read!
 Do not add them in excess, but do not be afraid to use them when they can help make the document easier to read and understand.
 
+Canonical markdown shape:
+
+> **Info:** Optional context that improves understanding without blocking the main flow.
+
+> **Note:** Important guidance that most readers should notice.
+
+> **Warning:** Critical guidance that should be hard to miss.
+
 > **Tip:** Tip Macros can be used to add a tip based on the current context of the document. They can be used to add helpful information that is not critical, but is probably useful for the reader to know.
 
-> **ℹ️ Info:** Info Macros can be used to add extra context that you expect the audience does not need to read.
+> **Info:** Info Macros can be used to add extra context that you expect the audience does not need to read.
 
-> **⚠️ Note:** Note Macros can be used to repeat and call out important information that you really want the audience to read.
+> **Note:** Note Macros can be used to repeat and call out important information that you really want the audience to read.
 
-> **‼️ WARNING ‼️:** Warning Macros should be used only in very important cases – this should hold critical information that you want EVERY reader to read (to avoid a resume generating event). 
+> **Warning:** Warning Macros should be used only in very important cases - this should hold critical information that you want every reader to read.
 
 
 ## Add Page Banners
