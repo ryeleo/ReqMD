@@ -579,9 +579,23 @@ def test_RQMD_packaging_008_release_publish_workflow_present() -> None:
     workflow_text = workflow_path.read_text(encoding="utf-8")
     assert "release:" in workflow_text
     assert "types: [published]" in workflow_text
-    assert "uv build" in workflow_text
-    assert "uv publish" in workflow_text
-    assert "PYPI_API_TOKEN" in workflow_text
+    assert "python -m build" in workflow_text
+    assert "Validate release tag matches project version" in workflow_text
+    assert "id-token: write" in workflow_text
+    assert "gh-action-pypi-publish" in workflow_text
+
+
+def test_RQMD_packaging_008_release_docs_match_trusted_publishing_flow() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    readme = (project_root / "README.md").read_text(encoding="utf-8")
+    release_doc = (project_root / "docs" / "releasing.md").read_text(encoding="utf-8")
+
+    assert "trusted publishing" in readme
+    assert "docs/releasing.md" in readme
+    assert "GitHub Release" in readme
+    assert "trusted publishing" in release_doc
+    assert "v0.1.0" in release_doc
+    assert "project.version" in release_doc
 
 
 def test_RQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_docs_prefix() -> None:

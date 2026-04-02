@@ -636,7 +636,8 @@ This package includes GitHub Actions workflows:
 
 - `.github/workflows/publish-pypi.yml`
 - Triggers when a GitHub release is published.
-- Builds with `uv build` and publishes with `uv publish` using `PYPI_API_TOKEN`.
+- Validates that the release tag is a stable semver tag matching `project.version`.
+- Builds with `python -m build` and publishes with GitHub Actions trusted publishing.
 
 ## Project portability
 
@@ -723,5 +724,6 @@ CLI flags always override config file values. When `.rqmd.yml` (or `.rqmd.yaml` 
 When ready for PyPI:
 
 1. Follow semantic versioning policy in `docs/SEMVER.md`.
-2. Build artifacts with `uv build`.
-3. Publish via GitHub release workflow or upload manually using `uv publish`.
+2. Follow the release checklist in `docs/releasing.md`.
+3. Create and publish a GitHub Release with a stable tag such as `v0.1.0` that matches `project.version`.
+4. Let `.github/workflows/publish-pypi.yml` publish through trusted publishing.
