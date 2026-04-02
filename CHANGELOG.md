@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Changed release-tag validation to run from `scripts/validate_release_tag.py` instead of inline workflow Python, and added Python-script syntax checks to the local smoke path so CI catches indentation or syntax typos in repository scripts earlier.
+
 ## [0.1.0rc1] - 2026-04-01
 ### Added
 

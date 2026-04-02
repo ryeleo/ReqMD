@@ -28,26 +28,7 @@ jobs:
       - name: Validate release tag matches project version
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          python - <<'PY'
-          import os
-          import pathlib
-          import re
-          import tomllib
-
-          tag = os.environ["RELEASE_TAG"].strip()
-            if not re.fullmatch(r"v?\d+\.\d+\.\d+(?:rc\d+)?", tag):
-              raise SystemExit(
-                f"Release tag {tag!r} must be a stable or rc semver tag like v0.1.0, 0.1.0, v0.1.0rc1, or 0.1.0rc1"
-              )
-
-          pyproject = pathlib.Path("pyproject.toml")
-          version = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["version"]
-          if tag.removeprefix("v") != version:
-              raise SystemExit(
-                  f"Release tag {tag!r} does not match project.version {version!r} in pyproject.toml"
-              )
-          PY
+        run: python scripts/validate_release_tag.py
 
       - name: Build package
         run: python -m build

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import click
@@ -574,17 +576,60 @@ def test_RQMD_packaging_010_readme_documents_shell_completion_activation() -> No
 def test_RQMD_packaging_008_release_publish_workflow_present() -> None:
     project_root = Path(__file__).resolve().parents[1]
     workflow_path = project_root / ".github" / "workflows" / "publish-pypi.yml"
+    validation_script_path = project_root / "scripts" / "validate_release_tag.py"
 
     assert workflow_path.exists()
+    assert validation_script_path.exists()
     workflow_text = workflow_path.read_text(encoding="utf-8")
+    validation_script_text = validation_script_path.read_text(encoding="utf-8")
     assert "release:" in workflow_text
     assert "types: [published]" in workflow_text
     assert "python -m build" in workflow_text
     assert "Validate release tag matches project version" in workflow_text
+    assert "python scripts/validate_release_tag.py" in workflow_text
+    assert "python - <<'PY'" not in workflow_text
     assert "id-token: write" in workflow_text
     assert "gh-action-pypi-publish" in workflow_text
-    assert "rc\\d+" in workflow_text
-    assert "v0.1.0rc1" in workflow_text
+    assert "rc\\d+" in validation_script_text
+    assert "v0.1.0rc1" in validation_script_text
+
+
+def test_RQMD_packaging_008_release_tag_validation_script_accepts_matching_rc_version() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    script_path = project_root / "scripts" / "validate_release_tag.py"
+
+    result = subprocess.run(
+        [sys.executable, str(script_path), "v0.1.0rc1"],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_RQMD_packaging_008_release_tag_validation_script_rejects_invalid_tag() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    script_path = project_root / "scripts" / "validate_release_tag.py"
+
+    result = subprocess.run(
+        [sys.executable, str(script_path), "release-please"],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode != 0
+    assert "must be a stable or rc semver tag" in result.stderr
+
+
+def test_RQMD_packaging_008_local_smoke_checks_python_scripts() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    smoke_script = (project_root / "scripts" / "local-smoke.sh").read_text(encoding="utf-8")
+
+    assert "python -m compileall -q scripts" in smoke_script
 
 
 def test_RQMD_packaging_008_release_docs_match_trusted_publishing_flow() -> None:

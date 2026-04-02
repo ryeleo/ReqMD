@@ -33,6 +33,9 @@ if [[ "$SKIP_INSTALL" != "true" ]]; then
   "$UV_BIN" sync --extra dev
 fi
 
+echo "[rqmd] Syntax-checking Python scripts"
+"$UV_BIN" run python -m compileall -q scripts
+
 echo "[rqmd] Running pytest"
 "$UV_BIN" run --extra dev pytest -q
 

@@ -71,6 +71,7 @@ Summary: 0💡 3🔧 9✅ 0⚠️ 0⛔ 0🗑️
 - So that publication uses repository automation rather than a manual local upload.
 - So that publication only proceeds for stable semver release tags or PEP 440 `rc` prerelease tags, and validates that the release tag matches `project.version` before publishing.
 - So that publication can use GitHub Actions trusted publishing instead of a long-lived PyPI API token.
+- So that release-tag validation logic lives in a repository Python script and can be syntax-checked in CI instead of being embedded inline in workflow YAML.
 
 ### RQMD-PACKAGING-009: Keep a Changelog maintained
 - **Status:** ✅ Verified
