@@ -583,6 +583,8 @@ def test_RQMD_packaging_008_release_publish_workflow_present() -> None:
     assert "Validate release tag matches project version" in workflow_text
     assert "id-token: write" in workflow_text
     assert "gh-action-pypi-publish" in workflow_text
+    assert "rc\\d+" in workflow_text
+    assert "v0.1.0rc1" in workflow_text
 
 
 def test_RQMD_packaging_008_release_docs_match_trusted_publishing_flow() -> None:
@@ -593,8 +595,10 @@ def test_RQMD_packaging_008_release_docs_match_trusted_publishing_flow() -> None
     assert "trusted publishing" in readme
     assert "docs/releasing.md" in readme
     assert "GitHub Release" in readme
+    assert "v0.1.0rc1" in readme
     assert "trusted publishing" in release_doc
     assert "v0.1.0" in release_doc
+    assert "v0.1.0rc1" in release_doc
     assert "project.version" in release_doc
 
 

@@ -636,7 +636,7 @@ This package includes GitHub Actions workflows:
 
 - `.github/workflows/publish-pypi.yml`
 - Triggers when a GitHub release is published.
-- Validates that the release tag is a stable semver tag matching `project.version`.
+- Validates that the release tag is a stable semver tag or `rc` prerelease tag matching `project.version`.
 - Builds with `python -m build` and publishes with GitHub Actions trusted publishing.
 
 ## Project portability
@@ -725,5 +725,5 @@ When ready for PyPI:
 
 1. Follow semantic versioning policy in `docs/SEMVER.md`.
 2. Follow the release checklist in `docs/releasing.md`.
-3. Create and publish a GitHub Release with a stable tag such as `v0.1.0` that matches `project.version`.
+3. Create and publish a GitHub Release with a matching tag such as `v0.1.0` or `v0.1.0rc1`.
 4. Let `.github/workflows/publish-pypi.yml` publish through trusted publishing.

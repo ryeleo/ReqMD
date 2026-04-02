@@ -16,5 +16,11 @@ rqmd follows Semantic Versioning (`MAJOR.MINOR.PATCH`).
 
 ## Release tagging
 
-- Git tags must use the package version format: `vX.Y.Z`.
+- Git tags must use the package version format: `vX.Y.Z` for stable releases or `vX.Y.ZrcN` for release candidates.
 - The tagged version must match `project.version` in `pyproject.toml`.
+
+## Prereleases
+
+- Release candidates should use PEP 440 `rc` versions such as `0.1.0rc1`.
+- GitHub release tags for release candidates should use the matching form `v0.1.0rc1`.
+- Prereleases are appropriate when you want real PyPI installability without promoting a build as the default stable release.

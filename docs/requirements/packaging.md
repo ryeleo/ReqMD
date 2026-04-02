@@ -69,7 +69,7 @@ Summary: 0💡 3🔧 9✅ 0⛔ 0🗑️
 - I want to run the release workflow
 - So that the tagged package version is published to pypi.org automatically
 - So that publication uses repository automation rather than a manual local upload.
-- So that publication only proceeds for stable semver release tags and validates that the release tag matches `project.version` before publishing.
+- So that publication only proceeds for stable semver release tags or PEP 440 `rc` prerelease tags, and validates that the release tag matches `project.version` before publishing.
 - So that publication can use GitHub Actions trusted publishing instead of a long-lived PyPI API token.
 
 ### RQMD-PACKAGING-009: Keep a Changelog maintained

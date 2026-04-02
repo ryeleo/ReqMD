@@ -6,7 +6,6 @@ on:
 
 jobs:
   publish:
-    if: ${{ !github.event.release.prerelease }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,8 +36,10 @@ jobs:
           import tomllib
 
           tag = os.environ["RELEASE_TAG"].strip()
-          if not re.fullmatch(r"v?\d+\.\d+\.\d+", tag):
-              raise SystemExit(f"Release tag {tag!r} is not a stable semver tag like v0.1.0 or 0.1.0")
+            if not re.fullmatch(r"v?\d+\.\d+\.\d+(?:rc\d+)?", tag):
+              raise SystemExit(
+                f"Release tag {tag!r} must be a stable or rc semver tag like v0.1.0, 0.1.0, v0.1.0rc1, or 0.1.0rc1"
+              )
 
           pyproject = pathlib.Path("pyproject.toml")
           version = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["version"]
