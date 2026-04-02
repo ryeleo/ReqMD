@@ -3,7 +3,7 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 11🔧 0✅ 0⛔ 0🗑️
+Summary: 0💡 11🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics

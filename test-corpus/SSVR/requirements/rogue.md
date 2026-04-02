@@ -3,7 +3,7 @@
 Scope: Rogue mode start/load flow, world-state persistence, and baseline duel progression behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 8🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 5💡 8🔧 0💻 0🎮 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

@@ -3,7 +3,7 @@
 Scope: add a first-class `Priority` field to requirement entries, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 3🔧 9✅ 0⛔ 0🗑️
+Summary: 0💡 3🔧 9✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PRIORITY-001: First-class priority field

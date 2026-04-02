@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.1.0rc1] - 2026-04-01
 ### Added
 
 - Added proposed backlog requirements to continue moving shipped defaults toward a packaged-resource source of truth and to ensure legacy-init installs local schema guidance into generated requirement indexes for AI-friendly repository-local onboarding (RQMD-CORE-035, RQMD-AI-038).
@@ -31,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed CLI startup to treat `readline` as optional so source installs continue working on Windows and other Python environments where the standard line-editing module is unavailable.
 - Changed repeated positional requirement IDs such as `rqmd SSVR-0001 SSVR-0002` to use the focused multi-target selection flow instead of being intercepted by the legacy single-ID lookup shortcut.
 - Changed shared interview group ordering, interaction-contract guidance, ID-prefix option copy, and bootstrap-chat, starter-init, and legacy-init interview labels, prompts, grouping, selection defaults, and option sets to load from packaged init YAML instead of hard-coded `rqmd-ai` Python dicts.
 - Changed init strategy reason strings and legacy-init README note sections to load from packaged init templates instead of remaining inline `rqmd-ai` strings, continuing the packaged-resource migration for shipped onboarding copy.

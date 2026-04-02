@@ -3,7 +3,7 @@
 Scope: individual gong-button rendering, interactivity, visual feedback, and audio-visual response behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 12💡 3🔧 0💻 0🎮 1✅ 0⛔ 1🗑️
+Summary: 12💡 3🔧 0💻 0🎮 1✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 

@@ -3,7 +3,7 @@
 Scope: game event logging, replay capture, performance metrics, and telemetry data collection infrastructure.
 
 <!-- acceptance-status-summary:start -->
-Summary: 11💡 8🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 11💡 8🔧 0💻 0🎮 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

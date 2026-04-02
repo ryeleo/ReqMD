@@ -3,7 +3,7 @@
 Scope: scorecard presentation and review flow derived from string replay data, archived attempts, and leaderboard/scorecard interactions.
 
 <!-- acceptance-status-summary:start -->
-Summary: 10💡 12🔧 1💻 0🎮 3✅ 0⛔ 0🗑️
+Summary: 10💡 12🔧 1💻 0🎮 3✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

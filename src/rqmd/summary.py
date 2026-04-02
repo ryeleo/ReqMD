@@ -29,15 +29,10 @@ except ImportError:
     print("Install with: pip3 install tabulate", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (
-    PRIORITY_ORDER,
-    STATUS_ORDER,
-    STATUS_PATTERN,
-    STATUS_TERSE_HEADERS_ASCII,
-    SUMMARY_END,
-    SUMMARY_START,
-)
-from .status_model import coerce_status_label, style_status_count, suggest_status_labels
+from .constants import (PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN,
+                        STATUS_TERSE_HEADERS_ASCII, SUMMARY_END, SUMMARY_START)
+from .status_model import (coerce_status_label, style_status_count,
+                           suggest_status_labels)
 
 
 class UnknownStatusValueError(ValueError):
@@ -94,12 +89,12 @@ def build_summary_line(
     """
     if verbose:
         # Build a table row for this file
-        row = [filename] + [counts[label] for label, _ in STATUS_ORDER]
+        row = [filename] + [counts.get(label, 0) for label, _ in STATUS_ORDER]
         return row
 
     # Terse mode: show just emojis and counts inline
     parts = [
-        f"{counts[label]}{label.split()[0] if include_status_emojis else _plain_status_label(label)}"
+        f"{counts.get(label, 0)}{label.split()[0] if include_status_emojis else _plain_status_label(label)}"
         for label, _ in STATUS_ORDER
     ]
     return " ".join(parts)
@@ -138,7 +133,7 @@ def build_summary_block(
         A multi-line summary block wrapped in <!-- acceptance-status-summary:start/end -->.
     """
     parts = [
-        f"{counts[label]}{label.split()[0] if include_status_emojis else _plain_status_label(label)}"
+        f"{counts.get(label, 0)}{label.split()[0] if include_status_emojis else _plain_status_label(label)}"
         for label, _ in STATUS_ORDER
     ]
     summary_text = " ".join(parts)

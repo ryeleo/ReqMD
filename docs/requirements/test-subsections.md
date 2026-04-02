@@ -3,7 +3,7 @@
 Scope: testing H2 subsection parsing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 0🔧 1✅ 0⛔ 0🗑️
+Summary: 2💡 0🔧 1✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Query API

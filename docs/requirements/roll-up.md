@@ -3,7 +3,7 @@
 Scope: status aggregation, per-file summary generation, and roll-up display output.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 0🔧 6✅ 0⛔ 1🗑️
+Summary: 0💡 0🔧 6✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-ROLLUP-001: Summary count generation per status

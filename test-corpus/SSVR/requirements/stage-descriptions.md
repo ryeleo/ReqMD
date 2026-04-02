@@ -3,7 +3,7 @@
 Scope: `.stage` file authoring format, parser behavior, defaults, and runtime consumption contract.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 1🔧 0💻 0🎮 15✅ 0⛔ 0🗑️
+Summary: 2💡 1🔧 0💻 0🎮 15✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

@@ -3,7 +3,7 @@
 Scope: firing contract, bullet behavior, visual trace behavior, calibration, and sight trust.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 2🔧 0💻 0🎮 7✅ 0⛔ 2🗑️
+Summary: 1💡 2🔧 0💻 0🎮 7✅ 0⚠️ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 

@@ -3,7 +3,7 @@
 Scope: frame rate targets, rendering budgets, memory management, and optimization thresholds.
 
 <!-- acceptance-status-summary:start -->
-Summary: 7💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 7💡 0🔧 0💻 0🎮 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

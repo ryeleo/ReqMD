@@ -384,7 +384,7 @@ def test_RQMD_portability_011_ssvr_corpus_copy_accepts_desktop_verified_set_stat
 
     target_file = repo / "requirements" / "main-menu.md"
     original = target_file.read_text(encoding="utf-8")
-    assert "### AC-MM-PRACTICE-002: Start creates a fresh Practice flow" in original
+    assert "### SSVR-0155: Start creates a fresh Practice flow" in original
 
     runner = CliRunner()
     result = runner.invoke(
@@ -395,7 +395,7 @@ def test_RQMD_portability_011_ssvr_corpus_copy_accepts_desktop_verified_set_stat
         "--docs-dir",
         "requirements",
         "--update-id",
-        "AC-MM-PRACTICE-002",
+        "SSVR-0155",
         "--update-status",
         "desktop-verified",
         "--no-table",
@@ -404,7 +404,7 @@ def test_RQMD_portability_011_ssvr_corpus_copy_accepts_desktop_verified_set_stat
 
     assert result.exit_code == 0
     updated = target_file.read_text(encoding="utf-8")
-    assert "### AC-MM-PRACTICE-002: Start creates a fresh Practice flow" in updated
+    assert "### SSVR-0155: Start creates a fresh Practice flow" in updated
     assert "- **Status:** 💻 Desktop-Verified" in updated
 
 

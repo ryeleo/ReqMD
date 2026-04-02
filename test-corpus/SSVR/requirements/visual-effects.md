@@ -3,7 +3,7 @@
 Scope: bullet-impact splatters, brass ejection, spray-paint target cleaning, muzzle flash, and hit particle effects.
 
 <!-- acceptance-status-summary:start -->
-Summary: 15💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 15💡 0🔧 0💻 0🎮 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

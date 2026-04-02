@@ -3,7 +3,7 @@
 Scope: deterministic ordering, sort toggles, and priority-based ranking in interactive views.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 0🔧 9✅ 0⛔ 2🗑️
+Summary: 5💡 0🔧 9✅ 0⚠️ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-SORTING-001: File ranking by priority buckets

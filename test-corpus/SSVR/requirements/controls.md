@@ -3,7 +3,7 @@
 Scope: player control schemes, input mappings, locomotion controls, and platform-specific control behavior for desktop and VR play.
 
 <!-- acceptance-status-summary:start -->
-Summary: 6💡 0🔧 0💻 1🎮 1✅ 0⛔ 0🗑️
+Summary: 6💡 0🔧 0💻 1🎮 1✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

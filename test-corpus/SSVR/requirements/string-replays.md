@@ -3,7 +3,7 @@
 Scope: string replay capture, schema semantics, telemetry upload, replay diagnostics, boss/replay compatibility behavior, and replay-parent scorecard contracts.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 10🔧 2💻 0🎮 6✅ 4⛔ 0🗑️
+Summary: 5💡 10🔧 2💻 0🎮 6✅ 0⚠️ 4⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

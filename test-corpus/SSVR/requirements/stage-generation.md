@@ -3,7 +3,7 @@
 Scope: stage build lifecycle, stage definitions, difficulty, generated scene setup, and selection behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 12🔧 0💻 0🎮 1✅ 0⛔ 0🗑️
+Summary: 1💡 12🔧 0💻 0🎮 1✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

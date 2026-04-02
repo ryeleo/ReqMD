@@ -3,7 +3,7 @@
 Scope: save slot model, auto-save triggers, world-state persistence across sessions, calibration persistence, and save-data schema migration.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 8🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 4💡 8🔧 0💻 0🎮 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

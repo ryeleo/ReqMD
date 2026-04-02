@@ -3,7 +3,7 @@
 Scope: player position history tracking, undo/redo navigation in pause menu, teleport stack management.
 
 <!-- acceptance-status-summary:start -->
-Summary: 10💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 10💡 0🔧 0💻 0🎮 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

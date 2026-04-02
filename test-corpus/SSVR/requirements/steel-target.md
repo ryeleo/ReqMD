@@ -3,7 +3,7 @@
 Scope: steel-target rendering, hit behavior, sound feedback, physical response, and interaction model.
 
 <!-- acceptance-status-summary:start -->
-Summary: 16💡 11🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 16💡 11🔧 0💻 0🎮 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

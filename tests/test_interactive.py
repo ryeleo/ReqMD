@@ -1221,9 +1221,10 @@ def test_RQMD_interactive_021b_requirement_menu_receives_panel_prefix() -> None:
     assert "Priority" in plain_title
     assert captured["prefix_text"] == "\nPANEL BODY\n=========="
     assert captured["right_label_layout"] == "adjacent"
-    assert len(captured["right_labels"]) == 5
+    assert len(captured["right_labels"]) == len(cli.STATUS_ORDER)
     assert captured["right_labels"][0].startswith("  !)")
     assert captured["right_labels"][2].startswith("  #)")
+    assert all(not item for item in captured["right_labels"][4:])
 
 
 def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> None:
@@ -1306,13 +1307,13 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
     assert "@=p1" in captured["footer_legend"]
     assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
     right_labels_plain = [re.sub(r"\x1b\[[0-9;]*m", "", item).rstrip() for item in captured["right_labels"]]
-    assert right_labels_plain == [
+    assert right_labels_plain[:4] == [
         "  !) 🔴 P0 - Critical",
         "  @) 🟠 P1 - High",
         "→ #) 🟡 P2 - Medium",
         "  $) 🟢 P3 - Low",
-        "",
     ]
+    assert right_labels_plain[4:] == [""] * (len(cli.STATUS_ORDER) - 4)
     widths = [menus.visible_length(item) for item in captured["right_labels"] if item]
     assert len(set(widths)) == 1
     assert "\x1b[48;5;178m" in captured["right_labels"][2]

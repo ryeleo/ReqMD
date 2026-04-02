@@ -63,9 +63,9 @@ Notes:
 
 from __future__ import annotations
 
+import importlib
 import json
 import re
-import readline  # noqa: F401 — activates arrow-key line editing in input()/click.prompt()
 import sys
 from datetime import datetime
 from importlib import metadata as importlib_metadata
@@ -134,6 +134,23 @@ from .workflows import (build_filtered_criteria_payload, build_summary_payload,
 from .workflows import \
     focused_target_interactive_loop as focused_target_interactive_loop_impl
 from .workflows import print_criteria_list, print_criteria_tree
+
+
+def _maybe_enable_readline() -> None:
+    """Best-effort readline activation for prompt editing.
+
+    Windows and some embedded Python environments do not provide the standard
+    `readline` module. The CLI should remain importable there even if prompt
+    line-editing support is unavailable.
+    """
+
+    try:
+        importlib.import_module("readline")
+    except ModuleNotFoundError:
+        return
+
+
+_maybe_enable_readline()
 
 __all__ = [
     "SUMMARY_START",

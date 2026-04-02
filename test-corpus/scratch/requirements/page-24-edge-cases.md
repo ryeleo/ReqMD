@@ -3,7 +3,7 @@
 Scope: frontend interaction edge cases and rendering stress scenarios.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 3🔧 2✅ 2⛔ 2🗑️
+Summary: 1💡 3🔧 2✅ 0⚠️ 2⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Query API

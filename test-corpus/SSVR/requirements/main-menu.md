@@ -3,7 +3,7 @@
 Scope: startup menu, Practice menu flows, mode selection, and menu interaction behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 20🔧 1💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 1💡 20🔧 1💻 0🎮 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

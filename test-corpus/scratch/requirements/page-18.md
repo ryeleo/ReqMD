@@ -3,7 +3,7 @@
 Scope: lorem ipsum pagination stress testing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 2🔧 2✅ 2⛔ 2🗑️
+Summary: 2💡 2🔧 2✅ 0⚠️ 2⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQ-PAG-171: Lorem ipsum block 171

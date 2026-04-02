@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import importlib
 import json
+import sys
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -151,6 +153,27 @@ def test_RQMD_core_020b_version_option_reports_editable_source_path(tmp_path: Pa
     assert "rqmd 1.2.3" in result.output
     assert f"editable source: {editable_root}" in result.output
     assert "package path:" in result.output
+
+
+def test_RQMD_core_020c_cli_import_succeeds_without_readline(monkeypatch) -> None:
+    module_name = "rqmd.cli"
+    original_import_module = importlib.import_module
+    original_module = sys.modules.get(module_name)
+
+    def fake_import_module(name: str, package: str | None = None):
+        if name == "readline":
+            raise ModuleNotFoundError("No module named 'readline'")
+        return original_import_module(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+    sys.modules.pop(module_name, None)
+
+    try:
+        reimported_cli = original_import_module(module_name)
+        assert hasattr(reimported_cli, "main")
+    finally:
+        if original_module is not None:
+            sys.modules[module_name] = original_module
 
 
 def test_RQMD_core_026_duplicate_ids_fail_fast(tmp_path: Path) -> None:
@@ -588,9 +611,9 @@ def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(tmp_path: Pat
 
     assert result.exit_code == 0
     readme_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
-    assert "Human-readable + AI-readable requirements for Requirements Driven Development (RDD)." in readme_text
-    assert "https://github.com/example/rqmd" in readme_text
-    assert "https://pypi.org/project/rqmd/" in readme_text
+    assert "This document is the source-of-truth index for rqmd requirements." in readme_text
+    assert "Generated from resources/init/README.md." in readme_text
+    assert "- `⚠️ Janky`" in readme_text
 
 
 def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> None:

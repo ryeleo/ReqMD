@@ -3,7 +3,7 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 10🔧 0✅ 0⛔ 0🗑️
+Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing

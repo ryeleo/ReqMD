@@ -3,7 +3,7 @@
 Scope: editor tooling, debugging utilities, logging infrastructure, and development-only features.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 4🔧 0💻 0🎮 4✅ 0⛔ 1🗑️
+Summary: 5💡 4🔧 0💻 0🎮 4✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 

@@ -3,7 +3,7 @@
 Scope: interactive menus, paginated views, and terminal rendering behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 10🔧 0✅ 0⛔ 1🗑️
+Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UI-001: Screen-write rendering mode

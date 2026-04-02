@@ -3,7 +3,7 @@
 Scope: pause menu visibility, controls, locomotion suppression, and pause-menu specific actions.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 9🔧 1💻 0🎮 1✅ 0⛔ 1🗑️
+Summary: 1💡 9🔧 1💻 0🎮 1✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 

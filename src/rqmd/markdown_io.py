@@ -30,7 +30,6 @@ from .constants import (DEFAULT_PRIORITY_CATALOG, DEFAULT_STATUS_CATALOG,
                         REQUIREMENTS_INDEX_NAME)
 from .summary import process_file
 
-
 _INIT_RESOURCE_ROOT = ("resources", "init")
 
 
