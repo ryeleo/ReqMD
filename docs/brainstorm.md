@@ -6,7 +6,7 @@ Explore vs Discovery... What is the difference...
 
 Exploring is open ended, breadth focused, and doesn't have an end result required. It can be what it can be.
 
-Discovery is more focused on finding specific information or insights that can help drive key decisions for the project. It has a goal of uncovering something helpful . It can be what it needs to be to achieve that result, but the result is the point.
+Discovery is more focused on finding specific information or insights that can help drive key decisions for the project. It helps the user make decisions.
 
 Solving is more focused on a specific question or problem that might/could have a solution.
 
