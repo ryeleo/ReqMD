@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 42🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 5💡 42🔧 2✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -426,3 +426,63 @@ Summary: 0💡 42🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - So that `rqmd-ai reinstall` and `rqmd-ai upgrade` provide obvious command-level workflows for refreshing managed bundle files without forcing users to remember flag combinations.
 - So that `upgrade` can preserve the currently installed preset by default while still allowing explicit preset selection when needed.
 - So that `upgrade` only overwrites files that rqmd can confidently identify as managed and unchanged since install, while `reinstall` remains the explicit reset path for rqmd-managed files only.
+
+### RQMD-AI-048: Bundle bootstrap asks whether `/dev` and `/test` skills should support multiple platforms
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a maintainer installing the rqmd bundle in a repository where contributors may use different operating systems
+- I want bundle bootstrap to ask whether generated `/dev` and `/test` skills should include cross-platform guidance
+- So that rqmd does not silently lock a team into one shell or platform assumption when the repository actually needs broader support.
+- Given a maintainer is generating repository-local `/dev` and `/test` skills through rqmd bundle bootstrap
+- When the bootstrap interview determines or suspects that more than one platform may be relevant
+- Then it should explicitly ask whether cross-platform support should be enabled for those generated skills unless the maintainer is confident the repository only targets a single platform
+- And the generated guidance should either include the agreed cross-platform commands and caveats or clearly record that the repository is intentionally single-platform
+- And Windows-oriented environments such as Git Bash should be treated as first-class cases rather than implicit Unix-only fallbacks.
+
+### RQMD-AI-049: Agent preflight verifies repository readiness before implementation
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a maintainer when handing a repository to one or more AI agents for implementation work
+- I want a canonical agent-facing workflow entry point that exposes a `preflight` readiness check
+- So that missing prerequisites are surfaced before an agent burns time failing inside the middle of a batch.
+- Given a developer wants to hand the repository to one or more AI agents for implementation work
+- When the repository's agent workflow entry point is run in `preflight` mode at the start of that workflow
+- Then it should verify the canonical repository prerequisites such as expected shell tooling, rqmd availability, generated or maintained workspace guidance files, and any project-specific validation hooks
+- And the workflow surface should be simple enough that agents and humans can treat it as the single obvious starting point instead of hunting across multiple scripts or tasks
+- And it should report missing or stale prerequisites with precise fixes instead of letting the failure surface later inside an agent run
+- And it should exit with a machine-readable success or failure result, including per-check status and remediation guidance, so prompts, tasks, and automation can gate on the same readiness check.
+
+### RQMD-AI-050: Agent workflow metadata has one source of truth
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P3 - Low
+- As a maintainer when workflow details are documented across prompts, skills, settings, scripts, and markdown guidance
+- I want canonical agent-workflow metadata to live in one maintained source of truth
+- So that workflow instructions do not drift across the derived surfaces that humans and agents actually consume.
+- Given the repository documents AI development workflow details across prompts, skills, settings, scripts, and markdown guidance
+- When a maintainer updates a canonical workflow detail such as the preferred validation command, bootstrap path, or required toolchain
+- Then that detail should be defined in one maintained source of truth and propagated to the derived docs or configuration surfaces that need it
+- And the repository should include a repeatable check or generation path that catches drift before stale workflow instructions reach developers or agents.
+
+### RQMD-AI-051: Generated agent workflow entry point is the canonical agent execution surface
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a maintainer when enabling AI agents in a repository
+- I want one generated agent-workflow entry point to be the canonical surface for routine agent actions
+- So that agents do not need to discover or memorize a scattered set of shell commands, tasks, and skill-local conventions.
+- Given a repository adopts rqmd-managed agent workflows
+- When an agent needs to perform its primary repository tasks
+- Then the repository should expose one stable agent-facing entry point with subcommands such as `preflight` and `validate`
+- And repository-specific operations such as compile, focused test, broader test, docs verification, or other primary workflows should be reachable through that same maintained interface rather than ad hoc standalone commands
+- And the interface should stay stable enough that prompts, skills, tasks, and automation can treat it as the primary execution contract for agent work.
+
+### RQMD-AI-052: `/dev` and `/test` skills can defer to the canonical agent workflow entry point
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a maintainer when a repository adopts a strong agent-workflow entry point
+- I want rqmd bundle guidance to allow `/dev` and `/test` skills to defer to that canonical interface instead of duplicating the same commands independently
+- So that the repository can avoid maintaining two competing sources of truth for agent execution behavior.
+- Given a repository has a maintained agent-workflow entry point that already covers preflight, validation, and primary development tasks
+- When rqmd generates or refreshes repository-local `/dev` and `/test` skills
+- Then those skills should be allowed to point agents at the canonical workflow entry point instead of restating the raw command set in parallel
+- And rqmd should allow repositories to omit separate `/dev` and `/test` skills entirely when the unified workflow entry point is sufficient and explicitly chosen
+- And the bundle guidance should make clear when those skills remain useful as thin wrappers or discovery aids versus when they should be treated as redundant.

@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 26🔧 10✅ 0⚠️ 0⛔ 0🗑️
+Summary: 1💡 26🔧 10✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -319,3 +319,17 @@ Summary: 0💡 26🔧 10✅ 0⚠️ 0⛔ 0🗑️
 - So that the resulting requirement set is ordered by newest ID first using descending numeric ID semantics for sequential IDs such as `REQ-001`, `REQ-010`, and `REQ-1000`.
 - So that `rqmd all` can drive the same JSON, tree/list, and focused interactive target workflows already used by explicit target tokens.
 - So that `all` is exposed in shell completion as a special positional target.
+
+### RQMD-AUTOMATION-037: Canonical machine-readable validation entry point
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a maintainer or AI agent when validating a planned change before closing a batch
+- I want one canonical validation entry point, ideally exposed as a `validate` subcommand on the same agent workflow surface used for preflight
+- So that validation does not fragment into ad hoc shell snippets that other tools have to scrape and reinterpret.
+- Given a developer or AI agent needs to validate a planned change before closing a batch
+- When they run the repository's canonical validation entry point
+- Then it should orchestrate the approved compile, focused test, broader test, and rqmd verification steps for that batch
+- And it should support a single agent-facing workflow shape where `preflight` and `validate` live under the same maintained command or script instead of separate unrelated entry points
+- And it should emit machine-readable status for each stage so other tools can make decisions without scraping ad hoc shell output
+- And machine-readable output should include per-stage status in a stable structure rather than only one aggregated success or failure bit
+- And it should allow focused modes for compile-only, docs-only, SDK-only, and repository-specific targeted validation without inventing parallel workflows.
