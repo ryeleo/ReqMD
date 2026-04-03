@@ -12,6 +12,8 @@ from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.constants import JSON_SCHEMA_VERSION
 from rqmd.history import HistoryManager
 
+_RQMD_VERSION_PATTERN = r"\d+\.\d+\.\d+(?:rc\d+)?|unknown"
+
 
 def _assert_schema_version(payload: dict[str, object]) -> None:
     assert payload["schema_version"] == JSON_SCHEMA_VERSION
@@ -103,7 +105,7 @@ def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> 
     assert payload["workflow_mode"] == "general"
     assert payload["read_only"] is True
     assert payload["tooling"]["json_schema_version"] == JSON_SCHEMA_VERSION
-    assert re.fullmatch(r"\d+\.\d+\.\d+|unknown", str(payload["tooling"]["rqmd_version"]))
+    assert re.fullmatch(_RQMD_VERSION_PATTERN, str(payload["tooling"]["rqmd_version"]))
     assert payload["bundle_installation"]["installed"] is False
     assert payload["bundle_installation"]["state"] == "absent"
     assert payload["bundle_installation"]["metadata_file"] is None
@@ -1229,7 +1231,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     assert metadata_payload["json_schema_version"] == JSON_SCHEMA_VERSION
     assert isinstance(metadata_payload["managed_files"], dict)
     assert ".github/copilot-instructions.md" in metadata_payload["managed_files"]
-    assert re.fullmatch(r"\d+\.\d+\.\d+|unknown", str(metadata_payload["rqmd_version"]))
+    assert re.fullmatch(_RQMD_VERSION_PATTERN, str(metadata_payload["rqmd_version"]))
     _assert_default_closeout_guidance(
         (repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
     )
