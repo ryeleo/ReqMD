@@ -8,3 +8,5 @@ dist/
 build/
 .venv/
 test-corpus/NSM/
+.postgres-data/
+.minio-data/

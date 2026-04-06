@@ -1,5 +1,11 @@
 # Brainstorm
 
+## Make Telemetry opt-out
+
+Telemetry on by default, but user can opt out.
+
+
+
 ## rqmd ai agent should be VERY well versed in rqmd
 
 The entire CLI, > rqmd-ai install

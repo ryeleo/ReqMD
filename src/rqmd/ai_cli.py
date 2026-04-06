@@ -73,10 +73,14 @@ _WORKFLOW_MODE_SKILLS: dict[str, str] = {
 }
 
 _BUNDLE_RESOURCE_ROOT = ("resources", "bundle")
+_GENERATED_PROJECT_SUPPORT_PATHS = (
+    "agent-workflow.sh",
+)
 _GENERATED_PROJECT_SKILL_PATHS = (
     ".github/skills/dev/SKILL.md",
     ".github/skills/test/SKILL.md",
 )
+_GENERATED_PROJECT_FILE_PATHS = _GENERATED_PROJECT_SUPPORT_PATHS + _GENERATED_PROJECT_SKILL_PATHS
 _BUNDLE_METADATA_RELATIVE = ".github/rqmd-bundle.json"
 
 _STATUS_SCHEME_LIBRARY: dict[str, dict[str, object]] = {
@@ -342,7 +346,7 @@ def _known_bundle_paths() -> set[str]:
     known_paths: set[str] = set()
     for preset in ("minimal", "full"):
         known_paths.update(_read_bundle_manifest(preset))
-    known_paths.update(_GENERATED_PROJECT_SKILL_PATHS)
+    known_paths.update(_GENERATED_PROJECT_FILE_PATHS)
     known_paths.add(_BUNDLE_METADATA_RELATIVE)
     return known_paths
 
@@ -1074,6 +1078,13 @@ def _format_command(command: str) -> str:
     return f"`{command}`"
 
 
+def _strip_command_markup(command: str) -> str:
+    text = str(command).strip()
+    if len(text) >= 2 and text.startswith("`") and text.endswith("`"):
+        return text[1:-1]
+    return text
+
+
 def _extract_make_targets(repo_root: Path) -> set[str]:
     makefile = repo_root / "Makefile"
     text = _read_text_if_exists(makefile)
@@ -1583,6 +1594,7 @@ def _render_project_skill_content_from_hints(hints: dict[str, list[str]]) -> dic
         ".github/skills/dev/SKILL.md": _render_bundle_template(
             "templates/dev-skill.md",
             {
+                "AGENT_WORKFLOW_PATH": "bash ./agent-workflow.sh",
                 "DETECTED_SOURCES": _markdown_list(hints["detected_sources"], "No common command source files were detected automatically."),
                 "ENVIRONMENT_SETUP": _markdown_list(hints["dev_environment"], "No canonical environment setup command was detected yet. Replace this with the repository's real setup step."),
                 "BUILD_COMMANDS": _markdown_list(hints["dev_build"], "No canonical build command was detected yet. Replace this with the repository's real build step."),
@@ -1594,6 +1606,7 @@ def _render_project_skill_content_from_hints(hints: dict[str, list[str]]) -> dic
         ".github/skills/test/SKILL.md": _render_bundle_template(
             "templates/test-skill.md",
             {
+                "AGENT_WORKFLOW_PATH": "bash ./agent-workflow.sh",
                 "DETECTED_SOURCES": _markdown_list(hints["detected_sources"], "No common command source files were detected automatically."),
                 "PRIMARY_TEST_COMMANDS": _markdown_list(hints["test_primary"], "No primary automated test command was detected yet. Replace this with the repository's real test command."),
                 "INTEGRATION_TEST_COMMANDS": _markdown_list(hints["test_integration"], "No dedicated integration or end-to-end test command was detected yet. Add one here if the repository has it."),
@@ -1602,6 +1615,117 @@ def _render_project_skill_content_from_hints(hints: dict[str, list[str]]) -> dic
             },
         ),
     }
+
+
+def _requirements_index_for_agent_workflow(repo_root: Path) -> str | None:
+    for relative in ("docs/requirements/README.md", "requirements/README.md"):
+        if (repo_root / relative).exists():
+            return relative
+    return None
+
+
+def _build_agent_workflow_plan(repo_root: Path, hints: dict[str, list[str]]) -> dict[str, object]:
+    requirements_index = _requirements_index_for_agent_workflow(repo_root)
+    stages = [
+        {
+            "id": "environment",
+            "label": "Environment setup",
+            "commands": [_strip_command_markup(item) for item in hints["dev_environment"] if _strip_command_markup(item)],
+        },
+        {
+            "id": "build",
+            "label": "Build",
+            "commands": [_strip_command_markup(item) for item in hints["dev_build"] if _strip_command_markup(item)],
+        },
+        {
+            "id": "smoke",
+            "label": "Smoke",
+            "commands": [_strip_command_markup(item) for item in hints["dev_smoke"] if _strip_command_markup(item)],
+        },
+        {
+            "id": "primary-tests",
+            "label": "Primary tests",
+            "commands": [_strip_command_markup(item) for item in hints["test_primary"] if _strip_command_markup(item)],
+        },
+        {
+            "id": "integration-tests",
+            "label": "Integration tests",
+            "commands": [_strip_command_markup(item) for item in hints["test_integration"] if _strip_command_markup(item)],
+        },
+        {
+            "id": "lint",
+            "label": "Lint and checks",
+            "commands": [_strip_command_markup(item) for item in hints["test_lint"] if _strip_command_markup(item)],
+        },
+    ]
+    if requirements_index is not None:
+        stages.append(
+            {
+                "id": "rqmd-verify",
+                "label": "rqmd verification",
+                "commands": ["rqmd --verify-summaries --no-walk --no-table"],
+            }
+        )
+
+    preflight_commands: list[str] = []
+    for command_group in (
+        hints["dev_environment"],
+        hints["dev_build"],
+        hints["dev_run"],
+        hints["dev_smoke"],
+        hints["test_primary"],
+        hints["test_integration"],
+        hints["test_lint"],
+    ):
+        for item in command_group:
+            normalized = _strip_command_markup(item)
+            if normalized and normalized not in preflight_commands:
+                preflight_commands.append(normalized)
+    if requirements_index is not None and "rqmd --verify-summaries --no-walk --no-table" not in preflight_commands:
+        preflight_commands.append("rqmd --verify-summaries --no-walk --no-table")
+
+    profile_candidates: dict[str, list[str]] = {
+        "all": [stage["id"] for stage in stages],
+        "build": ["environment", "build"],
+        "smoke": ["environment", "build", "smoke"],
+        "test": ["environment", "primary-tests"],
+        "integration": ["environment", "integration-tests"],
+        "lint": ["lint"],
+        "docs": ["rqmd-verify"],
+        "rqmd": ["rqmd-verify"],
+        "quick": ["environment", "build", "primary-tests", "rqmd-verify"],
+    }
+    available_stage_ids = {str(stage["id"]) for stage in stages}
+    profiles = {
+        name: [stage_id for stage_id in stage_ids if stage_id in available_stage_ids]
+        for name, stage_ids in profile_candidates.items()
+        if any(stage_id in available_stage_ids for stage_id in stage_ids)
+    }
+
+    return {
+        "detected_sources": list(hints["detected_sources"]),
+        "guidance_files": [
+            ".github/copilot-instructions.md",
+            ".github/agents/rqmd-dev.agent.md",
+            ".github/skills/dev/SKILL.md",
+            ".github/skills/test/SKILL.md",
+            "agent-workflow.sh",
+        ],
+        "preflight_commands": preflight_commands,
+        "stages": stages,
+        "profiles": profiles,
+        "requirements_index": requirements_index,
+    }
+
+
+def _render_agent_workflow_content_from_hints(repo_root: Path, hints: dict[str, list[str]]) -> str:
+    plan = _build_agent_workflow_plan(repo_root, hints)
+    return _render_bundle_template(
+        "templates/agent-workflow.sh",
+        {
+            "WORKFLOW_PLAN_JSON": json.dumps(plan, indent=2, sort_keys=True),
+        },
+    )
 
 
 def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
@@ -2561,7 +2685,11 @@ def _install_agent_bundle(
     detected_hints = _detect_project_command_hints(repo_root)
     applied_answers = _collect_interview_answers(interview_answers, _BOOTSTRAP_CHAT_FIELDS)
     resolved_hints = _apply_command_answers(detected_hints, applied_answers)
+    generated_support_files = {
+        "agent-workflow.sh": _render_agent_workflow_content_from_hints(repo_root, resolved_hints),
+    }
     generated_skill_files = _render_project_skill_content_from_hints(resolved_hints)
+    files.update(generated_support_files)
     files.update(generated_skill_files)
 
     existing_metadata = _read_workspace_bundle_metadata(repo_root)
@@ -2626,6 +2754,8 @@ def _install_agent_bundle(
         if not dry_run:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(normalized_content, encoding="utf-8")
+            if rel_path.endswith(".sh"):
+                target.chmod(target.stat().st_mode | 0o111)
 
         if exists:
             overwritten_files.append(rel_path)
@@ -2678,6 +2808,7 @@ def _install_agent_bundle(
                 "detected_sources": list(detected_hints.get("detected_sources", [])),
             },
         ),
+        "generated_support_files": sorted(generated_support_files),
         "generated_skill_files": sorted(generated_skill_files),
         "metadata_file": _BUNDLE_METADATA_RELATIVE,
         "removed_files": removed_files,
@@ -2685,6 +2816,10 @@ def _install_agent_bundle(
         "generated_skill_previews": [
             {"path": path, "content": content}
             for path, content in sorted(generated_skill_files.items())
+        ] if chat_mode else [],
+        "generated_support_previews": [
+            {"path": path, "content": content}
+            for path, content in sorted(generated_support_files.items())
         ] if chat_mode else [],
         "created_files": created_files,
         "overwritten_files": overwritten_files,
@@ -3714,6 +3849,42 @@ def _plan_or_apply_updates(
     }
 
 
+def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dict[str, object]:
+    """Handle the `rqmd-ai telemetry` command — report endpoint status."""
+    from .telemetry import resolve_telemetry_endpoint
+
+    endpoint = resolve_telemetry_endpoint(repo_root)
+    configured = endpoint is not None
+    reachable = False
+    health: dict[str, object] | None = None
+
+    if endpoint:
+        try:
+            import json as _json
+            import urllib.request
+            req = urllib.request.Request(f"{endpoint}/health", method="GET")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                health = _json.loads(resp.read())
+                reachable = True
+        except Exception:
+            pass
+
+    return {
+        "mode": "telemetry",
+        "configured": configured,
+        "endpoint": endpoint,
+        "reachable": reachable,
+        "health": health,
+        "instructions": (
+            "Telemetry endpoint is active. AI agents can POST events to {}/api/v1/events".format(endpoint)
+            if configured and reachable
+            else "No telemetry endpoint configured. Set RQMD_TELEMETRY_ENDPOINT or add telemetry.endpoint to .rqmd.yml."
+            if not configured
+            else "Telemetry endpoint configured but not reachable at {}.".format(endpoint)
+        ),
+    }
+
+
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.argument("command_name", required=False)
 @click.option(
@@ -3865,12 +4036,19 @@ def main(
             install_operation = "upgrade"
         elif normalized_command == "init":
             workflow_mode = "init"
+        elif normalized_command == "telemetry":
+            workflow_mode = "telemetry"
         else:
             raise click.ClickException(f"Unknown rqmd-ai command: {command_name}")
     if chat_mode is None:
         chat_mode = workflow_mode == "init"
     if brainstorm_file is not None and workflow_mode != "brainstorm":
         raise click.ClickException("--brainstorm-file can only be used with --workflow-mode brainstorm.")
+
+    if workflow_mode == "telemetry":
+        payload = _handle_telemetry_command(repo_root, json_output=json_output)
+        _emit(payload, json_output=json_output, json_output_file=json_output_file)
+        return
 
     if install_bundle:
         if guide or set_entries or export_ids or export_files or export_status or apply:

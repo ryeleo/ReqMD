@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 26🔧 10✅ 0⚠️ 0⛔ 0🗑️
+Summary: 0💡 27🔧 10✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -321,7 +321,7 @@ Summary: 1💡 26🔧 10✅ 0⚠️ 0⛔ 0🗑️
 - So that `all` is exposed in shell completion as a special positional target.
 
 ### RQMD-AUTOMATION-037: Canonical machine-readable validation entry point
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a maintainer or AI agent when validating a planned change before closing a batch
 - I want one canonical validation entry point, ideally exposed as a `validate` subcommand on the same agent workflow surface used for preflight

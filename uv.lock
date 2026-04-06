@@ -248,7 +248,7 @@ wheels = [
 
 [[package]]
 name = "rqmd"
-version = "0.1.1rc1"
+version = "0.1.1rc4"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

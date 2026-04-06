@@ -20,3 +20,4 @@
 .github/skills/rqmd-pin/SKILL.md
 .github/skills/rqmd-bundle/SKILL.md
 .github/skills/rqmd-verify/SKILL.md
+.github/skills/rqmd-telemetry/SKILL.md

@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added agent-facing telemetry infrastructure so AI agents can self-report workflow friction, improvement suggestions, and errors back to rqmd developers — implemented as a new `RQMD-TELEMETRY` requirement domain with Postgres + MinIO local dev stack, a FastAPI gateway, a Python telemetry client, and an `/rqmd-telemetry` bundle skill that teaches agents when and how to submit events.
+- Added `rqmd-ai telemetry` command for checking endpoint configuration and health.
 - Added prompt-aware bundle support and a bundled prompt suite including `/go`, `/commit-and-go`, `/next`, `/brainstorm`, `/docs-pass`, `/pin`, and `/ship-check` so the installed rqmd AI experience can stay centered on one primary implementation agent with simpler slash-command entrypoints.
 - Added workspace bundle provenance metadata at `.github/rqmd-bundle.json` so installed repositories can report which rqmd version and JSON schema version last generated their local bundle files.
+- Added a generated `agent-workflow.sh` scaffold during bundle install so repositories get one canonical agent-facing entry point for machine-readable `preflight` and `validate` workflows alongside the generated `/dev` and `/test` skills.
 - Added a visible project tooling metadata block for generated requirements indexes plus `rqmd --sync-index-metadata`, so interactive-only rqmd users can see and refresh the repository's recorded rqmd and JSON schema versions.
 - Added explicit `rqmd-ai reinstall` and `rqmd-ai upgrade` commands for managed bundle lifecycle refreshes, including conservative upgrade protection for customized files.
 - Added bundle-wide guidance for reliable `rqmd-ai --json` automation (foreground execution, stdout-only JSON parsing, separate stderr diagnostics), with Windows shell reliability called out explicitly.

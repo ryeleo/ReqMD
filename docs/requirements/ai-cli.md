@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 42🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 3💡 44🔧 2✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -440,7 +440,7 @@ Summary: 5💡 42🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And Windows-oriented environments such as Git Bash should be treated as first-class cases rather than implicit Unix-only fallbacks.
 
 ### RQMD-AI-049: Agent preflight verifies repository readiness before implementation
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a maintainer when handing a repository to one or more AI agents for implementation work
 - I want a canonical agent-facing workflow entry point that exposes a `preflight` readiness check
@@ -464,7 +464,7 @@ Summary: 5💡 42🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And the repository should include a repeatable check or generation path that catches drift before stale workflow instructions reach developers or agents.
 
 ### RQMD-AI-051: Generated agent workflow entry point is the canonical agent execution surface
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a maintainer when enabling AI agents in a repository
 - I want one generated agent-workflow entry point to be the canonical surface for routine agent actions
@@ -475,14 +475,17 @@ Summary: 5💡 42🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And repository-specific operations such as compile, focused test, broader test, docs verification, or other primary workflows should be reachable through that same maintained interface rather than ad hoc standalone commands
 - And the interface should stay stable enough that prompts, skills, tasks, and automation can treat it as the primary execution contract for agent work.
 
-### RQMD-AI-052: `/dev` and `/test` skills can defer to the canonical agent workflow entry point
+### RQMD-AI-052: `/dev` and `/test` skills can defer to a canonical agent-invocable interface
 - **Status:** 💡 Proposed
 - **Priority:** 🟡 P2 - Medium
-- As a maintainer when a repository adopts a strong agent-workflow entry point
-- I want rqmd bundle guidance to allow `/dev` and `/test` skills to defer to that canonical interface instead of duplicating the same commands independently
+- As a maintainer when a repository adopts a single canonical agent-facing interface such as a shell script (`agent-workflow.sh`), a Makefile, a `just` justfile, or another task-runner technology
+- I want rqmd bundle guidance to allow `/dev` and `/test` skills to defer to that one interface instead of teaching agents a sprawl of individual shell commands
 - So that the repository can avoid maintaining two competing sources of truth for agent execution behavior.
+- So that users can blanket-allow the single canonical interface in their tool-approval settings instead of playing whack-a-mole approving every distinct command an AI agent tries to run.
 - Given a repository has a maintained agent-workflow entry point that already covers preflight, validation, and primary development tasks
 - When rqmd generates or refreshes repository-local `/dev` and `/test` skills
-- Then those skills should be allowed to point agents at the canonical workflow entry point instead of restating the raw command set in parallel
-- And rqmd should allow repositories to omit separate `/dev` and `/test` skills entirely when the unified workflow entry point is sufficient and explicitly chosen
-- And the bundle guidance should make clear when those skills remain useful as thin wrappers or discovery aids versus when they should be treated as redundant.
+- Then those skills should direct agents to invoke the canonical interface rather than restating the raw command set in parallel
+- And the canonical interface should be designed for easy blanket-allow in IDE or tool-approval configurations, for example by keeping all agent actions routed through one executable path that approval systems can trust once
+- And rqmd should allow repositories to omit separate `/dev` and `/test` skills entirely when the unified entry point is sufficient and explicitly chosen
+- And the bundle guidance should make clear when those skills remain useful as thin wrappers or discovery aids versus when they should be treated as redundant
+- And the guidance should remain technology-neutral, supporting shell scripts, Makefiles, justfiles, or other task-runner conventions without forcing one choice.

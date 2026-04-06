@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -1164,12 +1165,14 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert payload["mode"] == "install-agent-bundle"
     assert payload["dry_run"] is True
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 25
+    assert payload["changed_count"] == 27
     assert payload["metadata_file"] == ".github/rqmd-bundle.json"
+    assert payload["generated_support_files"] == ["agent-workflow.sh"]
     assert payload["generated_skill_files"] == [
         ".github/skills/dev/SKILL.md",
         ".github/skills/test/SKILL.md",
     ]
+    assert "agent-workflow.sh" in payload["created_files"]
     assert ".github/copilot-instructions.md" in payload["created_files"]
     assert ".github/rqmd-bundle.json" in payload["created_files"]
     assert ".github/agents/rqmd-dev.agent.md" in payload["created_files"]
@@ -1195,6 +1198,7 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert ".github/skills/rqmd-pin/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-bundle/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-verify/SKILL.md" in payload["created_files"]
+    assert ".github/skills/rqmd-telemetry/SKILL.md" in payload["created_files"]
     assert not (repo / ".github" / "copilot-instructions.md").exists()
 
 
@@ -1221,7 +1225,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 26
+    assert first_payload["changed_count"] == 28
     assert (repo / ".github" / "copilot-instructions.md").exists()
     metadata_path = repo / ".github" / "rqmd-bundle.json"
     assert metadata_path.exists()
@@ -1254,6 +1258,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     assert ".github/agents/rqmd-bundle-maintainer.agent.md" not in first_payload["created_files"]
     assert ".github/skills/rqmd-init/SKILL.md" in first_payload["created_files"]
     assert ".github/skills/rqmd-init-legacy/SKILL.md" in first_payload["created_files"]
+    assert "agent-workflow.sh" in first_payload["created_files"]
     assert ".github/skills/dev/SKILL.md" in first_payload["created_files"]
     assert ".github/skills/test/SKILL.md" in first_payload["created_files"]
 
@@ -1274,7 +1279,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 26
+    assert len(second_payload["skipped_existing"]) == 28
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
@@ -1320,7 +1325,7 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
-    assert payload["changed_count"] == 25
+    assert payload["changed_count"] == 27
 
 
 def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
@@ -1346,7 +1351,7 @@ def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 25
+    assert payload["changed_count"] == 27
 
 
 def test_RQMD_AI_012_install_bundle_text_output_lists_created_files(tmp_path: Path) -> None:
@@ -1448,7 +1453,7 @@ def test_RQMD_AI_012_reinstall_command_overwrites_existing_bundle(tmp_path: Path
     payload = json.loads(reinstall.output)
     assert payload["operation"] == "reinstall"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 25
+    assert payload["changed_count"] == 27
     assert ".github/copilot-instructions.md" in payload["overwritten_files"]
 
 
@@ -1485,7 +1490,7 @@ def test_RQMD_AI_012_upgrade_command_preserves_installed_preset(tmp_path: Path) 
     payload = json.loads(upgrade.output)
     assert payload["operation"] == "upgrade"
     assert payload["preset"] == "full"
-    assert payload["changed_count"] == 26
+    assert payload["changed_count"] == 28
 
 
 def test_RQMD_AI_012_upgrade_protects_customized_bundle_files(tmp_path: Path) -> None:
@@ -1651,16 +1656,74 @@ def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_pa
     assert result.exit_code == 0
     payload = json.loads(result.output)
     _assert_schema_version(payload)
+    assert "agent-workflow.sh" in payload["created_files"]
     assert ".github/skills/dev/SKILL.md" in payload["created_files"]
     assert ".github/skills/test/SKILL.md" in payload["created_files"]
 
+    agent_workflow = (repo / "agent-workflow.sh").read_text(encoding="utf-8")
     dev_skill = (repo / ".github" / "skills" / "dev" / "SKILL.md").read_text(encoding="utf-8")
     test_skill = (repo / ".github" / "skills" / "test" / "SKILL.md").read_text(encoding="utf-8")
+    assert "Canonical agent workflow entry point" in dev_skill
+    assert "Canonical validation entry point" in test_skill
+    assert '"mode": "preflight"' in agent_workflow
+    assert '"mode": "validate"' in agent_workflow
     assert "npm run dev" in dev_skill
     assert "npm run build" in dev_skill
     assert "./scripts/local-smoke.sh" in dev_skill
     assert "package.json scripts" in dev_skill
     assert "npm run test" in test_skill
+
+
+def test_RQMD_AI_019_generated_agent_workflow_runs_preflight_and_validate(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "install",
+            "--bundle-preset",
+            "minimal",
+            "--answer",
+            f"dev_environment={sys.executable} -V",
+            "--answer",
+            f"test_primary={sys.executable} -V",
+        ],
+    )
+
+    assert result.exit_code == 0
+    preflight = subprocess.run(
+        ["bash", "./agent-workflow.sh", "preflight"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert preflight.returncode == 0, preflight.stderr
+    preflight_payload = json.loads(preflight.stdout)
+    assert preflight_payload["mode"] == "preflight"
+    assert preflight_payload["ok"] is True
+    assert any(check["target"] == "agent-workflow.sh" for check in preflight_payload["checks"])
+
+    validate = subprocess.run(
+        ["bash", "./agent-workflow.sh", "validate", "--profile", "test"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert validate.returncode == 0, validate.stderr
+    validate_payload = json.loads(validate.stdout)
+    assert validate_payload["mode"] == "validate"
+    assert validate_payload["profile"] == "test"
+    assert validate_payload["ok"] is True
+    assert [stage["id"] for stage in validate_payload["stages"]] == ["environment", "primary-tests"]
 
 
 def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path: Path) -> None:
@@ -1731,7 +1794,10 @@ def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path
     assert notes_question["prompt"] == "What review notes or caveats should be carried into the generated skills?"
     assert notes_question["custom_answer_prompt"] == "Add another command or note."
     preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
+    support_preview_map = {entry["path"]: entry["content"] for entry in payload["generated_support_previews"]}
     assert ".github/skills/dev/SKILL.md" in preview_map
+    assert "agent-workflow.sh" in support_preview_map
+    assert '"profiles"' in support_preview_map["agent-workflow.sh"]
     assert "npm run dev" in preview_map[".github/skills/dev/SKILL.md"]
     assert "npm run test" in preview_map[".github/skills/test/SKILL.md"]
 
@@ -1771,8 +1837,11 @@ def test_RQMD_AI_020_install_bundle_chat_applies_answer_overrides(tmp_path: Path
     assert payload["interview"]["applied_answers"]["dev_run"] == ["python -m demo.app"]
     assert payload["interview"]["applied_answers"]["test_primary"] == ["pytest -q"]
     preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
+    support_preview_map = {entry["path"]: entry["content"] for entry in payload["generated_support_previews"]}
     assert "python -m demo.app" in preview_map[".github/skills/dev/SKILL.md"]
     assert "pytest -q" in preview_map[".github/skills/test/SKILL.md"]
+    assert "python -m demo.app" in support_preview_map["agent-workflow.sh"]
+    assert "pytest -q" in support_preview_map["agent-workflow.sh"]
 
 
 def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, monkeypatch) -> None:

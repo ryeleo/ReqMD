@@ -562,11 +562,11 @@ rqmd-ai upgrade
 
 `rqmd-ai reinstall` is the explicit reset path: it removes and re-installs rqmd-managed files for the selected preset, but does not delete unrelated workspace files.
 
-Bundle install also scaffolds project-local `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` files based on detected repository commands. Treat those as a starting point: review and tighten the generated build, smoke, and validation commands so future `rqmd-dev` runs can rely on them instead of guessing.
+Bundle install also scaffolds a project-local `agent-workflow.sh` plus `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` based on detected repository commands. Treat `agent-workflow.sh` as the canonical agent-facing surface for `preflight` and `validate`, then review and tighten the generated build, smoke, and validation commands so future `rqmd-dev` runs can rely on them instead of guessing.
 
 The default bundle shape is single-agent-first: `rqmd-dev` stays the main implementation agent, and bundled prompts provide the main slash-command entrypoints for common rqmd actions.
 
-Bundle installation can also be driven through a structured chat-style preview with `rqmd-ai install --json --bundle-preset minimal --chat --dry-run`. That payload now includes grouped interview questions, multi-select command suggestions, custom-answer prompts, skip support, detected command sources, recommended choices, safe defaults, and preview content for the generated `/dev` and `/test` skills. Repeat `--answer FIELD=VALUE` to select multiple suggestions or add custom commands before writing.
+Bundle installation can also be driven through a structured chat-style preview with `rqmd-ai install --json --bundle-preset minimal --chat --dry-run`. That payload now includes grouped interview questions, multi-select command suggestions, custom-answer prompts, skip support, detected command sources, recommended choices, safe defaults, and preview content for the generated `agent-workflow.sh`, `/dev`, and `/test` scaffolds. Repeat `--answer FIELD=VALUE` to select multiple suggestions or add custom commands before writing.
 
 ### Use rqmd-ai for new-project onboarding
 

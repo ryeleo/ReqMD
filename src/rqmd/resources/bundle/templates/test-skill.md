@@ -5,17 +5,24 @@ argument-hint: Describe whether you need the primary test command, integration c
 user-invocable: true
 metadata:
   guide:
-    summary: Use the repository's canonical validation commands instead of guessing test workflows.
+    summary: Use the repository's canonical agent workflow validation interface instead of guessing test workflows.
     workflow:
-      - Start with the primary automated test command.
-      - Use any dedicated integration or lint/check commands when the task calls for them.
+      - Start with `{{AGENT_WORKFLOW_PATH}} preflight` if repository readiness is uncertain.
+      - Prefer `{{AGENT_WORKFLOW_PATH}} validate` and its focused profiles before falling back to raw test commands.
+      - Use any dedicated integration or lint/check commands below when customizing or debugging the validation flow.
       - Update this generated skill if the repository's real validation workflow differs from the scaffold.
     examples:
-      - Ask for the canonical test command for this repository.
+      - Ask which `{{AGENT_WORKFLOW_PATH}} validate --profile ...` mode matches the current batch.
       - Ask for integration or lint commands before finishing a change.
 ---
 
 Use this skill when work needs the repository's actual automated validation commands.
+
+Canonical validation entry point:
+- `{{AGENT_WORKFLOW_PATH}} validate`
+- `{{AGENT_WORKFLOW_PATH}} validate --profile test`
+- `{{AGENT_WORKFLOW_PATH}} validate --profile integration`
+- `{{AGENT_WORKFLOW_PATH}} validate --profile docs`
 
 Detected sources:
 {{DETECTED_SOURCES}}
@@ -33,5 +40,5 @@ Notes:
 {{NOTES}}
 
 Constraints:
-- Prefer these repository-specific validation commands over generic guesses.
+- Prefer the canonical agent workflow validation interface first; use the raw commands below when debugging or refining that interface.
 - Review and edit this generated skill after bootstrap if the detected commands are incomplete or stale.

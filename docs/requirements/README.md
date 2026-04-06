@@ -2,15 +2,17 @@
 
 This document is the source-of-truth index for rqmd requirements.
 
+
 ## Project Tooling Metadata
 
 This section records the rqmd tooling versions currently expected by this repository.
 Refresh it after upgrading rqmd by running `rqmd --sync-index-metadata --force-yes`.
 
 <!-- rqmd-project-metadata:start -->
-- `rqmd_version`: `0.1.0`
+- `rqmd_version`: `0.1.1rc4`
 - `json_schema_version`: `1.0.0`
 <!-- rqmd-project-metadata:end -->
+
 
 ## How To Use
 
@@ -44,6 +46,7 @@ Each requirement document can represent a domain, user story, feature area, or a
 - [Screen-Write UI](screen-write.md) - full-screen renderer mode, terminal capability fallback, and redraw ergonomics
 - [Portability](portability.md) - repo root, requirements directory, cross-project assumptions
 - [Packaging](packaging.md) - package layout, entrypoints, install/run behavior
+- [Telemetry](telemetry.md) - agent-facing telemetry for capturing AI workflow friction, improvement suggestions, and session diagnostics
 
 ## Verification
 
@@ -62,6 +65,7 @@ Each requirement document can represent a domain, user story, feature area, or a
 | RQMD-UI-* | Screen-Write UI |
 | RQMD-PORTABILITY-* | Portability |
 | RQMD-PACKAGING-* | Packaging |
+| RQMD-TELEMETRY-* | Telemetry |
 
 ## Tracking Rule
 
