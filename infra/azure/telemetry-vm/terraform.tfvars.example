@@ -6,7 +6,7 @@ prefix                   = "rqmdtelemetry"
 vm_size                  = "Standard_B2s"
 os_disk_size_gb          = 64
 vm_admin_username        = "azureuser"
-vm_admin_ssh_public_key  = "ssh-ed25519 AAAA..."
+vm_admin_ssh_public_key  = "ssh-rsa AAAA..."
 
 # Restrict to your office/home static IP for tighter security.
 allowed_ssh_cidr         = "0.0.0.0/0"
