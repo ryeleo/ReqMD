@@ -3870,8 +3870,7 @@ def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dic
                 reachable = True
         except Exception:
             pass
-
-    return {
+    from .telemetry import resolve_telemetry_api_key, resolve_telemetry_endpoint
         "mode": "telemetry",
         "configured": configured,
         "endpoint": endpoint,

@@ -18,7 +18,10 @@ Promoted into tracked requirements: `RQMD-CORE-037` (lazy imports), `RQMD-CORE-0
 
 ## Telemetry Local Dev
 
-Oh yeah, start setting me up so that I can run some basic docker containers locally that give me easy access to the backend of the telemetry services...
+Back to Telemetry Local Dev -- I should have said that I want to be able to use local tools to access the REMOTE servers -- so make sure there is a docker compose solution that runs just the admin tools and hopefully is even autoconfigured to reach 
+
+Oh yeah, set me up so that I can have easy access to the backend of the telemetry services to - I am not very good at DB work and being able to pull up a basic spreadsheet view of any DB table is very helpful for me! Maybe run some basic docker containers locally that give me access? Maybe just recommend VS Code extensions?
+
 
 ## Telemetry Feedback Loop
 

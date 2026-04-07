@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd import ai_cli
 from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.constants import JSON_SCHEMA_VERSION
@@ -2157,23 +2158,31 @@ def test_RQMD_AUTOMATION_038_batch_mode_runs_multiple_queries_in_one_invocation(
     results = payload["results"]
     assert len(results) == 3
 
+    def _collect_ids(result_obj: dict) -> list[str]:
+        """Extract all requirement IDs from an export-context result."""
+        ids: list[str] = []
+        for f in result_obj.get("files", []):
+            for r in f.get("requirements", []):
+                ids.append(r["id"])
+        return ids
+
     # q1: dump-status proposed -> only RQMD-DEMO-001
     q1 = results[0]
     assert q1["key"] == "q1"
-    q1_ids = [r["id"] for r in q1["result"]["requirements"]]
+    q1_ids = _collect_ids(q1["result"])
     assert "RQMD-DEMO-001" in q1_ids
     assert "RQMD-DEMO-002" not in q1_ids
 
     # q2: dump-id RQMD-DEMO-002 -> only that requirement
     q2 = results[1]
     assert q2["key"] == "q2"
-    q2_ids = [r["id"] for r in q2["result"]["requirements"]]
+    q2_ids = _collect_ids(q2["result"])
     assert q2_ids == ["RQMD-DEMO-002"]
 
     # q3: dump-all -> both requirements
     q3 = results[2]
     assert q3["key"] == "q3"
-    q3_ids = [r["id"] for r in q3["result"]["requirements"]]
+    q3_ids = _collect_ids(q3["result"])
     assert "RQMD-DEMO-001" in q3_ids
     assert "RQMD-DEMO-002" in q3_ids
 
