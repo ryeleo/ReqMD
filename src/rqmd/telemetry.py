@@ -59,6 +59,32 @@ def resolve_telemetry_endpoint(repo_root: Path | None = None) -> str | None:
     return None
 
 
+def resolve_telemetry_api_key(repo_root: Path | None = None) -> str | None:
+    """Return the configured telemetry API key, or None if not configured.
+
+    Checks in order:
+    1. RQMD_TELEMETRY_API_KEY environment variable
+    2. telemetry.api_key in .rqmd.yml / .rqmd.yaml / .rqmd.json
+    """
+    env_key = os.environ.get("RQMD_TELEMETRY_API_KEY")
+    if env_key:
+        return env_key
+
+    if repo_root is not None:
+        try:
+            from .config import load_config
+            config = load_config(repo_root)
+            telemetry_config = config.get("telemetry", {})
+            if isinstance(telemetry_config, dict):
+                api_key = telemetry_config.get("api_key")
+                if api_key:
+                    return str(api_key)
+        except Exception:
+            pass
+
+    return None
+
+
 def _truncate(text: str | None, max_len: int = _MAX_SNIPPET_LENGTH) -> str | None:
     if text is None:
         return None
@@ -76,6 +102,7 @@ def submit_event(
     session_id: str | None = None,
     agent_name: str | None = None,
     detail: dict[str, Any] | None = None,
+    api_key: str | None = None,
 ) -> dict[str, Any] | None:
     """Submit a telemetry event to the gateway.
 
@@ -108,10 +135,13 @@ def submit_event(
 
     try:
         urllib_request = _get_urllib()
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
         req = urllib_request.Request(
             url,
             data=body,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
             method="POST",
         )
         with urllib_request.urlopen(req, timeout=10) as resp:
@@ -132,6 +162,7 @@ def report_struggle(
     severity: Severity = "medium",
     session_id: str | None = None,
     agent_name: str | None = None,
+    api_key: str | None = None,
 ) -> dict[str, Any] | None:
     """Convenience wrapper for submitting a struggle event."""
     detail: dict[str, Any] = {}
@@ -151,6 +182,7 @@ def report_struggle(
         session_id=session_id,
         agent_name=agent_name,
         detail=detail or None,
+        api_key=api_key,
     )
 
 
@@ -164,6 +196,7 @@ def report_suggestion(
     severity: Severity = "low",
     session_id: str | None = None,
     agent_name: str | None = None,
+    api_key: str | None = None,
 ) -> dict[str, Any] | None:
     """Convenience wrapper for submitting a suggestion event."""
     detail: dict[str, Any] = {
@@ -180,6 +213,7 @@ def report_suggestion(
         session_id=session_id,
         agent_name=agent_name,
         detail=detail,
+        api_key=api_key,
     )
 
 
@@ -192,6 +226,7 @@ def report_error(
     severity: Severity = "high",
     session_id: str | None = None,
     agent_name: str | None = None,
+    api_key: str | None = None,
 ) -> dict[str, Any] | None:
     """Convenience wrapper for submitting an error event."""
     detail: dict[str, Any] = {}
@@ -207,4 +242,5 @@ def report_error(
         session_id=session_id,
         agent_name=agent_name,
         detail=detail or None,
+        api_key=api_key,
     )

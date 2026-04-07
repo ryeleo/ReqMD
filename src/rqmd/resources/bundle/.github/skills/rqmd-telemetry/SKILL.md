@@ -27,6 +27,21 @@ Telemetry is **never** sent unless a telemetry endpoint has been explicitly conf
 2. Check the `RQMD_TELEMETRY_ENDPOINT` environment variable.
 3. If neither is set, **do not attempt to send telemetry**. You may still log the event to stderr for the user's awareness.
 
+## Authentication
+
+All gateway endpoints except `/health` require an API key. The key is resolved the same way as the endpoint:
+
+1. `RQMD_TELEMETRY_API_KEY` environment variable.
+2. `telemetry.api_key` in the project `.rqmd.yml` / `.rqmd.yaml` / `.rqmd.json` config file.
+
+Include the key as a Bearer token on every request:
+
+```
+Authorization: Bearer <api-key>
+```
+
+If no API key is configured but an endpoint is, requests will likely receive a `403 Forbidden` response from the gateway.
+
 ## When to report
 
 Report a **struggle** event when:
@@ -53,6 +68,7 @@ POST a JSON event to the configured telemetry endpoint:
 ```
 POST {endpoint}/api/v1/events
 Content-Type: application/json
+Authorization: Bearer <api-key>
 
 {
   "session_id": "<your-session-id-or-uuid>",
@@ -90,6 +106,7 @@ For larger payloads such as full command output, session logs, or prompt snapsho
 ```
 POST {endpoint}/api/v1/artifacts
 Content-Type: multipart/form-data
+Authorization: Bearer <api-key>
 
 Fields:
   - session_id: <session-id>

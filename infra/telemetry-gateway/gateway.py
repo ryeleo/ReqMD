@@ -14,7 +14,8 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 
 import asyncpg
-from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi import (Depends, FastAPI, File, Form, Header, HTTPException,
+                     UploadFile)
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 Scope: agent-facing telemetry infrastructure for capturing AI workflow friction, improvement suggestions, and session diagnostics — enabling rqmd's own AI agents to report how rqmd can be improved.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 7🔧 0✅ 0⚠️ 0⛔ 0🗑️
+Summary: 0💡 8🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TELEMETRY-001: Local telemetry development stack
@@ -84,3 +84,20 @@ Summary: 0💡 7🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - Then agents must not attempt to send telemetry events anywhere
 - And when a local telemetry endpoint is configured, events stay on the local machine unless a remote endpoint is separately and explicitly opted into
 - And the skill guidance makes the opt-in contract visible to both agents and humans reviewing the installed bundle.
+
+### RQMD-TELEMETRY-008: Agent telemetry configuration discovery
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As an AI agent that needs to submit telemetry events to a remote gateway
+- I want a single discovery mechanism that resolves both the telemetry endpoint URL and the API key from well-known configuration sources
+- So that I can authenticate with the gateway without ad-hoc credential handling or hard-coded secrets.
+- Given an agent invokes the telemetry config discovery
+- When the `RQMD_TELEMETRY_ENDPOINT` environment variable is set
+- Then the endpoint URL is taken from that variable
+- And when the `RQMD_TELEMETRY_API_KEY` environment variable is set
+- Then the API key is taken from that variable
+- And when the environment variables are not set but a `.rqmd.yml` / `.rqmd.yaml` / `.rqmd.json` config file contains `telemetry.endpoint` and/or `telemetry.api_key`
+- Then those config-file values are used as fallbacks
+- And when neither source provides an endpoint, telemetry is silently disabled
+- And the `submit_event` client includes the resolved API key as a `Bearer` token in the `Authorization` header on every request
+- And the `rqmd-ai telemetry` status command reports whether an API key is configured (without revealing the key value).

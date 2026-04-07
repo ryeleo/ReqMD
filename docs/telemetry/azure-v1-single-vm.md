@@ -93,6 +93,41 @@ curl -X POST http://<vm-ip>:18080/api/v1/events \
 
 The `TELEMETRY_API_KEY` from your `.env.telemetry.v1` is the shared secret. Distribute this to your agents/clients; it's embedded in their configurations so they can send events.
 
+## Configuring agents
+
+Agents discover the endpoint and API key through two sources, checked in order:
+
+### Option 1: Environment variables (recommended for CI and local dev)
+
+```bash
+export RQMD_TELEMETRY_ENDPOINT="http://<vm-public-ip>:18080"
+export RQMD_TELEMETRY_API_KEY="<your-telemetry-api-key>"
+```
+
+Set these in your shell profile, CI secrets, or `.env` file (never commit the key).
+
+### Option 2: Project config file
+
+Add a `telemetry` section to your `.rqmd.yml` (or `.rqmd.yaml` / `.rqmd.json`):
+
+```yaml
+telemetry:
+  endpoint: "http://<vm-public-ip>:18080"
+  api_key: "<your-telemetry-api-key>"
+```
+
+> **⚠️ Note:** If you commit `.rqmd.yml` to version control, use a placeholder for `api_key` and override it via the environment variable at runtime. Never commit real secrets.
+
+### Verify agent configuration
+
+Run the built-in status check to confirm the agent can reach the gateway:
+
+```bash
+rqmd-ai telemetry --json
+```
+
+This reports whether the endpoint is configured, reachable, and whether an API key is present.
+
 ## Backup and restore
 
 Run backup:
