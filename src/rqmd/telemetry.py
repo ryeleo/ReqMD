@@ -244,3 +244,40 @@ def report_error(
         detail=detail or None,
         api_key=api_key,
     )
+
+
+def report_command_discovery_struggle(
+    endpoint: str,
+    *,
+    summary: str,
+    commands_attempted: list[str],
+    fallback_action: str | None = None,
+    stderr_snippet: str | None = None,
+    session_id: str | None = None,
+    agent_name: str | None = None,
+    api_key: str | None = None,
+) -> dict[str, Any] | None:
+    """Report a command-discovery struggle when rqmd/rqmd-ai cannot be invoked.
+
+    This is a high-signal friction category: when agents cannot find or run
+    the CLI, the entire rqmd workflow contract breaks and the agent falls back
+    to direct file manipulation.
+    """
+    detail: dict[str, Any] = {
+        "category": "command_discovery",
+        "commands_attempted": commands_attempted,
+    }
+    if fallback_action:
+        detail["fallback_action"] = fallback_action
+    if stderr_snippet:
+        detail["stderr_snippet"] = stderr_snippet
+    return submit_event(
+        endpoint,
+        event_type="struggle",
+        severity="high",
+        summary=summary,
+        session_id=session_id,
+        agent_name=agent_name,
+        detail=detail,
+        api_key=api_key,
+    )

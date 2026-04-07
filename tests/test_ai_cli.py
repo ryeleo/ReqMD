@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd import ai_cli
 from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.constants import JSON_SCHEMA_VERSION
@@ -2121,5 +2120,100 @@ def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_
     assert ".github/prompts/ship-check.prompt.md" in payload["bundle_installation"]["active_definition_files"]
     assert ".github/skills/dev/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
     assert ".github/skills/test/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
+
+
+def test_RQMD_AUTOMATION_038_batch_mode_runs_multiple_queries_in_one_invocation(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    batch_input = json.dumps([
+        {"query": "dump-status", "status": "proposed", "key": "q1"},
+        {"query": "dump-id", "ids": ["RQMD-DEMO-002"], "key": "q2"},
+        {"query": "dump-all", "key": "q3"},
+    ])
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--json",
+            "--batch",
+        ],
+        input=batch_input,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "batch"
+    assert payload["total_queries"] == 3
+    assert payload["read_only"] is True
+    _assert_schema_version(payload)
+
+    results = payload["results"]
+    assert len(results) == 3
+
+    # q1: dump-status proposed -> only RQMD-DEMO-001
+    q1 = results[0]
+    assert q1["key"] == "q1"
+    q1_ids = [r["id"] for r in q1["result"]["requirements"]]
+    assert "RQMD-DEMO-001" in q1_ids
+    assert "RQMD-DEMO-002" not in q1_ids
+
+    # q2: dump-id RQMD-DEMO-002 -> only that requirement
+    q2 = results[1]
+    assert q2["key"] == "q2"
+    q2_ids = [r["id"] for r in q2["result"]["requirements"]]
+    assert q2_ids == ["RQMD-DEMO-002"]
+
+    # q3: dump-all -> both requirements
+    q3 = results[2]
+    assert q3["key"] == "q3"
+    q3_ids = [r["id"] for r in q3["result"]["requirements"]]
+    assert "RQMD-DEMO-001" in q3_ids
+    assert "RQMD-DEMO-002" in q3_ids
+
+
+def test_RQMD_AUTOMATION_038_batch_mode_reports_per_query_errors(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    batch_input = json.dumps([
+        {"query": "dump-all", "key": "good"},
+        {"query": "nonsense-type", "key": "bad"},
+        "not-a-dict",
+    ])
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--json",
+            "--batch",
+        ],
+        input=batch_input,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "batch"
+    assert payload["total_queries"] == 3
+
+    results = payload["results"]
+    # First query succeeds
+    assert "result" in results[0] and "error" not in results[0].get("result", {})
+    # Second query returns an unknown-type error
+    assert "error" in results[1]["result"]
+    # Third query (non-dict) returns an error at result level
+    assert "error" in results[2]
 
 

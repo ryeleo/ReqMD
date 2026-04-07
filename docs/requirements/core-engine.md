@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 16🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 5💡 19🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -340,3 +340,46 @@ Summary: 4💡 16🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - So that generated rqmd requirement indexes include a visible project tooling metadata block near the top of the file.
 - So that existing repositories can add or refresh that block with a dedicated `rqmd --sync-index-metadata` migration step instead of hand-editing it.
 - So that text-mode rqmd startup surfaces a clear warning and migration hint when the recorded index metadata is missing or out of date.
+
+### RQMD-CORE-037: Lazy import strategy for non-interactive codepaths
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As an AI agent or automation consumer when running rqmd or rqmd-ai in JSON/non-interactive mode
+- I want rqmd to defer importing modules that are only needed for interactive TUI, color rendering, telemetry client, and other heavyweight subsystems until they are actually used
+- So that the ~80ms import overhead measured on typical machines is reduced to the minimum required for the codepath being exercised.
+- So that non-interactive JSON export and dump paths avoid loading screen-write, menu, color, and interactive-input modules entirely.
+- So that the lazy import strategy is transparent to callers and does not change any public API behavior.
+- So that import-time regressions are measurable and can be gated in CI alongside the runtime latency budget.
+
+### RQMD-CORE-038: Filesystem-cached parsed catalog for repeated invocations
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As an AI agent or automation consumer when running multiple rqmd commands in quick succession against the same requirement catalog
+- I want rqmd to cache parsed requirement data in a lightweight filesystem cache keyed by file mtime and size
+- So that the second and subsequent invocations within the same working tree skip re-parsing unchanged requirement files.
+- So that the cache is stored under `.rqmd/cache/` alongside existing rqmd working state and is safe to delete without data loss.
+- So that cache invalidation is deterministic: any change to a tracked requirement file's mtime or size causes that file to be re-parsed on next access.
+- So that the cache format is a compact binary or JSON structure that loads faster than re-parsing the original markdown.
+- So that the pure-Python path benefits from caching even without native acceleration, cutting repeated parse+index time to near zero for unchanged catalogs.
+
+### RQMD-CORE-039: Non-interactive latency budget and CI gate
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a rqmd maintainer when optimizing the AI agent feedback loop
+- I want a defined latency budget for non-interactive JSON and automation paths, separate from the interactive RQMD-UI-009 budget
+- So that AI-path commands such as `rqmd-ai --json --dump-status` and `rqmd --json --no-walk` have an explicit measurable target (e.g., <=80ms for single-requirement lookups, <=150ms for full catalog exports on a warm cache).
+- So that CI includes a latency gate for the non-interactive paths that fails the build when regressions push commands above the defined budget.
+- So that the budget accounts for both cold-start (first invocation, no cache) and warm-start (cached catalog) scenarios with separate documented thresholds.
+- So that profiling instrumentation can be enabled via an environment variable or flag to emit per-phase timing (import, parse, filter, serialize) without affecting normal output.
+
+### RQMD-CORE-040: Native Rust or C acceleration for parse and index hot paths
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a rqmd maintainer when Python-level optimizations (lazy imports, caching, orjson) have been exhausted and the remaining overhead is still too high for the desired AI feedback loop speed
+- I want rqmd to support a native Rust or C extension that accelerates the requirement markdown parser and in-memory index construction
+- So that the parse+index phase can drop from tens of milliseconds to single-digit milliseconds for catalogs of several hundred requirements.
+- So that the native extension is an optional dependency that rqmd auto-detects at import time, similar to the existing orjson path in `json_speedups.py`.
+- So that the pure-Python parser remains the canonical reference implementation and all native output is validated against it during development and CI.
+- So that the native extension is distributed as a pre-built wheel for common platforms (macOS arm64, macOS x86_64, Linux x86_64, Windows x86_64) and falls back to pure-Python when no wheel is available.
+- So that the native extension scope can grow incrementally: start with parsing, then indexing, then full catalog load, without requiring a single monolithic rewrite.
+- So that this requirement supersedes the narrow JSON-export scope of RQMD-CORE-025 and establishes the broader native acceleration roadmap.

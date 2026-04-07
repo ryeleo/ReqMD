@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 27🔧 10✅ 0⚠️ 0⛔ 0🗑️
+Summary: 0💡 28🔧 10✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -333,3 +333,14 @@ Summary: 0💡 27🔧 10✅ 0⚠️ 0⛔ 0🗑️
 - And it should emit machine-readable status for each stage so other tools can make decisions without scraping ad hoc shell output
 - And machine-readable output should include per-stage status in a stable structure rather than only one aggregated success or failure bit
 - And it should allow focused modes for compile-only, docs-only, SDK-only, and repository-specific targeted validation without inventing parallel workflows.
+
+### RQMD-AUTOMATION-038: Multi-query batch mode for rqmd-ai
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As an AI agent when a single workflow step needs several rqmd-ai queries (e.g., dump status, dump specific IDs, verify summaries)
+- I want rqmd-ai to accept multiple queries in one invocation so that startup, import, and catalog-parse costs are paid once instead of N times
+- So that an AI workflow that currently runs 5-15 separate rqmd-ai commands per step can collapse those into one or two batch invocations.
+- So that the batch input format is a simple JSON array of query objects on stdin or a repeated flag, keeping the contract easy for agents to construct.
+- So that each query in the batch produces a separate keyed result in the JSON output so agents can correlate responses to requests.
+- So that errors in one query do not abort the entire batch; per-query success/failure is reported consistently with the existing partial-failure model.
+- So that the batch path reuses the already-parsed and optionally cached catalog (RQMD-CORE-038) rather than re-parsing per query.

@@ -9,7 +9,6 @@ from threading import Thread
 from unittest.mock import patch
 
 import pytest
-
 from rqmd.telemetry import (
     report_error,
     report_struggle,
@@ -17,13 +16,6 @@ from rqmd.telemetry import (
     resolve_telemetry_endpoint,
     submit_event,
 )
-
-
-# ---------------------------------------------------------------------------
-# resolve_telemetry_endpoint
-# ---------------------------------------------------------------------------
-
-
 class TestResolveTelemetryEndpoint:
     def test_returns_none_when_unconfigured(self, tmp_path: Path):
         """RQMD-TELEMETRY-007: No endpoint configured means no telemetry."""

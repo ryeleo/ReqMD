@@ -15,6 +15,7 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
+from . import parse_cache
 from .constants import (
     BLOCKED_REASON_PATTERN,
     DEFAULT_ID_PREFIXES,
@@ -231,7 +232,7 @@ def _iter_requirement_headers(
     path: Path,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> list[tuple[str, int]]:
-    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = parse_cache.read_text_cached(path).splitlines()
     header_pattern = build_requirement_header_pattern(id_prefixes)
     matches: list[tuple[str, int]] = []
     for index, line in enumerate(lines, start=1):
@@ -314,7 +315,7 @@ def collect_sub_sections(
     path: Path,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> list[dict[str, object]]:
-    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = parse_cache.read_text_cached(path).splitlines()
     header_pattern = build_requirement_header_pattern(id_prefixes)
 
     ordered: list[str] = []
@@ -383,7 +384,10 @@ def parse_requirements(
         deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
         Only requirements with a status_line are included.
     """
-    lines = path.read_text(encoding="utf-8").splitlines()
+    cached = parse_cache.get_parsed(path, id_prefixes)
+    if cached is not None:
+        return cached
+    lines = parse_cache.read_text_cached(path).splitlines()
     requirements: list[dict[str, object]] = []
     current: dict[str, object] | None = None
     current_subsection: str | None = None  # Track active H2 subsection
@@ -474,7 +478,9 @@ def parse_requirements(
                 if links_list:
                     current["links"] = links_list
 
-    return [requirement for requirement in requirements if requirement["status_line"] is not None]
+    result = [requirement for requirement in requirements if requirement["status_line"] is not None]
+    parse_cache.put_parsed(path, id_prefixes, result)
+    return result
 
 
 def find_requirement_by_id(
@@ -517,7 +523,7 @@ def extract_requirement_block(
     Returns:
         The requirement text block as a string, or empty string if not found.
     """
-    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = parse_cache.read_text_cached(path).splitlines()
     start_index: int | None = None
     target = requirement_id.strip().upper()
     header_pattern = build_requirement_header_pattern(id_prefixes)
@@ -556,7 +562,7 @@ def extract_requirement_block_with_lines(
         A tuple of (block_text, start_line_index, end_line_index), or
         ('', None, None) if the requirement is not found.
     """
-    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = parse_cache.read_text_cached(path).splitlines()
     start_index: int | None = None
     target = requirement_id.strip().upper()
     header_pattern = build_requirement_header_pattern(id_prefixes)
@@ -884,7 +890,7 @@ def parse_domain_priority_metadata(
           H2 section title to priority label.
     """
     try:
-        text = path.read_text(encoding="utf-8")
+        text = parse_cache.read_text_cached(path)
     except OSError:
         return {"domain_priority": None, "sub_section_priorities": {}}
 

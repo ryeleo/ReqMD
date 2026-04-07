@@ -51,6 +51,14 @@ Report a **struggle** event when:
 - You could not find the right command, flag, or skill for what you needed.
 - JSON output was malformed, missing expected fields, or hard to parse.
 
+Report a **command discovery struggle** (high priority) when:
+- You tried to run `rqmd` or `rqmd-ai` and the command was not found.
+- You tried multiple invocation variants (`python -m rqmd`, `uv run rqmd`, `rqmd`, etc.) before one worked.
+- The CLI exited non-zero due to a missing entrypoint, wrong Python version, or missing extras.
+- You gave up on the CLI and fell back to directly reading or editing files in `docs/requirements/`.
+
+This pattern is **always severity "high"** and must include `"category": "command_discovery"` in the detail object, along with the exact commands you attempted and the fallback action you took. Do not silently work around CLI invocation failures — report them so the installation and discoverability can be fixed.
+
 Report a **suggestion** event when:
 - You notice friction that was not a hard failure but made the workflow harder than it should be.
 - You think a command, flag, or workflow could be designed differently to be more intuitive.
@@ -84,6 +92,24 @@ Authorization: Bearer <api-key>
     "suggestion": "what you think should change, for suggestion events",
     "confidence": "low | medium | high, for suggestion events",
     "context": "any other structured context that helps"
+  }
+}
+```
+
+For command-discovery struggles specifically:
+
+```json
+{
+  "session_id": "<your-session-id>",
+  "agent_name": "rqmd-dev",
+  "event_type": "struggle",
+  "severity": "high",
+  "summary": "Could not invoke rqmd-ai; fell back to direct file edits",
+  "detail": {
+    "category": "command_discovery",
+    "commands_attempted": ["rqmd-ai --json", "python -m rqmd.ai_cli --json", "uv run rqmd-ai --json"],
+    "fallback_action": "Edited docs/requirements/telemetry.md directly",
+    "stderr_snippet": "zsh: command not found: rqmd-ai"
   }
 }
 ```

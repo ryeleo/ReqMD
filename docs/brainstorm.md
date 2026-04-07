@@ -1,5 +1,21 @@
 # Brainstorm
 
+## Prompts
+
+/commit: Commit the current work with a nice git commit message to make it easier to keep track of changes and have a clear history of what was done and why. This is especially important when working with AI agents, as it helps maintain a clear record of the decisions made and the changes implemented based on those decisions. Similar to rqmd-changelog skill, make sure that the human inputs and decisions are clearly reflected in the commit messages, while the AI work is given a custom H1 heading to make it clear what was done by AI vs humans in the commit history. This way we can maintain a clear narrative in our commit history that highlights the human-driven decisions and changes, while still acknowledging the important AI-driven work that supports those changes. Having the AI Agent specify its own model and version in the commit message can also help with tracking how our AI capabilities evolve over time and provide context for the reliability of the changes made.
+/go: Continue with what you were currently doing.
+/next: Work with the user on picking what to work on next.
+/refine: Work with the user on refining requirements. (This can easily become brainstorming if the user isn't sure what they want yet, or it can be more focused on fixing-up existing requirements if they have a specific requirement in mind that they want to refine.)
+
+/brainstorm
+
+
+## Performance optimizing for rqmd-ai speed
+
+Figure out how to make rqmd commands used by AI MUCH faster so the feedback loop is much tighter and we can do more iterative prompting and less "put in a big prompt, wait a long time, get a big response" cycles.
+
+Promoted into tracked requirements: `RQMD-CORE-037` (lazy imports), `RQMD-CORE-038` (filesystem cache), `RQMD-CORE-039` (non-interactive latency budget), `RQMD-CORE-040` (native Rust/C acceleration roadmap), and `RQMD-AUTOMATION-038` (multi-query batch mode).
+
 ## Telemetry Local Dev
 
 Oh yeah, start setting me up so that I can run some basic docker containers locally that give me easy access to the backend of the telemetry services...
@@ -129,6 +145,11 @@ This file is now a checkpointed backlog scratchpad rather than a raw dump. Ideas
 - `RQMD-CORE-034`: guided duplicate-ID repair workflow.
 - `RQMD-SORTING-016`: positional `rqmd ranked` target for backlog grooming.
 - `RQMD-INTERACTIVE-032`: grapheme-safe menu alignment for emoji-rich labels like `⚠️ Janky`.
+- `RQMD-CORE-037`: lazy import strategy for non-interactive codepaths.
+- `RQMD-CORE-038`: filesystem-cached parsed catalog for repeated invocations.
+- `RQMD-CORE-039`: non-interactive latency budget and CI gate.
+- `RQMD-CORE-040`: native Rust/C acceleration for parse and index hot paths.
+- `RQMD-AUTOMATION-038`: multi-query batch mode for rqmd-ai.
 
 ## Clarified notes
 
@@ -160,5 +181,5 @@ The `Speed Shooting VR` status issue is not a generic parser incompatibility. It
 - Consider explicit `Ctrl+Z` / `Ctrl+Y` bindings on top of the existing undo/redo feature set.
 - Decide whether README generation should eventually become a stronger "tool-owned index" policy rather than marker-bounded sync.
 - Explore whether cross-root config discovery should follow `--docs-dir` targets when users intentionally point rqmd at another repository's requirement catalog.
-- Revisit native acceleration later if the current Python implementation becomes a real bottleneck despite the existing optional speedups path.
+- Revisit native acceleration later if the current Python implementation becomes a real bottleneck despite the existing optional speedups path. — Promoted into `RQMD-CORE-040`.
 

@@ -36,46 +36,27 @@ except ImportError:
     sys.exit(1)
 
 from .batch_inputs import parse_set_entry
-from .config import (
-    load_config,
-    load_priorities_file,
-    load_statuses_file,
-    validate_config,
-)
-from .constants import (
-    DEFAULT_STATUS_CATALOG,
-    JSON_SCHEMA_VERSION,
-    PRIORITY_ORDER,
-    REQUIREMENTS_INDEX_NAME,
-)
+from .config import (load_config, load_priorities_file, load_statuses_file,
+                     validate_config)
+from .constants import (DEFAULT_STATUS_CATALOG, JSON_SCHEMA_VERSION,
+                        PRIORITY_ORDER, REQUIREMENTS_INDEX_NAME)
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (
-    discover_project_root,
-    format_path_display,
-    initialize_requirements_scaffold,
-    iter_domain_files,
-    load_init_yaml,
-    preview_project_config_scaffold,
-    preview_requirements_scaffold,
-    render_legacy_issue_domain,
-    render_legacy_source_domain,
-    render_legacy_workflow_domain,
-    render_requirements_index,
-    render_startup_message,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
+from .markdown_io import (discover_project_root, format_path_display,
+                          initialize_requirements_scaffold, iter_domain_files,
+                          load_init_yaml, preview_project_config_scaffold,
+                          preview_requirements_scaffold,
+                          render_legacy_issue_domain,
+                          render_legacy_source_domain,
+                          render_legacy_workflow_domain,
+                          render_requirements_index, render_startup_message,
+                          resolve_requirements_dir, validate_files_readable)
 from .priority_model import configure_priority_catalog
-from .req_parser import (
-    extract_blocking_id,
-    extract_requirement_block_with_lines,
-    find_duplicate_requirement_ids,
-    normalize_id_prefixes,
-    parse_domain_priority_metadata,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .req_parser import (extract_blocking_id,
+                         extract_requirement_block_with_lines,
+                         find_duplicate_requirement_ids, normalize_id_prefixes,
+                         parse_domain_priority_metadata, parse_requirements,
+                         resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 from .summary import process_file
@@ -3889,8 +3870,7 @@ def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dic
                 reachable = True
         except Exception:
             pass
-
-    return {
+    from .telemetry import resolve_telemetry_api_key, resolve_telemetry_endpoint
         "mode": "telemetry",
         "configured": configured,
         "endpoint": endpoint,
@@ -3904,6 +3884,125 @@ def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dic
             if not configured
             else "Telemetry endpoint configured but not reachable at {}.".format(endpoint)
         ),
+    }
+
+
+def _handle_batch(
+    repo_root: Path,
+    requirements_dir_input: str | None,
+    id_prefixes_input: tuple[str, ...],
+    include_body: bool,
+    include_domain_body: bool,
+    max_domain_body_chars: int,
+) -> dict[str, object]:
+    """Execute a batch of queries from stdin against one loaded catalog."""
+    raw = sys.stdin.read()
+    try:
+        queries = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise click.ClickException(f"Invalid JSON on stdin for --batch: {exc}")
+
+    if not isinstance(queries, list):
+        raise click.ClickException("--batch expects a JSON array on stdin.")
+
+    resolved_criteria_dir, _message = resolve_requirements_dir(repo_root, requirements_dir_input)
+    try:
+        resolved_prefixes = normalize_id_prefixes(id_prefixes_input) if id_prefixes_input else id_prefixes_input
+        id_prefixes = resolve_id_prefixes(repo_root, str(resolved_criteria_dir), resolved_prefixes)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    domain_files = iter_domain_files(repo_root, str(resolved_criteria_dir))
+    if not domain_files:
+        raise click.ClickException(
+            f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
+        )
+    validate_files_readable(domain_files, repo_root)
+
+    results: list[dict[str, object]] = []
+    for idx, query in enumerate(queries):
+        if not isinstance(query, dict):
+            results.append({"index": idx, "error": "Query must be a JSON object."})
+            continue
+
+        query_type = str(query.get("query", "")).strip().lower()
+        key = query.get("key", idx)
+
+        try:
+            if query_type == "dump-status":
+                status_arg = str(query.get("status", ""))
+                result = _export_context(
+                    repo_root=repo_root,
+                    requirements_dir=resolved_criteria_dir,
+                    domain_files=domain_files,
+                    id_prefixes=id_prefixes,
+                    export_ids=(),
+                    export_files=(),
+                    export_status=status_arg or None,
+                    include_body=include_body,
+                    include_domain_body=include_domain_body,
+                    max_domain_body_chars=max_domain_body_chars,
+                )
+            elif query_type == "dump-id":
+                ids_arg = query.get("ids", [])
+                if isinstance(ids_arg, str):
+                    ids_arg = [ids_arg]
+                result = _export_context(
+                    repo_root=repo_root,
+                    requirements_dir=resolved_criteria_dir,
+                    domain_files=domain_files,
+                    id_prefixes=id_prefixes,
+                    export_ids=tuple(ids_arg),
+                    export_files=(),
+                    export_status=None,
+                    include_body=include_body,
+                    include_domain_body=include_domain_body,
+                    max_domain_body_chars=max_domain_body_chars,
+                )
+            elif query_type == "dump-file":
+                files_arg = query.get("files", [])
+                if isinstance(files_arg, str):
+                    files_arg = [files_arg]
+                result = _export_context(
+                    repo_root=repo_root,
+                    requirements_dir=resolved_criteria_dir,
+                    domain_files=domain_files,
+                    id_prefixes=id_prefixes,
+                    export_ids=(),
+                    export_files=tuple(files_arg),
+                    export_status=None,
+                    include_body=include_body,
+                    include_domain_body=include_domain_body,
+                    max_domain_body_chars=max_domain_body_chars,
+                )
+            elif query_type == "dump-all":
+                result = _export_context(
+                    repo_root=repo_root,
+                    requirements_dir=resolved_criteria_dir,
+                    domain_files=domain_files,
+                    id_prefixes=id_prefixes,
+                    export_ids=(),
+                    export_files=(),
+                    export_status=None,
+                    include_body=include_body,
+                    include_domain_body=include_domain_body,
+                    max_domain_body_chars=max_domain_body_chars,
+                )
+            else:
+                result = {"error": f"Unknown batch query type: {query_type!r}"}
+        except click.ClickException as exc:
+            result = {"error": str(exc.message)}
+        except Exception as exc:
+            result = {"error": str(exc)}
+
+        results.append({"key": key, "result": result})
+
+    return {
+        "mode": "batch",
+        "read_only": True,
+        "total_queries": len(queries),
+        "results": results,
+        "schema_version": JSON_SCHEMA_VERSION,
     }
 
 
@@ -4013,6 +4112,12 @@ def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dic
 )
 @click.option("--overwrite-existing", "overwrite_existing", is_flag=True, help="Allow --install-agent-bundle to overwrite existing instruction files.")
 @click.option("--dry-run", "dry_run", is_flag=True, help="Preview --install-agent-bundle changes without writing files.")
+@click.option(
+    "--batch",
+    "batch_mode",
+    is_flag=True,
+    help="Read a JSON array of query objects from stdin and run all queries in one invocation.",
+)
 def main(
     command_name: str | None,
     json_output: bool,
@@ -4039,8 +4144,22 @@ def main(
     force_legacy_init: bool,
     overwrite_existing: bool,
     dry_run: bool,
+    batch_mode: bool,
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
+
+    if batch_mode:
+        payload = _handle_batch(
+            repo_root=repo_root,
+            requirements_dir_input=requirements_dir,
+            id_prefixes_input=id_prefixes,
+            include_body=include_body,
+            include_domain_body=include_domain_body,
+            max_domain_body_chars=max_domain_body_chars,
+        )
+        _emit(payload, json_output=json_output, json_output_file=json_output_file)
+        return
+
     workflow_mode = workflow_mode.lower()
     install_operation = "install"
     if command_name:

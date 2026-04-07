@@ -3,7 +3,7 @@
 Scope: agent-facing telemetry infrastructure for capturing AI workflow friction, improvement suggestions, and session diagnostics — enabling rqmd's own AI agents to report how rqmd can be improved.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 8🔧 0✅ 0⚠️ 0⛔ 0🗑️
+Summary: 2💡 9🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TELEMETRY-001: Local telemetry development stack
@@ -103,7 +103,7 @@ Summary: 3💡 8🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - And the `rqmd-ai telemetry` status command reports whether an API key is configured (without revealing the key value).
 
 ### RQMD-TELEMETRY-009: Agent struggling to run rqmd reporting
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a developer who wants rqmd to be reliably invocable by AI agents
 - I want agents to report a specific telemetry event when they fail to invoke `rqmd` or `rqmd-ai` and fall back to directly reading or writing requirement files
