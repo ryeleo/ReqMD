@@ -7,6 +7,14 @@ terraform {
       version = "~> 3.110"
     }
   }
+
+  backend "azurerm" {
+    resource_group_name  = "rqmd-tfstate-rg"
+    container_name       = "tfstate"
+    key                  = "telemetry-vm.tfstate"
+    use_oidc             = true
+    # storage_account_name passed via -backend-config in CI
+  }
 }
 
 provider "azurerm" {
