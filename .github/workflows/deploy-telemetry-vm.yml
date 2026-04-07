@@ -75,6 +75,18 @@ jobs:
         run: |
           echo "public_ip=$(terraform output -raw vm_public_ip)" >> "$GITHUB_OUTPUT"
 
+      - name: Wait for cloud-init to finish
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ steps.vm.outputs.public_ip }}
+          username: ${{ vars.AZURE_VM_ADMIN_USERNAME || 'azureuser' }}
+          key: ${{ secrets.AZURE_VM_SSH_PRIVATE_KEY }}
+          command_timeout: 10m
+          script: |
+            echo "Waiting for cloud-init to complete..."
+            cloud-init status --wait
+            echo "cloud-init finished: $(cloud-init status)"
+
       - name: Push telemetry bundle to VM
         uses: appleboy/scp-action@v0.1.7
         with:
