@@ -24,6 +24,7 @@ env:
 jobs:
   provision-and-deploy:
     runs-on: ubuntu-latest
+    environment: Azure Telemetry
 
     steps:
       - name: Checkout
@@ -52,7 +53,7 @@ jobs:
           TF_VAR_vm_admin_username: ${{ vars.AZURE_VM_ADMIN_USERNAME || 'azureuser' }}
           TF_VAR_resource_group_name: ${{ vars.AZURE_VM_RESOURCE_GROUP || 'rqmd-telemetry-vm-rg' }}
           TF_VAR_prefix: ${{ vars.AZURE_VM_PREFIX || 'rqmdtelemetry' }}
-          TF_VAR_location: ${{ vars.AZURE_VM_LOCATION || 'eastus' }}
+          TF_VAR_location: ${{ vars.AZURE_VM_LOCATION || 'westus2' }}
           TF_VAR_vm_size: ${{ vars.AZURE_VM_SIZE || 'Standard_B2s' }}
           TF_VAR_telemetry_public_port: ${{ vars.AZURE_TELEMETRY_PORT || '18080' }}
         run: terraform apply -auto-approve

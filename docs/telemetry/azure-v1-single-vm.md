@@ -38,14 +38,14 @@ This keeps operations light while preserving portability. The stack can move acr
 ## Prerequisites
 
 1. Azure subscription and OIDC GitHub integration.
-2. GitHub repository secrets:
+2. GitHub **environment** secrets (environment: `Azure Telemetry`):
    - `AZURE_CLIENT_ID`
    - `AZURE_TENANT_ID`
    - `AZURE_SUBSCRIPTION_ID`
    - `AZURE_VM_SSH_PUBLIC_KEY`
    - `AZURE_VM_SSH_PRIVATE_KEY`
    - `AZURE_ALLOWED_SSH_CIDR` (for example `203.0.113.10/32`)
-3. Optional GitHub repository variables:
+3. Optional GitHub repository variables (or environment variables):
    - `AZURE_VM_ADMIN_USERNAME`
    - `AZURE_VM_RESOURCE_GROUP`
    - `AZURE_VM_PREFIX`
