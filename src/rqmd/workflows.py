@@ -18,27 +18,58 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
-                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
-                        PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
+from .constants import (
+    DEFAULT_ID_PREFIXES,
+    MENU_REFRESH,
+    MENU_TOGGLE_DIRECTION,
+    MENU_TOGGLE_SORT,
+    PRIORITY_ORDER,
+    STATUS_ORDER,
+    STATUS_PATTERN,
+)
 from .history import HistoryManager
-from .markdown_io import (display_name_from_h1, format_path_display,
-                          iter_domain_files, scope_and_body_from_file)
-from .menus import (apply_background_preserving_styles,
-                    right_align_menu_suffix, select_from_menu, truncate_text,
-                    visible_length)
+from .markdown_io import (
+    display_name_from_h1,
+    format_path_display,
+    iter_domain_files,
+    scope_and_body_from_file,
+)
+from .menus import (
+    apply_background_preserving_styles,
+    right_align_menu_suffix,
+    select_from_menu,
+    truncate_text,
+    visible_length,
+)
 from .priority_model import coerce_priority_label, style_priority_label
-from .req_parser import (collect_sub_sections, extract_requirement_block,
-                         extract_requirement_block_with_lines,
-                         find_requirement_by_id, normalize_sub_domain_name,
-                         parse_requirements)
-from .status_model import (build_color_rollup_text, status_emoji,
-                           style_status_label, style_status_line)
-from .status_update import (format_criterion_panel, prompt_for_blocked_reason,
-                            prompt_for_deprecated_reason,
-                            prompt_for_links_flow, update_criterion_status)
-from .summary import (collect_summary_rows, count_priorities, count_statuses,
-                      print_summary_table, process_file)
+from .req_parser import (
+    collect_sub_sections,
+    extract_requirement_block,
+    extract_requirement_block_with_lines,
+    find_requirement_by_id,
+    normalize_sub_domain_name,
+    parse_requirements,
+)
+from .status_model import (
+    build_color_rollup_text,
+    status_emoji,
+    style_status_label,
+    style_status_line,
+)
+from .status_update import (
+    format_criterion_panel,
+    prompt_for_blocked_reason,
+    prompt_for_deprecated_reason,
+    prompt_for_links_flow,
+    update_criterion_status,
+)
+from .summary import (
+    collect_summary_rows,
+    count_priorities,
+    count_statuses,
+    print_summary_table,
+    process_file,
+)
 
 SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
     "standard": {
@@ -192,7 +223,13 @@ def _right_align_sort_token(text: str, width: int) -> str:
     return f"{' ' * padding}{text}"
 
 
-def _build_sort_title(base_title: str, default_label: str, columns: list[tuple[str, str]], active_key: str | None, ascending: bool) -> str:
+def _build_sort_title(
+    base_title: str,
+    default_label: str,
+    columns: list[tuple[str, str]],
+    active_key: str | None,
+    ascending: bool,
+) -> str:
     tokens = [_format_sort_token(default_label, active_key is None, ascending)]
     for key, label in columns:
         tokens.append(_format_sort_token(label, active_key == key, ascending))
@@ -207,7 +244,9 @@ def _right_align_text(left: str, right: str) -> str:
     return f"{left}{' ' * pad}{right}"
 
 
-def _build_file_stats_header(active_key: str, ascending: bool, emoji_columns: bool = False) -> str:
+def _build_file_stats_header(
+    active_key: str, ascending: bool, emoji_columns: bool = False
+) -> str:
     labels = {
         "priority": "priority",
         "proposed": "💡" if emoji_columns else "P",
@@ -250,7 +289,9 @@ def _build_file_sort_title(
     return f"{base_title}\n{_right_align_text(left, right)}"
 
 
-def _build_criterion_sort_title(base_title: str, active_key: str | None, ascending: bool) -> str:
+def _build_criterion_sort_title(
+    base_title: str, active_key: str | None, ascending: bool
+) -> str:
     status_indicator = _sort_indicator(ascending) if active_key == "status" else " "
     status_label = click.style(
         f"status {status_indicator}",
@@ -314,7 +355,9 @@ def get_sort_strategy_spec(name: str) -> dict[str, object]:
     key = (name or "standard").strip().lower()
     if key not in SORT_STRATEGY_SPECS:
         supported = ", ".join(SORT_STRATEGY_NAMES)
-        raise click.ClickException(f"Unknown sort strategy '{name}'. Supported values: {supported}")
+        raise click.ClickException(
+            f"Unknown sort strategy '{name}'. Supported values: {supported}"
+        )
     return SORT_STRATEGY_SPECS[key]
 
 
@@ -330,7 +373,9 @@ def _build_sort_compact_footer() -> str:
     return "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
 
 
-def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts: bool = False) -> str:
+def _build_requirement_action_footer(
+    allow_nav: bool, include_priority_shortcuts: bool = False
+) -> str:
     base = "keys: 1-9 select"
     if include_priority_shortcuts:
         status_shortcuts = " | ".join(
@@ -341,7 +386,9 @@ def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts
         shortcut_legend = _priority_shortcut_footer_legend()
         if shortcut_legend:
             base += f" | {shortcut_legend}"
-    base += " | v=code | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    base += (
+        " | v=code | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    )
     if not allow_nav:
         return base
     nav = "keys: 1-9 select"
@@ -354,10 +401,15 @@ def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts
         shortcut_legend = _priority_shortcut_footer_legend()
         if shortcut_legend:
             nav += f" | {shortcut_legend}"
-    return nav + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | v=code | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    return (
+        nav
+        + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | v=code | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    )
 
 
-def _build_requirement_action_compact_footer(allow_nav: bool, include_priority_shortcuts: bool = False) -> str:
+def _build_requirement_action_compact_footer(
+    allow_nav: bool, include_priority_shortcuts: bool = False
+) -> str:
     if not allow_nav:
         base = "keys: 1-9 select"
         if include_priority_shortcuts:
@@ -370,7 +422,9 @@ def _build_requirement_action_compact_footer(allow_nav: bool, include_priority_s
         shortcut_legend = _priority_shortcut_compact_footer_legend()
         if shortcut_legend:
             base += f" | {shortcut_legend}"
-    return base + " | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
+    return (
+        base + " | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
+    )
 
 
 def _build_history_browser_compact_footer() -> str:
@@ -380,7 +434,9 @@ def _build_history_browser_compact_footer() -> str:
 def _infer_requirements_dir(repo_root: Path, domain_files: list[Path]) -> Path:
     if not domain_files:
         return Path("docs/requirements")
-    common_parent = Path(os.path.commonpath([str(path.parent) for path in domain_files])).resolve()
+    common_parent = Path(
+        os.path.commonpath([str(path.parent) for path in domain_files])
+    ).resolve()
     try:
         return common_parent.relative_to(repo_root)
     except ValueError:
@@ -457,7 +513,10 @@ def _history_entry_detail_text(entry: dict[str, object]) -> str:
     return "\n".join(
         [
             "",
-            click.style(f"History #{entry.get('entry_index', '?')}: {entry.get('command', 'unknown')}", bold=True),
+            click.style(
+                f"History #{entry.get('entry_index', '?')}: {entry.get('command', 'unknown')}",
+                bold=True,
+            ),
             f"Branch: {entry.get('branch', 'main')}",
             f"Commit: {entry.get('commit', '-')}",
             f"Timestamp: {entry.get('timestamp', '-')}",
@@ -479,7 +538,10 @@ def _current_history_branch_name(history_manager: HistoryManager) -> str:
 def _build_history_browser_state(
     history_manager: HistoryManager,
 ) -> tuple[list[dict[str, object]], int | None, str, str]:
-    entries = [dict(entry, entry_index=index) for index, entry in enumerate(history_manager.list_entries())]
+    entries = [
+        dict(entry, entry_index=index)
+        for index, entry in enumerate(history_manager.list_entries())
+    ]
     display_entries = list(reversed(entries))
     current_head = history_manager.get_current_head()
     selected_index = next(
@@ -548,9 +610,13 @@ def _prompt_for_history_entry_action(
                 continue
             checked_out = history_manager.checkout_branch(entry_branch)
             if checked_out is None:
-                click.echo(f"No checkout performed for history branch '{entry_branch}'.")
+                click.echo(
+                    f"No checkout performed for history branch '{entry_branch}'."
+                )
             else:
-                click.echo(f"Checked out history branch '{entry_branch}' at {checked_out}.")
+                click.echo(
+                    f"Checked out history branch '{entry_branch}' at {checked_out}."
+                )
             return "refresh"
         if choice.lower() == "l":
             label = click.prompt(
@@ -583,7 +649,9 @@ def _prompt_for_history_entry_action(
                 ).strip()
                 if label:
                     history_manager.label_branch(entry_branch, label)
-                    click.echo(f"Saved snapshot label '{label}' for history branch '{entry_branch}'.")
+                    click.echo(
+                        f"Saved snapshot label '{label}' for history branch '{entry_branch}'."
+                    )
             confirmed = click.confirm(
                 (
                     f"Discard history branch '{entry_branch}'? "
@@ -610,7 +678,9 @@ def _prompt_for_history_entry_action(
             if not confirmed:
                 click.echo("Cherry-pick cancelled.")
                 continue
-            new_commit = history_manager.cherry_pick(commit_hash, target_branch=current_branch)
+            new_commit = history_manager.cherry_pick(
+                commit_hash, target_branch=current_branch
+            )
             if new_commit is None:
                 click.echo(f"No cherry-pick applied for history commit {commit_hash}.")
             else:
@@ -632,7 +702,9 @@ def _prompt_for_history_entry_action(
             if not confirmed:
                 click.echo("Branch replay cancelled.")
                 continue
-            replayed_commits = history_manager.replay_branch(entry_branch, onto_branch=current_branch)
+            replayed_commits = history_manager.replay_branch(
+                entry_branch, onto_branch=current_branch
+            )
             if not replayed_commits:
                 click.echo(f"No replay applied from history branch '{entry_branch}'.")
             else:
@@ -657,7 +729,9 @@ def _prompt_for_history_entry_action(
                 ).strip()
                 if label:
                     history_manager.label_branch(current_branch, label)
-                    click.echo(f"Saved snapshot label '{label}' for history branch '{current_branch}'.")
+                    click.echo(
+                        f"Saved snapshot label '{label}' for history branch '{current_branch}'."
+                    )
             confirmed = click.confirm(
                 (
                     f"Run history garbage collection{prune_label}? "
@@ -699,12 +773,16 @@ def _show_history_browser(
         return
 
     while True:
-        display_entries, selected_index, prefix_text, _current_branch = _build_history_browser_state(history_manager)
+        display_entries, selected_index, prefix_text, _current_branch = (
+            _build_history_browser_state(history_manager)
+        )
         choice = select_from_menu_fn(
             "History entries",
             [_history_entry_menu_row(entry) for entry in display_entries],
             allow_paging_nav=True,
-            option_right_labels=[_history_entry_right_label(entry) for entry in display_entries],
+            option_right_labels=[
+                _history_entry_right_label(entry) for entry in display_entries
+            ],
             selected_option_index=selected_index,
             footer_legend="keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | q=quit",
             compact_footer=_build_history_browser_compact_footer(),
@@ -726,7 +804,9 @@ def _handle_requirement_history_action(
     select_from_menu_fn=select_from_menu,
 ) -> bool:
     if action == "history":
-        _show_history_browser(repo_root, domain_files, select_from_menu_fn=select_from_menu_fn)
+        _show_history_browser(
+            repo_root, domain_files, select_from_menu_fn=select_from_menu_fn
+        )
         return True
     if action not in {"undo", "redo"}:
         return False
@@ -781,16 +861,28 @@ def _sort_file_rows(
     if sort_key is None:
         return list(rows)
     if sort_key == "name":
-        return sorted(rows, key=lambda row: (row[2].lower(), row[0].name.lower()), reverse=not ascending)
+        return sorted(
+            rows,
+            key=lambda row: (row[2].lower(), row[0].name.lower()),
+            reverse=not ascending,
+        )
     if sort_key == "priority":
         return sorted(
             rows,
-            key=lambda row: (_file_priority_tuple(row[0]), row[2].lower(), row[0].name.lower()),
+            key=lambda row: (
+                _file_priority_tuple(row[0]),
+                row[2].lower(),
+                row[0].name.lower(),
+            ),
             reverse=not ascending,
         )
     return sorted(
         rows,
-        key=lambda row: (_file_sort_value(row[1], sort_key), row[2].lower(), row[0].name.lower()),
+        key=lambda row: (
+            _file_sort_value(row[1], sort_key),
+            row[2].lower(),
+            row[0].name.lower(),
+        ),
         reverse=not ascending,
     )
 
@@ -877,7 +969,10 @@ def _priority_shortcut_bindings() -> dict[str, str]:
 
 
 def _priority_shortcut_footer_legend() -> str:
-    parts = [f"{key}={slug}" for key, (_label, slug) in zip(PRIORITY_SHORTCUT_KEYS, PRIORITY_ORDER)]
+    parts = [
+        f"{key}={slug}"
+        for key, (_label, slug) in zip(PRIORITY_SHORTCUT_KEYS, PRIORITY_ORDER)
+    ]
     return " | ".join(parts)
 
 
@@ -938,29 +1033,51 @@ def _build_status_priority_preview(
         priority_label = PRIORITY_ORDER[index][0]
         is_current = priority_label == current_priority
         marker = "→" if is_current else " "
-        shortcut = PRIORITY_SHORTCUT_KEYS[index] if index < len(PRIORITY_SHORTCUT_KEYS) else None
+        shortcut = (
+            PRIORITY_SHORTCUT_KEYS[index]
+            if index < len(PRIORITY_SHORTCUT_KEYS)
+            else None
+        )
         prefix = f"{marker} {shortcut}) " if shortcut is not None else f"{marker}    "
-        raw_right_labels.append((f"{prefix}{style_priority_label(priority_label)}", is_current, priority_label))
+        raw_right_labels.append(
+            (
+                f"{prefix}{style_priority_label(priority_label)}",
+                is_current,
+                priority_label,
+            )
+        )
 
     priority_heading = click.style("Priority", bold=True)
     status_heading = click.style("Status", bold=True)
     column_width = max(
-        [visible_length("Priority")] + [visible_length(label) for label, _is_current, _priority_label in raw_right_labels]
+        [visible_length("Priority")]
+        + [
+            visible_length(label)
+            for label, _is_current, _priority_label in raw_right_labels
+        ]
     )
     left_title = status_heading
     left_column_width = max(
         visible_length(f"  {index + 1}) {label}")
         for index, (label, _slug) in enumerate(STATUS_ORDER)
     )
-    right_title = f"{priority_heading}{' ' * max(0, column_width - visible_length('Priority'))}"
+    right_title = (
+        f"{priority_heading}{' ' * max(0, column_width - visible_length('Priority'))}"
+    )
     spacer = max(2, left_column_width - visible_length("Status") + 2)
     title = f"{left_title}{' ' * spacer}{right_title}"
 
     right_labels: list[str] = []
     for label, is_current, priority_label in raw_right_labels:
-        padded = f"{label}{' ' * max(0, column_width - visible_length(label))}" if label else ""
+        padded = (
+            f"{label}{' ' * max(0, column_width - visible_length(label))}"
+            if label
+            else ""
+        )
         if is_current and padded:
-            padded = apply_background_preserving_styles(padded, _priority_highlight_bg(priority_label))
+            padded = apply_background_preserving_styles(
+                padded, _priority_highlight_bg(priority_label)
+            )
         right_labels.append(padded)
 
     return title, right_labels
@@ -976,7 +1093,9 @@ def _build_requirement_field_menu(
         labels = ["true", "false"]
         options = ["Flagged: true", "Flagged: false"]
         current_flagged = requirement.get("flagged")
-        current_index = 0 if current_flagged is True else 1 if current_flagged is False else None
+        current_index = (
+            0 if current_flagged is True else 1 if current_flagged is False else None
+        )
         highlight_bg = "\x1b[48;5;88m" if current_flagged is True else "\x1b[48;5;238m"
         title = f"Set flagged for {requirement['id']}{title_suffix}\n{click.style('Flagged', bold=True)}"
         return title, labels, options, current_index, highlight_bg
@@ -996,7 +1115,11 @@ def _build_requirement_field_menu(
     if active_field == "links":
         existing_links = requirement.get("links") or []
         link_count = len(existing_links)  # type: ignore[arg-type]
-        count_str = f"{link_count} link{'s' if link_count != 1 else ''}" if link_count else "no links"
+        count_str = (
+            f"{link_count} link{'s' if link_count != 1 else ''}"
+            if link_count
+            else "no links"
+        )
         labels = ["manage"]
         options = [f"🔗 Manage links ({count_str})\u2026"]
         title = f"Edit links for {requirement['id']}{title_suffix}\n{click.style('Links', bold=True)}"
@@ -1029,7 +1152,9 @@ def _linked_requirement_candidates(
     domain_files: list[Path],
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> list[tuple[Path, dict[str, object]]]:
-    block_text = extract_requirement_block(path, str(requirement["id"]), id_prefixes=id_prefixes)
+    block_text = extract_requirement_block(
+        path, str(requirement["id"]), id_prefixes=id_prefixes
+    )
     current_id = str(requirement["id"]).upper()
     valid_prefixes = tuple(f"{prefix.upper()}-" for prefix in id_prefixes)
     seen_ids: set[str] = set()
@@ -1060,7 +1185,12 @@ def _linked_requirement_candidates(
         matches = [
             (domain_path, found)
             for domain_path in domain_files
-            if (found := find_requirement_by_id(domain_path, candidate_id, id_prefixes=id_prefixes)) is not None
+            if (
+                found := find_requirement_by_id(
+                    domain_path, candidate_id, id_prefixes=id_prefixes
+                )
+            )
+            is not None
         ]
         if len(matches) == 1:
             resolved.append(matches[0])
@@ -1086,7 +1216,9 @@ def _open_linked_requirement_from_panel(
         id_prefixes=id_prefixes,
     )
     if not candidates:
-        click.echo(f"No linked requirements in the current catalog for {requirement['id']}.")
+        click.echo(
+            f"No linked requirements in the current catalog for {requirement['id']}."
+        )
         return
 
     options = [
@@ -1146,7 +1278,9 @@ def _open_current_requirement_in_vscode(
             text=True,
         )
     except (OSError, subprocess.CalledProcessError) as exc:
-        message = getattr(exc, "stderr", None) or getattr(exc, "stdout", None) or str(exc)
+        message = (
+            getattr(exc, "stderr", None) or getattr(exc, "stdout", None) or str(exc)
+        )
         click.echo(f"Could not open {requirement_id} in VS Code: {message.strip()}")
         return
 
@@ -1167,17 +1301,30 @@ def _prompt_for_requirement_action(
         title_suffix=title_suffix,
     )
     include_priority_shortcuts = active_field == "status"
-    option_right_labels = _build_status_priority_preview(requirement)[1] if include_priority_shortcuts else None
+    option_right_labels = (
+        _build_status_priority_preview(requirement)[1]
+        if include_priority_shortcuts
+        else None
+    )
     extra_keys = {"t": "toggle-field", "v": "open-vscode", "o": "open-linked"}
     extra_keys_help = {"t": "toggle", "v": "code", "o": "refs"}
     extra_keys.update({"z": "undo", "y": "redo", "h": "history"})
     extra_keys_help.update({"z": "undo", "y": "redo", "h": "history"})
     if include_priority_shortcuts:
-        extra_keys.update({key: f"priority-shortcut:{label}" for key, label in _priority_shortcut_bindings().items()})
+        extra_keys.update(
+            {
+                key: f"priority-shortcut:{label}"
+                for key, label in _priority_shortcut_bindings().items()
+            }
+        )
         extra_keys_help.update(_priority_shortcut_help_labels())
     if allow_nav:
-        extra_keys.update({"j": "nav-next", "k": "nav-prev", "g": "nav-first", "G": "nav-last"})
-        extra_keys_help.update({"j": "next-ac", "k": "prev-ac", "g": "first-ac", "G": "last-ac"})
+        extra_keys.update(
+            {"j": "nav-next", "k": "nav-prev", "g": "nav-first", "G": "nav-last"}
+        )
+        extra_keys_help.update(
+            {"j": "next-ac", "k": "prev-ac", "g": "first-ac", "G": "last-ac"}
+        )
 
     choice = select_from_menu_fn(
         title,
@@ -1191,13 +1338,29 @@ def _prompt_for_requirement_action(
         option_right_labels=option_right_labels,
         separate_right_label_background=include_priority_shortcuts,
         right_label_layout="adjacent" if include_priority_shortcuts else "edge",
-        footer_legend=_build_requirement_action_footer(allow_nav, include_priority_shortcuts=include_priority_shortcuts),
-        compact_footer=_build_requirement_action_compact_footer(allow_nav, include_priority_shortcuts=include_priority_shortcuts),
+        footer_legend=_build_requirement_action_footer(
+            allow_nav, include_priority_shortcuts=include_priority_shortcuts
+        ),
+        compact_footer=_build_requirement_action_compact_footer(
+            allow_nav, include_priority_shortcuts=include_priority_shortcuts
+        ),
         prefix_text=panel_text,
     )
     if choice is None:
         return "quit", None
-    if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "nav-first", "nav-last", "toggle-field", "open-vscode", "open-linked", "undo", "redo", "history"}:
+    if isinstance(choice, str) and choice in {
+        "up",
+        "nav-prev",
+        "nav-next",
+        "nav-first",
+        "nav-last",
+        "toggle-field",
+        "open-vscode",
+        "open-linked",
+        "undo",
+        "redo",
+        "history",
+    }:
         return choice, None
     if isinstance(choice, str) and choice.startswith("priority-shortcut:"):
         return "apply-priority", choice.split(":", 1)[1]
@@ -1211,7 +1374,9 @@ def _build_requirement_panel_text(
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     position_label: str | None = None,
 ) -> str:
-    panel_text = format_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
+    panel_text = format_criterion_panel(
+        path, requirement, repo_root, id_prefixes=id_prefixes
+    )
     if position_label is None:
         return panel_text
     return f"\n{click.style(position_label, dim=True)}{panel_text}"
@@ -1225,19 +1390,39 @@ def _sort_criteria(
     if sort_key is None:
         return list(requirements)
     if sort_key == "title":
-        return sorted(requirements, key=lambda item: (str(item["title"]).lower(), str(item["id"]).lower()), reverse=not ascending)
+        return sorted(
+            requirements,
+            key=lambda item: (str(item["title"]).lower(), str(item["id"]).lower()),
+            reverse=not ascending,
+        )
     if sort_key == "id":
-        return sorted(requirements, key=lambda item: str(item["id"]).lower(), reverse=not ascending)
+        return sorted(
+            requirements,
+            key=lambda item: str(item["id"]).lower(),
+            reverse=not ascending,
+        )
     if sort_key == "priority":
         return sorted(
             requirements,
-            key=lambda item: (_criterion_priority_rank(item.get("priority") if isinstance(item.get("priority"), str) else None), str(item["title"]).lower(), str(item["id"]).lower()),
+            key=lambda item: (
+                _criterion_priority_rank(
+                    item.get("priority")
+                    if isinstance(item.get("priority"), str)
+                    else None
+                ),
+                str(item["title"]).lower(),
+                str(item["id"]).lower(),
+            ),
             reverse=ascending,
         )
     if sort_key == "status":
         return sorted(
             requirements,
-            key=lambda item: (_criterion_status_rank(str(item["status"])), str(item["title"]).lower(), str(item["id"]).lower()),
+            key=lambda item: (
+                _criterion_status_rank(str(item["status"])),
+                str(item["title"]).lower(),
+                str(item["id"]).lower(),
+            ),
             reverse=not ascending,
         )
     raise ValueError(f"Unknown requirement sort key: {sort_key}")
@@ -1290,7 +1475,9 @@ def print_criteria_list(
 
     for path in sorted(criteria_by_file.keys()):
         relative_path = path.relative_to(repo_root).as_posix()
-        requirements = sorted(criteria_by_file[path], key=lambda req: str(req.get("id") or "").lower())
+        requirements = sorted(
+            criteria_by_file[path], key=lambda req: str(req.get("id") or "").lower()
+        )
         for requirement in requirements:
             crit_id = requirement["id"]
             crit_title = requirement["title"]
@@ -1335,10 +1522,12 @@ def build_filtered_criteria_payload(
                 entry["links"] = links_value
 
             if include_body:
-                body_markdown, block_start, block_end = extract_requirement_block_with_lines(
-                    path,
-                    str(requirement["id"]),
-                    id_prefixes=id_prefixes,
+                body_markdown, block_start, block_end = (
+                    extract_requirement_block_with_lines(
+                        path,
+                        str(requirement["id"]),
+                        id_prefixes=id_prefixes,
+                    )
                 )
                 lines_payload = {
                     "header": int(requirement.get("header_line") or 0) + 1,
@@ -1360,7 +1549,9 @@ def build_filtered_criteria_payload(
                 }
 
             criteria_payload.append(entry)
-        domain_scope, domain_body = scope_and_body_from_file(path, id_prefixes=id_prefixes)
+        domain_scope, domain_body = scope_and_body_from_file(
+            path, id_prefixes=id_prefixes
+        )
         domain_entry: dict[str, object] = {
             "path": relative_path,
             "scope": domain_scope,
@@ -1415,7 +1606,9 @@ def build_summary_payload(
     return {
         "mode": "summary",
         "requirements_dir": format_path_display(criteria_dir, repo_root),
-        "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
+        "changed_files": [
+            format_path_display(path, repo_root) for path in changed_paths
+        ],
         "totals": totals,
         "files": files_payload,
     }
@@ -1456,10 +1649,12 @@ def build_targeted_criteria_payload(
                 entry["links"] = links_value
 
             if include_body:
-                body_markdown, block_start, block_end = extract_requirement_block_with_lines(
-                    path,
-                    str(requirement["id"]),
-                    id_prefixes=id_prefixes,
+                body_markdown, block_start, block_end = (
+                    extract_requirement_block_with_lines(
+                        path,
+                        str(requirement["id"]),
+                        id_prefixes=id_prefixes,
+                    )
                 )
                 lines_payload = {
                     "header": int(requirement.get("header_line") or 0) + 1,
@@ -1481,7 +1676,9 @@ def build_targeted_criteria_payload(
 
             criteria_payload.append(entry)
 
-        domain_scope, domain_body = scope_and_body_from_file(path, id_prefixes=id_prefixes)
+        domain_scope, domain_body = scope_and_body_from_file(
+            path, id_prefixes=id_prefixes
+        )
         files_payload.append(
             {
                 "path": format_path_display(path, repo_root),
@@ -1517,11 +1714,17 @@ def focused_target_interactive_loop(
 ) -> int:
     if include_status_emojis is None:
         include_status_emojis = infer_include_status_emojis(domain_files)
-    repo_hash = hashlib.sha256(str(repo_root.resolve()).encode("utf-8")).hexdigest()[:12]
-    token_hash = hashlib.sha256(json.dumps(target_tokens, ensure_ascii=False).encode("utf-8")).hexdigest()[:12]
+    repo_hash = hashlib.sha256(str(repo_root.resolve()).encode("utf-8")).hexdigest()[
+        :12
+    ]
+    token_hash = hashlib.sha256(
+        json.dumps(target_tokens, ensure_ascii=False).encode("utf-8")
+    ).hexdigest()[:12]
     resume_root = resolve_resume_state_dir(repo_root, state_dir)
     resume_path = resume_root / f"filter-targets-resume-{repo_hash}-{token_hash}.json"
-    membership = [(path, str(requirement["id"])) for path, requirement in selected_items]
+    membership = [
+        (path, str(requirement["id"])) for path, requirement in selected_items
+    ]
 
     def load_resume_state() -> dict[str, str]:
         if not resume_path.exists() or not resume_path.is_file():
@@ -1537,7 +1740,9 @@ def focused_target_interactive_loop(
             "path": str(loaded.get("path") or ""),
         }
 
-    def save_current(flat_items: list[tuple[Path, dict[str, object]]], current_index: int) -> None:
+    def save_current(
+        flat_items: list[tuple[Path, dict[str, object]]], current_index: int
+    ) -> None:
         if not resume_filter or not flat_items:
             return
         idx = min(max(current_index, 0), len(flat_items) - 1)
@@ -1548,7 +1753,9 @@ def focused_target_interactive_loop(
         }
         try:
             resume_path.parent.mkdir(parents=True, exist_ok=True)
-            resume_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            resume_path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
         except OSError:
             return
 
@@ -1559,8 +1766,13 @@ def focused_target_interactive_loop(
         saved_id = saved.get("id")
         saved_path = saved.get("path")
         for index, (path, req) in enumerate(flat_items):
-            if str(req["id"]) == saved_id and format_path_display(path, repo_root) == saved_path:
-                click.echo(click.style(f"Resuming focused walk at {saved_id}.", dim=True))
+            if (
+                str(req["id"]) == saved_id
+                and format_path_display(path, repo_root) == saved_path
+            ):
+                click.echo(
+                    click.style(f"Resuming focused walk at {saved_id}.", dim=True)
+                )
                 return index
         return 0
 
@@ -1577,10 +1789,12 @@ def focused_target_interactive_loop(
         click.echo("No requirements found for the selected target list.")
         return 0
 
-    click.echo(click.style(
-        f"\nFocused walk: {len(flat_list)} requirements from {len(target_tokens)} target token(s)",
-        bold=True,
-    ))
+    click.echo(
+        click.style(
+            f"\nFocused walk: {len(flat_list)} requirements from {len(target_tokens)} target token(s)",
+            bold=True,
+        )
+    )
 
     index = resolve_resume_index(flat_list)
     current_entry_field = "priority" if priority_mode else "status"
@@ -1694,8 +1908,12 @@ def focused_target_interactive_loop(
             changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
-            blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
-            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+            blocked_reason = (
+                prompt_for_blocked_reason() if "Blocked" in new_status else None
+            )
+            deprecated_reason = (
+                prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+            )
             changed = update_criterion_status(
                 path,
                 requirement,
@@ -1782,13 +2000,17 @@ def interactive_update_loop(
     current_file_sort_ascending = bool(strategy["file_default_ascending"])
     ordered_paths = [path.resolve() for path in domain_files]
     force_rescan = True
-    pending_initial_file = initial_file_path.resolve() if isinstance(initial_file_path, Path) else None
+    pending_initial_file = (
+        initial_file_path.resolve() if isinstance(initial_file_path, Path) else None
+    )
     file_menu_selected_index = 0
     file_menu_window_start: int | None = None
 
     while True:
         if force_rescan:
-            scanned_paths = [path.resolve() for path in iter_domain_files(repo_root, criteria_dir)]
+            scanned_paths = [
+                path.resolve() for path in iter_domain_files(repo_root, criteria_dir)
+            ]
             file_rows_for_sort: list[tuple[Path, dict[str, int], str]] = []
             for path in scanned_paths:
                 counts = count_statuses(path.read_text(encoding="utf-8"))
@@ -1804,7 +2026,9 @@ def interactive_update_loop(
             ordered_paths = [row[0] for row in file_rows_for_sort]
             force_rescan = False
 
-        existing_paths = [path for path in ordered_paths if path.exists() and path.is_file()]
+        existing_paths = [
+            path for path in ordered_paths if path.exists() and path.is_file()
+        ]
         if not existing_paths:
             click.echo("No requirement markdown files found.")
             return 1
@@ -1816,13 +2040,22 @@ def interactive_update_loop(
             file_rows.append((path, counts, label))
 
         file_options = [
-            right_align_menu_suffix(label, _build_file_rollup_text(path, counts), index_width=1)
+            right_align_menu_suffix(
+                label, _build_file_rollup_text(path, counts), index_width=1
+            )
             for path, counts, label in file_rows
         ]
 
         selected_path: Path | None = None
         if pending_initial_file is not None:
-            initial_match = next((path for path, _counts, _label in file_rows if path.resolve() == pending_initial_file), None)
+            initial_match = next(
+                (
+                    path
+                    for path, _counts, _label in file_rows
+                    if path.resolve() == pending_initial_file
+                ),
+                None,
+            )
             if initial_match is not None:
                 selected_path = initial_match
             pending_initial_file = None
@@ -1856,33 +2089,49 @@ def interactive_update_loop(
             if file_choice == "up":
                 continue
             if file_choice == "cycle-sort":
-                current_file_sort_key = _cycle_sort_key(current_file_sort_key, file_columns, wrap_to_first=True) or "name"
+                current_file_sort_key = (
+                    _cycle_sort_key(
+                        current_file_sort_key, file_columns, wrap_to_first=True
+                    )
+                    or "name"
+                )
                 current_file_sort_ascending = False
                 force_rescan = True
                 mode = current_file_sort_key
-                click.echo(f"Select file sort: {mode} ({'asc' if current_file_sort_ascending else 'dsc'})")
+                click.echo(
+                    f"Select file sort: {mode} ({'asc' if current_file_sort_ascending else 'dsc'})"
+                )
                 continue
             if file_choice == "cycle-sort-backward":
-                current_file_sort_key = _cycle_sort_key(
-                    current_file_sort_key,
-                    file_columns,
-                    wrap_to_first=True,
-                    reverse=True,
-                ) or "name"
+                current_file_sort_key = (
+                    _cycle_sort_key(
+                        current_file_sort_key,
+                        file_columns,
+                        wrap_to_first=True,
+                        reverse=True,
+                    )
+                    or "name"
+                )
                 current_file_sort_ascending = False
                 force_rescan = True
                 mode = current_file_sort_key
-                click.echo(f"Select file sort: {mode} ({'asc' if current_file_sort_ascending else 'dsc'})")
+                click.echo(
+                    f"Select file sort: {mode} ({'asc' if current_file_sort_ascending else 'dsc'})"
+                )
                 continue
             if file_choice == "toggle-direction":
                 current_file_sort_ascending = not current_file_sort_ascending
                 force_rescan = True
-                click.echo(f"Select file direction: {'asc' if current_file_sort_ascending else 'dsc'}")
+                click.echo(
+                    f"Select file direction: {'asc' if current_file_sort_ascending else 'dsc'}"
+                )
                 continue
             if isinstance(file_choice, str) and file_choice.startswith("refresh"):
                 refresh_index = _refresh_index_from_choice(file_choice)
                 if refresh_index is not None and file_rows:
-                    file_menu_window_start = min(max(refresh_index, 0), len(file_rows) - 1)
+                    file_menu_window_start = min(
+                        max(refresh_index, 0), len(file_rows) - 1
+                    )
                     file_menu_selected_index = file_menu_window_start
                 force_rescan = True
                 click.echo("Select file refreshed.")
@@ -1893,7 +2142,9 @@ def interactive_update_loop(
             selected_path = file_rows[int(file_choice)][0]
 
         criterion_default_key = strategy["criterion_default_key"]
-        current_criterion_sort_key: str | None = str(criterion_default_key) if criterion_default_key is not None else None
+        current_criterion_sort_key: str | None = (
+            str(criterion_default_key) if criterion_default_key is not None else None
+        )
         current_criterion_sort_ascending = bool(strategy["criterion_default_ascending"])
 
         history: list[int] = []
@@ -1915,10 +2166,13 @@ def interactive_update_loop(
                 term_width = shutil.get_terminal_size(fallback=(80, 24)).columns
                 criterion_right_labels = [str(c["id"]) for c in requirements]
                 criterion_options = [
-                    style_status_line(str(c["status"]), truncate_text(
-                        f"{str(c.get('priority') or '⚪').split(' ', 1)[0]} {status_emoji(str(c['status']))} {c['title']}",
-                        max(8, term_width - 5 - visible_length(str(c["id"])) - 2),
-                    ))
+                    style_status_line(
+                        str(c["status"]),
+                        truncate_text(
+                            f"{str(c.get('priority') or '⚪').split(' ', 1)[0]} {status_emoji(str(c['status']))} {c['title']}",
+                            max(8, term_width - 5 - visible_length(str(c["id"])) - 2),
+                        ),
+                    )
                     for c in requirements
                 ]
                 criterion_choice = select_from_menu_fn(
@@ -1957,7 +2211,9 @@ def interactive_update_loop(
                         wrap_to_first=bool(strategy["criterion_cycle_wrap"]),
                     )
                     current_criterion_sort_ascending = False
-                    click.echo(f"Requirement sort: {current_criterion_sort_key or 'document'} (dsc)")
+                    click.echo(
+                        f"Requirement sort: {current_criterion_sort_key or 'document'} (dsc)"
+                    )
                     continue
                 if criterion_choice == "cycle-sort-backward":
                     current_criterion_sort_key = _cycle_sort_key(
@@ -1967,16 +2223,26 @@ def interactive_update_loop(
                         reverse=True,
                     )
                     current_criterion_sort_ascending = False
-                    click.echo(f"Requirement sort: {current_criterion_sort_key or 'document'} (dsc)")
+                    click.echo(
+                        f"Requirement sort: {current_criterion_sort_key or 'document'} (dsc)"
+                    )
                     continue
                 if criterion_choice == "toggle-direction":
-                    current_criterion_sort_ascending = not current_criterion_sort_ascending
-                    click.echo(f"Requirement direction: {'asc' if current_criterion_sort_ascending else 'dsc'}")
+                    current_criterion_sort_ascending = (
+                        not current_criterion_sort_ascending
+                    )
+                    click.echo(
+                        f"Requirement direction: {'asc' if current_criterion_sort_ascending else 'dsc'}"
+                    )
                     continue
-                if isinstance(criterion_choice, str) and criterion_choice.startswith("refresh"):
+                if isinstance(criterion_choice, str) and criterion_choice.startswith(
+                    "refresh"
+                ):
                     refresh_index = _refresh_index_from_choice(criterion_choice)
                     if refresh_index is not None and requirements:
-                        criterion_menu_window_start = min(max(refresh_index, 0), len(requirements) - 1)
+                        criterion_menu_window_start = min(
+                            max(refresh_index, 0), len(requirements) - 1
+                        )
                         criterion_menu_selected_index = criterion_menu_window_start
                     click.echo("Requirement list refreshed.")
                     continue
@@ -1994,7 +2260,9 @@ def interactive_update_loop(
                         (
                             idx
                             for idx, requirement in enumerate(requirements)
-                            if normalize_sub_domain_name(requirement.get("sub_domain")).startswith(normalized_query)
+                            if normalize_sub_domain_name(
+                                requirement.get("sub_domain")
+                            ).startswith(normalized_query)
                         ),
                         None,
                     )
@@ -2003,7 +2271,7 @@ def interactive_update_loop(
                         continue
 
                     criterion_index = jump_index
-                    del history[history_pos + 1:]
+                    del history[history_pos + 1 :]
                     history.append(criterion_index)
                     history_pos = len(history) - 1
                     continue
@@ -2011,12 +2279,23 @@ def interactive_update_loop(
                 criterion_index = int(criterion_choice)
                 criterion_menu_selected_index = criterion_index
                 criterion_menu_window_start = None
-                del history[history_pos + 1:]
+                del history[history_pos + 1 :]
                 history.append(criterion_index)
                 history_pos = len(history) - 1
 
-            selected_criterion = requirements[criterion_index] if criterion_index < len(requirements) else requirements[-1]
-            refreshed = next((c for c in requirements if str(c["id"]) == str(selected_criterion["id"])), None)
+            selected_criterion = (
+                requirements[criterion_index]
+                if criterion_index < len(requirements)
+                else requirements[-1]
+            )
+            refreshed = next(
+                (
+                    c
+                    for c in requirements
+                    if str(c["id"]) == str(selected_criterion["id"])
+                ),
+                None,
+            )
             if refreshed:
                 selected_criterion = refreshed
                 criterion_index = requirements.index(refreshed)
@@ -2083,7 +2362,7 @@ def interactive_update_loop(
                     criterion_index = history[history_pos]
                 elif criterion_index < len(requirements) - 1:
                     criterion_index += 1
-                    del history[history_pos + 1:]
+                    del history[history_pos + 1 :]
                     history.append(criterion_index)
                     history_pos = len(history) - 1
                 else:
@@ -2091,7 +2370,9 @@ def interactive_update_loop(
                 continue
 
             changed = False
-            target_entry_field = _resolve_action_entry_field(current_entry_field, action)
+            target_entry_field = _resolve_action_entry_field(
+                current_entry_field, action
+            )
             if target_entry_field == "priority":
                 changed = update_criterion_status(
                     selected_path,
@@ -2131,9 +2412,17 @@ def interactive_update_loop(
                     include_priority_summary=include_priority_summary,
                 )
             else:
-                new_status = selected_value or str(selected_criterion.get("status") or "")
-                blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
-                deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+                new_status = selected_value or str(
+                    selected_criterion.get("status") or ""
+                )
+                blocked_reason = (
+                    prompt_for_blocked_reason() if "Blocked" in new_status else None
+                )
+                deprecated_reason = (
+                    prompt_for_deprecated_reason()
+                    if "Deprecated" in new_status
+                    else None
+                )
 
                 changed = update_criterion_status(
                     selected_path,
@@ -2152,7 +2441,9 @@ def interactive_update_loop(
             if changed:
                 click.echo(f"Updated {selected_criterion['id']} -> {selected_value}")
             else:
-                click.echo(f"No change for {selected_criterion['id']} ({selected_value})")
+                click.echo(
+                    f"No change for {selected_criterion['id']} ({selected_value})"
+                )
 
             _, table_rows = collect_summary_rows(
                 domain_files,
@@ -2163,14 +2454,19 @@ def interactive_update_loop(
             )
             print_summary_table(table_rows, emoji_columns=emoji_columns)
 
-            raw_criteria_after = parse_requirements(selected_path, id_prefixes=id_prefixes)
+            raw_criteria_after = parse_requirements(
+                selected_path, id_prefixes=id_prefixes
+            )
             criteria_after = _sort_criteria(
                 raw_criteria_after,
                 current_criterion_sort_key,
                 current_criterion_sort_ascending,
             )
             cur_id = str(selected_criterion["id"])
-            new_idx = next((i for i, c in enumerate(criteria_after) if str(c["id"]) == cur_id), criterion_index)
+            new_idx = next(
+                (i for i, c in enumerate(criteria_after) if str(c["id"]) == cur_id),
+                criterion_index,
+            )
             if criteria_after:
                 criterion_index = new_idx
                 history[history_pos] = criterion_index
@@ -2194,7 +2490,9 @@ def filtered_interactive_loop(
 ) -> int:
     if include_status_emojis is None:
         include_status_emojis = infer_include_status_emojis(domain_files)
-    repo_hash = hashlib.sha256(str(repo_root.resolve()).encode("utf-8")).hexdigest()[:12]
+    repo_hash = hashlib.sha256(str(repo_root.resolve()).encode("utf-8")).hexdigest()[
+        :12
+    ]
     resume_root = resolve_resume_state_dir(repo_root, state_dir)
     resume_path = resume_root / f"filter-resume-{repo_hash}.json"
 
@@ -2219,14 +2517,18 @@ def filtered_interactive_loop(
     def save_resume_state(state: dict[str, dict[str, str]]) -> None:
         try:
             resume_path.parent.mkdir(parents=True, exist_ok=True)
-            resume_path.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+            resume_path.write_text(
+                json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
         except OSError:
             return
 
     def state_key() -> str:
         return target_status
 
-    def save_current(flat_items: list[tuple[Path, dict[str, object]]], current_index: int) -> None:
+    def save_current(
+        flat_items: list[tuple[Path, dict[str, object]]], current_index: int
+    ) -> None:
         if not resume_filter or not flat_items:
             return
         idx = min(max(current_index, 0), len(flat_items) - 1)
@@ -2248,8 +2550,13 @@ def filtered_interactive_loop(
         saved_id = saved.get("id")
         saved_path = saved.get("path")
         for i, (path, req) in enumerate(flat_items):
-            if str(req["id"]) == saved_id and format_path_display(path, repo_root) == saved_path:
-                click.echo(click.style(f"Resuming filtered walk at {saved_id}.", dim=True))
+            if (
+                str(req["id"]) == saved_id
+                and format_path_display(path, repo_root) == saved_path
+            ):
+                click.echo(
+                    click.style(f"Resuming filtered walk at {saved_id}.", dim=True)
+                )
                 return i
         return 0
 
@@ -2264,7 +2571,9 @@ def filtered_interactive_loop(
     def build_flat_list() -> list[tuple[Path, dict[str, object]]]:
         result: list[tuple[Path, dict[str, object]]] = []
         for path, requirement_id in membership:
-            refreshed = find_requirement_by_id(path, requirement_id, id_prefixes=id_prefixes)
+            refreshed = find_requirement_by_id(
+                path, requirement_id, id_prefixes=id_prefixes
+            )
             if refreshed:
                 result.append((path, refreshed))
         return result
@@ -2274,23 +2583,29 @@ def filtered_interactive_loop(
         click.echo(f"No requirements found with status: {target_status}")
         return 0
 
-    click.echo(click.style(
-        f"\nFiltered walk: {target_status} ({len(flat_list)} requirements across all files)",
-        bold=True,
-    ))
+    click.echo(
+        click.style(
+            f"\nFiltered walk: {target_status} ({len(flat_list)} requirements across all files)",
+            bold=True,
+        )
+    )
 
     index = resolve_resume_index(flat_list)
     current_entry_field = "priority" if priority_mode else "status"
     while True:
         flat_list = build_flat_list()
         if not flat_list:
-            click.echo("All filtered requirements in this session list are unavailable.")
+            click.echo(
+                "All filtered requirements in this session list are unavailable."
+            )
             return 0
         index = min(index, len(flat_list) - 1)
         save_current(flat_list, index)
 
         path, requirement = flat_list[index]
-        refreshed = find_requirement_by_id(path, str(requirement["id"]), id_prefixes=id_prefixes)
+        refreshed = find_requirement_by_id(
+            path, str(requirement["id"]), id_prefixes=id_prefixes
+        )
         if refreshed:
             requirement = refreshed
 
@@ -2370,7 +2685,9 @@ def filtered_interactive_loop(
             if index < len(flat_list) - 1:
                 index += 1
             else:
-                click.echo(f"No more {target_status} requirements in this session list.")
+                click.echo(
+                    f"No more {target_status} requirements in this session list."
+                )
                 save_current(flat_list, index)
                 continue
             save_current(flat_list, index)
@@ -2396,8 +2713,12 @@ def filtered_interactive_loop(
             changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
-            blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
-            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+            blocked_reason = (
+                prompt_for_blocked_reason() if "Blocked" in new_status else None
+            )
+            deprecated_reason = (
+                prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+            )
 
             changed = update_criterion_status(
                 path,
@@ -2431,7 +2752,9 @@ def filtered_interactive_loop(
         if flat_after:
             save_current(flat_after, min(index, len(flat_after) - 1))
         else:
-            click.echo("All filtered requirements in this session list are unavailable.")
+            click.echo(
+                "All filtered requirements in this session list are unavailable."
+            )
             return 0
 
 
@@ -2450,7 +2773,9 @@ def filtered_priority_interactive_loop(
 ) -> int:
     if include_status_emojis is None:
         include_status_emojis = infer_include_status_emojis(domain_files)
-    repo_hash = hashlib.sha256(str(repo_root.resolve()).encode("utf-8")).hexdigest()[:12]
+    repo_hash = hashlib.sha256(str(repo_root.resolve()).encode("utf-8")).hexdigest()[
+        :12
+    ]
     resume_root = resolve_resume_state_dir(repo_root, state_dir)
     resume_path = resume_root / f"filter-priority-resume-{repo_hash}.json"
 
@@ -2475,14 +2800,18 @@ def filtered_priority_interactive_loop(
     def save_resume_state(state: dict[str, dict[str, str]]) -> None:
         try:
             resume_path.parent.mkdir(parents=True, exist_ok=True)
-            resume_path.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+            resume_path.write_text(
+                json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
         except OSError:
             return
 
     def state_key() -> str:
         return target_priority
 
-    def save_current(flat_items: list[tuple[Path, dict[str, object]]], current_index: int) -> None:
+    def save_current(
+        flat_items: list[tuple[Path, dict[str, object]]], current_index: int
+    ) -> None:
         if not resume_filter or not flat_items:
             return
         idx = min(max(current_index, 0), len(flat_items) - 1)
@@ -2504,8 +2833,13 @@ def filtered_priority_interactive_loop(
         saved_id = saved.get("id")
         saved_path = saved.get("path")
         for index, (path, req) in enumerate(flat_items):
-            if str(req["id"]) == saved_id and format_path_display(path, repo_root) == saved_path:
-                click.echo(click.style(f"Resuming filtered walk at {saved_id}.", dim=True))
+            if (
+                str(req["id"]) == saved_id
+                and format_path_display(path, repo_root) == saved_path
+            ):
+                click.echo(
+                    click.style(f"Resuming filtered walk at {saved_id}.", dim=True)
+                )
                 return index
         return 0
 
@@ -2520,7 +2854,9 @@ def filtered_priority_interactive_loop(
     def build_flat_list() -> list[tuple[Path, dict[str, object]]]:
         result: list[tuple[Path, dict[str, object]]] = []
         for path, requirement_id in membership:
-            refreshed = find_requirement_by_id(path, requirement_id, id_prefixes=id_prefixes)
+            refreshed = find_requirement_by_id(
+                path, requirement_id, id_prefixes=id_prefixes
+            )
             if refreshed:
                 result.append((path, refreshed))
         return result
@@ -2530,10 +2866,12 @@ def filtered_priority_interactive_loop(
         click.echo(f"No requirements found with priority: {target_priority}")
         return 0
 
-    click.echo(click.style(
-        f"\nFiltered walk: {target_priority} ({len(flat_list)} requirements across all files)",
-        bold=True,
-    ))
+    click.echo(
+        click.style(
+            f"\nFiltered walk: {target_priority} ({len(flat_list)} requirements across all files)",
+            bold=True,
+        )
+    )
 
     index = resolve_resume_index(flat_list)
     current_entry_field = "priority" if priority_mode else "status"
@@ -2546,7 +2884,9 @@ def filtered_priority_interactive_loop(
         save_current(flat_list, index)
 
         path, requirement = flat_list[index]
-        refreshed = find_requirement_by_id(path, str(requirement["id"]), id_prefixes=id_prefixes)
+        refreshed = find_requirement_by_id(
+            path, str(requirement["id"]), id_prefixes=id_prefixes
+        )
         if refreshed:
             requirement = refreshed
 
@@ -2626,7 +2966,9 @@ def filtered_priority_interactive_loop(
             if index < len(flat_list) - 1:
                 index += 1
             else:
-                click.echo(f"No more {target_priority} requirements in this session list.")
+                click.echo(
+                    f"No more {target_priority} requirements in this session list."
+                )
                 save_current(flat_list, index)
                 continue
             save_current(flat_list, index)
@@ -2652,8 +2994,12 @@ def filtered_priority_interactive_loop(
             changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
-            blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
-            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+            blocked_reason = (
+                prompt_for_blocked_reason() if "Blocked" in new_status else None
+            )
+            deprecated_reason = (
+                prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+            )
 
             changed = update_criterion_status(
                 path,
@@ -2687,7 +3033,9 @@ def filtered_priority_interactive_loop(
         if flat_after:
             save_current(flat_after, min(index, len(flat_after) - 1))
         else:
-            click.echo("All filtered requirements in this session list are unavailable.")
+            click.echo(
+                "All filtered requirements in this session list are unavailable."
+            )
             return 0
 
 
@@ -2712,7 +3060,9 @@ def lookup_criterion_interactive(
             matches.append((path, crit))
 
     if not matches:
-        raise click.ClickException(f"Requirement '{requirement_id}' not found in the configured docs.")
+        raise click.ClickException(
+            f"Requirement '{requirement_id}' not found in the configured docs."
+        )
 
     if len(matches) > 1:
         locs = ", ".join(p.relative_to(repo_root).as_posix() for p, _ in matches)
@@ -2725,7 +3075,9 @@ def lookup_criterion_interactive(
     current_entry_field = "priority" if priority_mode else "status"
 
     while True:
-        refreshed = find_requirement_by_id(path, requirement_id, id_prefixes=id_prefixes)
+        refreshed = find_requirement_by_id(
+            path, requirement_id, id_prefixes=id_prefixes
+        )
         if refreshed:
             requirement = refreshed
 
@@ -2799,8 +3151,12 @@ def lookup_criterion_interactive(
             changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
-            blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
-            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+            blocked_reason = (
+                prompt_for_blocked_reason() if "Blocked" in new_status else None
+            )
+            deprecated_reason = (
+                prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+            )
 
             changed = update_criterion_status(
                 path,

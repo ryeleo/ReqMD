@@ -20,7 +20,9 @@ def test_RQMD_ui_007_unknown_background_disables_colorized_redraw() -> None:
     assert is_accessible_zebra_bg("\x1b[48;5;200m", "light") is False
 
 
-def test_RQMD_ui_007_cli_disables_colorized_redraw_for_unsafe_override(tmp_path: Path) -> None:
+def test_RQMD_ui_007_cli_disables_colorized_redraw_for_unsafe_override(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     req_dir = repo / "docs" / "requirements"
     req_dir.mkdir(parents=True)
@@ -66,9 +68,13 @@ def test_RQMD_ui_007_menu_omits_background_styles_when_colorized_disabled() -> N
         applied_calls.append((line, bg))
         return original(line, bg)
 
-    with patch.object(menus_mod, "apply_background_preserving_styles", side_effect=recorder):
+    with patch.object(
+        menus_mod, "apply_background_preserving_styles", side_effect=recorder
+    ):
         with patch("click.getchar", return_value="q"):
-            menus_mod.select_from_menu("UI-007", ["One", "Two", "Three"], zebra=True, allow_paging_nav=False)
+            menus_mod.select_from_menu(
+                "UI-007", ["One", "Two", "Three"], zebra=True, allow_paging_nav=False
+            )
 
     menus_mod.set_colorized_redraw_enabled(True)
     assert applied_calls == []

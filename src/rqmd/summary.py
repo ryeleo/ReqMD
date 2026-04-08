@@ -29,10 +29,15 @@ except ImportError:
     print("Install with: pip3 install tabulate", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN,
-                        STATUS_TERSE_HEADERS_ASCII, SUMMARY_END, SUMMARY_START)
-from .status_model import (coerce_status_label, style_status_count,
-                           suggest_status_labels)
+from .constants import (
+    PRIORITY_ORDER,
+    STATUS_ORDER,
+    STATUS_PATTERN,
+    STATUS_TERSE_HEADERS_ASCII,
+    SUMMARY_END,
+    SUMMARY_START,
+)
+from .status_model import coerce_status_label, style_status_count, suggest_status_labels
 
 
 class UnknownStatusValueError(ValueError):
@@ -49,7 +54,9 @@ class UnknownStatusValueError(ValueError):
         self.source_path = source_path
         self.line_number = line_number
         self.suggestions = suggestions
-        source_display = str(source_path) if source_path is not None else "<unknown file>"
+        source_display = (
+            str(source_path) if source_path is not None else "<unknown file>"
+        )
         message = (
             f"Unknown status value '{status_value}' in {source_display}:{line_number}. "
             f"Nearest configured statuses: {', '.join(suggestions)}"
@@ -137,26 +144,27 @@ def build_summary_block(
         for label, _ in STATUS_ORDER
     ]
     summary_text = " ".join(parts)
-    
+
     result = [
         SUMMARY_START,
         f"Summary: {summary_text}",
     ]
-    
+
     # Optionally include priority summary
     if priority_counts:
         priority_parts = [
-            f"{priority_counts[label]}{label.split()[0]}"
-            for label, _ in PRIORITY_ORDER
+            f"{priority_counts[label]}{label.split()[0]}" for label, _ in PRIORITY_ORDER
         ]
         priority_summary = " ".join(priority_parts)
         result.append(f"Priorities: {priority_summary}")
-    
+
     result.append(SUMMARY_END)
     return "\n".join(result)
 
 
-def normalize_status_lines(text: str, include_status_emojis: bool = True) -> tuple[str, bool]:
+def normalize_status_lines(
+    text: str, include_status_emojis: bool = True
+) -> tuple[str, bool]:
     """Normalize all status lines in markdown text to canonical labels.
 
     Args:
@@ -168,6 +176,7 @@ def normalize_status_lines(text: str, include_status_emojis: bool = True) -> tup
 
     """
     changed = False
+
     def replace_status_line(match: re.Match[str]) -> str:
         nonlocal changed
         raw_status = match.group("status")
@@ -176,7 +185,9 @@ def normalize_status_lines(text: str, include_status_emojis: bool = True) -> tup
         except ValueError:
             return match.group(0)
 
-        normalized_status = canonical if include_status_emojis else _plain_status_label(canonical)
+        normalized_status = (
+            canonical if include_status_emojis else _plain_status_label(canonical)
+        )
         updated_line = f"- **Status:** {normalized_status}"
         if updated_line != match.group(0):
             changed = True
@@ -227,7 +238,7 @@ def count_priorities(text: str) -> dict[str, int]:
     """
     from .constants import PRIORITY_PATTERN
     from .priority_model import coerce_priority_label
-    
+
     counts = {label: 0 for label, _ in PRIORITY_ORDER}
     for match in PRIORITY_PATTERN.finditer(text):
         raw_priority = match.group("priority")
@@ -279,7 +290,9 @@ def process_file(
     include_priority_summary: bool = False,
 ) -> tuple[bool, dict[str, int]]:
     original = path.read_text(encoding="utf-8")
-    normalized, _ = normalize_status_lines(original, include_status_emojis=include_status_emojis)
+    normalized, _ = normalize_status_lines(
+        original, include_status_emojis=include_status_emojis
+    )
     counts = count_statuses(normalized, source_path=path)
     priority_counts = count_priorities(normalized) if include_priority_summary else None
     updated = insert_or_replace_summary(
@@ -323,7 +336,9 @@ def collect_summary_rows(
             changed_paths.append(path)
 
         marker = "🆙" if changed else "✓"
-        row = [f"{marker} {display_name_fn(path)}"] + [counts[label] for label, _ in STATUS_ORDER]
+        row = [f"{marker} {display_name_fn(path)}"] + [
+            counts[label] for label, _ in STATUS_ORDER
+        ]
         table_rows.append(row)
 
     return changed_paths, table_rows

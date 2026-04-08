@@ -9,13 +9,13 @@ Covers:
 - _probe_gnome() returns None on exceptions
 - --theme CLI option accepted by main()
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
-
 from rqmd import cli
 from rqmd.theme import _probe_gnome, _probe_macos, detect_theme
 
@@ -93,7 +93,9 @@ class TestProbeMacos:
         return m
 
     def test_returns_dark_when_command_exits_0_with_dark_output(self):
-        with patch("rqmd.theme.subprocess.run", return_value=self._mock_run(0, "Dark\n")):
+        with patch(
+            "rqmd.theme.subprocess.run", return_value=self._mock_run(0, "Dark\n")
+        ):
             assert _probe_macos() == "dark"
 
     def test_returns_light_when_command_exits_nonzero(self):
@@ -106,11 +108,17 @@ class TestProbeMacos:
 
     def test_returns_none_on_timeout(self):
         import subprocess
-        with patch("rqmd.theme.subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="defaults", timeout=1)):
+
+        with patch(
+            "rqmd.theme.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(cmd="defaults", timeout=1),
+        ):
             assert _probe_macos() is None
 
     def test_dark_case_insensitive_match(self):
-        with patch("rqmd.theme.subprocess.run", return_value=self._mock_run(0, "dark\n")):
+        with patch(
+            "rqmd.theme.subprocess.run", return_value=self._mock_run(0, "dark\n")
+        ):
             assert _probe_macos() == "dark"
 
 
@@ -122,11 +130,17 @@ class TestProbeGnome:
         return m
 
     def test_returns_dark_when_gsettings_has_dark(self):
-        with patch("rqmd.theme.subprocess.run", return_value=self._mock_run(0, "'prefer-dark'\n")):
+        with patch(
+            "rqmd.theme.subprocess.run",
+            return_value=self._mock_run(0, "'prefer-dark'\n"),
+        ):
             assert _probe_gnome() == "dark"
 
     def test_returns_light_when_gsettings_has_no_dark(self):
-        with patch("rqmd.theme.subprocess.run", return_value=self._mock_run(0, "'prefer-light'\n")):
+        with patch(
+            "rqmd.theme.subprocess.run",
+            return_value=self._mock_run(0, "'prefer-light'\n"),
+        ):
             assert _probe_gnome() == "light"
 
     def test_returns_none_on_file_not_found(self):
@@ -159,9 +173,12 @@ class TestThemeCliOption:
             result = runner.invoke(
                 cli.main,
                 [
-                    "--project-root", str(repo),
-                    "--docs-dir", "docs/requirements",
-                    "--theme", "light",
+                    "--project-root",
+                    str(repo),
+                    "--docs-dir",
+                    "docs/requirements",
+                    "--theme",
+                    "light",
                 ],
                 catch_exceptions=False,
             )
@@ -178,9 +195,12 @@ class TestThemeCliOption:
             result = runner.invoke(
                 cli.main,
                 [
-                    "--project-root", str(repo),
-                    "--docs-dir", "docs/requirements",
-                    "--theme", "dark",
+                    "--project-root",
+                    str(repo),
+                    "--docs-dir",
+                    "docs/requirements",
+                    "--theme",
+                    "dark",
                 ],
                 catch_exceptions=False,
             )
@@ -194,9 +214,12 @@ class TestThemeCliOption:
         result = runner.invoke(
             cli.main,
             [
-                "--project-root", str(repo),
-                "--docs-dir", "docs/requirements",
-                "--theme", "purple",
+                "--project-root",
+                str(repo),
+                "--docs-dir",
+                "docs/requirements",
+                "--theme",
+                "purple",
             ],
         )
         assert result.exit_code != 0
@@ -221,13 +244,17 @@ class TestScreenWritePrecedence:
         runner = CliRunner()
         with patch("rqmd.cli.menus_mod.set_screen_write_enabled") as set_sw:
             with patch("rqmd.cli.menus_mod.set_screen_write_forced") as set_sw_forced:
-                with patch("rqmd.cli.menus_mod.reset_render_mode_controller") as reset_render:
+                with patch(
+                    "rqmd.cli.menus_mod.reset_render_mode_controller"
+                ) as reset_render:
                     with patch("rqmd.cli.interactive_update_loop", return_value=0):
                         result = runner.invoke(
                             cli.main,
                             [
-                                "--project-root", str(repo),
-                                "--docs-dir", "docs/requirements",
+                                "--project-root",
+                                str(repo),
+                                "--docs-dir",
+                                "docs/requirements",
                                 "--no-screen-write",
                             ],
                             catch_exceptions=False,
@@ -242,13 +269,17 @@ class TestScreenWritePrecedence:
         runner = CliRunner()
         with patch("rqmd.cli.menus_mod.set_screen_write_enabled") as set_sw:
             with patch("rqmd.cli.menus_mod.set_screen_write_forced") as set_sw_forced:
-                with patch("rqmd.cli.menus_mod.reset_render_mode_controller") as reset_render:
+                with patch(
+                    "rqmd.cli.menus_mod.reset_render_mode_controller"
+                ) as reset_render:
                     with patch("rqmd.cli.interactive_update_loop", return_value=0):
                         result = runner.invoke(
                             cli.main,
                             [
-                                "--project-root", str(repo),
-                                "--docs-dir", "docs/requirements",
+                                "--project-root",
+                                str(repo),
+                                "--docs-dir",
+                                "docs/requirements",
                             ],
                             catch_exceptions=False,
                         )
@@ -262,13 +293,17 @@ class TestScreenWritePrecedence:
         runner = CliRunner()
         with patch("rqmd.cli.menus_mod.set_screen_write_enabled") as set_sw:
             with patch("rqmd.cli.menus_mod.set_screen_write_forced") as set_sw_forced:
-                with patch("rqmd.cli.menus_mod.reset_render_mode_controller") as reset_render:
+                with patch(
+                    "rqmd.cli.menus_mod.reset_render_mode_controller"
+                ) as reset_render:
                     with patch("rqmd.cli.interactive_update_loop", return_value=0):
                         result = runner.invoke(
                             cli.main,
                             [
-                                "--project-root", str(repo),
-                                "--docs-dir", "docs/requirements",
+                                "--project-root",
+                                str(repo),
+                                "--docs-dir",
+                                "docs/requirements",
                             ],
                             catch_exceptions=False,
                         )
@@ -283,13 +318,17 @@ class TestScreenWritePrecedence:
         runner = CliRunner()
         with patch("rqmd.cli.menus_mod.set_screen_write_enabled") as set_sw:
             with patch("rqmd.cli.menus_mod.set_screen_write_forced") as set_sw_forced:
-                with patch("rqmd.cli.menus_mod.reset_render_mode_controller") as reset_render:
+                with patch(
+                    "rqmd.cli.menus_mod.reset_render_mode_controller"
+                ) as reset_render:
                     with patch("rqmd.cli.interactive_update_loop", return_value=0):
                         result = runner.invoke(
                             cli.main,
                             [
-                                "--project-root", str(repo),
-                                "--docs-dir", "docs/requirements",
+                                "--project-root",
+                                str(repo),
+                                "--docs-dir",
+                                "docs/requirements",
                                 "--screen-write",
                             ],
                             catch_exceptions=False,

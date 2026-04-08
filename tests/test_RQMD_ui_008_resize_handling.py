@@ -24,7 +24,9 @@ def test_RQMD_ui_008_menu_installs_and_restores_sigwinch_handler() -> None:
         with patch("sys.stdout", output_buffer):
             with patch("sys.stdout.isatty", return_value=True):
                 with patch("click.getchar", return_value="q"):
-                    menus_mod.select_from_menu("Resize", ["A", "B"], allow_paging_nav=False)
+                    menus_mod.select_from_menu(
+                        "Resize", ["A", "B"], allow_paging_nav=False
+                    )
 
     menus_mod.set_screen_write_enabled(False)
 
@@ -60,7 +62,9 @@ def test_RQMD_ui_008_resize_during_menu_keeps_render_stable() -> None:
         with patch("sys.stdout", output_buffer):
             with patch("sys.stdout.isatty", return_value=True):
                 with patch("click.getchar", side_effect=_getchar_side_effect):
-                    menus_mod.select_from_menu("Resize Stable", ["One", "Two"], allow_paging_nav=False)
+                    menus_mod.select_from_menu(
+                        "Resize Stable", ["One", "Two"], allow_paging_nav=False
+                    )
 
     menus_mod.set_screen_write_enabled(False)
     output = output_buffer.getvalue()

@@ -15,7 +15,9 @@ def _capture_menu_output(*, screen_write_enabled: bool, is_tty: bool) -> str:
     with patch("sys.stdout", output_buffer):
         with patch("sys.stdout.isatty", return_value=is_tty):
             with patch("click.getchar", return_value="q"):
-                menus_mod.select_from_menu("UI-010", ["One", "Two"], allow_paging_nav=False)
+                menus_mod.select_from_menu(
+                    "UI-010", ["One", "Two"], allow_paging_nav=False
+                )
     menus_mod.set_screen_write_enabled(False)
     return output_buffer.getvalue()
 
@@ -74,7 +76,10 @@ def test_RQMD_ui_010_screen_write_truncates_prefix_before_render() -> None:
     with patch("rqmd.menus.click.echo", side_effect=_capture_echo):
         with patch("sys.stdout", fake_terminal_size):
             with patch("sys.stdout.isatty", return_value=True):
-                with patch("rqmd.menus.shutil.get_terminal_size", return_value=os.terminal_size((40, 12))):
+                with patch(
+                    "rqmd.menus.shutil.get_terminal_size",
+                    return_value=os.terminal_size((40, 12)),
+                ):
                     with patch("click.getchar", return_value="q"):
                         menus_mod.select_from_menu(
                             "UI-010",
@@ -85,6 +90,10 @@ def test_RQMD_ui_010_screen_write_truncates_prefix_before_render() -> None:
 
     menus_mod.set_screen_write_enabled(False)
 
-    rendered_prefixes = [msg for msg in captured if "prefix 0" in msg or "content truncated to fit terminal" in msg]
+    rendered_prefixes = [
+        msg
+        for msg in captured
+        if "prefix 0" in msg or "content truncated to fit terminal" in msg
+    ]
     assert rendered_prefixes
     assert any("content truncated to fit terminal" in msg for msg in rendered_prefixes)

@@ -24,11 +24,12 @@ Detected sources:
 Primary automated test commands:
 - `uv run --extra dev pytest -q`
 
-Integration or end-to-end test commands:
-- No dedicated integration or end-to-end test command was detected yet. Add one here if the repository has it.
-
 Lint and check commands:
-- No lint or check command was detected yet. Add one here if the repository uses it.
+- `uv run ruff format --check src/ tests/`
+- `uv run ruff check --select I src/ tests/`
+
+Run both together before committing:
+- `uv run ruff format src/ tests/ && uv run ruff check --select I --fix src/ tests/ && uv run pytest -q`
 
 Notes:
 - Smoke coverage was detected under the development skill; keep `/test` focused on repeatable automated checks.

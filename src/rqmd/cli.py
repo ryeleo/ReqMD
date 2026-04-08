@@ -81,62 +81,113 @@ except ImportError:
 
 from . import menus as menus_mod
 from . import workflows as workflows_mod
-from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
-                           parse_batch_update_jsonl, parse_set_entry,
-                           parse_set_flagged_entry, parse_set_priority_entry)
-from .config import (load_config, load_priorities_file, load_statuses_file,
-                     load_user_config, validate_config)
-from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
-                        ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, PRIORITY_ORDER,
-                        REQUIREMENTS_INDEX_NAME, STATUS_ORDER, STATUS_PATTERN,
-                        SUMMARY_END, SUMMARY_START)
+from .batch_inputs import (
+    parse_batch_update_csv,
+    parse_batch_update_file,
+    parse_batch_update_jsonl,
+    parse_set_entry,
+    parse_set_flagged_entry,
+    parse_set_priority_entry,
+)
+from .config import (
+    load_config,
+    load_priorities_file,
+    load_statuses_file,
+    load_user_config,
+    validate_config,
+)
+from .constants import (
+    DEFAULT_ID_PREFIXES,
+    DEFAULT_REQUIREMENTS_DIR,
+    ID_PREFIX_PATTERN,
+    JSON_SCHEMA_VERSION,
+    PRIORITY_ORDER,
+    REQUIREMENTS_INDEX_NAME,
+    STATUS_ORDER,
+    STATUS_PATTERN,
+    SUMMARY_END,
+    SUMMARY_START,
+)
 from .history import HistoryManager, merge_retention_policies
 from .json_speedups import dumps_json
-from .markdown_io import (auto_detect_requirements_dir,
-                          build_requirements_index_tooling_metadata,
-                          check_files_writable, check_index_sync,
-                          discover_project_root, display_name_from_h1,
-                          format_path_display,
-                          initialize_requirements_scaffold, iter_domain_files,
-                          iter_requirements_search_roots, parse_index_links,
-                          parse_requirements_index_tooling_metadata,
-                          render_startup_message, resolve_requirements_dir,
-                          sync_requirements_index_tooling_metadata,
-                          validate_files_readable)
+from .markdown_io import (
+    auto_detect_requirements_dir,
+    build_requirements_index_tooling_metadata,
+    check_files_writable,
+    check_index_sync,
+    discover_project_root,
+    display_name_from_h1,
+    format_path_display,
+    initialize_requirements_scaffold,
+    iter_domain_files,
+    iter_requirements_search_roots,
+    parse_index_links,
+    parse_requirements_index_tooling_metadata,
+    render_startup_message,
+    resolve_requirements_dir,
+    sync_requirements_index_tooling_metadata,
+    validate_files_readable,
+)
 from .menus import select_from_menu
-from .priority_model import (configure_priority_catalog,
-                             normalize_priority_input)
-from .req_parser import (collect_requirements_by_filters,
-                         collect_requirements_by_flagged,
-                         collect_requirements_by_links,
-                         collect_requirements_by_priority,
-                         collect_requirements_by_status,
-                         collect_requirements_by_sub_domain,
-                         find_duplicate_requirement_ids,
-                         find_requirement_by_id,
-                         next_sequential_requirement_id, normalize_id_prefixes,
-                         parse_requirements, resolve_id_prefixes)
+from .priority_model import configure_priority_catalog, normalize_priority_input
+from .req_parser import (
+    collect_requirements_by_filters,
+    collect_requirements_by_flagged,
+    collect_requirements_by_links,
+    collect_requirements_by_priority,
+    collect_requirements_by_status,
+    collect_requirements_by_sub_domain,
+    find_duplicate_requirement_ids,
+    find_requirement_by_id,
+    next_sequential_requirement_id,
+    normalize_id_prefixes,
+    parse_requirements,
+    resolve_id_prefixes,
+)
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
-from .status_model import (build_color_rollup_text, configure_status_catalog,
-                           normalize_status_input, style_status_count,
-                           style_status_label)
-from .status_update import (apply_status_change_by_id, print_criterion_panel,
-                            prompt_for_blocked_reason,
-                            prompt_for_deprecated_reason,
-                            update_criterion_status)
-from .summary import (UnknownStatusValueError, build_summary_block,
-                      build_summary_line, build_summary_table,
-                      collect_summary_rows, count_statuses,
-                      insert_or_replace_summary, normalize_status_lines,
-                      print_custom_rollup_table, print_global_rollup_table,
-                      print_summary_table, process_file)
-from .target_selection import (complete_target_completion_candidates,
-                               parse_target_token_file, resolve_target_tokens)
-from .workflows import (build_filtered_criteria_payload, build_summary_payload,
-                        build_targeted_criteria_payload)
-from .workflows import \
-    focused_target_interactive_loop as focused_target_interactive_loop_impl
-from .workflows import print_criteria_list, print_criteria_tree
+from .status_model import (
+    build_color_rollup_text,
+    configure_status_catalog,
+    normalize_status_input,
+    style_status_count,
+    style_status_label,
+)
+from .status_update import (
+    apply_status_change_by_id,
+    print_criterion_panel,
+    prompt_for_blocked_reason,
+    prompt_for_deprecated_reason,
+    update_criterion_status,
+)
+from .summary import (
+    UnknownStatusValueError,
+    build_summary_block,
+    build_summary_line,
+    build_summary_table,
+    collect_summary_rows,
+    count_statuses,
+    insert_or_replace_summary,
+    normalize_status_lines,
+    print_custom_rollup_table,
+    print_global_rollup_table,
+    print_summary_table,
+    process_file,
+)
+from .target_selection import (
+    complete_target_completion_candidates,
+    parse_target_token_file,
+    resolve_target_tokens,
+)
+from .workflows import (
+    build_filtered_criteria_payload,
+    build_summary_payload,
+    build_targeted_criteria_payload,
+    print_criteria_list,
+    print_criteria_tree,
+)
+from .workflows import (
+    focused_target_interactive_loop as focused_target_interactive_loop_impl,
+)
 
 
 def _maybe_enable_readline() -> None:
@@ -252,7 +303,11 @@ def _expand_unique_long_option_prefixes(
             expanded.append(token)
             continue
 
-        matches = [candidate for candidate in option_names if candidate.startswith(option_token)]
+        matches = [
+            candidate
+            for candidate in option_names
+            if candidate.startswith(option_token)
+        ]
         if not matches:
             expanded.append(token)
             continue
@@ -262,7 +317,9 @@ def _expand_unique_long_option_prefixes(
             )
 
         resolved = matches[0]
-        expanded.append(f"{resolved}{separator}{option_value}" if separator else resolved)
+        expanded.append(
+            f"{resolved}{separator}{option_value}" if separator else resolved
+        )
 
     return expanded
 
@@ -348,8 +405,12 @@ def _resolve_history_retention_policy(
     user_config: dict[str, object],
 ) -> dict[str, int | None]:
     return merge_retention_policies(
-        user_config.get("history_retention") if isinstance(user_config.get("history_retention"), dict) else None,
-        project_config.get("history_retention") if isinstance(project_config.get("history_retention"), dict) else None,
+        user_config.get("history_retention")
+        if isinstance(user_config.get("history_retention"), dict)
+        else None,
+        project_config.get("history_retention")
+        if isinstance(project_config.get("history_retention"), dict)
+        else None,
     )
 
 
@@ -403,7 +464,9 @@ def _raise_unknown_status_error(
     source = "<unknown file>"
     if exc.source_path is not None:
         source = format_path_display(exc.source_path, repo_root)
-    suggestion_text = ", ".join(exc.suggestions) if exc.suggestions else "(no close matches)"
+    suggestion_text = (
+        ", ".join(exc.suggestions) if exc.suggestions else "(no close matches)"
+    )
     raise click.ClickException(
         "Unknown status compatibility issue. "
         f"Found '{exc.status_value}' at {source}:{exc.line_number}. "
@@ -423,7 +486,9 @@ def _raise_duplicate_id_error(
             for path, line_number in duplicates[requirement_id]
         )
         duplicate_parts.append(f"{requirement_id} [{locations}]")
-    raise click.ClickException(f"Duplicate requirement IDs found: {'; '.join(duplicate_parts)}")
+    raise click.ClickException(
+        f"Duplicate requirement IDs found: {'; '.join(duplicate_parts)}"
+    )
 
 
 def _ensure_unique_requirement_ids(
@@ -577,7 +642,11 @@ def _build_positional_filter_summary(
     if priority_filters:
         label_parts.append(f"priority={'+'.join(priority_filters)}")
         target_tokens.extend(f"priority:{value}" for value in priority_filters)
-    return summary, " & ".join(label_parts) if label_parts else "positional filters", target_tokens
+    return (
+        summary,
+        " & ".join(label_parts) if label_parts else "positional filters",
+        target_tokens,
+    )
 
 
 def _positional_status_completion_values() -> list[str]:
@@ -617,14 +686,22 @@ def _positional_priority_completion_values() -> list[str]:
 def _parse_prefix_rename_spec(raw: str) -> tuple[str, str]:
     spec = str(raw).strip()
     if "=" not in spec:
-        raise click.ClickException("--rename-id-prefix requires OLD=NEW format, for example --rename-id-prefix AC=RQMD.")
+        raise click.ClickException(
+            "--rename-id-prefix requires OLD=NEW format, for example --rename-id-prefix AC=RQMD."
+        )
     old_raw, new_raw = spec.split("=", 1)
     old_prefix = old_raw.strip().upper().rstrip("-")
     new_prefix = new_raw.strip().upper().rstrip("-")
     if not old_prefix or not new_prefix:
-        raise click.ClickException("--rename-id-prefix requires both OLD and NEW prefixes.")
-    if not ID_PREFIX_PATTERN.fullmatch(old_prefix) or not ID_PREFIX_PATTERN.fullmatch(new_prefix):
-        raise click.ClickException("Invalid prefix in --rename-id-prefix; use uppercase letters/numbers only.")
+        raise click.ClickException(
+            "--rename-id-prefix requires both OLD and NEW prefixes."
+        )
+    if not ID_PREFIX_PATTERN.fullmatch(old_prefix) or not ID_PREFIX_PATTERN.fullmatch(
+        new_prefix
+    ):
+        raise click.ClickException(
+            "Invalid prefix in --rename-id-prefix; use uppercase letters/numbers only."
+        )
     if old_prefix == new_prefix:
         raise click.ClickException("--rename-id-prefix OLD and NEW must be different.")
     return old_prefix, new_prefix
@@ -641,7 +718,9 @@ def _collect_requirement_ids_from_text(text: str) -> set[str]:
     )
 
 
-def _rename_requirement_id_prefix_in_text(text: str, old_prefix: str, new_prefix: str) -> tuple[str, int]:
+def _rename_requirement_id_prefix_in_text(
+    text: str, old_prefix: str, new_prefix: str
+) -> tuple[str, int]:
     pattern = re.compile(rf"\b{re.escape(old_prefix)}-(?P<suffix>[A-Z0-9][A-Z0-9-]*)\b")
     return pattern.subn(lambda m: f"{new_prefix}-{m.group('suffix')}", text)
 
@@ -657,7 +736,9 @@ def prompt_for_init_prefix(default_prefix: str = "REQ") -> str:
     )
     value = str(raw).strip().upper().rstrip("-")
     if not value or not ID_PREFIX_PATTERN.fullmatch(value):
-        raise click.ClickException("Invalid key prefix. Use uppercase letters/numbers, for example REQ, AC, or TEAM1.")
+        raise click.ClickException(
+            "Invalid key prefix. Use uppercase letters/numbers, for example REQ, AC, or TEAM1."
+        )
     return value
 
 
@@ -692,7 +773,11 @@ def resolve_positional_domain_file_token(
         return None
 
     candidate_input = Path(raw).expanduser()
-    candidate = candidate_input.resolve() if candidate_input.is_absolute() else (repo_root / candidate_input).resolve()
+    candidate = (
+        candidate_input.resolve()
+        if candidate_input.is_absolute()
+        else (repo_root / candidate_input).resolve()
+    )
     domain_lookup = {path.resolve(): path for path in domain_files}
     return domain_lookup.get(candidate)
 
@@ -851,11 +936,19 @@ def shell_complete_target_tokens(
     del param
     try:
         raw_repo_root = ctx.params.get("repo_root")
-        repo_root = Path(raw_repo_root).resolve() if raw_repo_root else discover_project_root(Path.cwd())[0]
+        repo_root = (
+            Path(raw_repo_root).resolve()
+            if raw_repo_root
+            else discover_project_root(Path.cwd())[0]
+        )
         raw_criteria_dir = ctx.params.get("requirements_dir")
-        resolved_criteria_dir, _message = resolve_requirements_dir(repo_root, raw_criteria_dir)
+        resolved_criteria_dir, _message = resolve_requirements_dir(
+            repo_root, raw_criteria_dir
+        )
         raw_prefixes = tuple(ctx.params.get("id_prefixes") or ())
-        resolved_prefixes = resolve_id_prefixes(repo_root, str(resolved_criteria_dir), raw_prefixes)
+        resolved_prefixes = resolve_id_prefixes(
+            repo_root, str(resolved_criteria_dir), raw_prefixes
+        )
         domain_files = iter_domain_files(repo_root, str(resolved_criteria_dir))
         target_candidates = complete_target_completion_candidates(
             repo_root,
@@ -869,8 +962,13 @@ def shell_complete_target_tokens(
     prefix = incomplete.casefold().strip()
     filter_candidates: list[tuple[str, str]] = []
     if not prefix:
-        filter_candidates.extend((value, "status filter") for value in _positional_status_completion_values())
-        filter_candidates.extend((value, "priority filter") for value in _positional_priority_completion_values())
+        filter_candidates.extend(
+            (value, "status filter") for value in _positional_status_completion_values()
+        )
+        filter_candidates.extend(
+            (value, "priority filter")
+            for value in _positional_priority_completion_values()
+        )
     else:
         filter_candidates.extend(
             (value, "status filter")
@@ -902,7 +1000,11 @@ def shell_complete_target_tokens(
         combined_items.append((value, item["kind"]))
 
     completion_module = getattr(click, "shell_completion", None)
-    completion_item = getattr(completion_module, "CompletionItem", None) if completion_module is not None else None
+    completion_item = (
+        getattr(completion_module, "CompletionItem", None)
+        if completion_module is not None
+        else None
+    )
     if completion_item is None:
         return [value for value, _kind in combined_items]
     return [completion_item(value, help=kind) for value, kind in combined_items]
@@ -937,7 +1039,11 @@ def _editable_source_path_from_distribution() -> Path | None:
 
     dir_info = payload.get("dir_info")
     url = payload.get("url")
-    if not isinstance(dir_info, dict) or dir_info.get("editable") is not True or not isinstance(url, str):
+    if (
+        not isinstance(dir_info, dict)
+        or dir_info.get("editable") is not True
+        or not isinstance(url, str)
+    ):
         return None
 
     parsed = urlparse(url)
@@ -984,7 +1090,9 @@ def _build_snapshot_status_map(
     tempdir = history_manager.materialize_snapshot_tempdir(commit_hash)
     try:
         root = Path(tempdir.name)
-        domain_files = iter_domain_files(root, history_manager.requirements_dir.as_posix())
+        domain_files = iter_domain_files(
+            root, history_manager.requirements_dir.as_posix()
+        )
         mapping: dict[str, str | None] = {}
         for path in domain_files:
             for requirement in parse_requirements(path, id_prefixes=id_prefixes):
@@ -1005,7 +1113,9 @@ def _enrich_timeline_nodes_with_change_metadata(
 
     def _status_map(commit_hash: str) -> dict[str, str | None]:
         if commit_hash not in status_cache:
-            status_cache[commit_hash] = _build_snapshot_status_map(history_manager, commit_hash, id_prefixes)
+            status_cache[commit_hash] = _build_snapshot_status_map(
+                history_manager, commit_hash, id_prefixes
+            )
         return status_cache[commit_hash]
 
     ordered_items = sorted(
@@ -1073,19 +1183,32 @@ def _filter_timeline_nodes(
 
     filtered: dict[str, dict[str, object]] = {}
     for commit_hash, node in timeline_nodes.items():
-        if branch_filter and not _contains_casefold(str(node.get("branch") or ""), branch_filter):
+        if branch_filter and not _contains_casefold(
+            str(node.get("branch") or ""), branch_filter
+        ):
             continue
-        if actor_filter and not _contains_casefold(str(node.get("actor") or ""), actor_filter):
+        if actor_filter and not _contains_casefold(
+            str(node.get("actor") or ""), actor_filter
+        ):
             continue
-        if command_filter and not _contains_casefold(str(node.get("command") or ""), command_filter):
+        if command_filter and not _contains_casefold(
+            str(node.get("command") or ""), command_filter
+        ):
             continue
 
         files = [str(item) for item in (node.get("files") or [])]
-        if file_filter and not any(file_filter.casefold() in value.casefold() for value in files):
+        if file_filter and not any(
+            file_filter.casefold() in value.casefold() for value in files
+        ):
             continue
 
-        changed_ids = [str(item) for item in (node.get("changed_requirement_ids") or [])]
-        if requirement_id_filter and not any(requirement_id_filter.casefold() == value.casefold() for value in changed_ids):
+        changed_ids = [
+            str(item) for item in (node.get("changed_requirement_ids") or [])
+        ]
+        if requirement_id_filter and not any(
+            requirement_id_filter.casefold() == value.casefold()
+            for value in changed_ids
+        ):
             continue
 
         transitions = node.get("status_transitions") or []
@@ -1096,7 +1219,9 @@ def _filter_timeline_nodes(
                     continue
                 before_value = str(transition.get("before_status") or "")
                 after_value = str(transition.get("after_status") or "")
-                if before_filter and not _contains_casefold(before_value, before_filter):
+                if before_filter and not _contains_casefold(
+                    before_value, before_filter
+                ):
                     continue
                 if after_filter and not _contains_casefold(after_value, after_filter):
                     continue
@@ -1107,7 +1232,9 @@ def _filter_timeline_nodes(
 
         timestamp_raw = str(node.get("timestamp") or "")
         if (from_filter or to_filter) and timestamp_raw:
-            timestamp_value = _parse_iso8601_filter(timestamp_raw, "timeline node timestamp")
+            timestamp_value = _parse_iso8601_filter(
+                timestamp_raw, "timeline node timestamp"
+            )
             if from_filter and timestamp_value < from_filter:
                 continue
             if to_filter and timestamp_value > to_filter:
@@ -1140,8 +1267,19 @@ def _filter_timeline_nodes(
     metavar="[TARGET]...",
     shell_complete=shell_complete_target_tokens,
 )
-@click.option("--verify-summaries", "check", is_flag=True, help="Check whether summaries are up to date without writing changes.")
-@click.option("-v", "--detailed", "verbose", is_flag=True, help="Show verbose output with full words.")
+@click.option(
+    "--verify-summaries",
+    "check",
+    is_flag=True,
+    help="Check whether summaries are up to date without writing changes.",
+)
+@click.option(
+    "-v",
+    "--detailed",
+    "verbose",
+    is_flag=True,
+    help="Show verbose output with full words.",
+)
 @click.option(
     "--emoji-headers",
     "emoji_columns",
@@ -1557,14 +1695,22 @@ def main(
 
     try:
         standalone_statuses = load_statuses_file(repo_root, status_config)
-        effective_statuses = standalone_statuses if standalone_statuses is not None else config.get("statuses")
+        effective_statuses = (
+            standalone_statuses
+            if standalone_statuses is not None
+            else config.get("statuses")
+        )
         configure_status_catalog(effective_statuses)
     except ValueError as exc:
         raise click.ClickException(f"Config error: {exc}") from exc
 
     try:
         standalone_priorities = load_priorities_file(repo_root, priorities_config)
-        effective_priorities = standalone_priorities if standalone_priorities is not None else config.get("priorities")
+        effective_priorities = (
+            standalone_priorities
+            if standalone_priorities is not None
+            else config.get("priorities")
+        )
         configure_priority_catalog(effective_priorities)
     except ValueError as exc:
         raise click.ClickException(f"Config error: {exc}") from exc
@@ -1606,6 +1752,7 @@ def main(
 
     # Resolve interactive zebra striping color from theme detection.
     from .theme import detect_theme, is_accessible_zebra_bg, resolve_zebra_bg
+
     _detected_theme, _theme_source = detect_theme(
         cli_override=theme,
         config_override=str(config.get("theme") or ""),
@@ -1635,10 +1782,31 @@ def main(
     if root_discovery_message and not json_output:
         click.echo(root_discovery_message)
 
-    positional_init_requested = len(targets) == 1 and str(targets[0]).strip().casefold() == "init"
+    positional_init_requested = (
+        len(targets) == 1 and str(targets[0]).strip().casefold() == "init"
+    )
 
     if positional_init_requested:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode:
+        if (
+            check
+            or filter_status
+            or filter_priority
+            or filter_flagged
+            or filter_no_flag
+            or filter_has_link
+            or filter_no_link
+            or filter_sub_domain
+            or filter_ids_file
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+            or tree
+            or rollup_mode
+        ):
             raise click.ClickException(
                 "rqmd init is an onboarding surface and cannot be combined with verify/filter/update/tree or rollup options."
             )
@@ -1664,7 +1832,9 @@ def main(
                     "mode": "init",
                     "requirements_dir": requirements_dir or DEFAULT_REQUIREMENTS_DIR,
                     "starter_prefix": starter_prefix,
-                    "created_files": [format_path_display(path, repo_root) for path in created],
+                    "created_files": [
+                        format_path_display(path, repo_root) for path in created
+                    ],
                     "created_count": len(created),
                 }
                 _emit_json_payload(payload)
@@ -1673,7 +1843,9 @@ def main(
             _emit_scaffold_result(created, repo_root)
             raise SystemExit(0)
 
-        normalized_init_prefixes = normalize_id_prefixes(id_prefixes) if id_prefixes else ()
+        normalized_init_prefixes = (
+            normalize_id_prefixes(id_prefixes) if id_prefixes else ()
+        )
         from .ai_cli import _build_or_apply_init_payload
 
         payload = _build_or_apply_init_payload(
@@ -1692,11 +1864,35 @@ def main(
             click.echo("")
             click.echo(render_startup_message("chat-handoff-heading.md").rstrip())
             click.echo("")
-            click.echo(str(payload.get("handoff_prompt") or "Run `rqmd-ai init --chat --json`."))
+            click.echo(
+                str(
+                    payload.get("handoff_prompt") or "Run `rqmd-ai init --chat --json`."
+                )
+            )
         raise SystemExit(0)
 
     if init_scaffold:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
+        if (
+            check
+            or filter_status
+            or filter_priority
+            or filter_flagged
+            or filter_no_flag
+            or filter_has_link
+            or filter_no_link
+            or filter_sub_domain
+            or filter_ids_file
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+            or tree
+            or rollup_mode
+            or targets
+        ):
             raise click.ClickException(
                 "--scaffold cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
@@ -1721,7 +1917,9 @@ def main(
                 "mode": "init",
                 "requirements_dir": requirements_dir or DEFAULT_REQUIREMENTS_DIR,
                 "starter_prefix": starter_prefix,
-                "created_files": [format_path_display(path, repo_root) for path in created],
+                "created_files": [
+                    format_path_display(path, repo_root) for path in created
+                ],
                 "created_count": len(created),
             }
             _emit_json_payload(payload)
@@ -1730,7 +1928,9 @@ def main(
         _emit_scaffold_result(created, repo_root)
         raise SystemExit(0)
 
-    resolved_criteria_dir, criteria_dir_message = resolve_requirements_dir(repo_root, requirements_dir)
+    resolved_criteria_dir, criteria_dir_message = resolve_requirements_dir(
+        repo_root, requirements_dir
+    )
     resolved_requirements_dir_input = str(resolved_criteria_dir)
     if criteria_dir_message and not json_output:
         click.echo(criteria_dir_message)
@@ -1755,7 +1955,9 @@ def main(
         if json_output:
             payload = {
                 "mode": "sync-index-metadata",
-                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "requirements_dir": format_path_display(
+                    resolved_criteria_dir, repo_root
+                ),
                 "index_path": format_path_display(index_path, repo_root),
                 "dry_run": dry_run,
                 "changed": changed,
@@ -1770,13 +1972,19 @@ def main(
 
         verb = "Would update" if dry_run else "Updated"
         if changed:
-            click.echo(f"{verb} requirements index metadata in {format_path_display(index_path, repo_root)}.")
+            click.echo(
+                f"{verb} requirements index metadata in {format_path_display(index_path, repo_root)}."
+            )
         else:
-            click.echo(f"Requirements index metadata already current in {format_path_display(index_path, repo_root)}.")
+            click.echo(
+                f"Requirements index metadata already current in {format_path_display(index_path, repo_root)}."
+            )
         raise SystemExit(0)
 
     if index_path.exists() and not json_output:
-        recorded_metadata = parse_requirements_index_tooling_metadata(index_path.read_text(encoding="utf-8"))
+        recorded_metadata = parse_requirements_index_tooling_metadata(
+            index_path.read_text(encoding="utf-8")
+        )
         current_metadata = build_requirements_index_tooling_metadata()
         if recorded_metadata is None:
             click.echo(
@@ -1788,8 +1996,12 @@ def main(
                 err=True,
             )
         else:
-            recorded_rqmd_version = str(recorded_metadata.get("rqmd_version") or "unknown")
-            recorded_json_schema = str(recorded_metadata.get("json_schema_version") or "unknown")
+            recorded_rqmd_version = str(
+                recorded_metadata.get("rqmd_version") or "unknown"
+            )
+            recorded_json_schema = str(
+                recorded_metadata.get("json_schema_version") or "unknown"
+            )
             if (
                 recorded_rqmd_version != current_metadata["rqmd_version"]
                 or recorded_json_schema != current_metadata["json_schema_version"]
@@ -1806,17 +2018,27 @@ def main(
                 )
 
     try:
-        id_prefixes = resolve_id_prefixes(repo_root, resolved_requirements_dir_input, id_prefixes)
+        id_prefixes = resolve_id_prefixes(
+            repo_root, resolved_requirements_dir_input, id_prefixes
+        )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
     domain_files = iter_domain_files(repo_root, resolved_requirements_dir_input)
     if not domain_files:
         missing_msg = f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
-        hint_msg = render_startup_message(
-            "startup-empty-dir.md",
-            {"CRITERIA_DIR_DISPLAY": format_path_display(resolved_criteria_dir, repo_root)},
-        ).split("\n", 1)[1].strip()
+        hint_msg = (
+            render_startup_message(
+                "startup-empty-dir.md",
+                {
+                    "CRITERIA_DIR_DISPLAY": format_path_display(
+                        resolved_criteria_dir, repo_root
+                    )
+                },
+            )
+            .split("\n", 1)[1]
+            .strip()
+        )
 
         if confirm_yes:
             starter_prefix = requested_init_prefix or "REQ"
@@ -1844,7 +2066,9 @@ def main(
             raise SystemExit(1)
 
         try:
-            starter_prefix = requested_init_prefix or prompt_for_init_prefix(default_prefix="REQ")
+            starter_prefix = requested_init_prefix or prompt_for_init_prefix(
+                default_prefix="REQ"
+            )
         except ValueError as exc:
             raise click.ClickException(str(exc)) from exc
 
@@ -1908,7 +2132,9 @@ def main(
             _emit_json_payload(
                 {
                     "mode": "next-id",
-                    "criteria_dir": format_path_display(resolved_criteria_dir, repo_root),
+                    "criteria_dir": format_path_display(
+                        resolved_criteria_dir, repo_root
+                    ),
                     "prefix": id_prefixes[0],
                     "requirement_id": requirement_id,
                     "next_number": next_number,
@@ -1958,11 +2184,19 @@ def main(
         for path in domain_files:
             text = path.read_text(encoding="utf-8")
             ids = _collect_requirement_ids_from_text(text)
-            existing_new_ids.update({rid for rid in ids if rid.startswith(f"{new_prefix}-")})
-            rename_target_ids.update({rid for rid in ids if rid.startswith(f"{old_prefix}-")})
+            existing_new_ids.update(
+                {rid for rid in ids if rid.startswith(f"{new_prefix}-")}
+            )
+            rename_target_ids.update(
+                {rid for rid in ids if rid.startswith(f"{old_prefix}-")}
+            )
 
-        projected_new_ids = {f"{new_prefix}-{rid.split('-', 1)[1]}" for rid in rename_target_ids}
-        conflicts = sorted(existing_new_ids.intersection(projected_new_ids - rename_target_ids))
+        projected_new_ids = {
+            f"{new_prefix}-{rid.split('-', 1)[1]}" for rid in rename_target_ids
+        }
+        conflicts = sorted(
+            existing_new_ids.intersection(projected_new_ids - rename_target_ids)
+        )
         if conflicts:
             preview = ", ".join(conflicts[:5])
             suffix = "..." if len(conflicts) > 5 else ""
@@ -1974,7 +2208,9 @@ def main(
         total_replacements = 0
         for path in domain_files:
             original = path.read_text(encoding="utf-8")
-            updated, replacements = _rename_requirement_id_prefix_in_text(original, old_prefix, new_prefix)
+            updated, replacements = _rename_requirement_id_prefix_in_text(
+                original, old_prefix, new_prefix
+            )
             if replacements == 0:
                 continue
             total_replacements += replacements
@@ -2006,13 +2242,17 @@ def main(
             _emit_json_payload(payload)
         else:
             action = "Would update" if dry_run else "Updated"
-            click.echo(f"{action} {len(changed_files)} file(s); {total_replacements} replacement(s).")
+            click.echo(
+                f"{action} {len(changed_files)} file(s); {total_replacements} replacement(s)."
+            )
             for entry in changed_files:
                 click.echo(f"  - {entry['path']}: {entry['replacements']}")
         raise SystemExit(0)
 
     if strip_status_emojis and restore_status_emojis:
-        raise click.ClickException("Use either --strip-status-icons or --restore-status-icons, not both.")
+        raise click.ClickException(
+            "Use either --strip-status-icons or --restore-status-icons, not both."
+        )
 
     if init_priorities:
         _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)
@@ -2048,13 +2288,20 @@ def main(
         changed_paths: list[Path] = []
         for path in domain_files:
             requirements = parse_requirements(path, id_prefixes=id_prefixes)
-            missing = [r for r in requirements if r.get("priority_line") is None and isinstance(r.get("status_line"), int)]
+            missing = [
+                r
+                for r in requirements
+                if r.get("priority_line") is None
+                and isinstance(r.get("status_line"), int)
+            ]
             if not missing:
                 continue
 
             lines = path.read_text(encoding="utf-8").splitlines()
             inserted = False
-            for requirement in sorted(missing, key=lambda r: int(r["status_line"]), reverse=True):
+            for requirement in sorted(
+                missing, key=lambda r: int(r["status_line"]), reverse=True
+            ):
                 status_line = int(requirement["status_line"])
                 blocked_line = requirement.get("blocked_reason_line")
                 deprecated_line = requirement.get("deprecated_reason_line")
@@ -2065,7 +2312,9 @@ def main(
                 if isinstance(deprecated_line, int):
                     insert_after = max(insert_after, deprecated_line)
 
-                lines.insert(insert_after + 1, f"- **Priority:** {canonical_default_priority}")
+                lines.insert(
+                    insert_after + 1, f"- **Priority:** {canonical_default_priority}"
+                )
                 inserted = True
 
             if inserted:
@@ -2079,7 +2328,9 @@ def main(
                             include_priority_summary=show_priority_summary,
                         )
                     except UnknownStatusValueError as exc:
-                        _raise_unknown_status_error("init-priorities", exc, repo_root, json_output=json_output)
+                        _raise_unknown_status_error(
+                            "init-priorities", exc, repo_root, json_output=json_output
+                        )
                 changed_paths.append(path)
 
         try:
@@ -2091,15 +2342,21 @@ def main(
                 include_priority_summary=show_priority_summary,
             )
         except UnknownStatusValueError as exc:
-            _raise_unknown_status_error("init-priorities", exc, repo_root, json_output=json_output)
+            _raise_unknown_status_error(
+                "init-priorities", exc, repo_root, json_output=json_output
+            )
 
         if json_output:
             payload = {
                 "mode": "init-priorities",
-                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "requirements_dir": format_path_display(
+                    resolved_criteria_dir, repo_root
+                ),
                 "default_priority": canonical_default_priority,
                 "dry_run": dry_run,
-                "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
+                "changed_files": [
+                    format_path_display(path, repo_root) for path in changed_paths
+                ],
                 "changed_count": len(changed_paths),
             }
             _emit_json_payload(payload)
@@ -2108,18 +2365,42 @@ def main(
         if summary_table:
             print_summary_table(table_rows, emoji_columns=emoji_columns)
         verb = "Would initialize" if dry_run else "Initialized"
-        click.echo(f"{verb} priorities in {len(changed_paths)} file(s) using {canonical_default_priority}.")
+        click.echo(
+            f"{verb} priorities in {len(changed_paths)} file(s) using {canonical_default_priority}."
+        )
         raise SystemExit(0)
 
     if strip_status_emojis or restore_status_emojis:
         _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
+        if (
+            check
+            or filter_status
+            or filter_priority
+            or filter_flagged
+            or filter_no_flag
+            or filter_has_link
+            or filter_no_link
+            or filter_sub_domain
+            or filter_ids_file
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+            or tree
+            or rollup_mode
+            or targets
+        ):
             raise click.ClickException(
                 "Emoji strip/restore modes cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
 
         include_status_emojis = not strip_status_emojis
-        mode_name = "restore-status-emojis" if restore_status_emojis else "strip-status-emojis"
+        mode_name = (
+            "restore-status-emojis" if restore_status_emojis else "strip-status-emojis"
+        )
         try:
             changed_paths, table_rows = collect_summary_rows(
                 domain_files,
@@ -2129,15 +2410,21 @@ def main(
                 include_priority_summary=show_priority_summary,
             )
         except UnknownStatusValueError as exc:
-            _raise_unknown_status_error(mode_name, exc, repo_root, json_output=json_output)
+            _raise_unknown_status_error(
+                mode_name, exc, repo_root, json_output=json_output
+            )
         if summary_table and not json_output:
             print_summary_table(table_rows, emoji_columns=emoji_columns)
 
         if json_output:
             payload = {
                 "mode": mode_name,
-                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
-                "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
+                "requirements_dir": format_path_display(
+                    resolved_criteria_dir, repo_root
+                ),
+                "changed_files": [
+                    format_path_display(path, repo_root) for path in changed_paths
+                ],
                 "changed_count": len(changed_paths),
             }
             _emit_json_payload(payload)
@@ -2161,46 +2448,73 @@ def main(
         stale_links, orphan_files = check_index_sync(resolved_criteria_dir, index_path)
         issues: list[str] = []
         for name in stale_links:
-            issues.append(f"  stale link:   {name}  (referenced in index but file does not exist)")
+            issues.append(
+                f"  stale link:   {name}  (referenced in index but file does not exist)"
+            )
         for path in orphan_files:
-            issues.append(f"  orphan file:  {format_path_display(path, repo_root)}  (exists on disk but not in index)")
+            issues.append(
+                f"  orphan file:  {format_path_display(path, repo_root)}  (exists on disk but not in index)"
+            )
         if issues:
-            click.echo(f"Index sync issues found in: {format_path_display(index_path, repo_root)}")
+            click.echo(
+                f"Index sync issues found in: {format_path_display(index_path, repo_root)}"
+            )
             for line in issues:
                 click.echo(line)
-            click.echo(f"  Hint: update {format_path_display(index_path, repo_root)} to add missing links or remove stale ones.")
+            click.echo(
+                f"  Hint: update {format_path_display(index_path, repo_root)} to add missing links or remove stale ones."
+            )
             raise SystemExit(1)
         click.echo(f"Index is in sync: {format_path_display(index_path, repo_root)}")
         raise SystemExit(0)
 
-    positional_status_filters_raw, positional_priority_filters_raw, remaining_positional_tokens = _extract_positional_filter_tokens(targets)
-    positional_filter_mode = bool(positional_status_filters_raw or positional_priority_filters_raw)
+    (
+        positional_status_filters_raw,
+        positional_priority_filters_raw,
+        remaining_positional_tokens,
+    ) = _extract_positional_filter_tokens(targets)
+    positional_filter_mode = bool(
+        positional_status_filters_raw or positional_priority_filters_raw
+    )
 
     explicit_target_tokens = list(remaining_positional_tokens)
     if filter_ids_file:
-        explicit_target_tokens.extend(parse_target_token_file(repo_root, filter_ids_file))
+        explicit_target_tokens.extend(
+            parse_target_token_file(repo_root, filter_ids_file)
+        )
 
-    all_target_mode = bool(explicit_target_tokens) and all(_is_all_target_token(token) for token in explicit_target_tokens)
+    all_target_mode = bool(explicit_target_tokens) and all(
+        _is_all_target_token(token) for token in explicit_target_tokens
+    )
 
     positional_domain_files: list[Path] = []
     if not filter_ids_file:
         seen_files: set[Path] = set()
         for token in remaining_positional_tokens:
-            matched_path = resolve_positional_domain_file_token(repo_root, domain_files, token)
+            matched_path = resolve_positional_domain_file_token(
+                repo_root, domain_files, token
+            )
             if matched_path and matched_path not in seen_files:
                 positional_domain_files.append(matched_path)
                 seen_files.add(matched_path)
 
     if len(positional_domain_files) > 1:
-        display = ", ".join(format_path_display(path, repo_root) for path in positional_domain_files)
-        raise click.ClickException(f"Provide at most one positional domain file path at a time; got: {display}")
+        display = ", ".join(
+            format_path_display(path, repo_root) for path in positional_domain_files
+        )
+        raise click.ClickException(
+            f"Provide at most one positional domain file path at a time; got: {display}"
+        )
 
-    positional_domain_file = positional_domain_files[0] if positional_domain_files else None
+    positional_domain_file = (
+        positional_domain_files[0] if positional_domain_files else None
+    )
     if positional_domain_file and not filter_ids_file:
         explicit_target_tokens = [
             token
             for token in explicit_target_tokens
-            if resolve_positional_domain_file_token(repo_root, domain_files, token) is None
+            if resolve_positional_domain_file_token(repo_root, domain_files, token)
+            is None
         ]
 
     has_non_lookup_mode = bool(
@@ -2228,17 +2542,44 @@ def main(
 
     if all_target_mode:
         if positional_filter_mode or filter_ids_file or positional_domain_files:
-            raise click.ClickException("The positional target 'all' cannot be combined with positional filters, --targets-file, or positional domain scoping.")
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
-            raise click.ClickException("The positional target 'all' cannot be combined with --verify-summaries, --totals, --filter-*, or --update-* options.")
+            raise click.ClickException(
+                "The positional target 'all' cannot be combined with positional filters, --targets-file, or positional domain scoping."
+            )
+        if (
+            check
+            or filter_status
+            or filter_priority
+            or filter_flagged
+            or filter_no_flag
+            or filter_has_link
+            or filter_no_link
+            or filter_sub_domain
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+            or rollup_mode
+        ):
+            raise click.ClickException(
+                "The positional target 'all' cannot be combined with --verify-summaries, --totals, --filter-*, or --update-* options."
+            )
 
     # Preserve legacy single-ID lookup mode, but allow repeated positional IDs
     # to fall through to the focused multi-target path below.
-    if not filter_ids_file and not has_non_lookup_mode and len(explicit_target_tokens) == 1:
+    if (
+        not filter_ids_file
+        and not has_non_lookup_mode
+        and len(explicit_target_tokens) == 1
+    ):
         for token in targets:
             exact_id_matches = []
             for path in domain_files:
-                requirement = find_requirement_by_id(path, token, id_prefixes=id_prefixes)
+                requirement = find_requirement_by_id(
+                    path, token, id_prefixes=id_prefixes
+                )
                 if requirement:
                     exact_id_matches.append((path, requirement))
             if len(exact_id_matches) == 1:
@@ -2259,7 +2600,8 @@ def main(
         unresolved_id_like = [
             token
             for token in targets
-            if resolve_positional_domain_file_token(repo_root, domain_files, token) is None
+            if resolve_positional_domain_file_token(repo_root, domain_files, token)
+            is None
             and looks_like_requirement_id_token(token, id_prefixes)
         ]
         if unresolved_id_like:
@@ -2290,11 +2632,29 @@ def main(
         domain_files = [positional_domain_file]
 
     if positional_filter_mode:
-        if filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain:
+        if (
+            filter_status
+            or filter_priority
+            or filter_flagged
+            or filter_no_flag
+            or filter_has_link
+            or filter_no_link
+            or filter_sub_domain
+        ):
             raise click.ClickException(
                 "Positional status/priority tokens cannot be combined with explicit --status/--priority or other --filter-* flags."
             )
-        if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
+        if (
+            check
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+            or rollup_mode
+        ):
             raise click.ClickException(
                 "Positional status/priority filters cannot be combined with --verify-summaries, --totals, or mutation options."
             )
@@ -2305,9 +2665,11 @@ def main(
             priority_filters=positional_priority_filters_raw,
             id_prefixes=id_prefixes,
         )
-        filter_summary, filter_label, filter_target_tokens = _build_positional_filter_summary(
-            positional_status_filters_raw,
-            positional_priority_filters_raw,
+        filter_summary, filter_label, filter_target_tokens = (
+            _build_positional_filter_summary(
+                positional_status_filters_raw,
+                positional_priority_filters_raw,
+            )
         )
 
         if explicit_target_tokens:
@@ -2317,7 +2679,9 @@ def main(
                 explicit_target_tokens,
                 id_prefixes=id_prefixes,
             )
-            selected_items = _scope_selected_items_to_filtered_results(selected_items, criteria_by_file)
+            selected_items = _scope_selected_items_to_filtered_results(
+                selected_items, criteria_by_file
+            )
 
             if json_output:
                 payload = build_targeted_criteria_payload(
@@ -2337,13 +2701,19 @@ def main(
             for path, requirement in selected_items:
                 targeted_by_file.setdefault(path, []).append(requirement)
 
-            scoped_label = f"{filter_label} | targets={','.join(explicit_target_tokens)}"
+            scoped_label = (
+                f"{filter_label} | targets={','.join(explicit_target_tokens)}"
+            )
             if list_output:
-                print_criteria_list(repo_root, targeted_by_file, scoped_label, filter_label="positional")
+                print_criteria_list(
+                    repo_root, targeted_by_file, scoped_label, filter_label="positional"
+                )
                 raise SystemExit(0)
 
             if tree or not interactive:
-                print_criteria_tree(repo_root, targeted_by_file, scoped_label, filter_label="positional")
+                print_criteria_tree(
+                    repo_root, targeted_by_file, scoped_label, filter_label="positional"
+                )
                 raise SystemExit(0)
 
             if not selected_items:
@@ -2381,7 +2751,10 @@ def main(
                 )
             )
 
-        if len(positional_status_filters_raw) == 1 and not positional_priority_filters_raw:
+        if (
+            len(positional_status_filters_raw) == 1
+            and not positional_priority_filters_raw
+        ):
             normalized_status = positional_status_filters_raw[0]
             if json_output:
                 payload = build_filtered_criteria_payload(
@@ -2395,10 +2768,20 @@ def main(
                 _emit_json_payload(payload)
                 raise SystemExit(0)
             if list_output:
-                print_criteria_list(repo_root, criteria_by_file, normalized_status, filter_label="status")
+                print_criteria_list(
+                    repo_root,
+                    criteria_by_file,
+                    normalized_status,
+                    filter_label="status",
+                )
                 raise SystemExit(0)
             if tree or not interactive:
-                print_criteria_tree(repo_root, criteria_by_file, normalized_status, filter_label="status")
+                print_criteria_tree(
+                    repo_root,
+                    criteria_by_file,
+                    normalized_status,
+                    filter_label="status",
+                )
                 raise SystemExit(0)
             raise SystemExit(
                 filtered_interactive_loop(
@@ -2415,7 +2798,10 @@ def main(
                 )
             )
 
-        if len(positional_priority_filters_raw) == 1 and not positional_status_filters_raw:
+        if (
+            len(positional_priority_filters_raw) == 1
+            and not positional_status_filters_raw
+        ):
             normalized_priority = positional_priority_filters_raw[0]
             if json_output:
                 payload = build_filtered_criteria_payload(
@@ -2431,10 +2817,20 @@ def main(
                 _emit_json_payload(payload)
                 raise SystemExit(0)
             if list_output:
-                print_criteria_list(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+                print_criteria_list(
+                    repo_root,
+                    criteria_by_file,
+                    normalized_priority,
+                    filter_label="priority",
+                )
                 raise SystemExit(0)
             if tree or not interactive:
-                print_criteria_tree(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+                print_criteria_tree(
+                    repo_root,
+                    criteria_by_file,
+                    normalized_priority,
+                    filter_label="priority",
+                )
                 raise SystemExit(0)
             raise SystemExit(
                 filtered_priority_interactive_loop(
@@ -2466,11 +2862,15 @@ def main(
             raise SystemExit(0)
 
         if list_output:
-            print_criteria_list(repo_root, criteria_by_file, filter_label, filter_label="positional")
+            print_criteria_list(
+                repo_root, criteria_by_file, filter_label, filter_label="positional"
+            )
             raise SystemExit(0)
 
         if tree or not interactive:
-            print_criteria_tree(repo_root, criteria_by_file, filter_label, filter_label="positional")
+            print_criteria_tree(
+                repo_root, criteria_by_file, filter_label, filter_label="positional"
+            )
             raise SystemExit(0)
 
         selected_items: list[tuple[Path, dict[str, object]]] = []
@@ -2495,7 +2895,24 @@ def main(
         )
 
     if explicit_target_tokens:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
+        if (
+            check
+            or filter_status
+            or filter_priority
+            or filter_flagged
+            or filter_no_flag
+            or filter_has_link
+            or filter_no_link
+            or filter_sub_domain
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+            or rollup_mode
+        ):
             raise click.ClickException(
                 "Explicit target selection cannot be combined with --verify-summaries, --totals, --filter-*, or --update-* options."
             )
@@ -2523,11 +2940,21 @@ def main(
             targeted_by_file.setdefault(path, []).append(requirement)
 
         if list_output:
-            print_criteria_list(repo_root, targeted_by_file, ", ".join(explicit_target_tokens), filter_label="targets")
+            print_criteria_list(
+                repo_root,
+                targeted_by_file,
+                ", ".join(explicit_target_tokens),
+                filter_label="targets",
+            )
             raise SystemExit(0)
 
         if tree or not interactive:
-            print_criteria_tree(repo_root, targeted_by_file, ", ".join(explicit_target_tokens), filter_label="targets")
+            print_criteria_tree(
+                repo_root,
+                targeted_by_file,
+                ", ".join(explicit_target_tokens),
+                filter_label="targets",
+            )
             raise SystemExit(0)
 
         raise SystemExit(
@@ -2575,7 +3002,9 @@ def main(
     ordered_paths = [path for path, _counts, _label in ordered_file_rows]
     table_rows = [path_to_row[path] for path in ordered_paths]
 
-    summary_payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, changed_paths)
+    summary_payload = build_summary_payload(
+        repo_root, resolved_criteria_dir, domain_files, changed_paths
+    )
 
     if summary_table and verbose and not json_output and not rollup_mode:
         for row, path in zip(table_rows, ordered_paths):
@@ -2590,19 +3019,41 @@ def main(
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
     if rollup_mode:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree:
-            raise click.ClickException("--totals cannot be combined with --verify-summaries, --status, --as-tree, or --update-* options.")
+        if (
+            check
+            or filter_status
+            or filter_priority
+            or filter_flagged
+            or filter_no_flag
+            or filter_has_link
+            or filter_no_link
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+            or tree
+        ):
+            raise click.ClickException(
+                "--totals cannot be combined with --verify-summaries, --status, --as-tree, or --update-* options."
+            )
         rollup_columns, rollup_source = resolve_rollup_columns(
             repo_root,
             cli_rollup_map=rollup_map_entries,
             rollup_config_path=rollup_config,
         )
-        rollup_column_values = compute_rollup_column_values(summary_payload["totals"], rollup_columns)
+        rollup_column_values = compute_rollup_column_values(
+            summary_payload["totals"], rollup_columns
+        )
 
         if json_output:
             payload = {
                 "mode": "rollup",
-                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "requirements_dir": format_path_display(
+                    resolved_criteria_dir, repo_root
+                ),
                 "file_count": len(domain_files),
                 "totals": summary_payload["totals"],
             }
@@ -2620,12 +3071,16 @@ def main(
             raise SystemExit(0)
 
         if rollup_column_values:
-            print_custom_rollup_table([(label, value) for label, value, _statuses in rollup_column_values])
+            print_custom_rollup_table(
+                [(label, value) for label, value, _statuses in rollup_column_values]
+            )
             if rollup_source and rollup_source != "cli":
                 click.echo(f"Using rollup config: {rollup_source}")
             raise SystemExit(0)
 
-        print_global_rollup_table(summary_payload["totals"], emoji_columns=emoji_columns)
+        print_global_rollup_table(
+            summary_payload["totals"], emoji_columns=emoji_columns
+        )
         raise SystemExit(0)
 
     if check and changed_paths:
@@ -2650,7 +3105,13 @@ def main(
     sub_domain_filters_raw = _expand_filter_values(filter_sub_domain)
 
     has_filter_mode = bool(
-        status_filters_raw or priority_filters_raw or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or sub_domain_filters_raw
+        status_filters_raw
+        or priority_filters_raw
+        or filter_flagged
+        or filter_no_flag
+        or filter_has_link
+        or filter_no_link
+        or sub_domain_filters_raw
     )
 
     if filter_flagged and filter_no_flag:
@@ -2660,18 +3121,35 @@ def main(
 
     # --as-tree/--as-list without an active filter mode is a no-op guard
     if (tree or list_output) and not (has_filter_mode or explicit_target_tokens):
-        raise click.ClickException("--as-tree/--as-list requires --status, --priority, --flagged/--no-flag, --has-link/--no-link, --sub-domain, or explicit target tokens.")
+        raise click.ClickException(
+            "--as-tree/--as-list requires --status, --priority, --flagged/--no-flag, --has-link/--no-link, --sub-domain, or explicit target tokens."
+        )
 
     if has_filter_mode:
-        if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
-            raise click.ClickException("Filters cannot be combined with --verify-summaries or mutation options.")
+        if (
+            check
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+        ):
+            raise click.ClickException(
+                "Filters cannot be combined with --verify-summaries or mutation options."
+            )
 
         normalized_status_filters: list[str] = []
         for raw_status in status_filters_raw:
             try:
                 normalized_status_filters.append(normalize_status_input(raw_status))
             except click.ClickException as exc:
-                mode_name = "filter-status" if len(status_filters_raw) == 1 else "filter-combined"
+                mode_name = (
+                    "filter-status"
+                    if len(status_filters_raw) == 1
+                    else "filter-combined"
+                )
                 if json_output and _emit_json_ambiguity_error(mode_name, exc):
                     raise SystemExit(1)
                 raise
@@ -2679,9 +3157,15 @@ def main(
         normalized_priority_filters: list[str] = []
         for raw_priority in priority_filters_raw:
             try:
-                normalized_priority_filters.append(normalize_priority_input(raw_priority))
+                normalized_priority_filters.append(
+                    normalize_priority_input(raw_priority)
+                )
             except click.ClickException as exc:
-                mode_name = "filter-priority" if len(priority_filters_raw) == 1 else "filter-combined"
+                mode_name = (
+                    "filter-priority"
+                    if len(priority_filters_raw) == 1
+                    else "filter-combined"
+                )
                 if json_output and _emit_json_ambiguity_error(mode_name, exc):
                     raise SystemExit(1)
                 raise
@@ -2766,10 +3250,20 @@ def main(
                 _emit_json_payload(payload)
                 raise SystemExit(0)
             if list_output:
-                print_criteria_list(repo_root, criteria_by_file, normalized_status, filter_label="status")
+                print_criteria_list(
+                    repo_root,
+                    criteria_by_file,
+                    normalized_status,
+                    filter_label="status",
+                )
                 raise SystemExit(0)
             if tree or not interactive:
-                print_criteria_tree(repo_root, criteria_by_file, normalized_status, filter_label="status")
+                print_criteria_tree(
+                    repo_root,
+                    criteria_by_file,
+                    normalized_status,
+                    filter_label="status",
+                )
                 raise SystemExit(0)
             raise SystemExit(
                 filtered_interactive_loop(
@@ -2808,10 +3302,20 @@ def main(
                 _emit_json_payload(payload)
                 raise SystemExit(0)
             if list_output:
-                print_criteria_list(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+                print_criteria_list(
+                    repo_root,
+                    criteria_by_file,
+                    normalized_priority,
+                    filter_label="priority",
+                )
                 raise SystemExit(0)
             if tree or not interactive:
-                print_criteria_tree(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+                print_criteria_tree(
+                    repo_root,
+                    criteria_by_file,
+                    normalized_priority,
+                    filter_label="priority",
+                )
                 raise SystemExit(0)
             raise SystemExit(
                 filtered_priority_interactive_loop(
@@ -2851,10 +3355,14 @@ def main(
                 raise SystemExit(0)
 
             if list_output:
-                print_criteria_list(repo_root, criteria_by_file, "flagged=true", filter_label="flagged")
+                print_criteria_list(
+                    repo_root, criteria_by_file, "flagged=true", filter_label="flagged"
+                )
                 raise SystemExit(0)
 
-            print_criteria_tree(repo_root, criteria_by_file, "flagged=true", filter_label="flagged")
+            print_criteria_tree(
+                repo_root, criteria_by_file, "flagged=true", filter_label="flagged"
+            )
             raise SystemExit(0)
 
         if is_no_flag_only:
@@ -2880,10 +3388,14 @@ def main(
                 raise SystemExit(0)
 
             if list_output:
-                print_criteria_list(repo_root, criteria_by_file, "flagged=false", filter_label="flagged")
+                print_criteria_list(
+                    repo_root, criteria_by_file, "flagged=false", filter_label="flagged"
+                )
                 raise SystemExit(0)
 
-            print_criteria_tree(repo_root, criteria_by_file, "flagged=false", filter_label="flagged")
+            print_criteria_tree(
+                repo_root, criteria_by_file, "flagged=false", filter_label="flagged"
+            )
             raise SystemExit(0)
 
         if is_has_link_only:
@@ -2909,10 +3421,14 @@ def main(
                 raise SystemExit(0)
 
             if list_output:
-                print_criteria_list(repo_root, criteria_by_file, "has-link=true", filter_label="links")
+                print_criteria_list(
+                    repo_root, criteria_by_file, "has-link=true", filter_label="links"
+                )
                 raise SystemExit(0)
 
-            print_criteria_tree(repo_root, criteria_by_file, "has-link=true", filter_label="links")
+            print_criteria_tree(
+                repo_root, criteria_by_file, "has-link=true", filter_label="links"
+            )
             raise SystemExit(0)
 
         if is_no_link_only:
@@ -2938,10 +3454,14 @@ def main(
                 raise SystemExit(0)
 
             if list_output:
-                print_criteria_list(repo_root, criteria_by_file, "has-link=false", filter_label="links")
+                print_criteria_list(
+                    repo_root, criteria_by_file, "has-link=false", filter_label="links"
+                )
                 raise SystemExit(0)
 
-            print_criteria_tree(repo_root, criteria_by_file, "has-link=false", filter_label="links")
+            print_criteria_tree(
+                repo_root, criteria_by_file, "has-link=false", filter_label="links"
+            )
             raise SystemExit(0)
 
         if is_sub_domain_only_single:
@@ -2968,10 +3488,17 @@ def main(
                 raise SystemExit(0)
 
             if list_output:
-                print_criteria_list(repo_root, criteria_by_file, sub_domain_value, filter_label="sub_domain")
+                print_criteria_list(
+                    repo_root,
+                    criteria_by_file,
+                    sub_domain_value,
+                    filter_label="sub_domain",
+                )
                 raise SystemExit(0)
 
-            print_criteria_tree(repo_root, criteria_by_file, sub_domain_value, filter_label="sub_domain")
+            print_criteria_tree(
+                repo_root, criteria_by_file, sub_domain_value, filter_label="sub_domain"
+            )
             raise SystemExit(0)
 
         # Combined filter mode:
@@ -2982,8 +3509,12 @@ def main(
             domain_files,
             status_filters=tuple(normalized_status_filters),
             priority_filters=tuple(normalized_priority_filters),
-            flagged_filters=(True,) if filter_flagged else ((False,) if filter_no_flag else ()),
-            link_filters=(True,) if filter_has_link else ((False,) if filter_no_link else ()),
+            flagged_filters=(True,)
+            if filter_flagged
+            else ((False,) if filter_no_flag else ()),
+            link_filters=(True,)
+            if filter_has_link
+            else ((False,) if filter_no_link else ()),
             sub_domain_filters=tuple(sub_domain_filters_raw),
             id_prefixes=id_prefixes,
         )
@@ -3032,11 +3563,15 @@ def main(
             raise SystemExit(0)
 
         if list_output:
-            print_criteria_list(repo_root, criteria_by_file, combined_label, filter_label="combined")
+            print_criteria_list(
+                repo_root, criteria_by_file, combined_label, filter_label="combined"
+            )
             raise SystemExit(0)
 
         if tree or not interactive:
-            print_criteria_tree(repo_root, criteria_by_file, combined_label, filter_label="combined")
+            print_criteria_tree(
+                repo_root, criteria_by_file, combined_label, filter_label="combined"
+            )
             raise SystemExit(0)
 
         selected_items: list[tuple[Path, dict[str, object]]] = []
@@ -3046,7 +3581,9 @@ def main(
 
         target_tokens: list[str] = []
         target_tokens.extend(f"status:{value}" for value in normalized_status_filters)
-        target_tokens.extend(f"priority:{value}" for value in normalized_priority_filters)
+        target_tokens.extend(
+            f"priority:{value}" for value in normalized_priority_filters
+        )
         if filter_flagged:
             target_tokens.append("flagged:true")
         if filter_no_flag:
@@ -3082,7 +3619,12 @@ def main(
         or set_file_input
         or set_file
     )
-    if non_interactive_requested and positional_domain_file and not set_file and not set_file_input:
+    if (
+        non_interactive_requested
+        and positional_domain_file
+        and not set_file
+        and not set_file_input
+    ):
         set_file = format_path_display(positional_domain_file, repo_root)
 
     if not non_interactive_requested:
@@ -3090,7 +3632,9 @@ def main(
 
     if non_interactive_requested:
         if check:
-            raise click.ClickException("--verify-summaries cannot be combined with --update-id/--update-status.")
+            raise click.ClickException(
+                "--verify-summaries cannot be combined with --update-id/--update-status."
+            )
         mode_count = (
             int(bool(set_updates))
             + int(bool(set_priority_updates))
@@ -3118,7 +3662,9 @@ def main(
             ]
         elif set_priority_updates:
             if set_file_input:
-                raise click.ClickException("--update-priority cannot be combined with --update-file.")
+                raise click.ClickException(
+                    "--update-priority cannot be combined with --update-file."
+                )
             update_requests = [
                 {
                     "requirement_id": cid,
@@ -3129,11 +3675,15 @@ def main(
                     "blocked_reason": None,
                     "deprecated_reason": None,
                 }
-                for cid, priority in (parse_set_priority_entry(entry) for entry in set_priority_updates)
+                for cid, priority in (
+                    parse_set_priority_entry(entry) for entry in set_priority_updates
+                )
             ]
         elif set_flagged_updates:
             if set_file_input:
-                raise click.ClickException("--update-flagged cannot be combined with --update-file.")
+                raise click.ClickException(
+                    "--update-flagged cannot be combined with --update-file."
+                )
             update_requests = [
                 {
                     "requirement_id": cid,
@@ -3144,17 +3694,25 @@ def main(
                     "blocked_reason": None,
                     "deprecated_reason": None,
                 }
-                for cid, flagged in (parse_set_flagged_entry(entry) for entry in set_flagged_updates)
+                for cid, flagged in (
+                    parse_set_flagged_entry(entry) for entry in set_flagged_updates
+                )
             ]
         elif set_file_input:
             if set_file:
-                raise click.ClickException("--scope-file cannot be combined with --update-file because each row may include its own file scope.")
+                raise click.ClickException(
+                    "--scope-file cannot be combined with --update-file because each row may include its own file scope."
+                )
             if set_blocked_reason or set_deprecated_reason:
-                raise click.ClickException("--blocked-note/--deprecated-note cannot be combined with --update-file; provide per-row values in the file.")
+                raise click.ClickException(
+                    "--blocked-note/--deprecated-note cannot be combined with --update-file; provide per-row values in the file."
+                )
             update_requests = parse_batch_update_file(repo_root, set_file_input)
         else:
             if set_requirement_id is None or set_status is None:
-                raise click.ClickException("Both --update-id and --update-status are required for non-interactive update mode.")
+                raise click.ClickException(
+                    "Both --update-id and --update-status are required for non-interactive update mode."
+                )
             update_requests = [
                 {
                     "requirement_id": set_requirement_id,
@@ -3168,7 +3726,9 @@ def main(
             ]
 
         if (set_blocked_reason or set_deprecated_reason) and len(update_requests) != 1:
-            raise click.ClickException("--blocked-note/--deprecated-note currently support single-target updates only.")
+            raise click.ClickException(
+                "--blocked-note/--deprecated-note currently support single-target updates only."
+            )
 
         update_results: list[dict[str, object]] = []
         batch_mode = bool(set_file_input)
@@ -3177,17 +3737,41 @@ def main(
         changed_files: set[Path] = set()
         for row_number, request in enumerate(update_requests, start=1):
             requirement_id_value = str(request["requirement_id"])
-            status_value = str(request["status"]) if request["status"] is not None else None
-            priority_value = str(request["priority"]) if request.get("priority") is not None else None
-            flagged_value = request.get("flagged") if isinstance(request.get("flagged"), bool) else None
-            row_file_filter = str(request["file"]) if request["file"] is not None else None
+            status_value = (
+                str(request["status"]) if request["status"] is not None else None
+            )
+            priority_value = (
+                str(request["priority"])
+                if request.get("priority") is not None
+                else None
+            )
+            flagged_value = (
+                request.get("flagged")
+                if isinstance(request.get("flagged"), bool)
+                else None
+            )
+            row_file_filter = (
+                str(request["file"]) if request["file"] is not None else None
+            )
             normalized_status: str | None = None
 
             try:
-                normalized_status = normalize_status_input(status_value) if status_value is not None else None
+                normalized_status = (
+                    normalize_status_input(status_value)
+                    if status_value is not None
+                    else None
+                )
 
-                blocked_reason = str(request["blocked_reason"]) if request["blocked_reason"] is not None else None
-                deprecated_reason = str(request["deprecated_reason"]) if request["deprecated_reason"] is not None else None
+                blocked_reason = (
+                    str(request["blocked_reason"])
+                    if request["blocked_reason"] is not None
+                    else None
+                )
+                deprecated_reason = (
+                    str(request["deprecated_reason"])
+                    if request["deprecated_reason"] is not None
+                    else None
+                )
                 if normalized_status is None or "Blocked" not in normalized_status:
                     blocked_reason = None
                 if normalized_status is None or "Deprecated" not in normalized_status:
@@ -3200,7 +3784,9 @@ def main(
                         changed_path = candidate
                 else:
                     for path in domain_files:
-                        if find_requirement_by_id(path, requirement_id_value, id_prefixes=id_prefixes):
+                        if find_requirement_by_id(
+                            path, requirement_id_value, id_prefixes=id_prefixes
+                        ):
                             changed_path = path
                             break
 
@@ -3269,9 +3855,13 @@ def main(
                 mode_name = "set-priority"
             elif set_flagged_updates and not set_updates and not set_priority_updates:
                 mode_name = "set-flagged"
-            _raise_unknown_status_error(mode_name, exc, repo_root, json_output=json_output)
+            _raise_unknown_status_error(
+                mode_name, exc, repo_root, json_output=json_output
+            )
         if json_output:
-            payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
+            payload = build_summary_payload(
+                repo_root, resolved_criteria_dir, domain_files, sorted(changed_files)
+            )
             payload["dry_run"] = dry_run
             if set_priority_updates and not set_updates and not set_flagged_updates:
                 payload["mode"] = "set-priority"
@@ -3281,7 +3871,9 @@ def main(
                 payload["mode"] = "set"
             payload["updates"] = update_results
             if allow_partial_failures:
-                failed_count = sum(1 for row in update_results if not bool(row.get("ok")))
+                failed_count = sum(
+                    1 for row in update_results if not bool(row.get("ok"))
+                )
                 payload["ok"] = failed_count == 0
                 payload["batch"] = {
                     "total": len(update_results),

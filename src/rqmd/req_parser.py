@@ -52,7 +52,9 @@ def build_requirement_header_pattern(id_prefixes: tuple[str, ...]) -> re.Pattern
     )
 
 
-def normalize_id_prefixes(raw_prefixes: tuple[str, ...] | list[str] | None) -> tuple[str, ...]:
+def normalize_id_prefixes(
+    raw_prefixes: tuple[str, ...] | list[str] | None,
+) -> tuple[str, ...]:
     """Normalize and validate requirement ID prefixes.
 
     Ensures all prefixes are uppercase, alphanumeric, and unique.
@@ -124,7 +126,9 @@ def _parse_link_item(link_text: str) -> dict[str, str | None] | None:
     return None
 
 
-def detect_id_prefixes_from_requirements_index(repo_root: Path, requirements_dir_input: str) -> tuple[str, ...]:
+def detect_id_prefixes_from_requirements_index(
+    repo_root: Path, requirements_dir_input: str
+) -> tuple[str, ...]:
     """Auto-detect requirement ID prefixes by scanning the index and linked documents.
 
     Reads the requirements index (README.md) and scans referenced markdown files
@@ -186,7 +190,14 @@ def detect_id_prefixes_from_requirements_index(repo_root: Path, requirements_dir
             candidates.append((index_path.parent / raw_path).resolve())
             candidates.append((repo_root / raw_path).resolve())
 
-        selected: Path | None = next((candidate for candidate in candidates if candidate.exists() and candidate.is_file()), None)
+        selected: Path | None = next(
+            (
+                candidate
+                for candidate in candidates
+                if candidate.exists() and candidate.is_file()
+            ),
+            None,
+        )
         if not selected:
             continue
 
@@ -221,7 +232,9 @@ def resolve_id_prefixes(
     if raw_prefixes:
         return normalize_id_prefixes(raw_prefixes)
 
-    detected = detect_id_prefixes_from_requirements_index(repo_root, requirements_dir_input)
+    detected = detect_id_prefixes_from_requirements_index(
+        repo_root, requirements_dir_input
+    )
     if detected:
         return detected
 
@@ -250,7 +263,9 @@ def find_duplicate_requirement_ids(
 
     locations: dict[str, list[tuple[Path, int]]] = {}
     for path in domain_files:
-        for requirement_id, line_number in _iter_requirement_headers(path, id_prefixes=id_prefixes):
+        for requirement_id, line_number in _iter_requirement_headers(
+            path, id_prefixes=id_prefixes
+        ):
             locations.setdefault(requirement_id, []).append((path, line_number))
     return {
         requirement_id: entries
@@ -277,7 +292,9 @@ def next_sequential_requirement_id(
     pattern = re.compile(rf"^{re.escape(normalized_prefix)}-(?P<number>\d+)$")
 
     for path in domain_files:
-        for requirement_id, _line_number in _iter_requirement_headers(path, id_prefixes=id_prefixes):
+        for requirement_id, _line_number in _iter_requirement_headers(
+            path, id_prefixes=id_prefixes
+        ):
             match = pattern.fullmatch(requirement_id)
             if not match:
                 continue
@@ -298,7 +315,9 @@ def detect_domain_prefix(
     (e.g., ``RQMD-CORE``).  Returns ``None`` if no IDs are found.
     """
     prefix_counts: dict[str, int] = {}
-    for requirement_id, _line_number in _iter_requirement_headers(domain_file, id_prefixes=id_prefixes):
+    for requirement_id, _line_number in _iter_requirement_headers(
+        domain_file, id_prefixes=id_prefixes
+    ):
         match = re.match(r"^(?P<prefix>.+)-\d+$", requirement_id)
         if match:
             p = match.group("prefix")
@@ -327,7 +346,10 @@ def next_domain_requirement_id(
             return f"{fallback_prefix}-001", 1
         return None
     return next_sequential_requirement_id(
-        [domain_file], prefix, id_prefixes=id_prefixes, min_width=min_width,
+        [domain_file],
+        prefix,
+        id_prefixes=id_prefixes,
+        min_width=min_width,
     )
 
 
@@ -338,7 +360,9 @@ def requirement_newest_first_sort_key(requirement_id: str) -> tuple[int, int, st
     numeric component descending. Other IDs fall back to reverse lexical order.
     """
 
-    match = re.fullmatch(r"(?P<prefix>[A-Z][A-Z0-9]*)-(?P<number>\d+)", requirement_id.upper())
+    match = re.fullmatch(
+        r"(?P<prefix>[A-Z][A-Z0-9]*)-(?P<number>\d+)", requirement_id.upper()
+    )
     if match:
         return (0, -int(match.group("number")), requirement_id.upper())
     return (1, 0, requirement_id.upper())
@@ -394,10 +418,14 @@ def collect_sub_sections(
     # Third pass: capture optional subsection body (text between H2 and first H3 in that section).
     for idx, (_start, key, _name) in enumerate(subsection_starts):
         start_line = subsection_starts[idx][0]
-        next_start = subsection_starts[idx + 1][0] if idx + 1 < len(subsection_starts) else len(lines)
+        next_start = (
+            subsection_starts[idx + 1][0]
+            if idx + 1 < len(subsection_starts)
+            else len(lines)
+        )
 
         body_lines: list[str] = []
-        for line in lines[start_line + 1:next_start]:
+        for line in lines[start_line + 1 : next_start]:
             if header_pattern.match(line):
                 break
             body_lines.append(line)
@@ -441,7 +469,9 @@ def parse_requirements(
         # Track H2 subsection headers (optional organizational structure)
         subsection_match = H2_SUBSECTION_PATTERN.match(line)
         if subsection_match:
-            current_subsection = display_sub_domain_name(subsection_match.group("section_title"))
+            current_subsection = display_sub_domain_name(
+                subsection_match.group("section_title")
+            )
             continue
 
         header_match = header_pattern.match(line)
@@ -522,7 +552,11 @@ def parse_requirements(
                 if links_list:
                     current["links"] = links_list
 
-    result = [requirement for requirement in requirements if requirement["status_line"] is not None]
+    result = [
+        requirement
+        for requirement in requirements
+        if requirement["status_line"] is not None
+    ]
     parse_cache.put_parsed(path, id_prefixes, result)
     return result
 
@@ -779,7 +813,9 @@ def collect_requirements_by_links(
             matching = [
                 c
                 for c in requirements
-                if not (isinstance(c.get("links"), list) and len(c.get("links") or []) > 0)
+                if not (
+                    isinstance(c.get("links"), list) and len(c.get("links") or []) > 0
+                )
             ]
         if matching:
             result[path] = matching
@@ -848,7 +884,9 @@ def collect_requirements_by_filters(
     - AND within each family (all configured values in a family must match)
     """
     normalized_sub_domains = tuple(
-        normalize_sub_domain_name(value) for value in sub_domain_filters if normalize_sub_domain_name(value)
+        normalize_sub_domain_name(value)
+        for value in sub_domain_filters
+        if normalize_sub_domain_name(value)
     )
 
     has_status = bool(status_filters)
@@ -875,22 +913,30 @@ def collect_requirements_by_filters(
             matches_priority = False
             if has_priority:
                 req_priority = str(requirement.get("priority") or "")
-                matches_priority = all(req_priority == value for value in priority_filters)
+                matches_priority = all(
+                    req_priority == value for value in priority_filters
+                )
 
             matches_flagged = False
             if has_flagged:
                 req_flagged = requirement.get("flagged")
+
                 def _flagged_match(value: bool) -> bool:
                     if value:
                         return req_flagged is True
                     # `False` filter includes explicit false and missing flag.
                     return req_flagged is not True
 
-                matches_flagged = all(_flagged_match(value) for value in flagged_filters)
+                matches_flagged = all(
+                    _flagged_match(value) for value in flagged_filters
+                )
 
             matches_links = False
             if has_links:
-                req_has_links = isinstance(requirement.get("links"), list) and len(requirement.get("links") or []) > 0
+                req_has_links = (
+                    isinstance(requirement.get("links"), list)
+                    and len(requirement.get("links") or []) > 0
+                )
 
                 def _link_match(value: bool) -> bool:
                     return req_has_links is value
@@ -899,12 +945,20 @@ def collect_requirements_by_filters(
 
             matches_sub_domain = False
             if has_sub_domain:
-                req_sub_domain = normalize_sub_domain_name(requirement.get("sub_domain"))
+                req_sub_domain = normalize_sub_domain_name(
+                    requirement.get("sub_domain")
+                )
                 matches_sub_domain = bool(req_sub_domain) and all(
                     req_sub_domain.startswith(value) for value in normalized_sub_domains
                 )
 
-            if matches_status or matches_priority or matches_flagged or matches_links or matches_sub_domain:
+            if (
+                matches_status
+                or matches_priority
+                or matches_flagged
+                or matches_links
+                or matches_sub_domain
+            ):
                 matching.append(requirement)
 
         if matching:
@@ -939,7 +993,9 @@ def parse_domain_priority_metadata(
         return {"domain_priority": None, "sub_section_priorities": {}}
 
     req_header = re.compile(
-        r"^###\s+(?:" + "|".join(re.escape(p) for p in id_prefixes) + r")-[A-Z0-9-]+:\s*",
+        r"^###\s+(?:"
+        + "|".join(re.escape(p) for p in id_prefixes)
+        + r")-[A-Z0-9-]+:\s*",
         re.MULTILINE,
     )
     h2_header = re.compile(r"^## (?P<title>.+?)\s*$", re.MULTILINE)
@@ -969,7 +1025,9 @@ def parse_domain_priority_metadata(
                 domain_priority = _extract_priority_from_lines(preamble_lines)
             # Flush any open H2 block
             if current_h2_title is not None:
-                sub_section_priorities[current_h2_title] = _extract_priority_from_lines(current_h2_lines)
+                sub_section_priorities[current_h2_title] = _extract_priority_from_lines(
+                    current_h2_lines
+                )
                 current_h2_title = None
                 current_h2_lines = []
             continue
@@ -982,7 +1040,9 @@ def parse_domain_priority_metadata(
                 domain_priority = _extract_priority_from_lines(preamble_lines)
             # Flush previous H2 block
             if current_h2_title is not None:
-                sub_section_priorities[current_h2_title] = _extract_priority_from_lines(current_h2_lines)
+                sub_section_priorities[current_h2_title] = _extract_priority_from_lines(
+                    current_h2_lines
+                )
             current_h2_title = h2m.group("title").strip()
             current_h2_lines = []
             continue
@@ -994,7 +1054,9 @@ def parse_domain_priority_metadata(
 
     # Flush any remaining H2 block
     if current_h2_title is not None:
-        sub_section_priorities[current_h2_title] = _extract_priority_from_lines(current_h2_lines)
+        sub_section_priorities[current_h2_title] = _extract_priority_from_lines(
+            current_h2_lines
+        )
 
     # If we never left the preamble (no req headers or H2 headers)
     if in_preamble:

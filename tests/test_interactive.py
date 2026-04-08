@@ -9,7 +9,6 @@ from types import SimpleNamespace
 import click
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli, menus
 from rqmd.priority_model import configure_priority_catalog
 
@@ -44,7 +43,9 @@ def test_RQMD_interactive_003b_up_navigation_key(monkeypatch) -> None:
     assert result == "up"
 
 
-def test_RQMD_interactive_003c_menu_legend_uses_up_not_back(monkeypatch, capsys) -> None:
+def test_RQMD_interactive_003c_menu_legend_uses_up_not_back(
+    monkeypatch, capsys
+) -> None:
     keys = iter(["q"])
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
     result = cli.select_from_menu("Pick", ["A", "B"])
@@ -117,7 +118,9 @@ def test_RQMD_interactive_004c_windows_arrow_nav_shortcuts(monkeypatch) -> None:
     assert result == "nav-next"
 
 
-def test_RQMD_interactive_004a_next_prev_stack_semantics(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_004a_next_prev_stack_semantics(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -139,7 +142,9 @@ Scope: demo.
     )
 
     status_visits: list[str] = []
-    status_actions = iter(["nav-next", "nav-next", "nav-prev", "nav-prev", "nav-next", "up"])
+    status_actions = iter(
+        ["nav-next", "nav-next", "nav-prev", "nav-prev", "nav-next", "up"]
+    )
     state = {"file_menu_calls": 0, "requirement_menu_calls": 0}
 
     def fake_select(title, options, **kwargs):
@@ -156,7 +161,11 @@ Scope: demo.
             return "up"
 
         if title.startswith("Choose Status or Priority for "):
-            status_visits.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            status_visits.append(
+                title.removeprefix("Choose Status or Priority for ")
+                .splitlines()[0]
+                .removesuffix(".")
+            )
             return next(status_actions)
 
         return None
@@ -188,11 +197,15 @@ Scope: demo.
 def test_RQMD_interactive_005_sort_toggle_key(monkeypatch) -> None:
     keys = iter(["s"])
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
-    result = cli.select_from_menu("Sort", ["A"], extra_key="s", extra_key_return="toggle-sort")
+    result = cli.select_from_menu(
+        "Sort", ["A"], extra_key="s", extra_key_return="toggle-sort"
+    )
     assert result == "toggle-sort"
 
 
-def test_RQMD_sorting_010_footer_legend_uses_standardized_order(monkeypatch, capsys) -> None:
+def test_RQMD_sorting_010_footer_legend_uses_standardized_order(
+    monkeypatch, capsys
+) -> None:
     keys = iter(["q"])
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
 
@@ -205,10 +218,15 @@ def test_RQMD_sorting_010_footer_legend_uses_standardized_order(monkeypatch, cap
     output = capsys.readouterr().out
 
     assert result is None
-    assert "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit" in output
+    assert (
+        "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
+        in output
+    )
 
 
-def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -255,12 +273,22 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
     assert "filesystem" not in str(captured["title"])
     assert "\x1b[1mname ↓\x1b[0m" in str(captured["title"])
     title_plain = re.sub(r"\x1b\[[0-9;]*m", "", str(captured["title"]))
-    assert re.search(r"priority\s+\|\s+P\s+\|\s+I\s+\|\s+Ver\s+\|\s+Blk/Dep", title_plain)
-    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
-    assert captured["compact_footer"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
+    assert re.search(
+        r"priority\s+\|\s+P\s+\|\s+I\s+\|\s+Ver\s+\|\s+Blk/Dep", title_plain
+    )
+    assert (
+        captured["legend"]
+        == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    )
+    assert (
+        captured["compact_footer"]
+        == "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
+    )
 
 
-def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -299,7 +327,9 @@ def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, 
     assert re.search(r"priority\s+\|\s+💡\s+\|\s+🔧\s+\|\s+✅\s+\|\s+⛔/🗑️", title_plain)
 
 
-def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -347,10 +377,15 @@ def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(m
     assert "\x1b[1mpriority ↓\x1b[0m" in str(captured["title"])
     assert "Z Domain" in captured["options"][0]
     assert "A Domain" in captured["options"][1]
-    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    assert (
+        captured["legend"]
+        == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    )
 
 
-def test_RQMD_sorting_shift_s_cycles_file_sort_backward(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_shift_s_cycles_file_sort_backward(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -392,7 +427,9 @@ def test_RQMD_sorting_shift_s_cycles_file_sort_backward(monkeypatch, tmp_path: P
     assert "\x1b[1mBlk/Dep ↓\x1b[0m" in titles[1]
 
 
-def test_RQMD_sorting_011_header_columns_stay_fixed_when_indicator_moves(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_011_header_columns_stay_fixed_when_indicator_moves(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -442,10 +479,14 @@ def test_RQMD_sorting_011_header_columns_stay_fixed_when_indicator_moves(monkeyp
 
     first = sort_line(titles[0])
     second = sort_line(titles[1])
-    assert [i for i, ch in enumerate(first) if ch == "|"] == [i for i, ch in enumerate(second) if ch == "|"]
+    assert [i for i, ch in enumerate(first) if ch == "|"] == [
+        i for i, ch in enumerate(second) if ch == "|"
+    ]
 
 
-def test_RQMD_sorting_008_direction_token_updates_in_legend(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_008_direction_token_updates_in_legend(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -483,11 +524,19 @@ def test_RQMD_sorting_008_direction_token_updates_in_legend(monkeypatch, tmp_pat
     )
 
     assert result.exit_code == 0
-    assert legends[0] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
-    assert legends[1] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
+    assert (
+        legends[0]
+        == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    )
+    assert (
+        legends[1]
+        == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
+    )
 
 
-def test_RQMD_sorting_009_refresh_reopens_file_menu(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_009_refresh_reopens_file_menu(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -526,7 +575,9 @@ def test_RQMD_sorting_009_refresh_reopens_file_menu(monkeypatch, tmp_path: Path)
     assert state["call"] == 2
 
 
-def test_RQMD_sorting_refresh_preserves_page_selection_context(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_refresh_preserves_page_selection_context(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -579,7 +630,9 @@ def test_RQMD_sorting_refresh_preserves_page_selection_context(monkeypatch, tmp_
     assert selected_indices[1] == 1
 
 
-def test_RQMD_sorting_003_refresh_keeps_deterministic_file_order(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_003_refresh_keeps_deterministic_file_order(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -626,7 +679,9 @@ def test_RQMD_sorting_003_refresh_keeps_deterministic_file_order(monkeypatch, tm
     assert snapshots[0] == snapshots[1]
 
 
-def test_RQMD_sorting_004_refresh_preserves_selected_sort_mode(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_004_refresh_preserves_selected_sort_mode(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -748,10 +803,21 @@ def test_RQMD_interactive_008_reason_prompt_helpers(monkeypatch) -> None:
     assert cli.prompt_for_deprecated_reason() == "Some reason"
 
 
-def test_RQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_RQMD_interactive_009_positional_lookup_mode(
+    monkeypatch, repo_with_domain_docs: Path
+) -> None:
     called = {"value": False}
 
-    def fake_lookup(repo_root, domain_files, requirement_id, emoji_columns, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
+    def fake_lookup(
+        repo_root,
+        domain_files,
+        requirement_id,
+        emoji_columns,
+        id_prefixes,
+        include_status_emojis,
+        priority_mode,
+        include_priority_summary,
+    ):
         called["value"] = True
         assert requirement_id == "AC-HELLO-001"
         assert id_prefixes == ("AC", "R", "RQMD")
@@ -774,7 +840,9 @@ def test_RQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_doma
     assert called["value"] is True
 
 
-def test_RQMD_interactive_016_positional_file_opens_requirement_list_first(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_016_positional_file_opens_requirement_list_first(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -802,7 +870,20 @@ Scope: two.
 
     captured: dict[str, object] = {}
 
-    def fake_interactive_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary, initial_file_path=None, **kwargs):
+    def fake_interactive_loop(
+        repo_root,
+        criteria_dir,
+        domain_files,
+        emoji_columns,
+        sort_files,
+        sort_strategy,
+        id_prefixes,
+        include_status_emojis,
+        priority_mode,
+        include_priority_summary,
+        initial_file_path=None,
+        **kwargs,
+    ):
         captured["initial_file_path"] = initial_file_path
         captured["domain_files"] = list(domain_files)
         return 0
@@ -826,7 +907,9 @@ Scope: two.
     assert len(captured["domain_files"]) == 2
 
 
-def test_RQMD_interactive_016_non_interactive_positional_file_scopes_updates(tmp_path: Path) -> None:
+def test_RQMD_interactive_016_non_interactive_positional_file_scopes_updates(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -872,7 +955,9 @@ Scope: two.
     assert "✅ Verified" not in two.read_text(encoding="utf-8")
 
 
-def test_RQMD_interactive_016_prefers_id_lookup_when_id_and_file_are_both_positional(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_016_prefers_id_lookup_when_id_and_file_are_both_positional(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -899,7 +984,16 @@ Scope: two.
 
     called = {"lookup": False}
 
-    def fake_lookup(repo_root, domain_files, requirement_id, emoji_columns, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
+    def fake_lookup(
+        repo_root,
+        domain_files,
+        requirement_id,
+        emoji_columns,
+        id_prefixes,
+        include_status_emojis,
+        priority_mode,
+        include_priority_summary,
+    ):
         called["lookup"] = True
         assert requirement_id == "AC-TWO-001"
         return 0
@@ -923,7 +1017,9 @@ Scope: two.
     assert called["lookup"] is True
 
 
-def test_RQMD_interactive_019_multiple_targets_launch_focused_walk(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_019_multiple_targets_launch_focused_walk(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -945,10 +1041,25 @@ Scope: demo.
 
     called = {"value": False}
 
-    def fake_focused(repo_root, domain_files, selected_items, target_tokens, emoji_columns, id_prefixes, resume_filter, state_dir, include_status_emojis, priority_mode, include_priority_summary):
+    def fake_focused(
+        repo_root,
+        domain_files,
+        selected_items,
+        target_tokens,
+        emoji_columns,
+        id_prefixes,
+        resume_filter,
+        state_dir,
+        include_status_emojis,
+        priority_mode,
+        include_priority_summary,
+    ):
         called["value"] = True
         assert target_tokens == ["demo", "Query"]
-        assert [str(item[1]["id"]) for item in selected_items] == ["AC-DEMO-001", "AC-DEMO-002"]
+        assert [str(item[1]["id"]) for item in selected_items] == [
+            "AC-DEMO-001",
+            "AC-DEMO-002",
+        ]
         return 0
 
     monkeypatch.setattr(cli, "focused_target_interactive_loop", fake_focused)
@@ -970,7 +1081,9 @@ Scope: demo.
     assert called["value"] is True
 
 
-def test_RQMD_interactive_009a_lookup_mode_up_exits(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_RQMD_interactive_009a_lookup_mode_up_exits(
+    monkeypatch, repo_with_domain_docs: Path
+) -> None:
     domain_file = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
     monkeypatch.setattr(cli, "select_from_menu", lambda *args, **kwargs: "up")
 
@@ -985,7 +1098,9 @@ def test_RQMD_interactive_009a_lookup_mode_up_exits(monkeypatch, repo_with_domai
     assert result == 0
 
 
-def test_RQMD_interactive_017_lookup_toggle_updates_flagged(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_017_lookup_toggle_updates_flagged(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1017,7 +1132,9 @@ Scope: demo.
     assert "- **Flagged:** true" in text
 
 
-def test_RQMD_interactive_031_lookup_opens_linked_requirement_and_returns(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_031_lookup_opens_linked_requirement_and_returns(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1045,7 +1162,11 @@ Scope: demo.
     def fake_select(title, options, **kwargs):
         del kwargs
         if title.startswith("Choose Status or Priority for "):
-            visits.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            visits.append(
+                title.removeprefix("Choose Status or Priority for ")
+                .splitlines()[0]
+                .removesuffix(".")
+            )
             return next(actions)
         if title.startswith("Open linked requirement from AC-DEMO-001"):
             opened_titles.extend(options)
@@ -1067,7 +1188,9 @@ Scope: demo.
     assert visits == ["AC-DEMO-001", "AC-DEMO-002", "AC-DEMO-001"]
 
 
-def test_RQMD_interactive_031_lookup_reports_no_resolvable_linked_requirements(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_RQMD_interactive_031_lookup_reports_no_resolvable_linked_requirements(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1107,7 +1230,9 @@ Scope: demo.
     assert "No linked requirements in the current catalog for AC-DEMO-001." in output
 
 
-def test_RQMD_interactive_009b_filtered_walk_up_exits(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_RQMD_interactive_009b_filtered_walk_up_exits(
+    monkeypatch, repo_with_domain_docs: Path
+) -> None:
     domain_file = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
     monkeypatch.setattr(cli, "select_from_menu", lambda *args, **kwargs: "up")
 
@@ -1122,7 +1247,9 @@ def test_RQMD_interactive_009b_filtered_walk_up_exits(monkeypatch, repo_with_dom
     assert result == 0
 
 
-def test_RQMD_interactive_021_jump_to_subsection_from_requirement_menu(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_021_jump_to_subsection_from_requirement_menu(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -1211,7 +1338,9 @@ def test_RQMD_interactive_021b_requirement_menu_receives_panel_prefix() -> None:
 
     assert result == ("up", None)
     plain_title = re.sub(r"\x1b\[[0-9;]*m", "", captured["title"])
-    assert plain_title.startswith("Choose Status or Priority for RQMD-AUTOMATION-019 [1/5].\n")
+    assert plain_title.startswith(
+        "Choose Status or Priority for RQMD-AUTOMATION-019 [1/5].\n"
+    )
     assert "Status" in plain_title
     assert "Priority" in plain_title
     assert captured["prefix_text"] == "\nPANEL BODY\n=========="
@@ -1257,7 +1386,10 @@ def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> N
     assert "next-ac" in captured["footer_legend"]
     assert "first-ac" in captured["footer_legend"]
     assert "/=fwd" not in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
+    assert (
+        captured["compact_footer"]
+        == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
+    )
 
 
 def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None:
@@ -1300,8 +1432,14 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
     assert "6=🗑️ Deprecated" in captured["footer_legend"]
     assert "!=p0" in captured["footer_legend"]
     assert "@=p1" in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
-    right_labels_plain = [re.sub(r"\x1b\[[0-9;]*m", "", item).rstrip() for item in captured["right_labels"]]
+    assert (
+        captured["compact_footer"]
+        == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
+    )
+    right_labels_plain = [
+        re.sub(r"\x1b\[[0-9;]*m", "", item).rstrip()
+        for item in captured["right_labels"]
+    ]
     assert right_labels_plain[:4] == [
         "  !) 🔴 P0 - Critical",
         "  @) 🟠 P1 - High",
@@ -1314,7 +1452,9 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
     assert "\x1b[48;5;178m" in captured["right_labels"][2]
 
 
-def test_RQMD_interactive_021cad_status_menu_shows_custom_priorities_beyond_shortcuts() -> None:
+def test_RQMD_interactive_021cad_status_menu_shows_custom_priorities_beyond_shortcuts() -> (
+    None
+):
     captured: dict[str, object] = {}
     custom_priorities = [
         {"name": "Critical", "shortcode": "p0", "emoji": "🔴"},
@@ -1352,7 +1492,10 @@ def test_RQMD_interactive_021cad_status_menu_shows_custom_priorities_beyond_shor
         configure_priority_catalog(None)
 
     assert result == ("up", None)
-    right_labels_plain = [re.sub(r"\x1b\[[0-9;]*m", "", item).rstrip() for item in captured["right_labels"]]
+    right_labels_plain = [
+        re.sub(r"\x1b\[[0-9;]*m", "", item).rstrip()
+        for item in captured["right_labels"]
+    ]
     assert right_labels_plain == [
         "  !) 🔴 Critical",
         "  @) 🟠 High",
@@ -1375,10 +1518,15 @@ def test_RQMD_interactive_021cad_status_menu_shows_custom_priorities_beyond_shor
     assert "^=p5" in captured["footer_legend"]
     assert "&=p6" in captured["footer_legend"]
     assert "*=p7" in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..*=p7 | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
+    assert (
+        captured["compact_footer"]
+        == "keys: 1-9 select | !=p0..*=p7 | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
+    )
 
 
-def test_RQMD_interactive_030_lookup_opens_current_requirement_in_vscode(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_RQMD_interactive_030_lookup_opens_current_requirement_in_vscode(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1404,12 +1552,20 @@ Scope: demo.
     def fake_select(title, options, **kwargs):
         del options, kwargs
         if title.startswith("Choose Status or Priority for "):
-            visits.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            visits.append(
+                title.removeprefix("Choose Status or Priority for ")
+                .splitlines()[0]
+                .removesuffix(".")
+            )
             return next(actions)
         return None
 
     monkeypatch.setattr(cli, "select_from_menu", fake_select)
-    monkeypatch.setattr(cli.workflows_mod.shutil, "which", lambda name: "/usr/local/bin/code" if name == "code" else None)
+    monkeypatch.setattr(
+        cli.workflows_mod.shutil,
+        "which",
+        lambda name: "/usr/local/bin/code" if name == "code" else None,
+    )
 
     def fake_run(cmd, **kwargs):
         del kwargs
@@ -1433,7 +1589,9 @@ Scope: demo.
     assert "Opened AC-DEMO-001 in VS Code." in output
 
 
-def test_RQMD_interactive_030_lookup_reports_missing_vscode_launcher(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_RQMD_interactive_030_lookup_reports_missing_vscode_launcher(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1471,7 +1629,9 @@ Scope: demo.
     assert "VS Code command-line launcher 'code' is not available." in output
 
 
-def test_RQMD_interactive_021cc_split_status_and_priority_highlights(monkeypatch, capsys) -> None:
+def test_RQMD_interactive_021cc_split_status_and_priority_highlights(
+    monkeypatch, capsys
+) -> None:
     keys = iter(["q"])
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
     rendered_lines: list[str] = []
@@ -1502,12 +1662,20 @@ def test_RQMD_interactive_021cc_split_status_and_priority_highlights(monkeypatch
     assert "→ @) \x1b[43m🟠 P1 - High\x1b[0m" in rendered
 
 
-def test_RQMD_interactive_021cd_adjacent_right_labels_stay_near_left_column(monkeypatch) -> None:
+def test_RQMD_interactive_021cd_adjacent_right_labels_stay_near_left_column(
+    monkeypatch,
+) -> None:
     keys = iter(["q"])
     rendered_lines: list[str] = []
 
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
-    monkeypatch.setattr(menus.click, "echo", lambda message="", *args, **kwargs: rendered_lines.append(message if isinstance(message, str) else str(message)))
+    monkeypatch.setattr(
+        menus.click,
+        "echo",
+        lambda message="", *args, **kwargs: rendered_lines.append(
+            message if isinstance(message, str) else str(message)
+        ),
+    )
 
     result = menus.select_from_menu(
         "Status",
@@ -1521,12 +1689,16 @@ def test_RQMD_interactive_021cd_adjacent_right_labels_stay_near_left_column(monk
     )
 
     assert result is None
-    first_option_line = next(line for line in rendered_lines if "1) 💡 Proposed" in line)
+    first_option_line = next(
+        line for line in rendered_lines if "1) 💡 Proposed" in line
+    )
     plain_line = re.sub(r"\x1b\[[0-9;]*m", "", first_option_line)
     assert re.search(r"1\) 💡 Proposed\s{2,12}!\) 🔴 Critical", plain_line)
 
 
-def test_RQMD_interactive_021cb_priority_shortcut_keeps_current_requirement_visible(tmp_path: Path) -> None:
+def test_RQMD_interactive_021cb_priority_shortcut_keeps_current_requirement_visible(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1560,7 +1732,11 @@ def test_RQMD_interactive_021cb_priority_shortcut_keeps_current_requirement_visi
                 return 0
             return "up"
         if title.startswith("Choose Status or Priority for "):
-            requirement_id = title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix(".")
+            requirement_id = (
+                title.removeprefix("Choose Status or Priority for ")
+                .splitlines()[0]
+                .removesuffix(".")
+            )
             visits.append(requirement_id)
             if len(visits) == 1:
                 return "priority-shortcut:🟠 P1 - High"
@@ -1584,7 +1760,10 @@ def test_RQMD_interactive_021cb_priority_shortcut_keeps_current_requirement_visi
 
     assert result == 0
     assert visits == ["AC-DEMO-002", "AC-DEMO-002"]
-    assert "### AC-DEMO-002: Second\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High" in updated_text
+    assert (
+        "### AC-DEMO-002: Second\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High"
+        in updated_text
+    )
 
 
 def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -> None:
@@ -1601,7 +1780,9 @@ def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -
         encoding="utf-8",
     )
 
-    history_manager = cli.HistoryManager(repo_root=repo, requirements_dir="docs/requirements")
+    history_manager = cli.HistoryManager(
+        repo_root=repo, requirements_dir="docs/requirements"
+    )
     history_manager.capture(command="baseline", actor="test")
     domain_file.write_text(
         """# Demo Requirements
@@ -1642,11 +1823,16 @@ def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -
     assert "^U/^D=half" in captured["footer_legend"]
     assert "/=fwd" in captured["footer_legend"]
     assert "n/N=next" in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
+    assert (
+        captured["compact_footer"]
+        == "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
+    )
 
 
 @pytest.mark.timeout(5)
-def test_RQMD_interactive_021d2_history_browser_checks_out_selected_branch(monkeypatch) -> None:
+def test_RQMD_interactive_021d2_history_browser_checks_out_selected_branch(
+    monkeypatch,
+) -> None:
     checkout_calls: list[str] = []
 
     class StubHistoryManager:
@@ -1680,7 +1866,9 @@ def test_RQMD_interactive_021d2_history_browser_checks_out_selected_branch(monke
 
 
 @pytest.mark.timeout(5)
-def test_RQMD_interactive_021e_history_browser_cherry_picks_selected_entry(monkeypatch) -> None:
+def test_RQMD_interactive_021e_history_browser_cherry_picks_selected_entry(
+    monkeypatch,
+) -> None:
     cherry_pick_calls: list[tuple[str, str | None]] = []
 
     class StubHistoryManager:
@@ -1717,7 +1905,9 @@ def test_RQMD_interactive_021e_history_browser_cherry_picks_selected_entry(monke
 
 
 @pytest.mark.timeout(5)
-def test_RQMD_interactive_021f_history_browser_replays_selected_branch(monkeypatch) -> None:
+def test_RQMD_interactive_021f_history_browser_replays_selected_branch(
+    monkeypatch,
+) -> None:
     replay_calls: list[tuple[str, str | None]] = []
 
     class StubHistoryManager:
@@ -1777,7 +1967,9 @@ def test_RQMD_interactive_021g_history_browser_runs_gc(monkeypatch) -> None:
             }
 
     monkeypatch.setattr(cli.click, "getchar", lambda: "g")
-    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers))
+    monkeypatch.setattr(
+        cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers)
+    )
 
     action = cli.workflows_mod._prompt_for_history_entry_action(
         {
@@ -1797,7 +1989,9 @@ def test_RQMD_interactive_021g_history_browser_runs_gc(monkeypatch) -> None:
 
 
 @pytest.mark.timeout(5)
-def test_RQMD_interactive_021g2_history_browser_saves_label_before_gc(monkeypatch) -> None:
+def test_RQMD_interactive_021g2_history_browser_saves_label_before_gc(
+    monkeypatch,
+) -> None:
     gc_calls: list[bool] = []
     label_calls: list[tuple[str, str]] = []
     confirm_answers = iter([True, True])
@@ -1825,7 +2019,9 @@ def test_RQMD_interactive_021g2_history_browser_saves_label_before_gc(monkeypatc
             }
 
     monkeypatch.setattr(cli.click, "getchar", lambda: "g")
-    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers))
+    monkeypatch.setattr(
+        cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers)
+    )
     monkeypatch.setattr(cli.click, "prompt", lambda *args, **kwargs: "saved-snapshot")
 
     action = cli.workflows_mod._prompt_for_history_entry_action(
@@ -1847,7 +2043,9 @@ def test_RQMD_interactive_021g2_history_browser_saves_label_before_gc(monkeypatc
 
 
 @pytest.mark.timeout(5)
-def test_RQMD_interactive_021h_history_browser_runs_immediate_prune(monkeypatch) -> None:
+def test_RQMD_interactive_021h_history_browser_runs_immediate_prune(
+    monkeypatch,
+) -> None:
     gc_calls: list[bool] = []
     confirm_answers = iter([False, True])
 
@@ -1870,7 +2068,9 @@ def test_RQMD_interactive_021h_history_browser_runs_immediate_prune(monkeypatch)
             }
 
     monkeypatch.setattr(cli.click, "getchar", lambda: "G")
-    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers))
+    monkeypatch.setattr(
+        cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers)
+    )
 
     action = cli.workflows_mod._prompt_for_history_entry_action(
         {
@@ -1890,7 +2090,9 @@ def test_RQMD_interactive_021h_history_browser_runs_immediate_prune(monkeypatch)
 
 
 @pytest.mark.timeout(5)
-def test_RQMD_interactive_021h2_history_browser_saves_label_before_prune(monkeypatch) -> None:
+def test_RQMD_interactive_021h2_history_browser_saves_label_before_prune(
+    monkeypatch,
+) -> None:
     gc_calls: list[bool] = []
     label_calls: list[tuple[str, str]] = []
     confirm_answers = iter([True, True])
@@ -1918,8 +2120,12 @@ def test_RQMD_interactive_021h2_history_browser_saves_label_before_prune(monkeyp
             }
 
     monkeypatch.setattr(cli.click, "getchar", lambda: "G")
-    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers))
-    monkeypatch.setattr(cli.click, "prompt", lambda *args, **kwargs: "saved-before-prune")
+    monkeypatch.setattr(
+        cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers)
+    )
+    monkeypatch.setattr(
+        cli.click, "prompt", lambda *args, **kwargs: "saved-before-prune"
+    )
 
     action = cli.workflows_mod._prompt_for_history_entry_action(
         {
@@ -1940,7 +2146,9 @@ def test_RQMD_interactive_021h2_history_browser_saves_label_before_prune(monkeyp
 
 
 @pytest.mark.timeout(5)
-def test_RQMD_interactive_021i_history_browser_labels_selected_branch(monkeypatch) -> None:
+def test_RQMD_interactive_021i_history_browser_labels_selected_branch(
+    monkeypatch,
+) -> None:
     label_calls: list[tuple[str, str]] = []
 
     class StubHistoryManager:
@@ -1975,7 +2183,9 @@ def test_RQMD_interactive_021i_history_browser_labels_selected_branch(monkeypatc
 
 
 @pytest.mark.timeout(5)
-def test_RQMD_interactive_021j_history_browser_discards_branch_after_optional_label(monkeypatch) -> None:
+def test_RQMD_interactive_021j_history_browser_discards_branch_after_optional_label(
+    monkeypatch,
+) -> None:
     label_calls: list[tuple[str, str]] = []
     discard_calls: list[str] = []
     confirm_answers = iter([True, True])
@@ -1996,8 +2206,12 @@ def test_RQMD_interactive_021j_history_browser_discards_branch_after_optional_la
             return True
 
     monkeypatch.setattr(cli.click, "getchar", lambda: "x")
-    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers))
-    monkeypatch.setattr(cli.click, "prompt", lambda *args, **kwargs: "keep-for-reference")
+    monkeypatch.setattr(
+        cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers)
+    )
+    monkeypatch.setattr(
+        cli.click, "prompt", lambda *args, **kwargs: "keep-for-reference"
+    )
 
     action = cli.workflows_mod._prompt_for_history_entry_action(
         {
@@ -2017,7 +2231,9 @@ def test_RQMD_interactive_021j_history_browser_discards_branch_after_optional_la
     assert discard_calls == ["recovery-branch"]
 
 
-def test_RQMD_interactive_020_shell_completion_suggests_subsection_domain_and_id(tmp_path: Path) -> None:
+def test_RQMD_interactive_020_shell_completion_suggests_subsection_domain_and_id(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2048,11 +2264,15 @@ Scope: demo.
     assert "AC-DEMO-001" not in values
 
     items_id = cli.shell_complete_target_tokens(ctx, param=None, incomplete="ac-demo")
-    values_id = [item.value if hasattr(item, "value") else str(item) for item in items_id]
+    values_id = [
+        item.value if hasattr(item, "value") else str(item) for item in items_id
+    ]
     assert "AC-DEMO-001" in values_id
 
 
-def test_RQMD_interactive_020b_shell_completion_includes_positional_filter_tokens(tmp_path: Path) -> None:
+def test_RQMD_interactive_020b_shell_completion_includes_positional_filter_tokens(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2082,11 +2302,15 @@ Scope: core-engine.
     assert "P1" in values
 
     items_all = cli.shell_complete_target_tokens(ctx, param=None, incomplete="a")
-    values_all = [item.value if hasattr(item, "value") else str(item) for item in items_all]
+    values_all = [
+        item.value if hasattr(item, "value") else str(item) for item in items_all
+    ]
     assert "all" in values_all
 
 
-def test_RQMD_interactive_027_positional_status_filter_launches_filtered_walk(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_027_positional_status_filter_launches_filtered_walk(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2106,7 +2330,18 @@ Scope: demo.
 
     called: dict[str, object] = {}
 
-    def fake_filtered(repo_root, domain_files, target_status, emoji_columns, id_prefixes, resume_filter, state_dir, include_status_emojis, priority_mode, include_priority_summary):
+    def fake_filtered(
+        repo_root,
+        domain_files,
+        target_status,
+        emoji_columns,
+        id_prefixes,
+        resume_filter,
+        state_dir,
+        include_status_emojis,
+        priority_mode,
+        include_priority_summary,
+    ):
         called["status"] = target_status
         called["domain_files"] = [path.name for path in domain_files]
         return 0
@@ -2130,7 +2365,9 @@ Scope: demo.
     assert called["domain_files"] == ["demo.md"]
 
 
-def test_RQMD_interactive_036_positional_all_launches_focused_walk(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_036_positional_all_launches_focused_walk(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2153,9 +2390,23 @@ Scope: demo.
 
     called: dict[str, object] = {}
 
-    def fake_focused(repo_root, domain_files, selected_items, target_tokens, emoji_columns, id_prefixes, resume_filter, state_dir, include_status_emojis, priority_mode, include_priority_summary):
+    def fake_focused(
+        repo_root,
+        domain_files,
+        selected_items,
+        target_tokens,
+        emoji_columns,
+        id_prefixes,
+        resume_filter,
+        state_dir,
+        include_status_emojis,
+        priority_mode,
+        include_priority_summary,
+    ):
         called["targets"] = list(target_tokens)
-        called["ids"] = [str(requirement["id"]) for _path, requirement in selected_items]
+        called["ids"] = [
+            str(requirement["id"]) for _path, requirement in selected_items
+        ]
         return 0
 
     monkeypatch.setattr(cli, "focused_target_interactive_loop", fake_focused)
@@ -2179,7 +2430,9 @@ Scope: demo.
     assert called["ids"] == ["REQ-1000", "REQ-010", "REQ-002"]
 
 
-def test_RQMD_interactive_filtered_walk_resumes_position_across_runs(tmp_path: Path) -> None:
+def test_RQMD_interactive_filtered_walk_resumes_position_across_runs(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2256,7 +2509,9 @@ Scope: demo.
     assert "[2/2]" in seen_titles[0]
 
 
-def test_RQMD_interactive_filtered_walk_shift_n_is_previous_and_g_G_jump(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_filtered_walk_shift_n_is_previous_and_g_G_jump(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2300,7 +2555,9 @@ Scope: demo.
     assert any("[1/2]" in title for title in seen_titles)
 
 
-def test_RQMD_interactive_filtered_walk_end_message_does_not_exit(monkeypatch, tmp_path: Path, capsys) -> None:
+def test_RQMD_interactive_filtered_walk_end_message_does_not_exit(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2342,7 +2599,9 @@ Scope: demo.
     assert "No more 🔧 Implemented requirements in this session list." in output
 
 
-def test_RQMD_interactive_filtered_priority_walk_keeps_stable_membership_after_priority_change(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_filtered_priority_walk_keeps_stable_membership_after_priority_change(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2368,7 +2627,11 @@ Scope: demo.
 
     def fake_select(title, options, **kwargs):
         if title.startswith("Choose Status or Priority for "):
-            seen_ids.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            seen_ids.append(
+                title.removeprefix("Choose Status or Priority for ")
+                .splitlines()[0]
+                .removesuffix(".")
+            )
             action = next(actions)
             if action == "apply":
                 return 2
@@ -2391,10 +2654,15 @@ Scope: demo.
 
     assert result == 0
     assert seen_ids == ["AC-DEMO-001 [1/2]", "AC-DEMO-001 [1/2]", "AC-DEMO-002 [2/2]"]
-    assert "### AC-DEMO-001: First\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium" in updated_text
+    assert (
+        "### AC-DEMO-001: First\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium"
+        in updated_text
+    )
 
 
-def test_RQMD_interactive_filtered_status_walk_keeps_current_requirement_visible_after_update(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_filtered_status_walk_keeps_current_requirement_visible_after_update(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2418,7 +2686,11 @@ Scope: demo.
 
     def fake_select(title, options, **kwargs):
         if title.startswith("Choose Status or Priority for "):
-            seen_ids.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            seen_ids.append(
+                title.removeprefix("Choose Status or Priority for ")
+                .splitlines()[0]
+                .removesuffix(".")
+            )
             return next(actions)
         return None
 
@@ -2440,7 +2712,9 @@ Scope: demo.
     assert "### AC-DEMO-001: First\n- **Status:** ✅ Verified" in updated_text
 
 
-def test_RQMD_interactive_019_focused_walk_keeps_current_requirement_visible_after_update(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_interactive_019_focused_walk_keeps_current_requirement_visible_after_update(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2461,14 +2735,21 @@ Scope: demo.
 
     selected_items = [
         (domain_file, {"id": "AC-DEMO-001", "status": "💡 Proposed", "title": "First"}),
-        (domain_file, {"id": "AC-DEMO-002", "status": "💡 Proposed", "title": "Second"}),
+        (
+            domain_file,
+            {"id": "AC-DEMO-002", "status": "💡 Proposed", "title": "Second"},
+        ),
     ]
     seen_ids: list[str] = []
     actions = iter([2, "nav-next", "up"])
 
     def fake_select(title, options, **kwargs):
         if title.startswith("Choose Status or Priority for "):
-            seen_ids.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            seen_ids.append(
+                title.removeprefix("Choose Status or Priority for ")
+                .splitlines()[0]
+                .removesuffix(".")
+            )
             return next(actions)
         return None
 
@@ -2494,7 +2775,9 @@ Scope: demo.
     assert "### AC-DEMO-001: First\n- **Status:** ✅ Verified" in updated_text
 
 
-def test_RQMD_interactive_filtered_walk_project_local_state_dir_writes_under_repo(tmp_path: Path) -> None:
+def test_RQMD_interactive_filtered_walk_project_local_state_dir_writes_under_repo(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -2529,10 +2812,24 @@ Scope: demo.
     assert list((repo / "tmp" / "rqmd").glob("filter-resume-*.json"))
 
 
-def test_RQMD_interactive_001_default_invokes_interactive_loop(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_RQMD_interactive_001_default_invokes_interactive_loop(
+    monkeypatch, repo_with_domain_docs: Path
+) -> None:
     called = {"value": False}
 
-    def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary, **kwargs):
+    def fake_loop(
+        repo_root,
+        criteria_dir,
+        domain_files,
+        emoji_columns,
+        sort_files,
+        sort_strategy,
+        id_prefixes,
+        include_status_emojis,
+        priority_mode,
+        include_priority_summary,
+        **kwargs,
+    ):
         called["value"] = True
         assert sort_strategy == "standard"
         assert id_prefixes == ("AC", "R", "RQMD")
@@ -2554,7 +2851,9 @@ def test_RQMD_interactive_001_default_invokes_interactive_loop(monkeypatch, repo
     assert called["value"] is True
 
 
-def test_RQMD_sorting_005_alpha_asc_strategy_changes_default_direction(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_005_alpha_asc_strategy_changes_default_direction(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -2599,10 +2898,15 @@ def test_RQMD_sorting_005_alpha_asc_strategy_changes_default_direction(monkeypat
     assert "\x1b[1mname ↑\x1b[0m" in str(captured["title"])
     assert "A Domain" in captured["options"][0]
     assert "B Domain" in captured["options"][1]
-    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
+    assert (
+        captured["legend"]
+        == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[asc] | r=rfrsh | q=quit"
+    )
 
 
-def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(monkeypatch, tmp_path: Path) -> None:
+def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(
+    monkeypatch, tmp_path: Path
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -2647,10 +2951,15 @@ def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(monkeyp
     assert "\x1b[1mI ↓\x1b[0m" in str(captured["title"])
     assert "High" in captured["options"][0]
     assert "Low" in captured["options"][1]
-    assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    assert (
+        captured["legend"]
+        == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    )
 
 
-def test_RQMD_sorting_unsorted_flag_warns_as_deprecated_alias(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_RQMD_sorting_unsorted_flag_warns_as_deprecated_alias(
+    monkeypatch, repo_with_domain_docs: Path
+) -> None:
     monkeypatch.setattr(cli, "select_from_menu", lambda *args, **kwargs: None)
 
     runner = CliRunner()
@@ -2670,7 +2979,9 @@ def test_RQMD_sorting_unsorted_flag_warns_as_deprecated_alias(monkeypatch, repo_
     assert "compatibility alias" in result.output.lower()
 
 
-def test_RQMD_interactive_001b_default_auto_detect_reaches_interactive(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_RQMD_interactive_001b_default_auto_detect_reaches_interactive(
+    monkeypatch, repo_with_domain_docs: Path
+) -> None:
     domain_dir = repo_with_domain_docs / "docs" / "requirements"
     (domain_dir / "README.md").write_text(
         "# Requirements\n\n## Domain Documents\n\n- [Demo](demo.md)\n",
@@ -2690,11 +3001,15 @@ def test_RQMD_interactive_001b_default_auto_detect_reaches_interactive(monkeypat
     )
 
     assert result.exit_code == 0
-    assert "Auto-selected requirement docs: docs/requirements/README.md" in result.output
+    assert (
+        "Auto-selected requirement docs: docs/requirements/README.md" in result.output
+    )
 
 
 @pytest.mark.timeout(10)
-def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkeypatch) -> None:
+def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(
+    monkeypatch,
+) -> None:
     repo_root = Path(__file__).resolve().parents[1]
     scratch_root = repo_root / ".scratch" / "test-interactive-deep"
     criteria_dir = scratch_root / "requirements"
@@ -2746,7 +3061,10 @@ def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkey
         assert "### AC-F01-001: First requirement" in updated
         assert "### AC-F01-002: Second requirement" in updated
         assert "### AC-F01-001: First requirement\n- **Status:** ✅ Verified" in updated
-        assert "### AC-F01-002: Second requirement\n- **Status:** 🔧 Implemented" in updated
+        assert (
+            "### AC-F01-002: Second requirement\n- **Status:** 🔧 Implemented"
+            in updated
+        )
     finally:
         # Cleanup scratch data so this test leaves the working tree unchanged.
         if scratch_root.exists():
@@ -2758,7 +3076,9 @@ def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkey
 # ---------------------------------------------------------------------------
 
 
-def test_RQMD_interactive_011_unwritable_file_blocks_interactive_mode(tmp_path: Path) -> None:
+def test_RQMD_interactive_011_unwritable_file_blocks_interactive_mode(
+    tmp_path: Path,
+) -> None:
     import stat
 
     repo = tmp_path / "repo"
@@ -2776,13 +3096,21 @@ def test_RQMD_interactive_011_unwritable_file_blocks_interactive_mode(tmp_path: 
         result = runner.invoke(
             cli.main,
             [
-                "--project-root", str(repo),
-                "--docs-dir", "docs/requirements",
+                "--project-root",
+                str(repo),
+                "--docs-dir",
+                "docs/requirements",
             ],
         )
         assert result.exit_code != 0
-        combined = (result.output or "") + (str(result.exception) if result.exception else "")
-        assert "writable" in combined.lower() or "write" in combined.lower() or "permission" in combined.lower()
+        combined = (result.output or "") + (
+            str(result.exception) if result.exception else ""
+        )
+        assert (
+            "writable" in combined.lower()
+            or "write" in combined.lower()
+            or "permission" in combined.lower()
+        )
         assert "locked.md" in combined
     finally:
         domain_file.chmod(stat.S_IRUSR | stat.S_IWUSR)

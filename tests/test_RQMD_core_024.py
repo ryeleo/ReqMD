@@ -3,21 +3,22 @@
 from pathlib import Path
 
 import pytest
-
-from rqmd.readme_gen import (extract_domain_summaries, generate_readme_section,
-                             sync_readme_from_domains)
+from rqmd.readme_gen import (
+    extract_domain_summaries,
+    generate_readme_section,
+    sync_readme_from_domains,
+)
 
 
 def test_RQMD_core_024_extract_domain_summaries(tmp_path: Path):
-
     """Test extracting summaries from domain files."""
     # Setup: Create minimal requirement files
     req_dir = tmp_path / "docs" / "requirements"
     req_dir.mkdir(parents=True)
-    
+
     # Create README.md for index
     (req_dir / "README.md").write_text("# Requirements Index\n")
-    
+
     # Create a domain file with requirements
     domain_file = req_dir / "test-domain.md"
     domain_file.write_text("""# Test Domain
@@ -34,9 +35,9 @@ requirement content.
 Summary: 1💡 0🔧 1✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 """)
-    
+
     summaries = extract_domain_summaries(tmp_path, "docs/requirements")
-    
+
     assert len(summaries) > 0
     summary = summaries[0]
     assert summary.display_name == "Test Domain"
@@ -47,18 +48,24 @@ Summary: 1💡 0🔧 1✅ 0⚠️ 0⛔ 0🗑️
 def test_RQMD_core_024_generate_readme_section():
     """Test generating README section from domain summaries."""
     from rqmd.readme_gen import DomainSummary
-    
+
     summaries = [
         DomainSummary(
             path=Path("docs/requirements/example.md"),
             display_name="Example Domain",
             emoji_label="3💡 2🔧 5✅",
-            counts={"proposed": 3, "implemented": 2, "verified": 5, "blocked": 0, "deprecated": 0},
+            counts={
+                "proposed": 3,
+                "implemented": 2,
+                "verified": 5,
+                "blocked": 0,
+                "deprecated": 0,
+            },
         ),
     ]
-    
+
     section = generate_readme_section(summaries)
-    
+
     assert "## Requirement Documents" in section
     assert "Example Domain" in section
     assert "example.md" in section
@@ -70,7 +77,7 @@ def test_RQMD_core_024_update_readme_section_new_file(tmp_path: Path):
     req_dir = tmp_path / "docs" / "requirements"
     req_dir.mkdir(parents=True)
     (req_dir / "README.md").write_text("# Requirements\n")
-    
+
     readme = tmp_path / "README.md"
     readme.write_text("""# Project
 
@@ -78,23 +85,29 @@ def test_RQMD_core_024_update_readme_section_new_file(tmp_path: Path):
 
 Content here.
 """)
-    
+
     # No requirement docs exist, so this should handle gracefully
     result = sync_readme_from_domains(tmp_path, "docs/requirements")
     assert result[0] is not None  # Should return a result tuple
     assert result[1] == "No requirement documents found"
 
 
-def test_RQMD_portability_019_generated_scaffold_supports_user_story_terminology(tmp_path: Path) -> None:
+def test_RQMD_portability_019_generated_scaffold_supports_user_story_terminology(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
 
     from rqmd.markdown_io import initialize_requirements_scaffold
 
-    created = initialize_requirements_scaffold(repo, "docs/requirements", starter_prefix="REQ")
+    created = initialize_requirements_scaffold(
+        repo, "docs/requirements", starter_prefix="REQ"
+    )
 
     assert created
-    index_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
+    index_text = (repo / "docs" / "requirements" / "README.md").read_text(
+        encoding="utf-8"
+    )
     assert "## Requirement Documents" in index_text
     assert "domain, user story, feature area" in index_text
 
@@ -104,10 +117,10 @@ def test_RQMD_core_024_idempotent_updates(tmp_path: Path):
     # Create requirement infrastructure
     req_dir = tmp_path / "docs" / "requirements"
     req_dir.mkdir(parents=True)
-    
+
     # Create requirements index
     (req_dir / "README.md").write_text("# Requirements\n")
-    
+
     domain_file = req_dir / "test.md"
     domain_file.write_text("""# Test Domain
 
@@ -118,22 +131,23 @@ def test_RQMD_core_024_idempotent_updates(tmp_path: Path):
 Summary: 1💡 0🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 """)
-    
+
     readme = tmp_path / "README.md"
     readme.write_text("# Project\n\n")
-    
+
     # First sync
     modified1, msg1 = sync_readme_from_domains(tmp_path, "docs/requirements")
     content_after_first = readme.read_text()
-    
+
     # Second sync (should be idempotent)
     # Remove and re-create to avoid multi-write issues
     import time
+
     time.sleep(0.01)  # Prevent timestamp collision
-    
+
     modified2, msg2 = sync_readme_from_domains(tmp_path, "docs/requirements")
     content_after_second = readme.read_text()
-    
+
     # Content should be identical since nothing changed
     assert content_after_first.strip() == content_after_second.strip()
 

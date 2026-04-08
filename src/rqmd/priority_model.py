@@ -73,11 +73,17 @@ def configure_priority_catalog(raw_priorities: object | None) -> None:
         emoji = str(item.get("emoji", "")).strip()
 
         if not name:
-            raise ValueError(f"Config key 'priorities' item #{index} missing non-empty 'name'")
+            raise ValueError(
+                f"Config key 'priorities' item #{index} missing non-empty 'name'"
+            )
         if not shortcode:
-            raise ValueError(f"Config key 'priorities' item #{index} missing non-empty 'shortcode'")
+            raise ValueError(
+                f"Config key 'priorities' item #{index} missing non-empty 'shortcode'"
+            )
         if not emoji:
-            raise ValueError(f"Config key 'priorities' item #{index} missing non-empty 'emoji'")
+            raise ValueError(
+                f"Config key 'priorities' item #{index} missing non-empty 'emoji'"
+            )
 
         label = f"{emoji} {name}".strip()
         lowered = label.lower()
@@ -169,7 +175,9 @@ def _priority_prefix_matches(value: str) -> list[str]:
     token = priority_key(value)
     if not token:
         return []
-    matches = sorted({label for key, label in PRIORITY_LOOKUP.items() if key.startswith(token)})
+    matches = sorted(
+        {label for key, label in PRIORITY_LOOKUP.items() if key.startswith(token)}
+    )
     return matches
 
 

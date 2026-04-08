@@ -34,7 +34,9 @@ def test_RQMD_interactive_006b_color_rollup_contains_bucket_styling() -> None:
     assert "\x1b[" in rollup
 
 
-def test_RQMD_interactive_006c_color_rollup_supports_custom_status_catalog_without_keyerror() -> None:
+def test_RQMD_interactive_006c_color_rollup_supports_custom_status_catalog_without_keyerror() -> (
+    None
+):
     custom_catalog = [
         {"name": "Proposed", "shortcode": "proposed", "emoji": "💡"},
         {"name": "Implemented7", "shortcode": "implemented7", "emoji": "🔧"},

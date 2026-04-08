@@ -7,12 +7,12 @@ Covers:
 - select_from_menu() uses custom zebra_bg when provided
 - select_from_menu() falls back to ZEBRA_BG when zebra_bg=None
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from rqmd.theme import ZEBRA_BG_DARK, ZEBRA_BG_LIGHT, resolve_zebra_bg
 
 
@@ -67,7 +67,9 @@ class TestSelectFromMenuZebraBgParam:
             applied.append((line, bg))
             return original_fn(line, bg)
 
-        with patch.object(menus, "apply_background_preserving_styles", side_effect=recording_fn):
+        with patch.object(
+            menus, "apply_background_preserving_styles", side_effect=recording_fn
+        ):
             with patch.object(menus, "click") as mock_click:
                 mock_click.getchar.return_value = "q"
                 menus.select_from_menu(
@@ -77,12 +79,12 @@ class TestSelectFromMenuZebraBgParam:
                     zebra_bg=custom_bg,
                 )
 
-        assert any(bg == custom_bg for _, bg in applied), (
-            f"Expected custom_bg {custom_bg!r} to be used; saw: {[bg for _, bg in applied]}"
-        )
-        assert not any(bg == ZEBRA_BG for _, bg in applied), (
-            "Default ZEBRA_BG should not appear when zebra_bg override is set"
-        )
+        assert any(
+            bg == custom_bg for _, bg in applied
+        ), f"Expected custom_bg {custom_bg!r} to be used; saw: {[bg for _, bg in applied]}"
+        assert not any(
+            bg == ZEBRA_BG for _, bg in applied
+        ), "Default ZEBRA_BG should not appear when zebra_bg override is set"
 
     def test_none_zebra_bg_falls_back_to_default_zebra_bg(self):
         """When zebra=True and zebra_bg=None, ZEBRA_BG constant should be used."""
@@ -97,7 +99,9 @@ class TestSelectFromMenuZebraBgParam:
             applied.append((line, bg))
             return original_fn(line, bg)
 
-        with patch.object(menus, "apply_background_preserving_styles", side_effect=recording_fn):
+        with patch.object(
+            menus, "apply_background_preserving_styles", side_effect=recording_fn
+        ):
             with patch.object(menus, "click") as mock_click:
                 mock_click.getchar.return_value = "q"
                 menus.select_from_menu(
@@ -107,6 +111,6 @@ class TestSelectFromMenuZebraBgParam:
                     zebra_bg=None,
                 )
 
-        assert any(bg == ZEBRA_BG for _, bg in applied), (
-            f"Expected default ZEBRA_BG {ZEBRA_BG!r}; saw: {[bg for _, bg in applied]}"
-        )
+        assert any(
+            bg == ZEBRA_BG for _, bg in applied
+        ), f"Expected default ZEBRA_BG {ZEBRA_BG!r}; saw: {[bg for _, bg in applied]}"

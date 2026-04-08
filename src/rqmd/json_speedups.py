@@ -13,7 +13,9 @@ def native_json_acceleration_enabled() -> bool:
     return _orjson is not None
 
 
-def dumps_json(payload: Any, *, indent: int | None = None, sort_keys: bool = False) -> str:
+def dumps_json(
+    payload: Any, *, indent: int | None = None, sort_keys: bool = False
+) -> str:
     if _orjson is not None:
         option = 0
         if indent == 2:

@@ -8,9 +8,12 @@ import yaml
 from click.testing import CliRunner
 from rqmd.cli import main
 from rqmd.config import load_priorities_file
-from rqmd.priority_model import (PRIORITY_ORDER, configure_priority_catalog,
-                                 normalize_priority_input,
-                                 style_priority_label)
+from rqmd.priority_model import (
+    PRIORITY_ORDER,
+    configure_priority_catalog,
+    normalize_priority_input,
+    style_priority_label,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -82,7 +85,9 @@ class TestConfigurePriorityCatalog:
             configure_priority_catalog(custom)
 
     def test_custom_color_applied_in_styling(self):
-        custom = [{"name": "Critical", "shortcode": "crit", "emoji": "🔴", "color": "magenta"}]
+        custom = [
+            {"name": "Critical", "shortcode": "crit", "emoji": "🔴", "color": "magenta"}
+        ]
         configure_priority_catalog(custom)
         styled = style_priority_label("🔴 Critical")
         assert "Critical" in styled
@@ -151,8 +156,15 @@ class TestCLIPrioritiesConfig:
         runner = CliRunner()
         result = runner.invoke(
             main,
-            ["--project-root", str(tmp_path), "--docs-dir", "docs/requirements",
-             "--priorities-config", str(prio_file), "--as-json"],
+            [
+                "--project-root",
+                str(tmp_path),
+                "--docs-dir",
+                "docs/requirements",
+                "--priorities-config",
+                str(prio_file),
+                "--as-json",
+            ],
         )
         assert result.exit_code == 0, result.output
 
@@ -167,8 +179,15 @@ class TestCLIPrioritiesConfig:
         runner = CliRunner()
         result = runner.invoke(
             main,
-            ["--project-root", str(tmp_path), "--docs-dir", "docs/requirements",
-             "--priorities-config", "missing.yml", "--as-json"],
+            [
+                "--project-root",
+                str(tmp_path),
+                "--docs-dir",
+                "docs/requirements",
+                "--priorities-config",
+                "missing.yml",
+                "--as-json",
+            ],
         )
         assert result.exit_code != 0
         assert "Config error" in result.output or "not found" in result.output.lower()
@@ -187,8 +206,15 @@ class TestCLIPrioritiesConfig:
         runner = CliRunner()
         result = runner.invoke(
             main,
-            ["--project-root", str(tmp_path), "--docs-dir", "docs/requirements",
-             "--priorities-config", str(prio_file), "--as-json"],
+            [
+                "--project-root",
+                str(tmp_path),
+                "--docs-dir",
+                "docs/requirements",
+                "--priorities-config",
+                str(prio_file),
+                "--as-json",
+            ],
         )
         assert result.exit_code != 0
 

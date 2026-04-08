@@ -37,7 +37,9 @@ class TestParseDomainPriorityMetadata:
         )
         result = parse_domain_priority_metadata(f)
         assert result["domain_priority"] is None
-        assert result["sub_section_priorities"].get("API Subsection") == "🟡 P2 - Medium"
+        assert (
+            result["sub_section_priorities"].get("API Subsection") == "🟡 P2 - Medium"
+        )
 
     def test_domain_and_subsection_priorities(self, tmp_path: Path):
         f = tmp_path / "domain.md"
@@ -105,8 +107,15 @@ class TestDomainPriorityInExport:
         runner = CliRunner()
         result = runner.invoke(
             ai_main,
-            ["--project-root", str(tmp_path), "--docs-dir", "docs/requirements",
-             "--as-json", "--dump-status", "proposed"],
+            [
+                "--project-root",
+                str(tmp_path),
+                "--docs-dir",
+                "docs/requirements",
+                "--as-json",
+                "--dump-status",
+                "proposed",
+            ],
         )
         assert result.exit_code == 0, result.output
         payload = json.loads(result.output)
@@ -120,15 +129,20 @@ class TestDomainPriorityInExport:
         req_dir.mkdir(parents=True)
         (req_dir / "README.md").write_text("# Index\n")
         (req_dir / "domain.md").write_text(
-            "# Domain\n\n"
-            "### RQMD-DOM-001: First\n"
-            "- **Status:** 💡 Proposed\n"
+            "# Domain\n\n" "### RQMD-DOM-001: First\n" "- **Status:** 💡 Proposed\n"
         )
         runner = CliRunner()
         result = runner.invoke(
             ai_main,
-            ["--project-root", str(tmp_path), "--docs-dir", "docs/requirements",
-             "--as-json", "--dump-status", "proposed"],
+            [
+                "--project-root",
+                str(tmp_path),
+                "--docs-dir",
+                "docs/requirements",
+                "--as-json",
+                "--dump-status",
+                "proposed",
+            ],
         )
         assert result.exit_code == 0, result.output
         payload = json.loads(result.output)
@@ -151,10 +165,19 @@ class TestDomainPriorityInExport:
         runner = CliRunner()
         result = runner.invoke(
             ai_main,
-            ["--project-root", str(tmp_path), "--docs-dir", "docs/requirements",
-             "--as-json", "--dump-status", "proposed"],
+            [
+                "--project-root",
+                str(tmp_path),
+                "--docs-dir",
+                "docs/requirements",
+                "--as-json",
+                "--dump-status",
+                "proposed",
+            ],
         )
         assert result.exit_code == 0, result.output
         payload = json.loads(result.output)
         file_entry = payload["files"][0]
-        assert file_entry.get("sub_section_priorities", {}).get("API") == "🟡 P2 - Medium"
+        assert (
+            file_entry.get("sub_section_priorities", {}).get("API") == "🟡 P2 - Medium"
+        )

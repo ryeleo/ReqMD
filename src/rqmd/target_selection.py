@@ -15,9 +15,13 @@ from pathlib import Path
 import click
 
 from .markdown_io import display_name_from_h1, format_path_display
-from .req_parser import (collect_sub_sections, find_requirement_by_id,
-                         normalize_sub_domain_name, parse_requirements,
-                         requirement_newest_first_sort_key)
+from .req_parser import (
+    collect_sub_sections,
+    find_requirement_by_id,
+    normalize_sub_domain_name,
+    parse_requirements,
+    requirement_newest_first_sort_key,
+)
 
 
 def parse_target_token_file(repo_root: Path, file_path_input: str) -> list[str]:
@@ -46,7 +50,9 @@ def parse_target_token_file(repo_root: Path, file_path_input: str) -> list[str]:
     try:
         text = path.read_text(encoding="utf-8")
     except OSError as exc:
-        raise click.ClickException(f"Unable to read --targets-file {path}: {exc}") from exc
+        raise click.ClickException(
+            f"Unable to read --targets-file {path}: {exc}"
+        ) from exc
 
     tokens = tokenize_target_text(text)
     if not tokens:
@@ -128,7 +134,12 @@ def collect_target_completion_tokens(
     Returns:
         Deduplicated list of completion tokens.
     """
-    return [item["value"] for item in collect_target_completion_candidates(repo_root, domain_files, id_prefixes)]
+    return [
+        item["value"]
+        for item in collect_target_completion_candidates(
+            repo_root, domain_files, id_prefixes
+        )
+    ]
 
 
 def complete_target_completion_candidates(
@@ -139,11 +150,22 @@ def complete_target_completion_candidates(
 ) -> list[dict[str, str]]:
     """Return matching completion candidates with kind metadata."""
     prefix = _normalized_token(incomplete)
-    candidates = collect_target_completion_candidates(repo_root, domain_files, id_prefixes)
+    candidates = collect_target_completion_candidates(
+        repo_root, domain_files, id_prefixes
+    )
     if not prefix:
-        return sorted(candidates, key=lambda item: (_normalized_token(item["value"]), item["value"]))
-    matches = [item for item in candidates if _normalized_token(item["value"]).startswith(prefix)]
-    return sorted(matches, key=lambda item: (_normalized_token(item["value"]), item["value"]))
+        return sorted(
+            candidates,
+            key=lambda item: (_normalized_token(item["value"]), item["value"]),
+        )
+    matches = [
+        item
+        for item in candidates
+        if _normalized_token(item["value"]).startswith(prefix)
+    ]
+    return sorted(
+        matches, key=lambda item: (_normalized_token(item["value"]), item["value"])
+    )
 
 
 def complete_target_tokens(
@@ -208,7 +230,9 @@ def resolve_target_tokens(
         if path not in domain_token_map[normalized]:
             domain_token_map[normalized].append(path)
 
-    def add_requirement_token(token: str, path: Path, requirement: dict[str, object]) -> None:
+    def add_requirement_token(
+        token: str, path: Path, requirement: dict[str, object]
+    ) -> None:
         normalized = _normalized_token(token)
         if not normalized:
             return
@@ -226,9 +250,13 @@ def resolve_target_tokens(
 
         for requirement in parse_requirements(path, id_prefixes=id_prefixes):
             add_requirement_token(str(requirement["id"]), path, requirement)
-            normalized_sub_domain = normalize_sub_domain_name(str(requirement.get("sub_domain") or ""))
+            normalized_sub_domain = normalize_sub_domain_name(
+                str(requirement.get("sub_domain") or "")
+            )
             if normalized_sub_domain:
-                subsection_requirements.append((normalized_sub_domain, path, requirement))
+                subsection_requirements.append(
+                    (normalized_sub_domain, path, requirement)
+                )
 
     invalid_tokens: list[str] = []
     ambiguous_tokens: list[str] = []
@@ -276,7 +304,9 @@ def resolve_target_tokens(
 
         if normalized_token == "all":
             if len(raw_tokens) != 1:
-                ambiguous_tokens.append(f"{token} (cannot be combined with other target tokens)")
+                ambiguous_tokens.append(
+                    f"{token} (cannot be combined with other target tokens)"
+                )
                 continue
             all_requirements: list[tuple[Path, dict[str, object]]] = []
             for path in domain_files:
@@ -312,7 +342,9 @@ def resolve_target_tokens(
 
         domain_matches = domain_token_map.get(normalized_token, [])
         if len(domain_matches) == 1:
-            for requirement in parse_requirements(domain_matches[0], id_prefixes=id_prefixes):
+            for requirement in parse_requirements(
+                domain_matches[0], id_prefixes=id_prefixes
+            ):
                 append_requirement(domain_matches[0], requirement)
             continue
         if len(domain_matches) > 1:
@@ -321,7 +353,9 @@ def resolve_target_tokens(
 
         prefix_domain_matches = unique_domain_matches(normalized_token)
         if len(prefix_domain_matches) == 1:
-            for requirement in parse_requirements(prefix_domain_matches[0], id_prefixes=id_prefixes):
+            for requirement in parse_requirements(
+                prefix_domain_matches[0], id_prefixes=id_prefixes
+            ):
                 append_requirement(prefix_domain_matches[0], requirement)
             continue
         if len(prefix_domain_matches) > 1:
@@ -350,6 +384,8 @@ def resolve_target_tokens(
 
     if not ordered_matches:
         raw_json = json.dumps(list(raw_tokens), ensure_ascii=False)
-        raise click.ClickException(f"No requirements resolved from target tokens: {raw_json}")
+        raise click.ClickException(
+            f"No requirements resolved from target tokens: {raw_json}"
+        )
 
     return ordered_matches

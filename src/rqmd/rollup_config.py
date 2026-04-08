@@ -65,7 +65,9 @@ def _canonical_status_label(token: str, source: str, key: str) -> str:
     """
     normalized = token.strip().lower()
     if not normalized:
-        raise click.ClickException(f"Invalid rollup mapping in {source}: empty status token for '{key}'.")
+        raise click.ClickException(
+            f"Invalid rollup mapping in {source}: empty status token for '{key}'."
+        )
 
     status_name_map = _build_status_name_map()
     if normalized in status_name_map:
@@ -93,16 +95,22 @@ def _parse_equation_line(equation: str, source: str) -> tuple[str, list[str]]:
         click.ClickException: If equation is malformed or contains invalid statuses.
     """
     if "=" not in equation:
-        raise click.ClickException(f"Invalid rollup equation in {source}: '{equation}' (expected NAME = A + B).")
+        raise click.ClickException(
+            f"Invalid rollup equation in {source}: '{equation}' (expected NAME = A + B)."
+        )
 
     column, rhs = equation.split("=", 1)
     column = column.strip()
     if not column:
-        raise click.ClickException(f"Invalid rollup equation in {source}: missing column name in '{equation}'.")
+        raise click.ClickException(
+            f"Invalid rollup equation in {source}: missing column name in '{equation}'."
+        )
 
     raw_tokens = [part.strip() for part in re.split(r"\+|,", rhs) if part.strip()]
     if not raw_tokens:
-        raise click.ClickException(f"Invalid rollup equation in {source}: no statuses in '{equation}'.")
+        raise click.ClickException(
+            f"Invalid rollup equation in {source}: no statuses in '{equation}'."
+        )
 
     seen: set[str] = set()
     statuses: list[str] = []
@@ -129,13 +137,17 @@ def _parse_rollup_map(raw_map: object, source: str) -> list[tuple[str, list[str]
         click.ClickException: If configuration is malformed.
     """
     if not isinstance(raw_map, dict):
-        raise click.ClickException(f"Invalid rollup_map in {source}: expected an object mapping column names to statuses.")
+        raise click.ClickException(
+            f"Invalid rollup_map in {source}: expected an object mapping column names to statuses."
+        )
 
     columns: list[tuple[str, list[str]]] = []
     for column, value in raw_map.items():
         column_name = str(column).strip()
         if not column_name:
-            raise click.ClickException(f"Invalid rollup_map in {source}: column names cannot be empty.")
+            raise click.ClickException(
+                f"Invalid rollup_map in {source}: column names cannot be empty."
+            )
 
         tokens: list[str]
         if isinstance(value, list):
@@ -148,7 +160,9 @@ def _parse_rollup_map(raw_map: object, source: str) -> list[tuple[str, list[str]
             )
 
         if not tokens:
-            raise click.ClickException(f"Invalid rollup_map in {source}: '{column_name}' has no statuses.")
+            raise click.ClickException(
+                f"Invalid rollup_map in {source}: '{column_name}' has no statuses."
+            )
 
         seen: set[str] = set()
         statuses: list[str] = []
@@ -164,9 +178,13 @@ def _parse_rollup_map(raw_map: object, source: str) -> list[tuple[str, list[str]
     return columns
 
 
-def _parse_rollup_equations(raw_equations: object, source: str) -> list[tuple[str, list[str]]]:
+def _parse_rollup_equations(
+    raw_equations: object, source: str
+) -> list[tuple[str, list[str]]]:
     if not isinstance(raw_equations, list):
-        raise click.ClickException(f"Invalid rollup_equations in {source}: expected a list of equation strings.")
+        raise click.ClickException(
+            f"Invalid rollup_equations in {source}: expected a list of equation strings."
+        )
 
     columns: list[tuple[str, list[str]]] = []
     for item in raw_equations:
@@ -176,7 +194,9 @@ def _parse_rollup_equations(raw_equations: object, source: str) -> list[tuple[st
         columns.append(_parse_equation_line(equation, source))
 
     if not columns:
-        raise click.ClickException(f"Invalid rollup_equations in {source}: no equations found.")
+        raise click.ClickException(
+            f"Invalid rollup_equations in {source}: no equations found."
+        )
     return columns
 
 
@@ -191,18 +211,26 @@ def _load_yaml(path: Path) -> object:
     try:
         return yaml.safe_load(path.read_text(encoding="utf-8"))
     except OSError as exc:
-        raise click.ClickException(f"Unable to read rollup config '{path}': {exc}") from exc
+        raise click.ClickException(
+            f"Unable to read rollup config '{path}': {exc}"
+        ) from exc
     except Exception as exc:
-        raise click.ClickException(f"Invalid YAML rollup config '{path}': {exc}") from exc
+        raise click.ClickException(
+            f"Invalid YAML rollup config '{path}': {exc}"
+        ) from exc
 
 
 def _load_json(path: Path) -> object:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except OSError as exc:
-        raise click.ClickException(f"Unable to read rollup config '{path}': {exc}") from exc
+        raise click.ClickException(
+            f"Unable to read rollup config '{path}': {exc}"
+        ) from exc
     except json.JSONDecodeError as exc:
-        raise click.ClickException(f"Invalid JSON rollup config '{path}': {exc.msg}") from exc
+        raise click.ClickException(
+            f"Invalid JSON rollup config '{path}': {exc.msg}"
+        ) from exc
 
 
 def load_rollup_columns_from_file(path: Path) -> list[tuple[str, list[str]]]:
@@ -217,7 +245,9 @@ def load_rollup_columns_from_file(path: Path) -> list[tuple[str, list[str]]]:
         )
 
     if not isinstance(data, dict):
-        raise click.ClickException(f"Invalid rollup config '{path}': expected top-level object.")
+        raise click.ClickException(
+            f"Invalid rollup config '{path}': expected top-level object."
+        )
 
     has_map = "rollup_map" in data
     has_eq = "rollup_equations" in data

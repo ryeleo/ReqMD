@@ -36,28 +36,48 @@ except ImportError:
     sys.exit(1)
 
 from .batch_inputs import parse_set_entry
-from .config import (load_config, load_priorities_file, load_statuses_file,
-                     validate_config)
-from .constants import (DEFAULT_STATUS_CATALOG, JSON_SCHEMA_VERSION,
-                        PRIORITY_ORDER, REQUIREMENTS_INDEX_NAME)
+from .config import (
+    load_config,
+    load_priorities_file,
+    load_statuses_file,
+    validate_config,
+)
+from .constants import (
+    DEFAULT_STATUS_CATALOG,
+    JSON_SCHEMA_VERSION,
+    PRIORITY_ORDER,
+    REQUIREMENTS_INDEX_NAME,
+)
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (discover_project_root, format_path_display,
-                          initialize_requirements_scaffold, iter_domain_files,
-                          load_init_yaml, preview_project_config_scaffold,
-                          preview_requirements_scaffold,
-                          render_legacy_issue_domain,
-                          render_legacy_source_domain,
-                          render_legacy_workflow_domain,
-                          render_requirements_index, render_startup_message,
-                          resolve_requirements_dir, validate_files_readable)
+from .markdown_io import (
+    discover_project_root,
+    format_path_display,
+    initialize_requirements_scaffold,
+    iter_domain_files,
+    load_init_yaml,
+    preview_project_config_scaffold,
+    preview_requirements_scaffold,
+    render_legacy_issue_domain,
+    render_legacy_source_domain,
+    render_legacy_workflow_domain,
+    render_requirements_index,
+    render_startup_message,
+    resolve_requirements_dir,
+    validate_files_readable,
+)
 from .priority_model import configure_priority_catalog
-from .req_parser import (detect_domain_prefix, extract_blocking_id,
-                         extract_requirement_block_with_lines,
-                         find_duplicate_requirement_ids, next_domain_requirement_id,
-                         normalize_id_prefixes,
-                         parse_domain_priority_metadata, parse_requirements,
-                         resolve_id_prefixes)
+from .req_parser import (
+    detect_domain_prefix,
+    extract_blocking_id,
+    extract_requirement_block_with_lines,
+    find_duplicate_requirement_ids,
+    next_domain_requirement_id,
+    normalize_id_prefixes,
+    parse_domain_priority_metadata,
+    parse_requirements,
+    resolve_id_prefixes,
+)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 from .summary import process_file
@@ -74,14 +94,14 @@ _WORKFLOW_MODE_SKILLS: dict[str, str] = {
 }
 
 _BUNDLE_RESOURCE_ROOT = ("resources", "bundle")
-_GENERATED_PROJECT_SUPPORT_PATHS = (
-    "agent-workflow.sh",
-)
+_GENERATED_PROJECT_SUPPORT_PATHS = ("agent-workflow.sh",)
 _GENERATED_PROJECT_SKILL_PATHS = (
     ".github/skills/dev/SKILL.md",
     ".github/skills/test/SKILL.md",
 )
-_GENERATED_PROJECT_FILE_PATHS = _GENERATED_PROJECT_SUPPORT_PATHS + _GENERATED_PROJECT_SKILL_PATHS
+_GENERATED_PROJECT_FILE_PATHS = (
+    _GENERATED_PROJECT_SUPPORT_PATHS + _GENERATED_PROJECT_SKILL_PATHS
+)
 _BUNDLE_METADATA_RELATIVE = ".github/rqmd-bundle.json"
 
 _STATUS_SCHEME_LIBRARY: dict[str, dict[str, object]] = {
@@ -162,7 +182,9 @@ def _resolve_status_scheme(
     lowered = _STATUS_SCHEME_ALIASES.get(lowered, lowered)
     if lowered in _STATUS_SCHEME_LIBRARY:
         status_entries = _STATUS_SCHEME_LIBRARY[lowered]["statuses"]
-        return lowered, [dict(item) for item in status_entries if isinstance(item, dict)]
+        return lowered, [
+            dict(item) for item in status_entries if isinstance(item, dict)
+        ]
 
     copy_path = token
     if lowered.startswith("copy:"):
@@ -173,7 +195,9 @@ def _resolve_status_scheme(
     loaded = load_statuses_file(repo_root, copy_path)
     if loaded is None:
         raise click.ClickException(f"Could not load statuses from {copy_path!r}.")
-    return f"copy:{copy_path}", [dict(item) for item in loaded if isinstance(item, dict)]
+    return f"copy:{copy_path}", [
+        dict(item) for item in loaded if isinstance(item, dict)
+    ]
 
 
 def _installed_rqmd_version() -> str:
@@ -195,7 +219,12 @@ def _build_bundle_metadata_payload(
     *,
     managed_file_hashes: dict[str, str],
 ) -> dict[str, object]:
-    generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    generated_at = (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
     return {
         "bundle_metadata_version": 1,
         "generated_by": "rqmd-ai install",
@@ -229,7 +258,9 @@ def _build_bundle_state_payload(
     tooling: dict[str, str],
     metadata: dict[str, object] | None,
 ) -> dict[str, object]:
-    installed_by_version = metadata.get("rqmd_version") if isinstance(metadata, dict) else None
+    installed_by_version = (
+        metadata.get("rqmd_version") if isinstance(metadata, dict) else None
+    )
     matches_running_version = (
         installed_by_version == tooling["rqmd_version"]
         if isinstance(installed_by_version, str)
@@ -242,9 +273,12 @@ def _build_bundle_state_payload(
         "active_definition_files": definition_files,
         "metadata_file": _BUNDLE_METADATA_RELATIVE if metadata is not None else None,
         "bundle_metadata": metadata,
-        "installed_by_rqmd_version": installed_by_version if isinstance(installed_by_version, str) else None,
+        "installed_by_rqmd_version": installed_by_version
+        if isinstance(installed_by_version, str)
+        else None,
         "matches_running_rqmd_version": matches_running_version,
     }
+
 
 def _editable_source_path_from_distribution() -> Path | None:
     try:
@@ -263,7 +297,11 @@ def _editable_source_path_from_distribution() -> Path | None:
 
     dir_info = payload.get("dir_info")
     url = payload.get("url")
-    if not isinstance(dir_info, dict) or dir_info.get("editable") is not True or not isinstance(url, str):
+    if (
+        not isinstance(dir_info, dict)
+        or dir_info.get("editable") is not True
+        or not isinstance(url, str)
+    ):
         return None
 
     parsed = urlparse(url)
@@ -306,7 +344,11 @@ def _bundle_resource_base() -> object:
 def _read_bundle_manifest(preset: str) -> tuple[str, ...]:
     manifest = _bundle_resource_base().joinpath(f"{preset}.txt")
     lines = manifest.read_text(encoding="utf-8").splitlines()
-    entries = [line.strip() for line in lines if line.strip() and not line.lstrip().startswith("#")]
+    entries = [
+        line.strip()
+        for line in lines
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
     return tuple(entries)
 
 
@@ -384,19 +426,27 @@ def _load_workflow_guide(workflow_mode: str) -> dict[str, object]:
     summary = guide.get("summary") if isinstance(guide, dict) else None
     workflow = guide.get("workflow") if isinstance(guide, dict) else None
     examples = guide.get("examples") if isinstance(guide, dict) else None
-    if not isinstance(summary, str) or not isinstance(workflow, list) or not isinstance(examples, list):
+    if (
+        not isinstance(summary, str)
+        or not isinstance(workflow, list)
+        or not isinstance(examples, list)
+    ):
         raise click.ClickException(
             f"Bundle workflow guide metadata missing or invalid for mode '{workflow_mode}' in {relative_path}."
         )
 
     batch_policy = guide.get("batch_policy") if isinstance(guide, dict) else None
-    validation_checks = guide.get("validation_checks") if isinstance(guide, dict) else None
+    validation_checks = (
+        guide.get("validation_checks") if isinstance(guide, dict) else None
+    )
     return {
         "summary": summary,
         "workflow": [str(item) for item in workflow],
         "examples": [str(item) for item in examples],
         "batch_policy": batch_policy if isinstance(batch_policy, dict) else None,
-        "validation_checks": [str(item) for item in validation_checks] if isinstance(validation_checks, list) else None,
+        "validation_checks": [str(item) for item in validation_checks]
+        if isinstance(validation_checks, list)
+        else None,
     }
 
 
@@ -405,7 +455,11 @@ def _load_runtime_priority_labels(repo_root: Path) -> tuple[str, ...]:
         config = load_config(repo_root)
         validate_config(config)
         standalone_priorities = load_priorities_file(repo_root, None)
-        effective_priorities = standalone_priorities if standalone_priorities is not None else config.get("priorities")
+        effective_priorities = (
+            standalone_priorities
+            if standalone_priorities is not None
+            else config.get("priorities")
+        )
         configure_priority_catalog(effective_priorities)
         return tuple(label for label, _slug in PRIORITY_ORDER)
     except ValueError as exc:
@@ -429,7 +483,9 @@ def _load_brainstorm_rules() -> dict[str, object]:
     proposal_sort = brainstorm.get("proposal_sort")
     section_targets_raw = brainstorm.get("section_targets")
     priority_hints_raw = brainstorm.get("priority_hints")
-    if not isinstance(default_target_file, str) or not isinstance(default_priority_rank, int):
+    if not isinstance(default_target_file, str) or not isinstance(
+        default_priority_rank, int
+    ):
         raise click.ClickException(
             f"Bundle brainstorm metadata missing default target or priority in {relative_path}."
         )
@@ -437,14 +493,21 @@ def _load_brainstorm_rules() -> dict[str, object]:
         raise click.ClickException(
             f"Bundle brainstorm metadata missing proposal title or sort configuration in {relative_path}."
         )
-    if not isinstance(section_targets_raw, list) or not isinstance(priority_hints_raw, list):
+    if not isinstance(section_targets_raw, list) or not isinstance(
+        priority_hints_raw, list
+    ):
         raise click.ClickException(
             f"Bundle brainstorm metadata missing section targets or priority hints in {relative_path}."
         )
 
     max_words = proposal_title.get("max_words")
     max_chars = proposal_title.get("max_chars")
-    if not isinstance(max_words, int) or not isinstance(max_chars, int) or max_words <= 0 or max_chars <= 0:
+    if (
+        not isinstance(max_words, int)
+        or not isinstance(max_chars, int)
+        or max_words <= 0
+        or max_chars <= 0
+    ):
         raise click.ClickException(
             f"Bundle brainstorm metadata has invalid proposal title configuration in {relative_path}."
         )
@@ -457,24 +520,36 @@ def _load_brainstorm_rules() -> dict[str, object]:
     section_targets: list[tuple[tuple[str, ...], str]] = []
     for item in section_targets_raw:
         if not isinstance(item, dict):
-            raise click.ClickException(f"Invalid brainstorm section target entry in {relative_path}.")
+            raise click.ClickException(
+                f"Invalid brainstorm section target entry in {relative_path}."
+            )
         tokens = item.get("tokens")
         target_file = item.get("target_file")
         if not isinstance(tokens, list) or not isinstance(target_file, str):
-            raise click.ClickException(f"Invalid brainstorm section target entry in {relative_path}.")
-        normalized_tokens = tuple(str(token).casefold() for token in tokens if str(token).strip())
+            raise click.ClickException(
+                f"Invalid brainstorm section target entry in {relative_path}."
+            )
+        normalized_tokens = tuple(
+            str(token).casefold() for token in tokens if str(token).strip()
+        )
         if normalized_tokens:
             section_targets.append((normalized_tokens, target_file))
 
     priority_hints: list[tuple[tuple[str, ...], int]] = []
     for item in priority_hints_raw:
         if not isinstance(item, dict):
-            raise click.ClickException(f"Invalid brainstorm priority hint entry in {relative_path}.")
+            raise click.ClickException(
+                f"Invalid brainstorm priority hint entry in {relative_path}."
+            )
         tokens = item.get("tokens")
         priority_rank = item.get("priority_rank")
         if not isinstance(tokens, list) or not isinstance(priority_rank, int):
-            raise click.ClickException(f"Invalid brainstorm priority hint entry in {relative_path}.")
-        normalized_tokens = tuple(str(token).casefold() for token in tokens if str(token).strip())
+            raise click.ClickException(
+                f"Invalid brainstorm priority hint entry in {relative_path}."
+            )
+        normalized_tokens = tuple(
+            str(token).casefold() for token in tokens if str(token).strip()
+        )
         if normalized_tokens:
             priority_hints.append((normalized_tokens, priority_rank))
 
@@ -542,9 +617,13 @@ def _write_json_payload_file(payload: dict[str, object], output_path: Path) -> N
     output_path.write_text(_serialize_json_payload(payload) + "\n", encoding="utf-8")
 
 
-def _resolve_init_requirements_dir(repo_root: Path, requirements_dir_input: str | None) -> Path:
+def _resolve_init_requirements_dir(
+    repo_root: Path, requirements_dir_input: str | None
+) -> Path:
     rules = _load_legacy_init_rules()
-    criteria_dir = Path(requirements_dir_input or str(rules["default_requirements_dir"]))
+    criteria_dir = Path(
+        requirements_dir_input or str(rules["default_requirements_dir"])
+    )
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
     return criteria_dir
@@ -559,7 +638,9 @@ def _detect_init_strategy(
     criteria_dir = _resolve_init_requirements_dir(repo_root, requirements_dir_input)
     reasons: list[str] = []
 
-    existing_markdown = sorted(criteria_dir.glob("*.md")) if criteria_dir.exists() else []
+    existing_markdown = (
+        sorted(criteria_dir.glob("*.md")) if criteria_dir.exists() else []
+    )
     if existing_markdown:
         reasons.append(
             render_startup_message(
@@ -590,11 +671,19 @@ def _detect_init_strategy(
             ).strip()
         )
 
-    selected = "legacy-init" if force_legacy or existing_markdown or marker_count >= 2 else "starter-scaffold"
+    selected = (
+        "legacy-init"
+        if force_legacy or existing_markdown or marker_count >= 2
+        else "starter-scaffold"
+    )
     if force_legacy:
-        reasons.insert(0, render_startup_message("init-strategy-force-legacy.md").strip())
+        reasons.insert(
+            0, render_startup_message("init-strategy-force-legacy.md").strip()
+        )
     if not reasons:
-        reasons.append(render_startup_message("init-strategy-starter-default.md").strip())
+        reasons.append(
+            render_startup_message("init-strategy-starter-default.md").strip()
+        )
 
     return {
         "selected": selected,
@@ -624,9 +713,13 @@ def _build_starter_init_chat_questions(
             allow_multiple=bool(requirements_dir_config["allow_multiple"]),
             allow_custom=bool(requirements_dir_config["allow_custom"]),
             allow_skip=bool(requirements_dir_config["allow_skip"]),
-            first_selected_is_canonical=bool(requirements_dir_config["first_selected_is_canonical"]),
+            first_selected_is_canonical=bool(
+                requirements_dir_config["first_selected_is_canonical"]
+            ),
             custom_answer_prompt=str(requirements_dir_config["custom_answer_prompt"]),
-            suggested_options=_legacy_init_requirements_dir_options(repo_root, requirements_dir),
+            suggested_options=_legacy_init_requirements_dir_options(
+                repo_root, requirements_dir
+            ),
         ),
         _build_id_prefix_question(
             repo_root=repo_root,
@@ -643,7 +736,9 @@ def _build_starter_init_chat_questions(
             allow_multiple=bool(status_scheme_config["allow_multiple"]),
             allow_custom=bool(status_scheme_config["allow_custom"]),
             allow_skip=bool(status_scheme_config["allow_skip"]),
-            first_selected_is_canonical=bool(status_scheme_config["first_selected_is_canonical"]),
+            first_selected_is_canonical=bool(
+                status_scheme_config["first_selected_is_canonical"]
+            ),
             custom_answer_prompt=str(status_scheme_config["custom_answer_prompt"]),
             suggested_options=_status_scheme_suggested_options(repo_root),
             recommended_values=["canonical"],
@@ -658,14 +753,20 @@ def _build_starter_init_chat_questions(
             allow_multiple=bool(starter_notes_config["allow_multiple"]),
             allow_custom=bool(starter_notes_config["allow_custom"]),
             allow_skip=bool(starter_notes_config["allow_skip"]),
-            first_selected_is_canonical=bool(starter_notes_config["first_selected_is_canonical"]),
+            first_selected_is_canonical=bool(
+                starter_notes_config["first_selected_is_canonical"]
+            ),
             custom_answer_prompt=str(starter_notes_config["custom_answer_prompt"]),
         ),
     ]
 
 
 def _derive_project_specific_prefix(repo_root: Path) -> str | None:
-    tokens = [segment for segment in re.split(r"[^A-Za-z0-9]+", repo_root.name.upper()) if segment]
+    tokens = [
+        segment
+        for segment in re.split(r"[^A-Za-z0-9]+", repo_root.name.upper())
+        if segment
+    ]
     if not tokens:
         return None
 
@@ -691,7 +792,10 @@ def _build_id_prefix_question(
     inferred_description = _ID_PREFIX_INFERRED_DESCRIPTION
     suggested_options: list[dict[str, str]] = []
 
-    if project_specific_prefix and project_specific_prefix.casefold() != inferred_prefix.casefold():
+    if (
+        project_specific_prefix
+        and project_specific_prefix.casefold() != inferred_prefix.casefold()
+    ):
         suggested_options.append(
             {
                 "value": project_specific_prefix,
@@ -752,24 +856,43 @@ def _build_starter_init_payload(
     interview_answers: tuple[str, ...] = (),
 ) -> dict[str, object]:
     rules = _load_legacy_init_rules()
-    starter_answer_map = _collect_interview_answers(interview_answers, _STARTER_INIT_CHAT_FIELDS)
+    starter_answer_map = _collect_interview_answers(
+        interview_answers, _STARTER_INIT_CHAT_FIELDS
+    )
     criteria_dir = Path(
         requirements_dir_input
-        or str(starter_answer_map.get("requirements_dir", [str(rules["default_requirements_dir"])])[0])
+        or str(
+            starter_answer_map.get(
+                "requirements_dir", [str(rules["default_requirements_dir"])]
+            )[0]
+        )
     )
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
 
-    prefix = id_prefixes[0] if id_prefixes else str(starter_answer_map.get("id_prefix", ["REQ"])[0]).strip().upper().rstrip("-")
-    status_scheme_raw = str(starter_answer_map.get("status_scheme", ["canonical"])[0]).strip()
-    status_scheme_key, selected_statuses = _resolve_status_scheme(repo_root, status_scheme_raw)
+    prefix = (
+        id_prefixes[0]
+        if id_prefixes
+        else str(starter_answer_map.get("id_prefix", ["REQ"])[0])
+        .strip()
+        .upper()
+        .rstrip("-")
+    )
+    status_scheme_raw = str(
+        starter_answer_map.get("status_scheme", ["canonical"])[0]
+    ).strip()
+    status_scheme_key, selected_statuses = _resolve_status_scheme(
+        repo_root, status_scheme_raw
+    )
     proposed_files = preview_requirements_scaffold(
         repo_root,
         str(criteria_dir),
         prefix,
         statuses=selected_statuses,
     )
-    questions = _build_starter_init_chat_questions(repo_root, criteria_dir.relative_to(repo_root), id_prefixes or (prefix,))
+    questions = _build_starter_init_chat_questions(
+        repo_root, criteria_dir.relative_to(repo_root), id_prefixes or (prefix,)
+    )
     payload = {
         "mode": "starter-init-apply" if apply else "starter-init-plan",
         "workflow_mode": "init",
@@ -794,7 +917,9 @@ def _build_starter_init_payload(
             prefix,
             statuses=selected_statuses,
         )
-        payload["created_files"] = [format_path_display(path, repo_root) for path in created_files]
+        payload["created_files"] = [
+            format_path_display(path, repo_root) for path in created_files
+        ]
         payload["changed_count"] = len(created_files)
     return payload
 
@@ -827,7 +952,9 @@ def _build_rqmd_ai_init_command(
     return _shell_join(parts)
 
 
-def _build_bundle_follow_up_command(repo_root: Path, *, json_output_file: Path | None = None) -> str:
+def _build_bundle_follow_up_command(
+    repo_root: Path, *, json_output_file: Path | None = None
+) -> str:
     parts = [
         "rqmd-ai",
         "install",
@@ -841,9 +968,7 @@ def _build_bundle_follow_up_command(repo_root: Path, *, json_output_file: Path |
     ]
     if json_output_file is not None:
         parts.extend(["--json-output-file", str(json_output_file)])
-    return _shell_join(
-        parts
-    )
+    return _shell_join(parts)
 
 
 def _build_init_handoff_prompt(
@@ -855,7 +980,9 @@ def _build_init_handoff_prompt(
     bundle_state: dict[str, object],
 ) -> str:
     init_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-init-preview")
-    bundle_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-bundle-preview")
+    bundle_artifact_path = _default_json_artifact_path(
+        repo_root, "rqmd-ai-bundle-preview"
+    )
     sections = [
         render_startup_message(
             "init-handoff-base.md",
@@ -955,8 +1082,14 @@ def _build_or_apply_init_payload(
     )
     init_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-init-preview")
     apply_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-init-apply")
-    bundle_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-bundle-preview")
-    payload["mode"] = "init-chat" if chat_mode and not apply else ("init-apply" if apply else "init-plan")
+    bundle_artifact_path = _default_json_artifact_path(
+        repo_root, "rqmd-ai-bundle-preview"
+    )
+    payload["mode"] = (
+        "init-chat"
+        if chat_mode and not apply
+        else ("init-apply" if apply else "init-plan")
+    )
     payload["workflow_mode"] = "init"
     payload["strategy"] = strategy
     payload["bundle_installation"] = bundle_state
@@ -1004,7 +1137,9 @@ def _build_or_apply_init_payload(
 
 def _priority_label_for_rank(priority_labels: tuple[str, ...], rank: int) -> str:
     if not priority_labels:
-        raise click.ClickException("No priorities configured for brainstorm proposal generation.")
+        raise click.ClickException(
+            "No priorities configured for brainstorm proposal generation."
+        )
     if rank < 0:
         return priority_labels[max(len(priority_labels) + rank, 0)]
     if rank >= len(priority_labels):
@@ -1015,11 +1150,17 @@ def _priority_label_for_rank(priority_labels: tuple[str, ...], rank: int) -> str
 def _bundle_definition_kind(relative_path: str) -> str | None:
     if relative_path == ".github/copilot-instructions.md":
         return "instruction"
-    if relative_path.startswith(".github/prompts/") and relative_path.endswith(".prompt.md"):
+    if relative_path.startswith(".github/prompts/") and relative_path.endswith(
+        ".prompt.md"
+    ):
         return "prompt"
-    if relative_path.startswith(".github/skills/") and relative_path.endswith("/SKILL.md"):
+    if relative_path.startswith(".github/skills/") and relative_path.endswith(
+        "/SKILL.md"
+    ):
         return "skill"
-    if relative_path.startswith(".github/agents/") and relative_path.endswith(".agent.md"):
+    if relative_path.startswith(".github/agents/") and relative_path.endswith(
+        ".agent.md"
+    ):
         return "agent"
     return None
 
@@ -1147,7 +1288,9 @@ def _expect_init_list(value: object, *, message: str) -> list[object]:
     return list(value)
 
 
-def _load_init_field_section(section_name: str) -> tuple[tuple[str, ...], dict[str, dict[str, object]]]:
+def _load_init_field_section(
+    section_name: str,
+) -> tuple[tuple[str, ...], dict[str, dict[str, object]]]:
     section = _expect_init_mapping(
         _INIT_INTERVIEW_CONFIG.get(section_name),
         message=f"Invalid init interview config: missing {section_name} mapping.",
@@ -1197,7 +1340,9 @@ def _load_init_option_sets(section_name: str) -> dict[str, tuple[dict[str, str],
     }
 
 
-def _load_init_option_list(section_name: str, option_key: str) -> tuple[dict[str, str], ...]:
+def _load_init_option_list(
+    section_name: str, option_key: str
+) -> tuple[dict[str, str], ...]:
     section = _expect_init_mapping(
         _INIT_INTERVIEW_CONFIG.get(section_name),
         message=f"Invalid init interview config: missing {section_name} mapping.",
@@ -1207,10 +1352,7 @@ def _load_init_option_list(section_name: str, option_key: str) -> tuple[dict[str
         message=f"Invalid init interview config: {section_name} {option_key} must be a list.",
     )
     return tuple(
-        {
-            str(raw_key): str(raw_value)
-            for raw_key, raw_value in option.items()
-        }
+        {str(raw_key): str(raw_value) for raw_key, raw_value in option.items()}
         for option in raw_options
         if isinstance(option, dict)
     )
@@ -1218,15 +1360,16 @@ def _load_init_option_list(section_name: str, option_key: str) -> tuple[dict[str
 
 _INIT_INTERVIEW_CONFIG = load_init_yaml("init-interview.yml")
 if not isinstance(_INIT_INTERVIEW_CONFIG, dict):
-    raise click.ClickException("Invalid init interview config: expected a mapping in init-interview.yml.")
+    raise click.ClickException(
+        "Invalid init interview config: expected a mapping in init-interview.yml."
+    )
 
 _RAW_INTERVIEW_GROUP_LABELS = _expect_init_mapping(
     _INIT_INTERVIEW_CONFIG.get("group_labels"),
     message="Invalid init interview config: missing group_labels mapping.",
 )
 _INTERVIEW_GROUP_LABELS: dict[str, str] = {
-    str(key): str(value)
-    for key, value in _RAW_INTERVIEW_GROUP_LABELS.items()
+    str(key): str(value) for key, value in _RAW_INTERVIEW_GROUP_LABELS.items()
 }
 
 _RAW_INTERVIEW_GROUP_ORDER = _expect_init_list(
@@ -1250,30 +1393,50 @@ _INTERVIEW_INTERACTION_CONTRACT: dict[str, object] = {
     "preferred_ui": str(_RAW_INTERACTION_CONTRACT.get("preferred_ui") or ""),
     "presentation": str(_RAW_INTERACTION_CONTRACT.get("presentation") or ""),
     "next_action": str(_RAW_INTERACTION_CONTRACT.get("next_action") or ""),
-    "confirmation_policy": str(_RAW_INTERACTION_CONTRACT.get("confirmation_policy") or ""),
-    "selection_behavior": str(_RAW_INTERACTION_CONTRACT.get("selection_behavior") or ""),
-    "instructions": [str(item) for item in _RAW_INTERACTION_CONTRACT_INSTRUCTIONS if str(item).strip()],
+    "confirmation_policy": str(
+        _RAW_INTERACTION_CONTRACT.get("confirmation_policy") or ""
+    ),
+    "selection_behavior": str(
+        _RAW_INTERACTION_CONTRACT.get("selection_behavior") or ""
+    ),
+    "instructions": [
+        str(item)
+        for item in _RAW_INTERACTION_CONTRACT_INSTRUCTIONS
+        if str(item).strip()
+    ],
 }
 
 _RAW_ID_PREFIX_QUESTION = _expect_init_mapping(
     _INIT_INTERVIEW_CONFIG.get("id_prefix_question"),
     message="Invalid init interview config: missing id_prefix_question mapping.",
 )
-_ID_PREFIX_QUESTION_LABEL = str(_RAW_ID_PREFIX_QUESTION.get("label") or "Requirement ID prefix")
+_ID_PREFIX_QUESTION_LABEL = str(
+    _RAW_ID_PREFIX_QUESTION.get("label") or "Requirement ID prefix"
+)
 _ID_PREFIX_PROMPT_SUFFIX = str(_RAW_ID_PREFIX_QUESTION.get("prompt_suffix") or "")
-_ID_PREFIX_CUSTOM_ANSWER_PROMPT = str(_RAW_ID_PREFIX_QUESTION.get("custom_answer_prompt") or "")
+_ID_PREFIX_CUSTOM_ANSWER_PROMPT = str(
+    _RAW_ID_PREFIX_QUESTION.get("custom_answer_prompt") or ""
+)
 _ID_PREFIX_PROJECT_SPECIFIC_DESCRIPTION = str(
     _RAW_ID_PREFIX_QUESTION.get("project_specific_description") or ""
 )
-_ID_PREFIX_INFERRED_DESCRIPTION = str(_RAW_ID_PREFIX_QUESTION.get("inferred_description") or "")
+_ID_PREFIX_INFERRED_DESCRIPTION = str(
+    _RAW_ID_PREFIX_QUESTION.get("inferred_description") or ""
+)
 _ID_PREFIX_INFERRED_DESCRIPTION_WHEN_PROJECT_SPECIFIC = str(
     _RAW_ID_PREFIX_QUESTION.get("inferred_description_when_project_specific") or ""
 )
 _ID_PREFIX_BASE_OPTIONS = _load_init_option_list("id_prefix_question", "options")
 
-_BOOTSTRAP_CHAT_FIELDS, _BOOTSTRAP_CHAT_FIELD_CONFIGS = _load_init_field_section("bootstrap")
-_STARTER_INIT_CHAT_FIELDS, _STARTER_INIT_FIELD_CONFIGS = _load_init_field_section("starter_init")
-_LEGACY_INIT_CHAT_FIELDS, _LEGACY_INIT_FIELD_CONFIGS = _load_init_field_section("legacy_init")
+_BOOTSTRAP_CHAT_FIELDS, _BOOTSTRAP_CHAT_FIELD_CONFIGS = _load_init_field_section(
+    "bootstrap"
+)
+_STARTER_INIT_CHAT_FIELDS, _STARTER_INIT_FIELD_CONFIGS = _load_init_field_section(
+    "starter_init"
+)
+_LEGACY_INIT_CHAT_FIELDS, _LEGACY_INIT_FIELD_CONFIGS = _load_init_field_section(
+    "legacy_init"
+)
 _LEGACY_INIT_OPTION_SETS = _load_init_option_sets("legacy_init")
 
 
@@ -1297,9 +1460,19 @@ def _build_interview_question(
     options: list[dict[str, object]] = []
     seen: set[str] = set()
     option_index_by_key: dict[str, int] = {}
-    normalized_recommended = {str(value).strip().casefold() for value in recommended_values if str(value).strip()}
-    normalized_safe_defaults = {str(value).strip().casefold() for value in safe_default_values if str(value).strip()}
-    normalized_detected_from = [str(item).strip() for item in detected_from if str(item).strip()]
+    normalized_recommended = {
+        str(value).strip().casefold()
+        for value in recommended_values
+        if str(value).strip()
+    }
+    normalized_safe_defaults = {
+        str(value).strip().casefold()
+        for value in safe_default_values
+        if str(value).strip()
+    }
+    normalized_detected_from = [
+        str(item).strip() for item in detected_from if str(item).strip()
+    ]
 
     def add_option(
         *,
@@ -1316,15 +1489,25 @@ def _build_interview_question(
         normalized = text.casefold()
         if normalized in seen:
             existing = options[option_index_by_key[normalized]]
-            if label_text and (existing.get("label") in {None, "", text} or existing.get("kind") == "inferred"):
+            if label_text and (
+                existing.get("label") in {None, "", text}
+                or existing.get("kind") == "inferred"
+            ):
                 existing["label"] = label_text
-            if description and (not existing.get("description") or (kind == "suggested" and existing.get("kind") == "inferred")):
+            if description and (
+                not existing.get("description")
+                or (kind == "suggested" and existing.get("kind") == "inferred")
+            ):
                 existing["description"] = description
             if kind == "suggested" and existing.get("kind") == "inferred":
                 existing["kind"] = "suggested"
             if kind == "inferred" and normalized_detected_from:
                 existing_detected = existing.get("detected_from")
-                merged_detected = list(existing_detected) if isinstance(existing_detected, list) else []
+                merged_detected = (
+                    list(existing_detected)
+                    if isinstance(existing_detected, list)
+                    else []
+                )
                 for item in normalized_detected_from:
                     if item not in merged_detected:
                         merged_detected.append(item)
@@ -1340,8 +1523,12 @@ def _build_interview_question(
             "value": text,
             "label": str(label_text or text),
             "kind": kind,
-            "recommended": (normalized in normalized_recommended) if recommended is None else bool(recommended),
-            "safe_default": (normalized in normalized_safe_defaults) if safe_default is None else bool(safe_default),
+            "recommended": (normalized in normalized_recommended)
+            if recommended is None
+            else bool(recommended),
+            "safe_default": (normalized in normalized_safe_defaults)
+            if safe_default is None
+            else bool(safe_default),
         }
         if description:
             option["description"] = description
@@ -1358,14 +1545,19 @@ def _build_interview_question(
             label_text=str(option.get("label") or "") or None,
             kind="suggested",
             description=str(option.get("description") or "") or None,
-            recommended=bool(option.get("recommended")) if "recommended" in option else None,
-            safe_default=bool(option.get("safe_default")) if "safe_default" in option else None,
+            recommended=bool(option.get("recommended"))
+            if "recommended" in option
+            else None,
+            safe_default=bool(option.get("safe_default"))
+            if "safe_default" in option
+            else None,
         )
 
     default_checked_values = [
         str(option["value"])
         for option in options
-        if allow_multiple and (option.get("kind") == "suggested" or option.get("recommended") is True)
+        if allow_multiple
+        and (option.get("kind") == "suggested" or option.get("recommended") is True)
     ]
 
     return {
@@ -1382,17 +1574,25 @@ def _build_interview_question(
         },
         "custom_answer_prompt": custom_answer_prompt,
         "options": options,
-        "inferred_answers": [str(item) for item in inferred_answers if str(item).strip()],
+        "inferred_answers": [
+            str(item) for item in inferred_answers if str(item).strip()
+        ],
         "option_annotations": {
-            "recommended_values": [str(item) for item in recommended_values if str(item).strip()],
-            "safe_default_values": [str(item) for item in safe_default_values if str(item).strip()],
+            "recommended_values": [
+                str(item) for item in recommended_values if str(item).strip()
+            ],
+            "safe_default_values": [
+                str(item) for item in safe_default_values if str(item).strip()
+            ],
             "detected_from": list(normalized_detected_from),
             "default_checked_values": default_checked_values,
         },
     }
 
 
-def _group_interview_questions(questions: list[dict[str, object]]) -> list[dict[str, object]]:
+def _group_interview_questions(
+    questions: list[dict[str, object]],
+) -> list[dict[str, object]]:
     grouped: dict[str, dict[str, object]] = {}
     ordered_groups: list[str] = []
     for question in questions:
@@ -1417,10 +1617,14 @@ def _build_interview_interaction_contract() -> dict[str, object]:
     }
 
 
-def _build_interview_flow(question_groups: list[dict[str, object]]) -> list[dict[str, object]]:
+def _build_interview_flow(
+    question_groups: list[dict[str, object]],
+) -> list[dict[str, object]]:
     flow: list[dict[str, object]] = []
     for step_index, group in enumerate(question_groups, start=1):
-        questions = group.get("questions") if isinstance(group.get("questions"), list) else []
+        questions = (
+            group.get("questions") if isinstance(group.get("questions"), list) else []
+        )
         flow.append(
             {
                 "step": step_index,
@@ -1431,16 +1635,30 @@ def _build_interview_flow(question_groups: list[dict[str, object]]) -> list[dict
                 "question_fields": [
                     str(question.get("field") or "")
                     for question in questions
-                    if isinstance(question, dict) and str(question.get("field") or "").strip()
+                    if isinstance(question, dict)
+                    and str(question.get("field") or "").strip()
                 ],
                 "questions": [
                     {
                         "field": str(question.get("field") or ""),
                         "label": str(question.get("label") or ""),
-                        "allow_multiple": bool((question.get("selection_model") or {}).get("allow_multiple")),
-                        "allow_custom": bool((question.get("selection_model") or {}).get("allow_custom")),
-                        "allow_skip": bool((question.get("selection_model") or {}).get("allow_skip")),
-                        "default_checked_values": list((question.get("option_annotations") or {}).get("default_checked_values") or []),
+                        "allow_multiple": bool(
+                            (question.get("selection_model") or {}).get(
+                                "allow_multiple"
+                            )
+                        ),
+                        "allow_custom": bool(
+                            (question.get("selection_model") or {}).get("allow_custom")
+                        ),
+                        "allow_skip": bool(
+                            (question.get("selection_model") or {}).get("allow_skip")
+                        ),
+                        "default_checked_values": list(
+                            (question.get("option_annotations") or {}).get(
+                                "default_checked_values"
+                            )
+                            or []
+                        ),
                     }
                     for question in questions
                     if isinstance(question, dict)
@@ -1501,11 +1719,17 @@ def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
                 _append_unique(test_primary, _format_command(f"npm run {script_name}"))
         for script_name in ("test:integration", "integration", "e2e"):
             if script_name in package_scripts:
-                _append_unique(test_integration, _format_command(f"npm run {script_name}"))
+                _append_unique(
+                    test_integration, _format_command(f"npm run {script_name}")
+                )
         for script_name in ("lint", "check"):
             if script_name in package_scripts:
                 _append_unique(test_lint, _format_command(f"npm run {script_name}"))
-        if (repo_root / "package-lock.json").exists() or (repo_root / "pnpm-lock.yaml").exists() or (repo_root / "yarn.lock").exists():
+        if (
+            (repo_root / "package-lock.json").exists()
+            or (repo_root / "pnpm-lock.yaml").exists()
+            or (repo_root / "yarn.lock").exists()
+        ):
             _append_unique(dev_environment, _format_command("npm install"))
 
     make_targets = _extract_make_targets(repo_root)
@@ -1536,11 +1760,21 @@ def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
         if (repo_root / "uv.lock").exists() or "uv run" in pyproject_text:
             _append_unique(dev_environment, _format_command("uv sync --extra dev"))
         elif "[project]" in pyproject_text or "[build-system]" in pyproject_text:
-            _append_unique(dev_environment, _format_command("python -m pip install -e ."))
+            _append_unique(
+                dev_environment, _format_command("python -m pip install -e .")
+            )
 
-    if (repo_root / "tests").exists() or (repo_root / "pytest.ini").exists() or (pyproject_text and "pytest" in pyproject_text):
-        if (repo_root / "uv.lock").exists() or (pyproject_text and "[tool.pytest.ini_options]" in pyproject_text):
-            _append_unique(test_primary, _format_command("uv run --extra dev pytest -q"))
+    if (
+        (repo_root / "tests").exists()
+        or (repo_root / "pytest.ini").exists()
+        or (pyproject_text and "pytest" in pyproject_text)
+    ):
+        if (repo_root / "uv.lock").exists() or (
+            pyproject_text and "[tool.pytest.ini_options]" in pyproject_text
+        ):
+            _append_unique(
+                test_primary, _format_command("uv run --extra dev pytest -q")
+            )
         else:
             _append_unique(test_primary, _format_command("pytest -q"))
 
@@ -1565,11 +1799,17 @@ def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
         _append_unique(test_primary, _format_command("go test ./..."))
 
     if not test_integration and dev_smoke:
-        notes.append("Smoke coverage was detected under the development skill; keep `/test` focused on repeatable automated checks.")
+        notes.append(
+            "Smoke coverage was detected under the development skill; keep `/test` focused on repeatable automated checks."
+        )
     if not detected_sources:
-        notes.append("No common project-command sources were detected automatically; replace the placeholders below with the repository's real commands.")
+        notes.append(
+            "No common project-command sources were detected automatically; replace the placeholders below with the repository's real commands."
+        )
     else:
-        notes.append("Review the generated commands and tighten them to the repository's canonical workflows before relying on them in automation.")
+        notes.append(
+            "Review the generated commands and tighten them to the repository's canonical workflows before relying on them in automation."
+        )
 
     result = {
         "detected_sources": detected_sources,
@@ -1590,29 +1830,64 @@ def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
     return result
 
 
-def _render_project_skill_content_from_hints(hints: dict[str, list[str]]) -> dict[str, str]:
+def _render_project_skill_content_from_hints(
+    hints: dict[str, list[str]],
+) -> dict[str, str]:
     return {
         ".github/skills/dev/SKILL.md": _render_bundle_template(
             "templates/dev-skill.md",
             {
                 "AGENT_WORKFLOW_PATH": "bash ./agent-workflow.sh",
-                "DETECTED_SOURCES": _markdown_list(hints["detected_sources"], "No common command source files were detected automatically."),
-                "ENVIRONMENT_SETUP": _markdown_list(hints["dev_environment"], "No canonical environment setup command was detected yet. Replace this with the repository's real setup step."),
-                "BUILD_COMMANDS": _markdown_list(hints["dev_build"], "No canonical build command was detected yet. Replace this with the repository's real build step."),
-                "RUN_COMMANDS": _markdown_list(hints["dev_run"], "No canonical run or dev-server command was detected yet. Replace this with the repository's real run step."),
-                "SMOKE_COMMANDS": _markdown_list(hints["dev_smoke"], "No smoke-test command was detected yet. Add the repository's primary smoke path here if one exists."),
-                "NOTES": _markdown_list(hints["notes"], "Review and edit this generated skill after bootstrap."),
+                "DETECTED_SOURCES": _markdown_list(
+                    hints["detected_sources"],
+                    "No common command source files were detected automatically.",
+                ),
+                "ENVIRONMENT_SETUP": _markdown_list(
+                    hints["dev_environment"],
+                    "No canonical environment setup command was detected yet. Replace this with the repository's real setup step.",
+                ),
+                "BUILD_COMMANDS": _markdown_list(
+                    hints["dev_build"],
+                    "No canonical build command was detected yet. Replace this with the repository's real build step.",
+                ),
+                "RUN_COMMANDS": _markdown_list(
+                    hints["dev_run"],
+                    "No canonical run or dev-server command was detected yet. Replace this with the repository's real run step.",
+                ),
+                "SMOKE_COMMANDS": _markdown_list(
+                    hints["dev_smoke"],
+                    "No smoke-test command was detected yet. Add the repository's primary smoke path here if one exists.",
+                ),
+                "NOTES": _markdown_list(
+                    hints["notes"],
+                    "Review and edit this generated skill after bootstrap.",
+                ),
             },
         ),
         ".github/skills/test/SKILL.md": _render_bundle_template(
             "templates/test-skill.md",
             {
                 "AGENT_WORKFLOW_PATH": "bash ./agent-workflow.sh",
-                "DETECTED_SOURCES": _markdown_list(hints["detected_sources"], "No common command source files were detected automatically."),
-                "PRIMARY_TEST_COMMANDS": _markdown_list(hints["test_primary"], "No primary automated test command was detected yet. Replace this with the repository's real test command."),
-                "INTEGRATION_TEST_COMMANDS": _markdown_list(hints["test_integration"], "No dedicated integration or end-to-end test command was detected yet. Add one here if the repository has it."),
-                "LINT_AND_CHECK_COMMANDS": _markdown_list(hints["test_lint"], "No lint or check command was detected yet. Add one here if the repository uses it."),
-                "NOTES": _markdown_list(hints["notes"], "Review and edit this generated skill after bootstrap."),
+                "DETECTED_SOURCES": _markdown_list(
+                    hints["detected_sources"],
+                    "No common command source files were detected automatically.",
+                ),
+                "PRIMARY_TEST_COMMANDS": _markdown_list(
+                    hints["test_primary"],
+                    "No primary automated test command was detected yet. Replace this with the repository's real test command.",
+                ),
+                "INTEGRATION_TEST_COMMANDS": _markdown_list(
+                    hints["test_integration"],
+                    "No dedicated integration or end-to-end test command was detected yet. Add one here if the repository has it.",
+                ),
+                "LINT_AND_CHECK_COMMANDS": _markdown_list(
+                    hints["test_lint"],
+                    "No lint or check command was detected yet. Add one here if the repository uses it.",
+                ),
+                "NOTES": _markdown_list(
+                    hints["notes"],
+                    "Review and edit this generated skill after bootstrap.",
+                ),
             },
         ),
     }
@@ -1625,38 +1900,64 @@ def _requirements_index_for_agent_workflow(repo_root: Path) -> str | None:
     return None
 
 
-def _build_agent_workflow_plan(repo_root: Path, hints: dict[str, list[str]]) -> dict[str, object]:
+def _build_agent_workflow_plan(
+    repo_root: Path, hints: dict[str, list[str]]
+) -> dict[str, object]:
     requirements_index = _requirements_index_for_agent_workflow(repo_root)
     stages = [
         {
             "id": "environment",
             "label": "Environment setup",
-            "commands": [_strip_command_markup(item) for item in hints["dev_environment"] if _strip_command_markup(item)],
+            "commands": [
+                _strip_command_markup(item)
+                for item in hints["dev_environment"]
+                if _strip_command_markup(item)
+            ],
         },
         {
             "id": "build",
             "label": "Build",
-            "commands": [_strip_command_markup(item) for item in hints["dev_build"] if _strip_command_markup(item)],
+            "commands": [
+                _strip_command_markup(item)
+                for item in hints["dev_build"]
+                if _strip_command_markup(item)
+            ],
         },
         {
             "id": "smoke",
             "label": "Smoke",
-            "commands": [_strip_command_markup(item) for item in hints["dev_smoke"] if _strip_command_markup(item)],
+            "commands": [
+                _strip_command_markup(item)
+                for item in hints["dev_smoke"]
+                if _strip_command_markup(item)
+            ],
         },
         {
             "id": "primary-tests",
             "label": "Primary tests",
-            "commands": [_strip_command_markup(item) for item in hints["test_primary"] if _strip_command_markup(item)],
+            "commands": [
+                _strip_command_markup(item)
+                for item in hints["test_primary"]
+                if _strip_command_markup(item)
+            ],
         },
         {
             "id": "integration-tests",
             "label": "Integration tests",
-            "commands": [_strip_command_markup(item) for item in hints["test_integration"] if _strip_command_markup(item)],
+            "commands": [
+                _strip_command_markup(item)
+                for item in hints["test_integration"]
+                if _strip_command_markup(item)
+            ],
         },
         {
             "id": "lint",
             "label": "Lint and checks",
-            "commands": [_strip_command_markup(item) for item in hints["test_lint"] if _strip_command_markup(item)],
+            "commands": [
+                _strip_command_markup(item)
+                for item in hints["test_lint"]
+                if _strip_command_markup(item)
+            ],
         },
     ]
     if requirements_index is not None:
@@ -1682,7 +1983,10 @@ def _build_agent_workflow_plan(repo_root: Path, hints: dict[str, list[str]]) -> 
             normalized = _strip_command_markup(item)
             if normalized and normalized not in preflight_commands:
                 preflight_commands.append(normalized)
-    if requirements_index is not None and "rqmd --verify-summaries --non-interactive" not in preflight_commands:
+    if (
+        requirements_index is not None
+        and "rqmd --verify-summaries --non-interactive" not in preflight_commands
+    ):
         preflight_commands.append("rqmd --verify-summaries --non-interactive")
 
     profile_candidates: dict[str, list[str]] = {
@@ -1719,7 +2023,9 @@ def _build_agent_workflow_plan(repo_root: Path, hints: dict[str, list[str]]) -> 
     }
 
 
-def _render_agent_workflow_content_from_hints(repo_root: Path, hints: dict[str, list[str]]) -> str:
+def _render_agent_workflow_content_from_hints(
+    repo_root: Path, hints: dict[str, list[str]]
+) -> str:
     plan = _build_agent_workflow_plan(repo_root, hints)
     return _render_bundle_template(
         "templates/agent-workflow.sh",
@@ -1734,7 +2040,9 @@ def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
     return _render_project_skill_content_from_hints(hints)
 
 
-def _parse_interview_answer_entry(raw: str, allowed_fields: tuple[str, ...]) -> tuple[str, str]:
+def _parse_interview_answer_entry(
+    raw: str, allowed_fields: tuple[str, ...]
+) -> tuple[str, str]:
     text = str(raw).strip()
     if "=" not in text:
         raise click.ClickException(
@@ -1779,9 +2087,15 @@ def _apply_command_answers(
     return updated
 
 
-def _build_bootstrap_chat_questions(hints: dict[str, list[str]]) -> list[dict[str, object]]:
+def _build_bootstrap_chat_questions(
+    hints: dict[str, list[str]],
+) -> list[dict[str, object]]:
     questions: list[dict[str, object]] = []
-    field_detected_from = hints.get("field_detected_from") if isinstance(hints.get("field_detected_from"), dict) else {}
+    field_detected_from = (
+        hints.get("field_detected_from")
+        if isinstance(hints.get("field_detected_from"), dict)
+        else {}
+    )
     for field in _BOOTSTRAP_CHAT_FIELDS:
         inferred = hints.get(field) if isinstance(hints.get(field), list) else []
         config = _BOOTSTRAP_CHAT_FIELD_CONFIGS[field]
@@ -1797,9 +2111,15 @@ def _build_bootstrap_chat_questions(hints: dict[str, list[str]]) -> list[dict[st
                 allow_skip=bool(config["allow_skip"]),
                 first_selected_is_canonical=bool(config["first_selected_is_canonical"]),
                 custom_answer_prompt=str(config["custom_answer_prompt"]),
-                detected_from=list(field_detected_from.get(field, [])) if isinstance(field_detected_from, dict) else [],
-                recommended_values=[str(item) for item in inferred if str(item).strip()],
-                safe_default_values=[str(inferred[0])] if inferred and field != "notes" else [],
+                detected_from=list(field_detected_from.get(field, []))
+                if isinstance(field_detected_from, dict)
+                else [],
+                recommended_values=[
+                    str(item) for item in inferred if str(item).strip()
+                ],
+                safe_default_values=[str(inferred[0])]
+                if inferred and field != "notes"
+                else [],
             )
         )
     return questions
@@ -1856,9 +2176,13 @@ def _build_legacy_init_chat_questions(
             allow_multiple=bool(requirements_dir_config["allow_multiple"]),
             allow_custom=bool(requirements_dir_config["allow_custom"]),
             allow_skip=bool(requirements_dir_config["allow_skip"]),
-            first_selected_is_canonical=bool(requirements_dir_config["first_selected_is_canonical"]),
+            first_selected_is_canonical=bool(
+                requirements_dir_config["first_selected_is_canonical"]
+            ),
             custom_answer_prompt=str(requirements_dir_config["custom_answer_prompt"]),
-            suggested_options=_legacy_init_requirements_dir_options(repo_root, requirements_dir),
+            suggested_options=_legacy_init_requirements_dir_options(
+                repo_root, requirements_dir
+            ),
         )
     )
     id_prefix_config = _LEGACY_INIT_FIELD_CONFIGS["id_prefix"]
@@ -1881,7 +2205,9 @@ def _build_legacy_init_chat_questions(
             allow_multiple=bool(status_scheme_config["allow_multiple"]),
             allow_custom=bool(status_scheme_config["allow_custom"]),
             allow_skip=bool(status_scheme_config["allow_skip"]),
-            first_selected_is_canonical=bool(status_scheme_config["first_selected_is_canonical"]),
+            first_selected_is_canonical=bool(
+                status_scheme_config["first_selected_is_canonical"]
+            ),
             custom_answer_prompt=str(status_scheme_config["custom_answer_prompt"]),
             suggested_options=_status_scheme_suggested_options(repo_root),
             recommended_values=["canonical"],
@@ -1891,7 +2217,12 @@ def _build_legacy_init_chat_questions(
 
     questions.extend(_build_bootstrap_chat_questions(command_hints))
 
-    issue_mode = "use-gh-if-available" if bool(issue_context.get("used")) or str(issue_context.get("reason") or "") != "gh CLI not found" else "skip-gh-issues"
+    issue_mode = (
+        "use-gh-if-available"
+        if bool(issue_context.get("used"))
+        or str(issue_context.get("reason") or "") != "gh CLI not found"
+        else "skip-gh-issues"
+    )
     for field in _LEGACY_INIT_CHAT_FIELDS:
         if field in {"requirements_dir", "id_prefix", "status_scheme"}:
             continue
@@ -1934,7 +2265,9 @@ def _build_legacy_init_chat_questions(
                 first_selected_is_canonical=bool(config["first_selected_is_canonical"]),
                 custom_answer_prompt=str(config["custom_answer_prompt"]),
                 suggested_options=suggested_options,
-                detected_from=[str(area["evidence"]) for area in source_areas] if field == "domain_focus" else [],
+                detected_from=[str(area["evidence"]) for area in source_areas]
+                if field == "domain_focus"
+                else [],
                 recommended_values=inferred_answers,
                 safe_default_values=(
                     ["readmes-first"]
@@ -1960,14 +2293,8 @@ def _match_domain_focus_answers(
         return source_areas
     matched: list[dict[str, str]] = []
     seen_titles: set[str] = set()
-    area_lookup = {
-        str(area["title"]).casefold(): area
-        for area in source_areas
-    }
-    slug_lookup = {
-        str(area["slug"]).casefold(): area
-        for area in source_areas
-    }
+    area_lookup = {str(area["title"]).casefold(): area for area in source_areas}
+    slug_lookup = {str(area["slug"]).casefold(): area for area in source_areas}
     for raw in values:
         key = str(raw).strip().casefold()
         if not key:
@@ -1975,7 +2302,10 @@ def _match_domain_focus_answers(
         area = area_lookup.get(key) or slug_lookup.get(key)
         if area is None:
             title = str(raw).strip()
-            slug = re.sub(r"[^a-z0-9]+", "-", title.casefold()).strip("-") or "custom-domain"
+            slug = (
+                re.sub(r"[^a-z0-9]+", "-", title.casefold()).strip("-")
+                or "custom-domain"
+            )
             area = {
                 "title": title,
                 "slug": slug,
@@ -2003,7 +2333,9 @@ def _allocate_sequential_id(prefix: str, next_number: int) -> tuple[str, int]:
     return f"{prefix}-{next_number:03d}", next_number + 1
 
 
-def _detect_legacy_source_areas(repo_root: Path, max_source_areas: int) -> list[dict[str, str]]:
+def _detect_legacy_source_areas(
+    repo_root: Path, max_source_areas: int
+) -> list[dict[str, str]]:
     candidates: list[dict[str, str]] = []
     seen_slugs: set[str] = set()
 
@@ -2029,7 +2361,15 @@ def _detect_legacy_source_areas(repo_root: Path, max_source_areas: int) -> list[
                 add_candidate(path.name, f"src/{path.name}")
 
     if not candidates:
-        for dirname in ("app", "apps", "lib", "server", "client", "backend", "frontend"):
+        for dirname in (
+            "app",
+            "apps",
+            "lib",
+            "server",
+            "client",
+            "backend",
+            "frontend",
+        ):
             path = repo_root / dirname
             if path.is_dir():
                 add_candidate(dirname, dirname)
@@ -2042,7 +2382,9 @@ def _detect_legacy_source_areas(repo_root: Path, max_source_areas: int) -> list[
     return candidates[:max_source_areas]
 
 
-def _collect_github_issue_context(repo_root: Path, max_issue_requirements: int) -> dict[str, object]:
+def _collect_github_issue_context(
+    repo_root: Path, max_issue_requirements: int
+) -> dict[str, object]:
     gh_executable = shutil.which("gh")
     if gh_executable is None:
         return {
@@ -2080,7 +2422,9 @@ def _collect_github_issue_context(repo_root: Path, max_issue_requirements: int) 
         return {
             "available": True,
             "used": False,
-            "reason": (result.stderr or result.stdout or "gh issue list failed").strip(),
+            "reason": (
+                result.stderr or result.stdout or "gh issue list failed"
+            ).strip(),
             "issues": [],
         }
 
@@ -2105,7 +2449,11 @@ def _collect_github_issue_context(repo_root: Path, max_issue_requirements: int) 
                     "number": int(item.get("number") or 0),
                     "title": str(item.get("title") or "").strip(),
                     "state": str(item.get("state") or "open"),
-                    "labels": [str(label.get("name") or "") for label in labels if isinstance(label, dict)],
+                    "labels": [
+                        str(label.get("name") or "")
+                        for label in labels
+                        if isinstance(label, dict)
+                    ],
                 }
             )
     return {
@@ -2124,21 +2472,23 @@ def _build_legacy_init_readme(
 ) -> str:
     notes = interview_notes or {}
     legacy_preferences: list[str] = []
-    for field in ("docs_review", "source_grokking", "test_grokking", "issue_backlog", "legacy_notes"):
+    for field in (
+        "docs_review",
+        "source_grokking",
+        "test_grokking",
+        "issue_backlog",
+        "legacy_notes",
+    ):
         for item in notes.get(field, []):
             text = str(item).strip()
             if text:
                 legacy_preferences.append(text)
-    extra_sections = [
-        render_startup_message("legacy-readme-seeded-note.md").strip()
-    ]
+    extra_sections = [render_startup_message("legacy-readme-seeded-note.md").strip()]
     if legacy_preferences:
         extra_sections.append(
             render_startup_message(
                 "legacy-readme-interview-notes.md",
-                {
-                    "NOTES_BULLETS": _markdown_list(legacy_preferences, "")
-                },
+                {"NOTES_BULLETS": _markdown_list(legacy_preferences, "")},
             ).strip()
         )
     return render_requirements_index(
@@ -2159,19 +2509,39 @@ def _build_legacy_init_files(
 ) -> dict[str, object]:
     rules = _load_legacy_init_rules()
     command_hints = _detect_project_command_hints(repo_root)
-    source_areas = _detect_legacy_source_areas(repo_root, int(rules["max_source_areas"]))
-    issue_context = _collect_github_issue_context(repo_root, int(rules["max_issue_requirements"]))
+    source_areas = _detect_legacy_source_areas(
+        repo_root, int(rules["max_source_areas"])
+    )
+    issue_context = _collect_github_issue_context(
+        repo_root, int(rules["max_issue_requirements"])
+    )
     legacy_answer_map = _collect_interview_answers(
         interview_answers,
         _BOOTSTRAP_CHAT_FIELDS + _LEGACY_INIT_CHAT_FIELDS,
     )
 
-    prefix = id_prefixes[0] if id_prefixes else str(legacy_answer_map.get("id_prefix", ["REQ"])[0]).strip().upper().rstrip("-")
-    status_scheme_raw = str(legacy_answer_map.get("status_scheme", ["canonical"])[0]).strip()
-    status_scheme_key, selected_statuses = _resolve_status_scheme(repo_root, status_scheme_raw)
+    prefix = (
+        id_prefixes[0]
+        if id_prefixes
+        else str(legacy_answer_map.get("id_prefix", ["REQ"])[0])
+        .strip()
+        .upper()
+        .rstrip("-")
+    )
+    status_scheme_raw = str(
+        legacy_answer_map.get("status_scheme", ["canonical"])[0]
+    ).strip()
+    status_scheme_key, selected_statuses = _resolve_status_scheme(
+        repo_root, status_scheme_raw
+    )
     command_hints = _apply_command_answers(command_hints, legacy_answer_map)
-    source_areas = _match_domain_focus_answers(source_areas, legacy_answer_map.get("domain_focus", []))
-    if any(value == "skip-gh-issues" for value in legacy_answer_map.get("issue_backlog", [])):
+    source_areas = _match_domain_focus_answers(
+        source_areas, legacy_answer_map.get("domain_focus", [])
+    )
+    if any(
+        value == "skip-gh-issues"
+        for value in legacy_answer_map.get("issue_backlog", [])
+    ):
         issue_context = {
             "used": False,
             "reason": "skipped by bootstrap interview",
@@ -2212,13 +2582,22 @@ def _build_legacy_init_files(
             scope="initial legacy-init seed for the repository's canonical developer workflows.",
             setup_id=workflow_ids[0],
             validation_id=workflow_ids[1],
-            setup_commands=command_hints["dev_environment"] + command_hints["dev_build"] + command_hints["dev_run"],
-            validation_commands=command_hints["dev_smoke"] + command_hints["test_primary"] + command_hints["test_integration"] + command_hints["test_lint"],
+            setup_commands=command_hints["dev_environment"]
+            + command_hints["dev_build"]
+            + command_hints["dev_run"],
+            validation_commands=command_hints["dev_smoke"]
+            + command_hints["test_primary"]
+            + command_hints["test_integration"]
+            + command_hints["test_lint"],
         ),
     }
 
     issue_entry: dict[str, str] | None = None
-    issues = issue_context.get("issues") if isinstance(issue_context.get("issues"), list) else []
+    issues = (
+        issue_context.get("issues")
+        if isinstance(issue_context.get("issues"), list)
+        else []
+    )
     if issues:
         issue_ids: list[str] = []
         issue_prefix = f"{prefix}-ISSUE"
@@ -2236,9 +2615,13 @@ def _build_legacy_init_files(
             ),
         }
 
-    selected_domains = source_domain_entries[: max(int(rules["max_domain_files"]) - 1, 1)]
+    selected_domains = source_domain_entries[
+        : max(int(rules["max_domain_files"]) - 1, 1)
+    ]
     domain_files_for_index = [*selected_domains, workflow_entry]
-    if issue_entry is not None and len(domain_files_for_index) < int(rules["max_domain_files"]):
+    if issue_entry is not None and len(domain_files_for_index) < int(
+        rules["max_domain_files"]
+    ):
         domain_files_for_index.append(issue_entry)
 
     readme_content = _build_legacy_init_readme(
@@ -2280,7 +2663,9 @@ def _build_legacy_init_files(
     }
 
 
-def _write_legacy_init_files(repo_root: Path, proposed_files: list[dict[str, str]]) -> list[str]:
+def _write_legacy_init_files(
+    repo_root: Path, proposed_files: list[dict[str, str]]
+) -> list[str]:
     created_files: list[str] = []
     domain_paths: list[Path] = []
     for entry in proposed_files:
@@ -2312,14 +2697,22 @@ def _build_or_apply_legacy_init_payload(
     )
     criteria_dir = Path(
         requirements_dir_input
-        or str(legacy_answer_map.get("requirements_dir", [str(rules["default_requirements_dir"])] )[0])
+        or str(
+            legacy_answer_map.get(
+                "requirements_dir", [str(rules["default_requirements_dir"])]
+            )[0]
+        )
     )
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
 
-    existing_markdown = sorted(criteria_dir.glob("*.md")) if criteria_dir.exists() else []
+    existing_markdown = (
+        sorted(criteria_dir.glob("*.md")) if criteria_dir.exists() else []
+    )
     if apply and existing_markdown:
-        display = ", ".join(format_path_display(path, repo_root) for path in existing_markdown)
+        display = ", ".join(
+            format_path_display(path, repo_root) for path in existing_markdown
+        )
         raise click.ClickException(
             "--workflow-mode init-legacy --write requires an empty target requirements directory. "
             f"Found existing markdown files: {display}"
@@ -2357,7 +2750,9 @@ def _build_or_apply_legacy_init_payload(
             questions=legacy_questions,
             applied_answers=plan.get("interview_answers", {}),
             extras={
-                "detected_sources": list(plan["detected_context"].get("detected_command_sources", [])),
+                "detected_sources": list(
+                    plan["detected_context"].get("detected_command_sources", [])
+                ),
                 "detected_source_areas": [
                     str(area.get("title") or "")
                     for area in plan["detected_context"].get("source_areas", [])
@@ -2367,7 +2762,9 @@ def _build_or_apply_legacy_init_payload(
         ),
     }
     if apply:
-        payload["created_files"] = _write_legacy_init_files(repo_root, plan["proposed_files"])
+        payload["created_files"] = _write_legacy_init_files(
+            repo_root, plan["proposed_files"]
+        )
         payload["changed_count"] = len(payload["created_files"])
         payload["mode"] = "legacy-init-apply"
     return payload
@@ -2463,7 +2860,11 @@ def _bundle_files_for_preset(preset: str) -> dict[str, str]:
 
 
 def _resolve_brainstorm_file(repo_root: Path, brainstorm_file: str | None) -> Path:
-    candidate = Path(brainstorm_file) if brainstorm_file else repo_root / "docs" / "brainstorm.md"
+    candidate = (
+        Path(brainstorm_file)
+        if brainstorm_file
+        else repo_root / "docs" / "brainstorm.md"
+    )
     if not candidate.is_absolute():
         candidate = (repo_root / candidate).resolve()
     if not candidate.exists() or not candidate.is_file():
@@ -2481,7 +2882,9 @@ def _extract_brainstorm_blocks(brainstorm_path: Path) -> list[dict[str, str | No
     def flush_paragraph() -> None:
         if not paragraph_lines:
             return
-        text = " ".join(line.strip() for line in paragraph_lines if line.strip()).strip()
+        text = " ".join(
+            line.strip() for line in paragraph_lines if line.strip()
+        ).strip()
         paragraph_lines.clear()
         if not text or text == "##":
             return
@@ -2540,7 +2943,9 @@ def _suggest_priority_for_brainstorm(
     for tokens, priority_rank in rules["priority_hints"]:
         if any(token in haystack for token in tokens):
             return _priority_label_for_rank(priority_labels, priority_rank)
-    return _priority_label_for_rank(priority_labels, int(rules["default_priority_rank"]))
+    return _priority_label_for_rank(
+        priority_labels, int(rules["default_priority_rank"])
+    )
 
 
 def _suggest_target_doc_for_brainstorm(
@@ -2644,8 +3049,7 @@ def _build_brainstorm_plan_payload(
 
     configured_priority_order = runtime_priority_labels
     priority_order = {
-        priority: index
-        for index, priority in enumerate(configured_priority_order)
+        priority: index for index, priority in enumerate(configured_priority_order)
     }
     proposals.sort(
         key=lambda item: (
@@ -2686,10 +3090,14 @@ def _install_agent_bundle(
 
     files = _bundle_files_for_preset(preset)
     detected_hints = _detect_project_command_hints(repo_root)
-    applied_answers = _collect_interview_answers(interview_answers, _BOOTSTRAP_CHAT_FIELDS)
+    applied_answers = _collect_interview_answers(
+        interview_answers, _BOOTSTRAP_CHAT_FIELDS
+    )
     resolved_hints = _apply_command_answers(detected_hints, applied_answers)
     generated_support_files = {
-        "agent-workflow.sh": _render_agent_workflow_content_from_hints(repo_root, resolved_hints),
+        "agent-workflow.sh": _render_agent_workflow_content_from_hints(
+            repo_root, resolved_hints
+        ),
     }
     generated_skill_files = _render_project_skill_content_from_hints(resolved_hints)
     files.update(generated_support_files)
@@ -2740,7 +3148,9 @@ def _install_agent_bundle(
                 should_write = True
             elif operation == "upgrade":
                 current_text = _read_text_if_exists(target)
-                current_digest = _sha256_text(current_text) if current_text is not None else None
+                current_digest = (
+                    _sha256_text(current_text) if current_text is not None else None
+                )
                 previous_digest = previous_managed_hashes.get(rel_path)
                 if previous_digest is None:
                     should_write = False
@@ -2780,7 +3190,9 @@ def _install_agent_bundle(
         preset,
         managed_file_hashes=managed_hashes_after,
     )
-    metadata_content = _normalize_bundle_file_content(json.dumps(metadata_payload, indent=2, sort_keys=True))
+    metadata_content = _normalize_bundle_file_content(
+        json.dumps(metadata_payload, indent=2, sort_keys=True)
+    )
 
     if metadata_should_write:
         if not dry_run:
@@ -2819,11 +3231,15 @@ def _install_agent_bundle(
         "generated_skill_previews": [
             {"path": path, "content": content}
             for path, content in sorted(generated_skill_files.items())
-        ] if chat_mode else [],
+        ]
+        if chat_mode
+        else [],
         "generated_support_previews": [
             {"path": path, "content": content}
             for path, content in sorted(generated_support_files.items())
-        ] if chat_mode else [],
+        ]
+        if chat_mode
+        else [],
         "created_files": created_files,
         "overwritten_files": overwritten_files,
         "skipped_existing": skipped_existing,
@@ -2831,7 +3247,9 @@ def _install_agent_bundle(
     }
 
 
-def _extract_domain_body(path: Path, id_prefixes: tuple[str, ...], max_chars: int) -> dict[str, object] | None:
+def _extract_domain_body(
+    path: Path, id_prefixes: tuple[str, ...], max_chars: int
+) -> dict[str, object] | None:
     header_pattern = r"|".join(id_prefixes)
     requirement_header = re.compile(rf"^###\s+(?:{header_pattern})-[A-Z0-9-]+:\s*")
 
@@ -2886,7 +3304,9 @@ def _extract_domain_body(path: Path, id_prefixes: tuple[str, ...], max_chars: in
     }
 
 
-def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path | None = None) -> None:
+def _emit(
+    payload: dict[str, object], json_output: bool, json_output_file: Path | None = None
+) -> None:
     if json_output_file is not None:
         _write_json_payload_file(payload, json_output_file)
 
@@ -2916,7 +3336,11 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
             click.echo(render_startup_message("preview-only.md").rstrip())
         issue_discovery = payload.get("issue_discovery")
         issue_details = issue_discovery if isinstance(issue_discovery, dict) else {}
-        issue_status = "used" if issue_details.get("used") else issue_details.get("reason", "not used")
+        issue_status = (
+            "used"
+            if issue_details.get("used")
+            else issue_details.get("reason", "not used")
+        )
         click.echo(f"GitHub issue discovery: {issue_status}")
         if mode == "legacy-init-plan":
             click.echo(f"proposed files: {payload.get('total_files')}")
@@ -2933,8 +3357,14 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
         endpoint = payload.get("endpoint")
         reachable = payload.get("reachable", False)
         api_key_ok = payload.get("api_key_configured", False)
-        status_icon = click.style("✓", fg="green") if (configured and reachable) else click.style("✗", fg="red")
-        click.echo(f"{status_icon} Telemetry endpoint: {endpoint or '(not configured)'}")
+        status_icon = (
+            click.style("✓", fg="green")
+            if (configured and reachable)
+            else click.style("✗", fg="red")
+        )
+        click.echo(
+            f"{status_icon} Telemetry endpoint: {endpoint or '(not configured)'}"
+        )
         if configured:
             click.echo(f"  reachable: {'yes' if reachable else 'no'}")
             click.echo(f"  api key:   {'configured' if api_key_ok else 'not set'}")
@@ -2950,22 +3380,38 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
 
         event_info = payload.get("event") or {}
         artifact_info = payload.get("artifact") or {}
-        event_ok = event_info.get("success", False) if isinstance(event_info, dict) else False
-        artifact_ok = artifact_info.get("success", False) if isinstance(artifact_info, dict) else False
+        event_ok = (
+            event_info.get("success", False) if isinstance(event_info, dict) else False
+        )
+        artifact_ok = (
+            artifact_info.get("success", False)
+            if isinstance(artifact_info, dict)
+            else False
+        )
 
         # Event (Postgres) line
         if event_ok:
-            event_id = event_info.get("event_id", "") if isinstance(event_info, dict) else ""
+            event_id = (
+                event_info.get("event_id", "") if isinstance(event_info, dict) else ""
+            )
             click.echo(f"  {ok} Event (Postgres):  accepted  id={event_id}")
         else:
             click.echo(f"  {fail} Event (Postgres):  failed")
 
         # Artifact (MinIO) line
         if artifact_ok:
-            artifact_id = artifact_info.get("artifact_id", "") if isinstance(artifact_info, dict) else ""
+            artifact_id = (
+                artifact_info.get("artifact_id", "")
+                if isinstance(artifact_info, dict)
+                else ""
+            )
             click.echo(f"  {ok} Artifact (MinIO):  stored    id={artifact_id}")
         else:
-            art_err = artifact_info.get("error", "") if isinstance(artifact_info, dict) else ""
+            art_err = (
+                artifact_info.get("error", "")
+                if isinstance(artifact_info, dict)
+                else ""
+            )
             click.echo(f"  {fail} Artifact (MinIO):  {art_err or 'failed'}")
 
         # Summary
@@ -2973,7 +3419,9 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
         if overall:
             click.echo(f"\n{ok} All checks passed — endpoint: {endpoint}")
         else:
-            message = payload.get("message") or payload.get("error") or "Partial failure"
+            message = (
+                payload.get("message") or payload.get("error") or "Partial failure"
+            )
             click.echo(f"\n{fail} {message}")
             if endpoint:
                 click.echo(f"  endpoint: {endpoint}")
@@ -3003,7 +3451,9 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
                 click.echo(f"- {item}")
         bundle_installation = payload.get("bundle_installation")
         if isinstance(bundle_installation, dict):
-            click.echo(f"workspace bundle: {bundle_installation.get('state', 'unknown')}")
+            click.echo(
+                f"workspace bundle: {bundle_installation.get('state', 'unknown')}"
+            )
             installed_by = bundle_installation.get("installed_by_rqmd_version")
             if isinstance(installed_by, str):
                 click.echo(f"bundle installed by rqmd: {installed_by}")
@@ -3052,7 +3502,9 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
             remaining = len(protected_existing) - len(preview)
             if remaining > 0:
                 click.echo(f"- ... and {remaining} more")
-            click.echo("Upgrade only overwrites files still tracked as rqmd-managed and unchanged since install.")
+            click.echo(
+                "Upgrade only overwrites files still tracked as rqmd-managed and unchanged since install."
+            )
         skipped_existing = payload.get("skipped_existing")
         if isinstance(skipped_existing, list) and skipped_existing:
             click.echo(f"skipped existing files: {len(skipped_existing)}")
@@ -3062,7 +3514,9 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
             remaining = len(skipped_existing) - len(preview)
             if remaining > 0:
                 click.echo(f"- ... and {remaining} more")
-            click.echo("Re-run with `--overwrite-existing` to refresh the managed bundle files.")
+            click.echo(
+                "Re-run with `--overwrite-existing` to refresh the managed bundle files."
+            )
         if payload.get("dry_run") is True:
             click.echo("dry run only: no files were written.")
         return
@@ -3072,11 +3526,14 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
         for item in payload.get("proposals", []):
             if not isinstance(item, dict):
                 continue
-            proposal = item.get("proposal") if isinstance(item.get("proposal"), dict) else {}
+            proposal = (
+                item.get("proposal") if isinstance(item.get("proposal"), dict) else {}
+            )
             click.echo(
                 f"- #{item.get('rank')} {proposal.get('suggested_id')} [{proposal.get('priority')}] -> {proposal.get('target_file')}: {proposal.get('title')}"
             )
         return
+
 
 def _emit_history_report(
     payload: dict[str, object],
@@ -3102,7 +3559,11 @@ def _emit_history_report(
     if report_type == "state":
         click.echo(f"Total Requirements: {summary.get('total_requirements', 0)}")
         click.echo(f"Total Files: {summary.get('total_files', 0)}")
-        by_status = summary.get("by_status") if isinstance(summary.get("by_status"), dict) else {}
+        by_status = (
+            summary.get("by_status")
+            if isinstance(summary.get("by_status"), dict)
+            else {}
+        )
         if by_status:
             click.echo("By Status:")
             for label, count in by_status.items():
@@ -3127,7 +3588,9 @@ def _raise_duplicate_id_error(
             for path, line_number in duplicates[requirement_id]
         )
         duplicate_parts.append(f"{requirement_id} [{locations}]")
-    raise click.ClickException(f"Duplicate requirement IDs found: {'; '.join(duplicate_parts)}")
+    raise click.ClickException(
+        f"Duplicate requirement IDs found: {'; '.join(duplicate_parts)}"
+    )
 
 
 def _build_history_state_report_payload(
@@ -3217,7 +3680,9 @@ def _build_history_action_preview_payload(
     if action == "restore":
         target = manager.resolve_ref(args_value)
         if target is None:
-            raise click.ClickException(f"Unknown --history-action restore target: {args_value!r}")
+            raise click.ClickException(
+                f"Unknown --history-action restore target: {args_value!r}"
+            )
         compare_payload = _build_compare_payload(
             manager=manager,
             ref_a="head",
@@ -3256,14 +3721,20 @@ def _build_history_action_preview_payload(
 
         pair = manager.resolve_two_refs(ref_a, ref_b)
         if pair is None:
-            raise click.ClickException(f"Unknown --history-action replay range: {args_value!r}")
+            raise click.ClickException(
+                f"Unknown --history-action replay range: {args_value!r}"
+            )
         entry_a, entry_b = pair
         idx_a = int(entry_a.get("entry_index", -1))
         idx_b = int(entry_b.get("entry_index", -1))
         if idx_a < 0 or idx_b < 0:
-            raise click.ClickException("Replay preview requires refs that resolve to indexed history entries.")
+            raise click.ClickException(
+                "Replay preview requires refs that resolve to indexed history entries."
+            )
         if idx_b <= idx_a:
-            raise click.ClickException("Replay preview requires an increasing range where end is after start.")
+            raise click.ClickException(
+                "Replay preview requires an increasing range where end is after start."
+            )
 
         compare_payload = _build_compare_payload(
             manager=manager,
@@ -3276,7 +3747,11 @@ def _build_history_action_preview_payload(
             {
                 "entry_index": idx_a + 1 + offset,
                 "commit": item.get("commit"),
-                "stable_id": manager.build_stable_history_id(str(item.get("commit") or "")) if item.get("commit") else None,
+                "stable_id": manager.build_stable_history_id(
+                    str(item.get("commit") or "")
+                )
+                if item.get("commit")
+                else None,
                 "command": item.get("command"),
                 "actor": item.get("actor"),
                 "branch": item.get("branch"),
@@ -3307,7 +3782,9 @@ def _build_history_action_preview_payload(
     if action == "cherry-pick":
         tokens = [token.strip() for token in args_value.split(",") if token.strip()]
         if not tokens:
-            raise click.ClickException("cherry-pick args must include one or more refs separated by commas.")
+            raise click.ClickException(
+                "cherry-pick args must include one or more refs separated by commas."
+            )
 
         picks: list[dict[str, object]] = []
         total_transitions = 0
@@ -3317,7 +3794,9 @@ def _build_history_action_preview_payload(
         for token in tokens:
             entry = manager.resolve_ref(token)
             if entry is None:
-                raise click.ClickException(f"Unknown --history-action cherry-pick target: {token!r}")
+                raise click.ClickException(
+                    f"Unknown --history-action cherry-pick target: {token!r}"
+                )
 
             parent_ref = str(entry.get("parent_commit") or "")
             preview: dict[str, object]
@@ -3349,7 +3828,11 @@ def _build_history_action_preview_payload(
                     "removed": compare_payload.get("removed"),
                 }
 
-            summary = preview.get("summary") if isinstance(preview.get("summary"), dict) else {}
+            summary = (
+                preview.get("summary")
+                if isinstance(preview.get("summary"), dict)
+                else {}
+            )
             total_transitions += int(summary.get("transitions", 0))
             total_added += int(summary.get("added", 0))
             total_removed += int(summary.get("removed", 0))
@@ -3360,7 +3843,11 @@ def _build_history_action_preview_payload(
                     "entry": {
                         "entry_index": entry.get("entry_index"),
                         "commit": entry.get("commit"),
-                        "stable_id": manager.build_stable_history_id(str(entry.get("commit") or "")) if entry.get("commit") else None,
+                        "stable_id": manager.build_stable_history_id(
+                            str(entry.get("commit") or "")
+                        )
+                        if entry.get("commit")
+                        else None,
                         "timestamp": entry.get("timestamp"),
                         "command": entry.get("command"),
                         "actor": entry.get("actor"),
@@ -3467,7 +3954,14 @@ def _resolve_history_view(
     repo_root: Path,
     requirements_dir: Path,
     history_ref: str | None,
-) -> tuple[Path, list[Path], dict[str, object] | None, tempfile.TemporaryDirectory[str] | None, HistoryManager | None, dict[str, object] | None]:
+) -> tuple[
+    Path,
+    list[Path],
+    dict[str, object] | None,
+    tempfile.TemporaryDirectory[str] | None,
+    HistoryManager | None,
+    dict[str, object] | None,
+]:
     if not history_ref:
         domain_files = iter_domain_files(repo_root, str(requirements_dir))
         return repo_root, domain_files, None, None, None, None
@@ -3545,9 +4039,13 @@ def _build_history_activity_payload(
 
     previous_tempdir: tempfile.TemporaryDirectory[str] | None = None
     if previous_entry is not None:
-        previous_tempdir = manager.materialize_snapshot_tempdir(str(previous_entry["commit"]))
+        previous_tempdir = manager.materialize_snapshot_tempdir(
+            str(previous_entry["commit"])
+        )
         previous_root = Path(previous_tempdir.name)
-        previous_files = iter_domain_files(previous_root, manager.requirements_dir.as_posix())
+        previous_files = iter_domain_files(
+            previous_root, manager.requirements_dir.as_posix()
+        )
         previous_map = _build_requirement_status_map(
             previous_files,
             id_prefixes=id_prefixes,
@@ -3561,10 +4059,9 @@ def _build_history_activity_payload(
         if before == after:
             continue
         if before and after:
-            if (
-                before.get("status") == after.get("status")
-                and before.get("blocked_reason") == after.get("blocked_reason")
-            ):
+            if before.get("status") == after.get("status") and before.get(
+                "blocked_reason"
+            ) == after.get("blocked_reason"):
                 continue
         changes.append(
             {
@@ -3581,7 +4078,9 @@ def _build_history_activity_payload(
     return {
         "entry": {
             "commit": resolved_entry.get("commit"),
-            "stable_id": manager.build_stable_history_id(str(resolved_entry.get("commit"))),
+            "stable_id": manager.build_stable_history_id(
+                str(resolved_entry.get("commit"))
+            ),
             "entry_index": entry_index,
             "timestamp": resolved_entry.get("timestamp"),
             "command": resolved_entry.get("command"),
@@ -3591,24 +4090,36 @@ def _build_history_activity_payload(
         },
         "neighbors": {
             "previous": {
-                "entry_index": entry_index - 1 if previous_entry is not None and entry_index is not None else None,
-                "commit": previous_entry.get("commit") if isinstance(previous_entry, dict) else None,
+                "entry_index": entry_index - 1
+                if previous_entry is not None and entry_index is not None
+                else None,
+                "commit": previous_entry.get("commit")
+                if isinstance(previous_entry, dict)
+                else None,
                 "stable_id": (
                     manager.build_stable_history_id(str(previous_entry.get("commit")))
                     if isinstance(previous_entry, dict) and previous_entry.get("commit")
                     else None
                 ),
-                "timestamp": previous_entry.get("timestamp") if isinstance(previous_entry, dict) else None,
+                "timestamp": previous_entry.get("timestamp")
+                if isinstance(previous_entry, dict)
+                else None,
             },
             "next": {
-                "entry_index": entry_index + 1 if next_entry is not None and entry_index is not None else None,
-                "commit": next_entry.get("commit") if isinstance(next_entry, dict) else None,
+                "entry_index": entry_index + 1
+                if next_entry is not None and entry_index is not None
+                else None,
+                "commit": next_entry.get("commit")
+                if isinstance(next_entry, dict)
+                else None,
                 "stable_id": (
                     manager.build_stable_history_id(str(next_entry.get("commit")))
                     if isinstance(next_entry, dict) and next_entry.get("commit")
                     else None
                 ),
-                "timestamp": next_entry.get("timestamp") if isinstance(next_entry, dict) else None,
+                "timestamp": next_entry.get("timestamp")
+                if isinstance(next_entry, dict)
+                else None,
             },
         },
         "changed_requirements": changes,
@@ -3641,8 +4152,12 @@ def _build_compare_payload(
         root_b = Path(tempdir_b.name)
         files_a = iter_domain_files(root_a, manager.requirements_dir.as_posix())
         files_b = iter_domain_files(root_b, manager.requirements_dir.as_posix())
-        map_a = _build_requirement_status_map(files_a, id_prefixes=id_prefixes, repo_root=root_a)
-        map_b = _build_requirement_status_map(files_b, id_prefixes=id_prefixes, repo_root=root_b)
+        map_a = _build_requirement_status_map(
+            files_a, id_prefixes=id_prefixes, repo_root=root_a
+        )
+        map_b = _build_requirement_status_map(
+            files_b, id_prefixes=id_prefixes, repo_root=root_b
+        )
     finally:
         tempdir_a.cleanup()
         tempdir_b.cleanup()
@@ -3657,19 +4172,37 @@ def _build_compare_payload(
         a = map_a.get(req_id)
         b = map_b.get(req_id)
         if a is None:
-            added.append({"id": req_id, "title": (b or {}).get("title"), "status": (b or {}).get("status"), "after": b})
-        elif b is None:
-            removed.append({"id": req_id, "title": a.get("title"), "status": a.get("status"), "before": a})
-        else:
-            if a.get("status") != b.get("status") or a.get("blocked_reason") != b.get("blocked_reason"):
-                transitions.append({
+            added.append(
+                {
                     "id": req_id,
-                    "title": b.get("title") or a.get("title"),
-                    "before_status": a.get("status"),
-                    "after_status": b.get("status"),
-                    "before_blocked_reason": a.get("blocked_reason"),
-                    "after_blocked_reason": b.get("blocked_reason"),
-                })
+                    "title": (b or {}).get("title"),
+                    "status": (b or {}).get("status"),
+                    "after": b,
+                }
+            )
+        elif b is None:
+            removed.append(
+                {
+                    "id": req_id,
+                    "title": a.get("title"),
+                    "status": a.get("status"),
+                    "before": a,
+                }
+            )
+        else:
+            if a.get("status") != b.get("status") or a.get("blocked_reason") != b.get(
+                "blocked_reason"
+            ):
+                transitions.append(
+                    {
+                        "id": req_id,
+                        "title": b.get("title") or a.get("title"),
+                        "before_status": a.get("status"),
+                        "after_status": b.get("status"),
+                        "before_blocked_reason": a.get("blocked_reason"),
+                        "after_blocked_reason": b.get("blocked_reason"),
+                    }
+                )
             else:
                 unchanged_count += 1
 
@@ -3678,7 +4211,9 @@ def _build_compare_payload(
         return {
             "entry_index": entry.get("entry_index"),
             "commit": entry.get("commit"),
-            "stable_id": manager.build_stable_history_id(commit_value) if commit_value else None,
+            "stable_id": manager.build_stable_history_id(commit_value)
+            if commit_value
+            else None,
             "timestamp": entry.get("timestamp"),
             "command": entry.get("command"),
             "reason": entry.get("reason"),
@@ -3754,7 +4289,10 @@ def _export_context(
             req_id = str(requirement["id"])
             if normalized_ids and req_id.upper() not in normalized_ids:
                 continue
-            if normalized_status and str(requirement.get("status")) != normalized_status:
+            if (
+                normalized_status
+                and str(requirement.get("status")) != normalized_status
+            ):
                 continue
 
             entry: dict[str, object] = {
@@ -3780,7 +4318,9 @@ def _export_context(
                 entry["body"] = {
                     "markdown": block,
                     "lines": {
-                        "start": (start_line + 1) if isinstance(start_line, int) else None,
+                        "start": (start_line + 1)
+                        if isinstance(start_line, int)
+                        else None,
                         "end": (end_line + 1) if isinstance(end_line, int) else None,
                     },
                 }
@@ -3796,11 +4336,17 @@ def _export_context(
             nid = next_domain_requirement_id(path, id_prefixes=id_prefixes)
             if nid is not None:
                 file_payload["next_id"] = nid[0]
-            domain_priority_meta = parse_domain_priority_metadata(path, id_prefixes=id_prefixes)
+            domain_priority_meta = parse_domain_priority_metadata(
+                path, id_prefixes=id_prefixes
+            )
             if domain_priority_meta["domain_priority"] is not None:
-                file_payload["domain_priority"] = domain_priority_meta["domain_priority"]
+                file_payload["domain_priority"] = domain_priority_meta[
+                    "domain_priority"
+                ]
             if domain_priority_meta["sub_section_priorities"]:
-                file_payload["sub_section_priorities"] = domain_priority_meta["sub_section_priorities"]
+                file_payload["sub_section_priorities"] = domain_priority_meta[
+                    "sub_section_priorities"
+                ]
             if include_domain_body:
                 file_payload["domain_body"] = _extract_domain_body(
                     path,
@@ -3808,9 +4354,7 @@ def _export_context(
                     max_chars=max_domain_body_chars,
                 )
 
-            files_payload.append(
-                file_payload
-            )
+            files_payload.append(file_payload)
             total += len(entries)
 
     return {
@@ -3838,13 +4382,19 @@ def _plan_or_apply_updates(
 
     changed_count = 0
     audit: dict[str, object] | None = None
-    history_manager = HistoryManager(repo_root=repo_root, requirements_dir=requirements_dir) if apply else None
+    history_manager = (
+        HistoryManager(repo_root=repo_root, requirements_dir=requirements_dir)
+        if apply
+        else None
+    )
     for req_id, status_input in updates:
         normalized = normalize_status_input(status_input)
         changed = False
         history_entry: dict[str, object] | None = None
         if apply:
-            before_entries = history_manager.list_entries() if history_manager is not None else []
+            before_entries = (
+                history_manager.list_entries() if history_manager is not None else []
+            )
             changed = apply_status_change_by_id(
                 repo_root=repo_root,
                 domain_files=domain_files,
@@ -3865,7 +4415,11 @@ def _plan_or_apply_updates(
                         history_entry = {
                             "entry_index": len(after_entries) - 1,
                             "commit": commit_hash,
-                            "stable_id": history_manager.build_stable_history_id(commit_hash) if commit_hash else None,
+                            "stable_id": history_manager.build_stable_history_id(
+                                commit_hash
+                            )
+                            if commit_hash
+                            else None,
                             "timestamp": latest_entry.get("timestamp"),
                             "command": latest_entry.get("command"),
                             "branch": latest_entry.get("branch"),
@@ -3907,10 +4461,11 @@ def _plan_or_apply_updates(
     }
 
 
-def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dict[str, object]:
+def _handle_telemetry_command(
+    repo_root: Path, json_output: bool = False
+) -> dict[str, object]:
     """Handle the `rqmd-ai telemetry` command — report endpoint status."""
-    from .telemetry import (resolve_telemetry_api_key,
-                            resolve_telemetry_endpoint)
+    from .telemetry import resolve_telemetry_api_key, resolve_telemetry_endpoint
 
     endpoint = resolve_telemetry_endpoint(repo_root)
     api_key = resolve_telemetry_api_key(repo_root)
@@ -3922,6 +4477,7 @@ def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dic
         try:
             import json as _json
             import urllib.request
+
             req = urllib.request.Request(f"{endpoint}/health", method="GET")
             with urllib.request.urlopen(req, timeout=5) as resp:
                 health = _json.loads(resp.read())
@@ -3937,16 +4493,22 @@ def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dic
         "reachable": reachable,
         "health": health,
         "instructions": (
-            "Telemetry endpoint is active. AI agents can POST events to {}/api/v1/events".format(endpoint)
+            "Telemetry endpoint is active. AI agents can POST events to {}/api/v1/events".format(
+                endpoint
+            )
             if configured and reachable
             else "No telemetry endpoint configured. Set RQMD_TELEMETRY_ENDPOINT or add telemetry.endpoint to rqmd.yml."
             if not configured
-            else "Telemetry endpoint configured but not reachable at {}.".format(endpoint)
+            else "Telemetry endpoint configured but not reachable at {}.".format(
+                endpoint
+            )
         ),
     }
 
 
-def _handle_telemetry_test_command(repo_root: Path, json_output: bool = False) -> dict[str, object]:
+def _handle_telemetry_test_command(
+    repo_root: Path, json_output: bool = False
+) -> dict[str, object]:
     """Handle `rqmd-ai telemetry-test` — send a test event and artifact, report results."""
     from .telemetry import (
         resolve_telemetry_api_key,
@@ -4024,9 +4586,13 @@ def _handle_telemetry_test_command(repo_root: Path, json_output: bool = False) -
     if overall_success:
         payload["message"] = "Postgres and MinIO pipelines are working end-to-end."
     elif event_ok and not artifact_ok:
-        payload["message"] = "Event accepted (Postgres OK) but artifact upload failed (MinIO)."
+        payload["message"] = (
+            "Event accepted (Postgres OK) but artifact upload failed (MinIO)."
+        )
     else:
-        payload["error"] = "Failed to submit test event. Check that the endpoint is reachable and the API key is correct."
+        payload["error"] = (
+            "Failed to submit test event. Check that the endpoint is reachable and the API key is correct."
+        )
 
     return payload
 
@@ -4049,10 +4615,18 @@ def _handle_batch(
     if not isinstance(queries, list):
         raise click.ClickException("--batch expects a JSON array on stdin.")
 
-    resolved_criteria_dir, _message = resolve_requirements_dir(repo_root, requirements_dir_input)
+    resolved_criteria_dir, _message = resolve_requirements_dir(
+        repo_root, requirements_dir_input
+    )
     try:
-        resolved_prefixes = normalize_id_prefixes(id_prefixes_input) if id_prefixes_input else id_prefixes_input
-        id_prefixes = resolve_id_prefixes(repo_root, str(resolved_criteria_dir), resolved_prefixes)
+        resolved_prefixes = (
+            normalize_id_prefixes(id_prefixes_input)
+            if id_prefixes_input
+            else id_prefixes_input
+        )
+        id_prefixes = resolve_id_prefixes(
+            repo_root, str(resolved_criteria_dir), resolved_prefixes
+        )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
@@ -4172,7 +4746,13 @@ Commands:
     callback=_handle_version_option,
     help="Show the installed rqmd-ai version and editable source path when applicable.",
 )
-@click.option("--json", "--as-json", "json_output", is_flag=True, help="Emit machine-readable JSON output.")
+@click.option(
+    "--json",
+    "--as-json",
+    "json_output",
+    is_flag=True,
+    help="Emit machine-readable JSON output.",
+)
 @click.option(
     "--json-output-file",
     "json_output_file",
@@ -4180,11 +4760,19 @@ Commands:
     default=None,
     help="Also write the JSON payload to a file. Useful when a terminal wrapper truncates stdout.",
 )
-@click.option("--show-guide", "guide", is_flag=True, help="Print onboarding guidance for rqmd-ai workflows.")
+@click.option(
+    "--show-guide",
+    "guide",
+    is_flag=True,
+    help="Print onboarding guidance for rqmd-ai workflows.",
+)
 @click.option(
     "--workflow-mode",
     "workflow_mode",
-    type=click.Choice(["general", "brainstorm", "implement", "init", "init-legacy"], case_sensitive=False),
+    type=click.Choice(
+        ["general", "brainstorm", "implement", "init", "init-legacy"],
+        case_sensitive=False,
+    ),
     default="general",
     show_default=True,
     help="Guide variant to emit for rqmd-ai workflow sequencing.",
@@ -4218,10 +4806,33 @@ Commands:
     default=(),
     help="Allowed requirement ID prefixes. Repeat or comma-separate values.",
 )
-@click.option("--dump-id", "export_ids", multiple=True, default=(), help="Export requirement context for one or more IDs.")
-@click.option("--dump-file", "export_files", multiple=True, default=(), help="Export context only from one or more domain files.")
-@click.option("--dump-status", "export_status", type=str, default=None, help="Export context filtered by status label or slug.")
-@click.option("--include-requirement-body/--no-include-requirement-body", "include_body", default=True, help="Include requirement body markdown in exports.")
+@click.option(
+    "--dump-id",
+    "export_ids",
+    multiple=True,
+    default=(),
+    help="Export requirement context for one or more IDs.",
+)
+@click.option(
+    "--dump-file",
+    "export_files",
+    multiple=True,
+    default=(),
+    help="Export context only from one or more domain files.",
+)
+@click.option(
+    "--dump-status",
+    "export_status",
+    type=str,
+    default=None,
+    help="Export context filtered by status label or slug.",
+)
+@click.option(
+    "--include-requirement-body/--no-include-requirement-body",
+    "include_body",
+    default=True,
+    help="Include requirement body markdown in exports.",
+)
 @click.option(
     "--include-domain-markdown/--no-include-domain-markdown",
     "include_domain_body",
@@ -4236,10 +4847,32 @@ Commands:
     show_default=True,
     help="Maximum characters per exported domain-body markdown block.",
 )
-@click.option("--update", "set_entries", multiple=True, default=(), help="Planned status update in ID=STATUS format.")
-@click.option("--scope-file", "file_scope", type=str, default=None, help="Optional file scope used with --update/--write.")
-@click.option("--write", "apply", is_flag=True, help="Apply planned updates. Without this flag rqmd-ai remains read-only.")
-@click.option("--install-agent-bundle", "install_bundle", is_flag=True, help="Legacy flag equivalent of `rqmd-ai install`.")
+@click.option(
+    "--update",
+    "set_entries",
+    multiple=True,
+    default=(),
+    help="Planned status update in ID=STATUS format.",
+)
+@click.option(
+    "--scope-file",
+    "file_scope",
+    type=str,
+    default=None,
+    help="Optional file scope used with --update/--write.",
+)
+@click.option(
+    "--write",
+    "apply",
+    is_flag=True,
+    help="Apply planned updates. Without this flag rqmd-ai remains read-only.",
+)
+@click.option(
+    "--install-agent-bundle",
+    "install_bundle",
+    is_flag=True,
+    help="Legacy flag equivalent of `rqmd-ai install`.",
+)
 @click.option(
     "--bundle-preset",
     "bundle_preset",
@@ -4266,8 +4899,18 @@ Commands:
     is_flag=True,
     help="Force the compatibility legacy-init strategy when using the unified `rqmd-ai init` entrypoint.",
 )
-@click.option("--overwrite-existing", "overwrite_existing", is_flag=True, help="Allow --install-agent-bundle to overwrite existing instruction files.")
-@click.option("--dry-run", "dry_run", is_flag=True, help="Preview --install-agent-bundle changes without writing files.")
+@click.option(
+    "--overwrite-existing",
+    "overwrite_existing",
+    is_flag=True,
+    help="Allow --install-agent-bundle to overwrite existing instruction files.",
+)
+@click.option(
+    "--dry-run",
+    "dry_run",
+    is_flag=True,
+    help="Preview --install-agent-bundle changes without writing files.",
+)
 @click.option(
     "--batch",
     "batch_mode",
@@ -4342,7 +4985,9 @@ def main(
     if chat_mode is None:
         chat_mode = workflow_mode == "init"
     if brainstorm_file is not None and workflow_mode != "brainstorm":
-        raise click.ClickException("--brainstorm-file can only be used with --workflow-mode brainstorm.")
+        raise click.ClickException(
+            "--brainstorm-file can only be used with --workflow-mode brainstorm."
+        )
 
     if workflow_mode == "telemetry":
         payload = _handle_telemetry_command(repo_root, json_output=json_output)
@@ -4363,7 +5008,10 @@ def main(
         if install_operation == "upgrade":
             existing_state = _detect_workspace_bundle_state(repo_root)
             existing_preset = existing_state.get("preset")
-            if isinstance(existing_preset, str) and existing_preset in {"minimal", "full"}:
+            if isinstance(existing_preset, str) and existing_preset in {
+                "minimal",
+                "full",
+            }:
                 resolved_preset = existing_preset
         payload = _install_agent_bundle(
             repo_root=repo_root,
@@ -4379,7 +5027,9 @@ def main(
 
     if workflow_mode in {"init", "init-legacy"} and guide:
         rules = _load_legacy_init_rules()
-        guide_requirements_dir = Path(requirements_dir or str(rules["default_requirements_dir"]))
+        guide_requirements_dir = Path(
+            requirements_dir or str(rules["default_requirements_dir"])
+        )
         if not guide_requirements_dir.is_absolute():
             guide_requirements_dir = repo_root / guide_requirements_dir
         _emit(
@@ -4396,7 +5046,9 @@ def main(
 
     if workflow_mode == "init":
         if brainstorm_file is not None:
-            raise click.ClickException("--brainstorm-file cannot be combined with --workflow-mode init.")
+            raise click.ClickException(
+                "--brainstorm-file cannot be combined with --workflow-mode init."
+            )
         if set_entries or export_ids or export_files or export_status:
             raise click.ClickException(
                 "--workflow-mode init is an onboarding surface and cannot be combined with export or update options."
@@ -4415,7 +5067,9 @@ def main(
 
     if workflow_mode == "init-legacy":
         if brainstorm_file is not None:
-            raise click.ClickException("--brainstorm-file cannot be combined with --workflow-mode init-legacy.")
+            raise click.ClickException(
+                "--brainstorm-file cannot be combined with --workflow-mode init-legacy."
+            )
         if set_entries or export_ids or export_files or export_status:
             raise click.ClickException(
                 "--workflow-mode init-legacy is a bootstrap surface and cannot be combined with export or update options."
@@ -4431,16 +5085,24 @@ def main(
         _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 
-    resolved_criteria_dir, _message = resolve_requirements_dir(repo_root, requirements_dir)
+    resolved_criteria_dir, _message = resolve_requirements_dir(
+        repo_root, requirements_dir
+    )
     try:
-        resolved_prefixes_input = normalize_id_prefixes(id_prefixes) if id_prefixes else id_prefixes
-        id_prefixes = resolve_id_prefixes(repo_root, str(resolved_criteria_dir), resolved_prefixes_input)
+        resolved_prefixes_input = (
+            normalize_id_prefixes(id_prefixes) if id_prefixes else id_prefixes
+        )
+        id_prefixes = resolve_id_prefixes(
+            repo_root, str(resolved_criteria_dir), resolved_prefixes_input
+        )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
     effective_repo_root = repo_root
     effective_requirements_dir = resolved_criteria_dir
-    domain_files = iter_domain_files(effective_repo_root, str(effective_requirements_dir))
+    domain_files = iter_domain_files(
+        effective_repo_root, str(effective_requirements_dir)
+    )
     if not domain_files:
         raise click.ClickException(
             f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
@@ -4451,8 +5113,12 @@ def main(
         _raise_duplicate_id_error(effective_repo_root, duplicates)
 
     if apply and not set_entries:
-        raise click.ClickException("rqmd-ai --write requires at least one --update ID=STATUS update.")
-    if workflow_mode != "general" and (apply or set_entries or export_ids or export_files or export_status):
+        raise click.ClickException(
+            "rqmd-ai --write requires at least one --update ID=STATUS update."
+        )
+    if workflow_mode != "general" and (
+        apply or set_entries or export_ids or export_files or export_status
+    ):
         raise click.ClickException(
             "--workflow-mode brainstorm|implement is a guidance surface and cannot be combined with export, update, or apply options."
         )

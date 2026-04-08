@@ -12,6 +12,7 @@ from rqmd.status_update import (
 )
 from rqmd.workflows import ENTRY_FIELDS, _build_requirement_field_menu
 
+
 def _make_req_file(tmp_path: Path, body: str) -> Path:
     p = tmp_path / "domain.md"
     p.write_text(body, encoding="utf-8")
@@ -28,6 +29,7 @@ def _parse_first_req(path: Path) -> dict:
 # ENTRY_FIELDS
 # ---------------------------------------------------------------------------
 
+
 class TestEntryFields:
     def test_links_in_entry_fields(self):
         assert "links" in ENTRY_FIELDS
@@ -42,6 +44,7 @@ class TestEntryFields:
 # ---------------------------------------------------------------------------
 # _build_requirement_field_menu
 # ---------------------------------------------------------------------------
+
 
 class TestBuildRequirementFieldMenuLinks:
     def _req(self, links=None) -> dict:
@@ -95,6 +98,7 @@ class TestBuildRequirementFieldMenuLinks:
 # _add_link_to_file
 # ---------------------------------------------------------------------------
 
+
 class TestAddLinkToFile:
     def test_creates_links_section_when_absent(self, tmp_path: Path):
         path = _make_req_file(
@@ -143,6 +147,7 @@ class TestAddLinkToFile:
 # ---------------------------------------------------------------------------
 # _remove_link_from_file
 # ---------------------------------------------------------------------------
+
 
 class TestRemoveLinkFromFile:
     def test_removes_link_by_index(self, tmp_path: Path):
@@ -203,6 +208,7 @@ class TestRemoveLinkFromFile:
 # prompt_for_links_flow
 # ---------------------------------------------------------------------------
 
+
 class TestPromptForLinksFlow:
     def test_empty_input_returns_false(self, tmp_path: Path):
         """Pressing Enter immediately (empty input) → no changes, returns False."""
@@ -222,7 +228,10 @@ class TestPromptForLinksFlow:
         )
         req = _parse_first_req(path)
         # Prompt side_effect: URL → then label (skip) → then empty (exit)
-        with patch("rqmd.status_update.click.prompt", side_effect=["https://example.com", "", ""]):
+        with patch(
+            "rqmd.status_update.click.prompt",
+            side_effect=["https://example.com", "", ""],
+        ):
             result = prompt_for_links_flow(path, req)
         assert result is True
         content = path.read_text(encoding="utf-8")
@@ -234,7 +243,10 @@ class TestPromptForLinksFlow:
             "# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n",
         )
         req = _parse_first_req(path)
-        with patch("rqmd.status_update.click.prompt", side_effect=["https://example.com", "My Label", ""]):
+        with patch(
+            "rqmd.status_update.click.prompt",
+            side_effect=["https://example.com", "My Label", ""],
+        ):
             result = prompt_for_links_flow(path, req)
         assert result is True
         content = path.read_text(encoding="utf-8")
@@ -247,7 +259,10 @@ class TestPromptForLinksFlow:
         )
         req = _parse_first_req(path)
         # markdown link → no label prompt should fire → then empty exit
-        with patch("rqmd.status_update.click.prompt", side_effect=["[Spec](https://spec.example.com)", ""]) as mock_prompt:
+        with patch(
+            "rqmd.status_update.click.prompt",
+            side_effect=["[Spec](https://spec.example.com)", ""],
+        ) as mock_prompt:
             result = prompt_for_links_flow(path, req)
         assert result is True
         # Only 2 prompt calls: the link entry and the exit

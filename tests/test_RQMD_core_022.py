@@ -16,7 +16,9 @@ class TestExtractBlockingId:
         assert extract_blocking_id("") is None
 
     def test_bare_id_in_text(self):
-        assert extract_blocking_id("Waiting on RQMD-CORE-001 to land") == "RQMD-CORE-001"
+        assert (
+            extract_blocking_id("Waiting on RQMD-CORE-001 to land") == "RQMD-CORE-001"
+        )
 
     def test_bare_id_case_normalized(self):
         result = extract_blocking_id("blocked by rqmd-core-001")
@@ -82,8 +84,15 @@ class TestBlockingIdInJSONExport:
         runner = CliRunner()
         result = runner.invoke(
             ai_main,
-            ["--project-root", str(tmp_path), "--docs-dir", "docs/requirements",
-             "--as-json", "--dump-status", "blocked"],
+            [
+                "--project-root",
+                str(tmp_path),
+                "--docs-dir",
+                "docs/requirements",
+                "--as-json",
+                "--dump-status",
+                "blocked",
+            ],
         )
         assert result.exit_code == 0, result.output
         payload = json.loads(result.output)
@@ -107,8 +116,15 @@ class TestBlockingIdInJSONExport:
         runner = CliRunner()
         result = runner.invoke(
             ai_main,
-            ["--project-root", str(tmp_path), "--docs-dir", "docs/requirements",
-             "--as-json", "--dump-status", "blocked"],
+            [
+                "--project-root",
+                str(tmp_path),
+                "--docs-dir",
+                "docs/requirements",
+                "--as-json",
+                "--dump-status",
+                "blocked",
+            ],
         )
         assert result.exit_code == 0, result.output
         payload = json.loads(result.output)
@@ -131,8 +147,15 @@ class TestBlockingIdInJSONExport:
         runner = CliRunner()
         result = runner.invoke(
             ai_main,
-            ["--project-root", str(tmp_path), "--docs-dir", "docs/requirements",
-             "--as-json", "--dump-status", "blocked"],
+            [
+                "--project-root",
+                str(tmp_path),
+                "--docs-dir",
+                "docs/requirements",
+                "--as-json",
+                "--dump-status",
+                "blocked",
+            ],
         )
         assert result.exit_code == 0, result.output
         payload = json.loads(result.output)

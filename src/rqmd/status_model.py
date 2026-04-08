@@ -14,9 +14,16 @@ import difflib
 
 import click
 
-from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, NON_ALNUM_PATTERN,
-                        NON_ALNUM_PREFIX_PATTERN, PROPOSED_FG, STATUS_ALIASES,
-                        STATUS_ORDER, STATUS_PARSE_ALIASES)
+from .constants import (
+    ANSI_ESCAPE_PATTERN,
+    ANSI_RESET,
+    NON_ALNUM_PATTERN,
+    NON_ALNUM_PREFIX_PATTERN,
+    PROPOSED_FG,
+    STATUS_ALIASES,
+    STATUS_ORDER,
+    STATUS_PARSE_ALIASES,
+)
 
 _DEFAULT_STATUS_ORDER = list(STATUS_ORDER)
 _DEFAULT_STATUS_ALIASES = dict(STATUS_ALIASES)
@@ -70,11 +77,17 @@ def configure_status_catalog(raw_statuses: object | None) -> None:
         emoji = str(item.get("emoji", "")).strip()
 
         if not name:
-            raise ValueError(f"Config key 'statuses' item #{index} missing non-empty 'name'")
+            raise ValueError(
+                f"Config key 'statuses' item #{index} missing non-empty 'name'"
+            )
         if not shortcode:
-            raise ValueError(f"Config key 'statuses' item #{index} missing non-empty 'shortcode'")
+            raise ValueError(
+                f"Config key 'statuses' item #{index} missing non-empty 'shortcode'"
+            )
         if not emoji:
-            raise ValueError(f"Config key 'statuses' item #{index} missing non-empty 'emoji'")
+            raise ValueError(
+                f"Config key 'statuses' item #{index} missing non-empty 'emoji'"
+            )
 
         label = f"{emoji} {name}".strip()
         lowered = label.lower()
@@ -275,7 +288,9 @@ def suggest_status_labels(value: str, limit: int = 3) -> list[str]:
         key_to_label[status_key(plain)] = label
         key_to_label[status_key(slug)] = label
 
-    close_keys = difflib.get_close_matches(token, list(key_to_label.keys()), n=max(limit * 2, 3), cutoff=0.45)
+    close_keys = difflib.get_close_matches(
+        token, list(key_to_label.keys()), n=max(limit * 2, 3), cutoff=0.45
+    )
     suggestions: list[str] = []
     for key in close_keys:
         label = key_to_label[key]
@@ -380,8 +395,7 @@ def normalize_status_input(value: str) -> str:
             raise click.ClickException(str(exc)) from exc
         raise click.ClickException(
             "Unrecognized status input "
-            f"'{value}'. Use one of: "
-            + ", ".join(label for label, _ in STATUS_ORDER)
+            f"'{value}'. Use one of: " + ", ".join(label for label, _ in STATUS_ORDER)
         ) from exc
 
 

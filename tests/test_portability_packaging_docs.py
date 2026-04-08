@@ -3,18 +3,19 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
 
 import click
 import pytest
+import tomllib
 from click.testing import CliRunner
-
 from rqmd import cli
 from rqmd.markdown_io import display_name_from_h1
 
 
-def test_RQMD_portability_001_and_002_repo_root_and_criteria_dir_flags(tmp_path: Path) -> None:
+def test_RQMD_portability_001_and_002_repo_root_and_criteria_dir_flags(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "another-repo"
     requirements = repo / "custom" / "ac"
     requirements.mkdir(parents=True)
@@ -44,7 +45,9 @@ Scope: x.
     assert result.exit_code == 1
 
 
-def test_RQMD_portability_003_default_conventions(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_RQMD_portability_003_default_conventions(
+    monkeypatch, repo_with_domain_docs: Path
+) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
         # Build default docs/requirements under isolated CWD.
@@ -65,7 +68,9 @@ Scope: demo.
 """,
             encoding="utf-8",
         )
-        result = runner.invoke(cli.main, ["--verify-summaries", "--non-interactive", "--non-interactive"])
+        result = runner.invoke(
+            cli.main, ["--verify-summaries", "--non-interactive", "--non-interactive"]
+        )
         assert result.exit_code == 1
 
 
@@ -111,12 +116,21 @@ Scope: generic.
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--docs-dir", "docs/requirements", "--non-interactive", "--non-interactive"],
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--non-interactive",
+            "--non-interactive",
+        ],
     )
     assert result.exit_code == 0
 
 
-def test_RQMD_portability_display_name_strips_plural_requirements_prefix(tmp_path: Path) -> None:
+def test_RQMD_portability_display_name_strips_plural_requirements_prefix(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "open-risks-and-docs.md"
     path.write_text(
         "# Requirements Open Risks and Docs\n\n### AC-001: Demo\n- **Status:** 💡 Proposed\n",
@@ -126,7 +140,9 @@ def test_RQMD_portability_display_name_strips_plural_requirements_prefix(tmp_pat
     assert display_name_from_h1(path) == "Open Risks and Docs"
 
 
-def test_RQMD_portability_017_unknown_status_reports_actionable_guidance(tmp_path: Path) -> None:
+def test_RQMD_portability_017_unknown_status_reports_actionable_guidance(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -225,7 +241,11 @@ Scope: demo.
             [
                 {"name": "Proposed", "shortcode": "proposed", "emoji": "💡"},
                 {"name": "Implemented7", "shortcode": "implemented7", "emoji": "🔧"},
-                {"name": "Desktop-Verified", "shortcode": "desktop-verified", "emoji": "💻"},
+                {
+                    "name": "Desktop-Verified",
+                    "shortcode": "desktop-verified",
+                    "emoji": "💻",
+                },
                 {"name": "VR-Verified", "shortcode": "vr-verified", "emoji": "🥽"},
                 {"name": "Done", "shortcode": "done", "emoji": "✅"},
                 {"name": "Blocked", "shortcode": "blocked", "emoji": "⛔"},
@@ -252,7 +272,9 @@ Scope: demo.
     assert "Traceback" not in result.output
 
 
-def test_RQMD_portability_019_top_level_unexpected_exception_shows_friendly_line(capsys) -> None:
+def test_RQMD_portability_019_top_level_unexpected_exception_shows_friendly_line(
+    capsys,
+) -> None:
     @click.command(cls=cli.FriendlyTopLevelCommand)
     @click.option("-v", "--detailed", "verbose", is_flag=True)
     def boom(verbose: bool) -> None:
@@ -269,7 +291,9 @@ def test_RQMD_portability_019_top_level_unexpected_exception_shows_friendly_line
     assert "Traceback" not in captured.err
 
 
-def test_RQMD_portability_019_top_level_unexpected_exception_reraises_with_detailed() -> None:
+def test_RQMD_portability_019_top_level_unexpected_exception_reraises_with_detailed() -> (
+    None
+):
     @click.command(cls=cli.FriendlyTopLevelCommand)
     @click.option("-v", "--detailed", "verbose", is_flag=True)
     def boom(verbose: bool) -> None:
@@ -280,7 +304,9 @@ def test_RQMD_portability_019_top_level_unexpected_exception_reraises_with_detai
         boom.main(args=["--detailed"], standalone_mode=True)
 
 
-def test_RQMD_portability_008a_auto_detects_requirements_dir_without_explicit_flag(tmp_path: Path) -> None:
+def test_RQMD_portability_008a_auto_detects_requirements_dir_without_explicit_flag(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -302,7 +328,15 @@ Scope: demo.
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--status", "Implemented", "--as-tree", "--non-interactive", "--non-interactive"],
+        [
+            "--project-root",
+            str(repo),
+            "--status",
+            "Implemented",
+            "--as-tree",
+            "--non-interactive",
+            "--non-interactive",
+        ],
     )
 
     assert result.exit_code == 0
@@ -310,7 +344,9 @@ Scope: demo.
     assert "REQ-DEMO-001" in result.output
 
 
-def test_RQMD_portability_008b_auto_detection_prefers_nearest_requirements_dir_from_cwd(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_portability_008b_auto_detection_prefers_nearest_requirements_dir_from_cwd(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     root_criteria_dir = repo / "requirements"
     nested_root = repo / "packages" / "feature"
@@ -350,16 +386,29 @@ Scope: feature.
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--status", "Implemented", "--as-tree", "--non-interactive", "--non-interactive"],
+        [
+            "--project-root",
+            str(repo),
+            "--status",
+            "Implemented",
+            "--as-tree",
+            "--non-interactive",
+            "--non-interactive",
+        ],
     )
 
     assert result.exit_code == 0
-    assert "Auto-selected requirement docs: packages/feature/requirements/README.md" in result.output
+    assert (
+        "Auto-selected requirement docs: packages/feature/requirements/README.md"
+        in result.output
+    )
     assert "RQ-001" in result.output
     assert "AC-ROOT-001" not in result.output
 
 
-def test_RQMD_portability_014_state_dir_option_forwards_to_filtered_walk(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_portability_014_state_dir_option_forwards_to_filtered_walk(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -376,7 +425,18 @@ Scope: demo.
 
     captured: dict[str, object] = {}
 
-    def fake_filtered_loop(repo_root, domain_files, target_status, emoji_columns, id_prefixes, resume_filter, state_dir, include_status_emojis, priority_mode, include_priority_summary):
+    def fake_filtered_loop(
+        repo_root,
+        domain_files,
+        target_status,
+        emoji_columns,
+        id_prefixes,
+        resume_filter,
+        state_dir,
+        include_status_emojis,
+        priority_mode,
+        include_priority_summary,
+    ):
         captured["state_dir"] = state_dir
         captured["target_status"] = target_status
         return 0
@@ -424,8 +484,10 @@ Scope: demo.
     strip_result = runner.invoke(
         cli.main,
         [
-            "--project-root", str(repo),
-            "--docs-dir", "docs/requirements",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
             "--strip-status-icons",
         ],
     )
@@ -438,8 +500,10 @@ Scope: demo.
     no_reintroduce_result = runner.invoke(
         cli.main,
         [
-            "--project-root", str(repo),
-            "--docs-dir", "docs/requirements",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
             "--non-interactive",
         ],
     )
@@ -449,8 +513,10 @@ Scope: demo.
     restore_result = runner.invoke(
         cli.main,
         [
-            "--project-root", str(repo),
-            "--docs-dir", "docs/requirements",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
             "--restore-status-icons",
         ],
     )
@@ -469,12 +535,12 @@ def test_RQMD_packaging_001_to_005_metadata_and_layout() -> None:
     assert (project_root / "src" / "rqmd" / "__main__.py").exists()
 
     pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
-    assert "rqmd = \"rqmd.cli:main\"" in pyproject
-    assert "reqmd = \"rqmd.cli:main\"" in pyproject
-    assert "rqmd-ai = \"rqmd.ai_cli:main\"" in pyproject
-    assert "reqmd-ai = \"rqmd.ai_cli:main\"" in pyproject
-    assert 'speedups = [' in pyproject
-    assert 'orjson>=3.10.0' in pyproject
+    assert 'rqmd = "rqmd.cli:main"' in pyproject
+    assert 'reqmd = "rqmd.cli:main"' in pyproject
+    assert 'rqmd-ai = "rqmd.ai_cli:main"' in pyproject
+    assert 'reqmd-ai = "rqmd.ai_cli:main"' in pyproject
+    assert "speedups = [" in pyproject
+    assert "orjson>=3.10.0" in pyproject
     assert "click>=8.1.0" in pyproject
     assert "tabulate>=0.9.0" in pyproject
 
@@ -532,11 +598,11 @@ def test_RQMD_packaging_006_metadata_hardening_fields_present() -> None:
     project_root = Path(__file__).resolve().parents[1]
     pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
 
-    assert "license = \"MIT\"" in pyproject
+    assert 'license = "MIT"' in pyproject
     assert "[project.urls]" in pyproject
-    assert "Homepage = \"https://github.com/example/rqmd\"" in pyproject
-    assert "Repository = \"https://github.com/example/rqmd\"" in pyproject
-    assert "Issues = \"https://github.com/example/rqmd/issues\"" in pyproject
+    assert 'Homepage = "https://github.com/example/rqmd"' in pyproject
+    assert 'Repository = "https://github.com/example/rqmd"' in pyproject
+    assert 'Issues = "https://github.com/example/rqmd/issues"' in pyproject
     assert "classifiers = [" in pyproject
     assert "Programming Language :: Python :: 3.10" in pyproject
 
@@ -587,10 +653,14 @@ def test_RQMD_packaging_008_release_publish_workflow_present() -> None:
     assert "v1.2.3rc1" in validation_script_text
 
 
-def test_RQMD_packaging_008_release_tag_validation_script_accepts_matching_rc_version() -> None:
+def test_RQMD_packaging_008_release_tag_validation_script_accepts_matching_rc_version() -> (
+    None
+):
     project_root = Path(__file__).resolve().parents[1]
     script_path = project_root / "scripts" / "validate_release_tag.py"
-    project_version = tomllib.loads((project_root / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    project_version = tomllib.loads(
+        (project_root / "pyproject.toml").read_text(encoding="utf-8")
+    )["project"]["version"]
 
     result = subprocess.run(
         [sys.executable, str(script_path), f"v{project_version}"],
@@ -621,7 +691,9 @@ def test_RQMD_packaging_008_release_tag_validation_script_rejects_invalid_tag() 
 
 def test_RQMD_packaging_008_local_smoke_checks_python_scripts() -> None:
     project_root = Path(__file__).resolve().parents[1]
-    smoke_script = (project_root / "scripts" / "local-smoke.sh").read_text(encoding="utf-8")
+    smoke_script = (project_root / "scripts" / "local-smoke.sh").read_text(
+        encoding="utf-8"
+    )
 
     assert "python -m compileall -q scripts" in smoke_script
 
@@ -641,7 +713,9 @@ def test_RQMD_packaging_008_release_docs_match_trusted_publishing_flow() -> None
     assert "project.version" in release_doc
 
 
-def test_RQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_docs_prefix() -> None:
+def test_RQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_docs_prefix() -> (
+    None
+):
     project_root = Path(__file__).resolve().parents[1]
     scratch_root = project_root / "test-corpus" / "scratch"
 
@@ -671,7 +745,9 @@ def test_RQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_
 # ---------------------------------------------------------------------------
 
 
-def test_RQMD_portability_009_nonexistent_criteria_dir_gives_not_found_error(tmp_path: Path) -> None:
+def test_RQMD_portability_009_nonexistent_criteria_dir_gives_not_found_error(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
 
@@ -679,8 +755,10 @@ def test_RQMD_portability_009_nonexistent_criteria_dir_gives_not_found_error(tmp
     result = runner.invoke(
         cli.main,
         [
-            "--project-root", str(repo),
-            "--docs-dir", "no/such/dir",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "no/such/dir",
             "--verify-summaries",
             "--non-interactive",
         ],
@@ -688,10 +766,15 @@ def test_RQMD_portability_009_nonexistent_criteria_dir_gives_not_found_error(tmp
 
     assert result.exit_code != 0
     assert "not found" in result.output.lower()
-    assert "rqmd init --scaffold" in result.output or "requirements-dir" in result.output.lower()
+    assert (
+        "rqmd init --scaffold" in result.output
+        or "requirements-dir" in result.output.lower()
+    )
 
 
-def test_RQMD_portability_009_unreadable_domain_file_gives_permission_error(tmp_path: Path) -> None:
+def test_RQMD_portability_009_unreadable_domain_file_gives_permission_error(
+    tmp_path: Path,
+) -> None:
     import stat
 
     repo = tmp_path / "repo"
@@ -709,14 +792,18 @@ def test_RQMD_portability_009_unreadable_domain_file_gives_permission_error(tmp_
         result = runner.invoke(
             cli.main,
             [
-                "--project-root", str(repo),
-                "--docs-dir", "docs/requirements",
+                "--project-root",
+                str(repo),
+                "--docs-dir",
+                "docs/requirements",
                 "--verify-summaries",
                 "--non-interactive",
             ],
         )
         assert result.exit_code != 0
-        combined = (result.output or "") + (str(result.exception) if result.exception else "")
+        combined = (result.output or "") + (
+            str(result.exception) if result.exception else ""
+        )
         assert "permission" in combined.lower() or "inaccessible" in combined.lower()
     finally:
         domain_file.chmod(stat.S_IRUSR | stat.S_IWUSR)
@@ -751,7 +838,13 @@ def test_RQMD_core_013_check_index_clean_exits_zero(tmp_path: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--verify-index", "--non-interactive", "--non-interactive"],
+        [
+            "--project-root",
+            str(repo),
+            "--verify-index",
+            "--non-interactive",
+            "--non-interactive",
+        ],
     )
     assert result.exit_code == 0
     assert "in sync" in result.output.lower()
@@ -767,7 +860,13 @@ def test_RQMD_core_013_check_index_stale_link_exits_nonzero(tmp_path: Path) -> N
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--verify-index", "--non-interactive", "--non-interactive"],
+        [
+            "--project-root",
+            str(repo),
+            "--verify-index",
+            "--non-interactive",
+            "--non-interactive",
+        ],
     )
     assert result.exit_code != 0
     assert "stale" in result.output.lower()
@@ -779,12 +878,21 @@ def test_RQMD_core_013_check_index_orphan_file_exits_nonzero(tmp_path: Path) -> 
     _make_index_repo(
         repo,
         "# Requirements\n\n- [Demo](demo.md)\n",
-        {"demo.md": _SAMPLE_DOMAIN, "unlisted.md": _SAMPLE_DOMAIN},  # unlisted.md not in index
+        {
+            "demo.md": _SAMPLE_DOMAIN,
+            "unlisted.md": _SAMPLE_DOMAIN,
+        },  # unlisted.md not in index
     )
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--verify-index", "--non-interactive", "--non-interactive"],
+        [
+            "--project-root",
+            str(repo),
+            "--verify-index",
+            "--non-interactive",
+            "--non-interactive",
+        ],
     )
     assert result.exit_code != 0
     assert "orphan" in result.output.lower()
@@ -805,7 +913,9 @@ def test_RQMD_core_013_parse_index_links_extracts_md_filenames(tmp_path: Path) -
     assert not any("/" in lnk for lnk in links)
 
 
-def test_RQMD_portability_015_upward_root_discovery_prefers_nearest_ancestor(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_portability_015_upward_root_discovery_prefers_nearest_ancestor(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     root_criteria = repo / "docs" / "requirements"
     nested_root = repo / "packages" / "feature"
@@ -814,7 +924,9 @@ def test_RQMD_portability_015_upward_root_discovery_prefers_nearest_ancestor(tmp
     root_criteria.mkdir(parents=True)
     nested_criteria.mkdir(parents=True)
 
-    (root_criteria / "README.md").write_text("# Requirements\n\n- [Root](root.md)\n", encoding="utf-8")
+    (root_criteria / "README.md").write_text(
+        "# Requirements\n\n- [Root](root.md)\n", encoding="utf-8"
+    )
     (root_criteria / "root.md").write_text(
         """# Root Requirement
 
@@ -823,7 +935,9 @@ def test_RQMD_portability_015_upward_root_discovery_prefers_nearest_ancestor(tmp
 """,
         encoding="utf-8",
     )
-    (nested_criteria / "README.md").write_text("# Requirements\n\n- [Nested](nested.md)\n", encoding="utf-8")
+    (nested_criteria / "README.md").write_text(
+        "# Requirements\n\n- [Nested](nested.md)\n", encoding="utf-8"
+    )
     (nested_criteria / "nested.md").write_text(
         """# Nested Requirement
 
@@ -839,7 +953,13 @@ def test_RQMD_portability_015_upward_root_discovery_prefers_nearest_ancestor(tmp
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--status", "Implemented", "--as-tree", "--non-interactive", "--non-interactive"],
+        [
+            "--status",
+            "Implemented",
+            "--as-tree",
+            "--non-interactive",
+            "--non-interactive",
+        ],
     )
 
     assert result.exit_code == 0
@@ -847,14 +967,20 @@ def test_RQMD_portability_015_upward_root_discovery_prefers_nearest_ancestor(tmp
     assert "AC-ROOT-001" not in result.output
 
 
-def test_RQMD_portability_015_marker_priority_prefers_rqmd_config(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_portability_015_marker_priority_prefers_rqmd_config(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
-    (repo / "rqmd.yml").write_text("requirements_dir: docs/requirements\n", encoding="utf-8")
+    (repo / "rqmd.yml").write_text(
+        "requirements_dir: docs/requirements\n", encoding="utf-8"
+    )
     (repo / "requirements").mkdir(parents=True)
     requirements = repo / "docs" / "requirements"
     requirements.mkdir(parents=True)
-    (requirements / "README.md").write_text("# Requirements\n\n- [Demo](demo.md)\n", encoding="utf-8")
+    (requirements / "README.md").write_text(
+        "# Requirements\n\n- [Demo](demo.md)\n", encoding="utf-8"
+    )
     (requirements / "demo.md").write_text(
         """# Demo Requirement
 
@@ -868,18 +994,28 @@ def test_RQMD_portability_015_marker_priority_prefers_rqmd_config(tmp_path: Path
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--status", "Implemented", "--as-tree", "--non-interactive", "--non-interactive"],
+        [
+            "--status",
+            "Implemented",
+            "--as-tree",
+            "--non-interactive",
+            "--non-interactive",
+        ],
     )
 
     assert result.exit_code == 0
     assert "marker:rqmd.yml" in result.output
 
 
-def test_RQMD_portability_015_explicit_repo_root_bypasses_discovery(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_portability_015_explicit_repo_root_bypasses_discovery(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     nested = repo / "nested"
     nested.mkdir(parents=True)
-    (nested / "rqmd.yml").write_text("requirements_dir: requirements\n", encoding="utf-8")
+    (nested / "rqmd.yml").write_text(
+        "requirements_dir: requirements\n", encoding="utf-8"
+    )
     (nested / "requirements").mkdir(parents=True)
 
     root_criteria = repo / "docs" / "requirements"

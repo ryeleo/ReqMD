@@ -74,7 +74,9 @@ class RenderModeController:
             if median_ms > self.upper_ms and p95_ms > self.upper_ms:
                 self.mode = "append"
                 self.last_transition_at = timestamp
-                return RenderModeDecision(self.mode, True, "degrade-latency", median_ms, p95_ms)
+                return RenderModeDecision(
+                    self.mode, True, "degrade-latency", median_ms, p95_ms
+                )
             return RenderModeDecision(self.mode, False, None, median_ms, p95_ms)
 
         # Recovery path uses hysteresis to avoid threshold oscillation.
@@ -83,6 +85,8 @@ class RenderModeController:
         if median_ms <= recovery_target and p95_ms <= recovery_upper:
             self.mode = "screen-write"
             self.last_transition_at = timestamp
-            return RenderModeDecision(self.mode, True, "recover-latency", median_ms, p95_ms)
+            return RenderModeDecision(
+                self.mode, True, "recover-latency", median_ms, p95_ms
+            )
 
         return RenderModeDecision(self.mode, False, None, median_ms, p95_ms)

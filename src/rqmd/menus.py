@@ -24,9 +24,16 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, MENU_NEXT,
-                        MENU_PAGE_SIZE, MENU_PREV, MENU_QUIT, MENU_UP,
-                        ZEBRA_BG)
+from .constants import (
+    ANSI_ESCAPE_PATTERN,
+    ANSI_RESET,
+    MENU_NEXT,
+    MENU_PAGE_SIZE,
+    MENU_PREV,
+    MENU_QUIT,
+    MENU_UP,
+    ZEBRA_BG,
+)
 from .render_heuristics import RenderModeController
 
 _SCREEN_WRITE_ENABLED = False
@@ -120,9 +127,17 @@ def _format_key_label(key: str) -> str:
         return "↑"
     if key in _ARROW_DOWN_KEYS:
         return "↓"
-    if any(key == f"{prefix}{suffix}" for prefix in _WINDOWS_ARROW_PREFIXES for suffix in _WINDOWS_ARROW_UP_SUFFIXES):
+    if any(
+        key == f"{prefix}{suffix}"
+        for prefix in _WINDOWS_ARROW_PREFIXES
+        for suffix in _WINDOWS_ARROW_UP_SUFFIXES
+    ):
         return "↑"
-    if any(key == f"{prefix}{suffix}" for prefix in _WINDOWS_ARROW_PREFIXES for suffix in _WINDOWS_ARROW_DOWN_SUFFIXES):
+    if any(
+        key == f"{prefix}{suffix}"
+        for prefix in _WINDOWS_ARROW_PREFIXES
+        for suffix in _WINDOWS_ARROW_DOWN_SUFFIXES
+    ):
         return "↓"
     if key == _CTRL_U:
         return "^U"
@@ -153,7 +168,11 @@ def _resolve_arrow_navigation(
             return "nav-next"
         if allow_paging_nav:
             return MENU_NEXT
-    if any(choice == f"{prefix}{suffix}" for prefix in _WINDOWS_ARROW_PREFIXES for suffix in _WINDOWS_ARROW_DOWN_SUFFIXES):
+    if any(
+        choice == f"{prefix}{suffix}"
+        for prefix in _WINDOWS_ARROW_PREFIXES
+        for suffix in _WINDOWS_ARROW_DOWN_SUFFIXES
+    ):
         if extra_keys and "nav-next" in extra_keys.values():
             return "nav-next"
         if allow_paging_nav:
@@ -163,7 +182,11 @@ def _resolve_arrow_navigation(
             return "nav-prev"
         if allow_paging_nav:
             return MENU_PREV
-    if any(choice == f"{prefix}{suffix}" for prefix in _WINDOWS_ARROW_PREFIXES for suffix in _WINDOWS_ARROW_UP_SUFFIXES):
+    if any(
+        choice == f"{prefix}{suffix}"
+        for prefix in _WINDOWS_ARROW_PREFIXES
+        for suffix in _WINDOWS_ARROW_UP_SUFFIXES
+    ):
         if extra_keys and "nav-prev" in extra_keys.values():
             return "nav-prev"
         if allow_paging_nav:
@@ -208,9 +231,7 @@ def _build_default_help_legend(
     extra_keys_help: dict[str, str] | None,
 ) -> str:
     if allow_paging_nav:
-        keys_line = (
-            f"keys: 1-9 select | ↓/{MENU_NEXT}=next | ↑/{MENU_PREV}=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | {MENU_UP}=up | {MENU_QUIT}=quit"
-        )
+        keys_line = f"keys: 1-9 select | ↓/{MENU_NEXT}=next | ↑/{MENU_PREV}=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | {MENU_UP}=up | {MENU_QUIT}=quit"
     else:
         keys_line = f"keys: 1-9 select | {MENU_UP}=up | {MENU_QUIT}=quit"
     if extra_key:
@@ -254,7 +275,14 @@ def _wrap_help_legend(legend: str, width: int) -> list[str]:
             if current_tokens:
                 lines.append(" | ".join(current_tokens))
                 current_tokens = []
-            lines.extend(textwrap.wrap(token, width=max_width, break_long_words=False, break_on_hyphens=False))
+            lines.extend(
+                textwrap.wrap(
+                    token,
+                    width=max_width,
+                    break_long_words=False,
+                    break_on_hyphens=False,
+                )
+            )
             continue
         current_tokens = candidate_tokens
 
@@ -298,7 +326,9 @@ def _wrapped_row_count(text: str, width: int) -> int:
     return (line_width + width - 1) // width
 
 
-def _fit_prefix_text_for_viewport(prefix_text: str | None, width: int, max_rows: int) -> str | None:
+def _fit_prefix_text_for_viewport(
+    prefix_text: str | None, width: int, max_rows: int
+) -> str | None:
     """Trim prefix text so the full frame stays within the visible viewport."""
     if not prefix_text:
         return prefix_text
@@ -401,7 +431,9 @@ def right_align_menu_suffix(label: str, suffix: str, index_width: int = 1) -> st
     return f"{label}{' ' * spaces}{suffix}"
 
 
-def file_sort_key_by_priority(counts: dict[str, int], label: str) -> tuple[int, int, int, str]:
+def file_sort_key_by_priority(
+    counts: dict[str, int], label: str
+) -> tuple[int, int, int, str]:
     """Generate a sort key prioritizing implemented, then proposed, then verified counts.
 
     Args:
@@ -417,7 +449,9 @@ def file_sort_key_by_priority(counts: dict[str, int], label: str) -> tuple[int, 
     return (-black, -blue, -green, label)
 
 
-def compute_row_diff(previous_rows: list[str], current_rows: list[str]) -> list[tuple[int, str]]:
+def compute_row_diff(
+    previous_rows: list[str], current_rows: list[str]
+) -> list[tuple[int, str]]:
     """Return changed row positions between two rendered menu snapshots.
 
     The return value is a list of ``(row_index, row_text)`` tuples for rows that
@@ -494,7 +528,12 @@ def select_from_menu(
     max_window_start = max(0, len(options) - 1)
     last_page_start = max(0, ((len(options) - 1) // page_size) * page_size)
     window_start = 0
-    current_selected_index = selected_option_index if selected_option_index is not None and 0 <= selected_option_index < len(options) else None
+    current_selected_index = (
+        selected_option_index
+        if selected_option_index is not None
+        and 0 <= selected_option_index < len(options)
+        else None
+    )
     last_search_query: str | None = None
     last_search_forward = True
     help_visible = False
@@ -508,13 +547,21 @@ def select_from_menu(
         extra_keys=extra_keys,
         extra_keys_help=extra_keys_help,
     )
-    resolved_help_legend = help_legend if help_legend is not None else footer_legend if compact_footer is not None else default_help_legend
+    resolved_help_legend = (
+        help_legend
+        if help_legend is not None
+        else footer_legend
+        if compact_footer is not None
+        else default_help_legend
+    )
     resolved_compact_footer = compact_footer
     if resolved_compact_footer is None:
         if footer_legend is not None:
             resolved_compact_footer = footer_legend
         else:
-            resolved_compact_footer = _build_default_compact_footer(allow_paging_nav=allow_paging_nav)
+            resolved_compact_footer = _build_default_compact_footer(
+                allow_paging_nav=allow_paging_nav
+            )
 
     if is_tty and hasattr(signal, "SIGWINCH"):
         previous_resize_handler = signal.signal(signal.SIGWINCH, _mark_resize_pending)
@@ -522,13 +569,15 @@ def select_from_menu(
     if initial_window_start is not None and initial_window_start >= 0:
         window_start = min(initial_window_start, max_window_start)
     elif selected_option_index is not None and selected_option_index >= 0:
-        window_start = min((selected_option_index // page_size) * page_size, max_window_start)
+        window_start = min(
+            (selected_option_index // page_size) * page_size, max_window_start
+        )
 
     try:
         while True:
             total_pages = (len(options) + page_size - 1) // page_size
             start = window_start
-            page_items = options[start:start + page_size]
+            page_items = options[start : start + page_size]
             term_size = shutil.get_terminal_size(fallback=(120, 24))
             term_width = term_size.columns
             term_height = term_size.lines
@@ -538,7 +587,11 @@ def select_from_menu(
             _ = consume_resize_pending()
 
             effective_screen_write = _SCREEN_WRITE_ENABLED and is_tty
-            if effective_screen_write and (not _SCREEN_WRITE_FORCED) and _RENDER_MODE_CONTROLLER.mode == "append":
+            if (
+                effective_screen_write
+                and (not _SCREEN_WRITE_FORCED)
+                and _RENDER_MODE_CONTROLLER.mode == "append"
+            ):
                 effective_screen_write = False
 
             if effective_screen_write:
@@ -550,14 +603,18 @@ def select_from_menu(
 
             rendered_prefix = prefix_text
             if rendered_prefix and effective_screen_write:
-                reserved_rows = 1 + 1 + len(page_items) + 1 + 1  # blank, title, menu rows, footer, prompt
+                reserved_rows = (
+                    1 + 1 + len(page_items) + 1 + 1
+                )  # blank, title, menu rows, footer, prompt
                 if show_page_indicator and total_pages > 1:
                     reserved_rows += 1
                 if help_visible:
                     wrapped_help = _wrap_help_legend(resolved_help_legend, term_width)
                     reserved_rows += 1 + len(wrapped_help) + 1
                 available_prefix_rows = max(0, term_height - reserved_rows)
-                rendered_prefix = _fit_prefix_text_for_viewport(rendered_prefix, term_width, available_prefix_rows)
+                rendered_prefix = _fit_prefix_text_for_viewport(
+                    rendered_prefix, term_width, available_prefix_rows
+                )
 
             if rendered_prefix:
                 click.echo(rendered_prefix)
@@ -573,24 +630,50 @@ def select_from_menu(
                         continue
                     if not option_right_labels[global_idx]:
                         continue
-                    selection_marker = "→" if current_selected_index is not None and global_idx == current_selected_index else " "
+                    selection_marker = (
+                        "→"
+                        if current_selected_index is not None
+                        and global_idx == current_selected_index
+                        else " "
+                    )
                     left = f"{selection_marker} {idx + 1}) {option}"
-                    adjacent_right_column_width = max(adjacent_right_column_width, visible_length(left))
+                    adjacent_right_column_width = max(
+                        adjacent_right_column_width, visible_length(left)
+                    )
             for idx, option in enumerate(page_items):
                 global_idx = start + idx
-                selection_marker = "→" if current_selected_index is not None and global_idx == current_selected_index else " "
+                selection_marker = (
+                    "→"
+                    if current_selected_index is not None
+                    and global_idx == current_selected_index
+                    else " "
+                )
                 left = f"{selection_marker} {idx + 1}) {option}"
                 rendered_split_highlight = False
                 if option_right_labels and global_idx < len(option_right_labels):
                     raw_right = option_right_labels[global_idx]
-                    right = raw_right if separate_right_label_background or ANSI_ESCAPE_PATTERN.search(raw_right) else click.style(raw_right, dim=True)
+                    right = (
+                        raw_right
+                        if separate_right_label_background
+                        or ANSI_ESCAPE_PATTERN.search(raw_right)
+                        else click.style(raw_right, dim=True)
+                    )
                     if right_label_layout == "adjacent" and raw_right:
-                        pad = max(2, adjacent_right_column_width - visible_length(left) + 2)
+                        pad = max(
+                            2, adjacent_right_column_width - visible_length(left) + 2
+                        )
                     else:
                         pad = term_width - visible_length(left) - visible_length(right)
                     if pad >= 2:
-                        if _COLORIZED_REDRAW_ENABLED and current_selected_index is not None and global_idx == current_selected_index and selected_option_bg:
-                            left = apply_background_preserving_styles(left, selected_option_bg)
+                        if (
+                            _COLORIZED_REDRAW_ENABLED
+                            and current_selected_index is not None
+                            and global_idx == current_selected_index
+                            and selected_option_bg
+                        ):
+                            left = apply_background_preserving_styles(
+                                left, selected_option_bg
+                            )
                         elif _COLORIZED_REDRAW_ENABLED and zebra and (idx % 2 == 1):
                             left = apply_background_preserving_styles(
                                 left, zebra_bg if zebra_bg is not None else ZEBRA_BG
@@ -609,9 +692,20 @@ def select_from_menu(
                 else:
                     line = left
 
-                if (not rendered_split_highlight) and _COLORIZED_REDRAW_ENABLED and current_selected_index is not None and global_idx == current_selected_index and selected_option_bg:
+                if (
+                    (not rendered_split_highlight)
+                    and _COLORIZED_REDRAW_ENABLED
+                    and current_selected_index is not None
+                    and global_idx == current_selected_index
+                    and selected_option_bg
+                ):
                     line = apply_background_preserving_styles(line, selected_option_bg)
-                elif (not rendered_split_highlight) and _COLORIZED_REDRAW_ENABLED and zebra and (idx % 2 == 1):
+                elif (
+                    (not rendered_split_highlight)
+                    and _COLORIZED_REDRAW_ENABLED
+                    and zebra
+                    and (idx % 2 == 1)
+                ):
                     line = apply_background_preserving_styles(
                         line, zebra_bg if zebra_bg is not None else ZEBRA_BG
                     )
@@ -622,7 +716,9 @@ def select_from_menu(
                 click.echo(click.style("Help", bold=True))
                 for help_line in _wrap_help_legend(resolved_help_legend, term_width):
                     click.echo(help_line)
-                click.echo(click.style("Press : or any invalid key to close help.", dim=True))
+                click.echo(
+                    click.style("Press : or any invalid key to close help.", dim=True)
+                )
             click.echo(resolved_compact_footer)
             click.echo("choice: ", nl=False)
             raw_choice = _read_menu_key()
@@ -660,7 +756,9 @@ def select_from_menu(
                     _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                 continue
 
-            arrow_navigation = _resolve_arrow_navigation(choice, allow_paging_nav, extra_keys)
+            arrow_navigation = _resolve_arrow_navigation(
+                choice, allow_paging_nav, extra_keys
+            )
             if arrow_navigation in {"nav-next", "nav-prev"}:
                 return arrow_navigation
             if arrow_navigation is not None:
@@ -704,7 +802,11 @@ def select_from_menu(
                         _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                     continue
 
-                anchor_index = current_selected_index if current_selected_index is not None else min(window_start, len(options) - 1)
+                anchor_index = (
+                    current_selected_index
+                    if current_selected_index is not None
+                    else min(window_start, len(options) - 1)
+                )
                 search_forward = choice == "/"
                 match_index = _find_search_match(
                     options,
@@ -722,7 +824,9 @@ def select_from_menu(
                     continue
 
                 current_selected_index = match_index
-                window_start = min((match_index // page_size) * page_size, max_window_start)
+                window_start = min(
+                    (match_index // page_size) * page_size, max_window_start
+                )
                 render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
                 if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                     _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
@@ -736,8 +840,14 @@ def select_from_menu(
                         _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                     continue
 
-                anchor_index = current_selected_index if current_selected_index is not None else min(window_start, len(options) - 1)
-                repeat_forward = last_search_forward if choice == "n" else not last_search_forward
+                anchor_index = (
+                    current_selected_index
+                    if current_selected_index is not None
+                    else min(window_start, len(options) - 1)
+                )
+                repeat_forward = (
+                    last_search_forward if choice == "n" else not last_search_forward
+                )
                 match_index = _find_search_match(
                     options,
                     last_search_query,
@@ -752,7 +862,9 @@ def select_from_menu(
                     continue
 
                 current_selected_index = match_index
-                window_start = min((match_index // page_size) * page_size, max_window_start)
+                window_start = min(
+                    (match_index // page_size) * page_size, max_window_start
+                )
                 render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
                 if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                     _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
@@ -801,5 +913,9 @@ def select_from_menu(
                 _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
     finally:
         consume_resize_pending()
-        if is_tty and hasattr(signal, "SIGWINCH") and previous_resize_handler is not None:
+        if (
+            is_tty
+            and hasattr(signal, "SIGWINCH")
+            and previous_resize_handler is not None
+        ):
             signal.signal(signal.SIGWINCH, previous_resize_handler)

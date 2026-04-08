@@ -16,8 +16,9 @@ def _capture_panel(domain_file, requirement, repo_root):
         output_lines.append(str(msg))
 
     with patch("rqmd.status_update.click.echo", side_effect=fake_echo):
-        with patch("rqmd.status_update.shutil.get_terminal_size",
-                   return_value=_TERM_SIZE):
+        with patch(
+            "rqmd.status_update.shutil.get_terminal_size", return_value=_TERM_SIZE
+        ):
             print_criterion_panel(domain_file, requirement, repo_root)
 
     return "\n".join(output_lines)
@@ -107,4 +108,3 @@ class TestPrintCriterionPanelDomainNotes:
         assert "Status: 💡 Proposed" in output
         assert "Priority: 🟠 P1 - High" in output
         assert "Use cached prompt context for repeat runs." in output
-

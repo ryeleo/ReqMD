@@ -6,27 +6,33 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli
 from rqmd.config import load_config, load_statuses_file, validate_config
 from rqmd.constants import DEFAULT_PRIORITY_CATALOG, DEFAULT_STATUS_CATALOG
 from rqmd.markdown_io import render_default_project_config
-from rqmd.status_model import (_STATUS_COLORS, configure_status_catalog,
-                               style_status_label)
+from rqmd.status_model import (
+    _STATUS_COLORS,
+    configure_status_catalog,
+    style_status_label,
+)
 
 
 def test_RQMD_portability_006_load_config_from_rqmd_json(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
     config_file = repo / "rqmd.json"
-    config_file.write_text('{"requirements_dir": "custom/reqs", "id_prefix": "PROJ"}', encoding="utf-8")
+    config_file.write_text(
+        '{"requirements_dir": "custom/reqs", "id_prefix": "PROJ"}', encoding="utf-8"
+    )
 
     config = load_config(repo)
     assert config["requirements_dir"] == "custom/reqs"
     assert config["id_prefix"] == "PROJ"
 
 
-def test_RQMD_portability_006_load_config_empty_when_file_missing(tmp_path: Path) -> None:
+def test_RQMD_portability_006_load_config_empty_when_file_missing(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
 
@@ -34,7 +40,9 @@ def test_RQMD_portability_006_load_config_empty_when_file_missing(tmp_path: Path
     assert config == {}
 
 
-def test_RQMD_portability_006_load_config_handles_malformed_json(tmp_path: Path) -> None:
+def test_RQMD_portability_006_load_config_handles_malformed_json(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
     config_file = repo / "rqmd.json"
@@ -74,7 +82,9 @@ def test_RQMD_portability_006_validate_config_type_checks_screen_write() -> None
         validate_config(config)
 
 
-def test_RQMD_portability_006_validate_config_rejects_unknown_keys(tmp_path: Path) -> None:
+def test_RQMD_portability_006_validate_config_rejects_unknown_keys(
+    tmp_path: Path,
+) -> None:
     config = {
         "unknown_key": "value",
     }
@@ -111,7 +121,9 @@ def test_RQMD_portability_006_cli_flag_overrides_config(tmp_path: Path) -> None:
     # this loaded config value, which is handled by Click's parameter precedence
 
 
-def test_RQMD_portability_011_custom_status_catalog_from_yaml_supports_rollup(tmp_path: Path) -> None:
+def test_RQMD_portability_011_custom_status_catalog_from_yaml_supports_rollup(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -199,7 +211,9 @@ Scope: demo.
     assert "Complete" in result.output
 
 
-def test_RQMD_portability_011_custom_status_catalog_allows_set_status_input(tmp_path: Path) -> None:
+def test_RQMD_portability_011_custom_status_catalog_allows_set_status_input(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -263,7 +277,9 @@ Scope: demo.
     assert "- **Status:** 💻 Desktop-Verified" in text
 
 
-def test_RQMD_portability_011_custom_status_catalog_does_not_leak_between_runs(tmp_path: Path) -> None:
+def test_RQMD_portability_011_custom_status_catalog_does_not_leak_between_runs(
+    tmp_path: Path,
+) -> None:
     custom_repo = tmp_path / "custom"
     custom_domain = custom_repo / "docs" / "requirements"
     custom_domain.mkdir(parents=True)
@@ -370,7 +386,9 @@ def test_RQMD_portability_011_ssvr_corpus_rollup_uses_custom_status_catalog() ->
     assert "Complete" in column_labels
 
 
-def test_RQMD_portability_011_ssvr_corpus_copy_accepts_desktop_verified_set_status(tmp_path: Path) -> None:
+def test_RQMD_portability_011_ssvr_corpus_copy_accepts_desktop_verified_set_status(
+    tmp_path: Path,
+) -> None:
     source_corpus_root = Path(__file__).resolve().parents[1] / "test-corpus" / "SSVR"
     assert source_corpus_root.exists(), "Expected test corpus at test-corpus/SSVR"
 
@@ -383,17 +401,17 @@ def test_RQMD_portability_011_ssvr_corpus_copy_accepts_desktop_verified_set_stat
 
     runner = CliRunner()
     result = runner.invoke(
-      cli.main,
-      [
-        "--project-root",
-        str(repo),
-        "--docs-dir",
-        "requirements",
-        "--update-id",
-        "SSVR-0155",
-        "--update-status",
-        "desktop-verified",
-      ],
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "requirements",
+            "--update-id",
+            "SSVR-0155",
+            "--update-status",
+            "desktop-verified",
+        ],
     )
 
     assert result.exit_code == 0
@@ -403,245 +421,288 @@ def test_RQMD_portability_011_ssvr_corpus_copy_accepts_desktop_verified_set_stat
 
 
 def test_RQMD_portability_007_load_statuses_file_explicit_path(tmp_path: Path) -> None:
-  """load_statuses_file with an explicit override path loads the file."""
-  catalog = tmp_path / "my-statuses.yml"
-  catalog.write_text(
-    """- name: Alpha
+    """load_statuses_file with an explicit override path loads the file."""
+    catalog = tmp_path / "my-statuses.yml"
+    catalog.write_text(
+        """- name: Alpha
   shortcode: A
   emoji: "🅰️"
 - name: Beta
   shortcode: B
   emoji: "🅱️"
 """,
-    encoding="utf-8",
-  )
-  result = load_statuses_file(tmp_path, str(catalog))
-  assert result is not None
-  assert len(result) == 2
-  assert result[0]["name"] == "Alpha"
-  assert result[1]["name"] == "Beta"
+        encoding="utf-8",
+    )
+    result = load_statuses_file(tmp_path, str(catalog))
+    assert result is not None
+    assert len(result) == 2
+    assert result[0]["name"] == "Alpha"
+    assert result[1]["name"] == "Beta"
 
 
-def test_RQMD_portability_007_load_statuses_file_explicit_path_dict_form(tmp_path: Path) -> None:
-  """load_statuses_file with a dict-form YAML (with 'statuses' key) extracts the list."""
-  catalog = tmp_path / "catalog.yml"
-  catalog.write_text(
-    """statuses:
+def test_RQMD_portability_007_load_statuses_file_explicit_path_dict_form(
+    tmp_path: Path,
+) -> None:
+    """load_statuses_file with a dict-form YAML (with 'statuses' key) extracts the list."""
+    catalog = tmp_path / "catalog.yml"
+    catalog.write_text(
+        """statuses:
   - name: Custom
     shortcode: C
     emoji: "🔹"
 rollup_mode: per_status
 """,
-    encoding="utf-8",
-  )
-  result = load_statuses_file(tmp_path, str(catalog))
-  assert result is not None
-  assert len(result) == 1
-  assert result[0]["name"] == "Custom"
+        encoding="utf-8",
+    )
+    result = load_statuses_file(tmp_path, str(catalog))
+    assert result is not None
+    assert len(result) == 1
+    assert result[0]["name"] == "Custom"
 
 
-def test_RQMD_portability_007_load_statuses_file_not_found_raises(tmp_path: Path) -> None:
-  """load_statuses_file raises ValueError when override path does not exist."""
-  with pytest.raises(ValueError, match="not found"):
-    load_statuses_file(tmp_path, "nonexistent/statuses.yml")
+def test_RQMD_portability_007_load_statuses_file_not_found_raises(
+    tmp_path: Path,
+) -> None:
+    """load_statuses_file raises ValueError when override path does not exist."""
+    with pytest.raises(ValueError, match="not found"):
+        load_statuses_file(tmp_path, "nonexistent/statuses.yml")
 
 
-def test_RQMD_portability_007_load_statuses_file_auto_detect_rqmd_dir(tmp_path: Path) -> None:
-  """load_statuses_file auto-detects .rqmd/statuses.yml under repo_root."""
-  rqmd_dir = tmp_path / ".rqmd"
-  rqmd_dir.mkdir()
-  (rqmd_dir / "statuses.yml").write_text(
-    """\
+def test_RQMD_portability_007_load_statuses_file_auto_detect_rqmd_dir(
+    tmp_path: Path,
+) -> None:
+    """load_statuses_file auto-detects .rqmd/statuses.yml under repo_root."""
+    rqmd_dir = tmp_path / ".rqmd"
+    rqmd_dir.mkdir()
+    (rqmd_dir / "statuses.yml").write_text(
+        """\
 - name: InProgress
   shortcode: IP
   emoji: "🔄"
 """,
-    encoding="utf-8",
-  )
-  result = load_statuses_file(tmp_path)
-  assert result is not None
-  assert result[0]["name"] == "InProgress"
+        encoding="utf-8",
+    )
+    result = load_statuses_file(tmp_path)
+    assert result is not None
+    assert result[0]["name"] == "InProgress"
 
 
-def test_RQMD_portability_007_load_statuses_file_returns_none_when_absent(tmp_path: Path) -> None:
-  """load_statuses_file returns None when no override and no .rqmd/statuses.* found."""
-  result = load_statuses_file(tmp_path)
-  assert result is None
+def test_RQMD_portability_007_load_statuses_file_returns_none_when_absent(
+    tmp_path: Path,
+) -> None:
+    """load_statuses_file returns None when no override and no .rqmd/statuses.* found."""
+    result = load_statuses_file(tmp_path)
+    assert result is None
 
 
 def test_RQMD_portability_020_packaged_default_catalogs_drive_scaffold() -> None:
-  assert [entry["name"] for entry in DEFAULT_STATUS_CATALOG] == [
-    "Proposed",
-    "Implemented",
-    "Verified",
-    "Janky",
-    "Blocked",
-    "Deprecated",
-  ]
-  assert [entry["shortcode"] for entry in DEFAULT_PRIORITY_CATALOG] == ["P0", "P1", "P2", "P3"]
+    assert [entry["name"] for entry in DEFAULT_STATUS_CATALOG] == [
+        "Proposed",
+        "Implemented",
+        "Verified",
+        "Janky",
+        "Blocked",
+        "Deprecated",
+    ]
+    assert [entry["shortcode"] for entry in DEFAULT_PRIORITY_CATALOG] == [
+        "P0",
+        "P1",
+        "P2",
+        "P3",
+    ]
 
-  rendered = render_default_project_config("docs/requirements", "RQMD")
-  assert rendered.startswith("# Generated by `rqmd init` so humans and AI agents share one project config.\n")
-  assert "requirements_dir: docs/requirements\nid_prefix: RQMD\n" in rendered
-  assert "  - name: Janky\n    shortcode: J\n    emoji: \"⚠️\"" in rendered
-  assert "  - name: P0 - Critical\n    shortcode: P0\n    emoji: \"🔴\"" in rendered
-
-
-def test_RQMD_portability_007_cli_status_config_overrides_unified_config(tmp_path: Path) -> None:
-  """--status-config file takes precedence over statuses in rqmd.yml."""
-  repo = tmp_path / "repo"
-  domain = repo / "docs" / "requirements"
-  domain.mkdir(parents=True)
-
-  # Unified config with standard statuses
-  (repo / "rqmd.yml").write_text(
-    "statuses:\n  - name: Proposed\n    shortcode: P\n    emoji: \"💡\"\n",
-    encoding="utf-8",
-  )
-
-  # Separate override file with a custom status
-  override = tmp_path / "custom.yml"
-  override.write_text(
-    "- name: InReview\n  shortcode: IR\n  emoji: \"👀\"\n"
-    "- name: Shipped\n  shortcode: SH\n  emoji: \"🚀\"\n",
-    encoding="utf-8",
-  )
-
-  (domain / "demo.md").write_text(
-    "# Demo\n\nScope: demo.\n\n### AC-001: Item\n- **Status:** 👀 InReview\n",
-    encoding="utf-8",
-  )
-
-  runner = CliRunner()
-  result = runner.invoke(
-    cli.main,
-    [
-      "--project-root", str(repo),
-      "--docs-dir", "docs/requirements",
-      "--status-config", str(override),
-      "--verify-summaries",
-      "--non-interactive",
-    ],
-  )
-
-  assert result.exit_code in (0, 1), result.output
-  assert "Unrecognized" not in result.output
+    rendered = render_default_project_config("docs/requirements", "RQMD")
+    assert rendered.startswith(
+        "# Generated by `rqmd init` so humans and AI agents share one project config.\n"
+    )
+    assert "requirements_dir: docs/requirements\nid_prefix: RQMD\n" in rendered
+    assert '  - name: Janky\n    shortcode: J\n    emoji: "⚠️"' in rendered
+    assert '  - name: P0 - Critical\n    shortcode: P0\n    emoji: "🔴"' in rendered
 
 
-def test_RQMD_portability_007_cli_status_config_error_on_missing_file(tmp_path: Path) -> None:
-  """--status-config with a nonexistent path exits with an error."""
-  repo = tmp_path / "repo"
-  domain = repo / "docs" / "requirements"
-  domain.mkdir(parents=True)
-  (domain / "demo.md").write_text(
-    "# Demo\n\nScope: demo.\n\n### AC-001: Item\n- **Status:** 💡 Proposed\n",
-    encoding="utf-8",
-  )
+def test_RQMD_portability_007_cli_status_config_overrides_unified_config(
+    tmp_path: Path,
+) -> None:
+    """--status-config file takes precedence over statuses in rqmd.yml."""
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
 
-  runner = CliRunner()
-  result = runner.invoke(
-    cli.main,
-    [
-      "--project-root", str(repo),
-      "--docs-dir", "docs/requirements",
-      "--status-config", "nonexistent/statuses.yml",
-      "--verify-summaries",
-    ],
-  )
+    # Unified config with standard statuses
+    (repo / "rqmd.yml").write_text(
+        'statuses:\n  - name: Proposed\n    shortcode: P\n    emoji: "💡"\n',
+        encoding="utf-8",
+    )
 
-  assert result.exit_code != 0
-  assert "not found" in result.output.lower() or "error" in result.output.lower()
+    # Separate override file with a custom status
+    override = tmp_path / "custom.yml"
+    override.write_text(
+        '- name: InReview\n  shortcode: IR\n  emoji: "👀"\n'
+        '- name: Shipped\n  shortcode: SH\n  emoji: "🚀"\n',
+        encoding="utf-8",
+    )
+
+    (domain / "demo.md").write_text(
+        "# Demo\n\nScope: demo.\n\n### AC-001: Item\n- **Status:** 👀 InReview\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status-config",
+            str(override),
+            "--verify-summaries",
+            "--non-interactive",
+        ],
+    )
+
+    assert result.exit_code in (0, 1), result.output
+    assert "Unrecognized" not in result.output
+
+
+def test_RQMD_portability_007_cli_status_config_error_on_missing_file(
+    tmp_path: Path,
+) -> None:
+    """--status-config with a nonexistent path exits with an error."""
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        "# Demo\n\nScope: demo.\n\n### AC-001: Item\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status-config",
+            "nonexistent/statuses.yml",
+            "--verify-summaries",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "not found" in result.output.lower() or "error" in result.output.lower()
 
 
 def test_RQMD_portability_011_color_field_stored_in_status_colors() -> None:
-  """color field in custom status catalog is stored and used by style_status_label."""
-  configure_status_catalog([
-    {"name": "Active", "shortcode": "A", "emoji": "🔵", "color": "cyan"},
-    {"name": "Done", "shortcode": "D", "emoji": "✅"},
-  ])
-  try:
-    assert _STATUS_COLORS.get("🔵 Active") == "cyan"
-    styled = style_status_label("🔵 Active")
-    assert "Active" in styled  # styled label still contains the name
-    # Done has no color -> not in _STATUS_COLORS
-    assert "✅ Done" not in _STATUS_COLORS
-  finally:
-    configure_status_catalog(None)  # reset to defaults
+    """color field in custom status catalog is stored and used by style_status_label."""
+    configure_status_catalog(
+        [
+            {"name": "Active", "shortcode": "A", "emoji": "🔵", "color": "cyan"},
+            {"name": "Done", "shortcode": "D", "emoji": "✅"},
+        ]
+    )
+    try:
+        assert _STATUS_COLORS.get("🔵 Active") == "cyan"
+        styled = style_status_label("🔵 Active")
+        assert "Active" in styled  # styled label still contains the name
+        # Done has no color -> not in _STATUS_COLORS
+        assert "✅ Done" not in _STATUS_COLORS
+    finally:
+        configure_status_catalog(None)  # reset to defaults
 
 
 def test_RQMD_portability_012_load_user_config_returns_empty_when_missing() -> None:
-  """load_user_config returns empty dict when ~/.rqmd.config does not exist."""
-  from rqmd.config import load_user_config
-  user_config = load_user_config()
-  assert isinstance(user_config, dict)
+    """load_user_config returns empty dict when ~/.rqmd.config does not exist."""
+    from rqmd.config import load_user_config
+
+    user_config = load_user_config()
+    assert isinstance(user_config, dict)
 
 
-def test_RQMD_portability_012_load_user_config_json(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-  """load_user_config loads .rqmd.config.json from home directory."""
-  from rqmd.config import load_user_config
-  
-  fake_home = tmp_path / "home"
-  fake_home.mkdir()
-  config_file = fake_home / ".rqmd.config.json"
-  config_file.write_text('{"statuses": [{"name": "Custom", "emoji": "⭐", "shortcode": "C"}]}', encoding="utf-8")
-  
-  monkeypatch.setattr("pathlib.Path.home", lambda: fake_home)
-  
-  user_config = load_user_config()
-  assert "statuses" in user_config
-  assert len(user_config["statuses"]) == 1
-  assert user_config["statuses"][0]["name"] == "Custom"
+def test_RQMD_portability_012_load_user_config_json(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """load_user_config loads .rqmd.config.json from home directory."""
+    from rqmd.config import load_user_config
+
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
+    config_file = fake_home / ".rqmd.config.json"
+    config_file.write_text(
+        '{"statuses": [{"name": "Custom", "emoji": "⭐", "shortcode": "C"}]}',
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("pathlib.Path.home", lambda: fake_home)
+
+    user_config = load_user_config()
+    assert "statuses" in user_config
+    assert len(user_config["statuses"]) == 1
+    assert user_config["statuses"][0]["name"] == "Custom"
 
 
-def test_RQMD_portability_012_load_user_config_yaml(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-  """load_user_config loads .rqmd.config.yml from home directory."""
-  from rqmd.config import load_user_config
-  
-  fake_home = tmp_path / "home"
-  fake_home.mkdir()
-  config_file = fake_home / ".rqmd.config.yml"
-  config_file.write_text("statuses:\n  - name: Custom\n    emoji: ⭐\n    shortcode: C\n", encoding="utf-8")
-  
-  monkeypatch.setattr("pathlib.Path.home", lambda: fake_home)
-  
-  user_config = load_user_config()
-  assert "statuses" in user_config
-  assert len(user_config["statuses"]) == 1
-  assert user_config["statuses"][0]["name"] == "Custom"
+def test_RQMD_portability_012_load_user_config_yaml(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """load_user_config loads .rqmd.config.yml from home directory."""
+    from rqmd.config import load_user_config
+
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
+    config_file = fake_home / ".rqmd.config.yml"
+    config_file.write_text(
+        "statuses:\n  - name: Custom\n    emoji: ⭐\n    shortcode: C\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("pathlib.Path.home", lambda: fake_home)
+
+    user_config = load_user_config()
+    assert "statuses" in user_config
+    assert len(user_config["statuses"]) == 1
+    assert user_config["statuses"][0]["name"] == "Custom"
 
 
-def test_RQMD_portability_012_user_config_precedence_cli_over_user(tmp_path: Path) -> None:
-  """User config colors are overridden by project config when both exist."""
-  repo = tmp_path / "repo"
-  domain = repo / "docs" / "requirements"
-  domain.mkdir(parents=True)
-  (domain / "demo.md").write_text(
-    "# Demo\n\nScope: demo.\n\n### AC-001: Item\n- **Status:** 💡 Proposed\n",
-    encoding="utf-8",
-  )
-  
-  # Create project-level config override
-  project_config = repo / "rqmd.json"
-  project_config.write_text(
-    '{"statuses": [{"name": "Proposed", "emoji": "💡", "shortcode": "P", "color": "yellow"}]}',
-    encoding="utf-8"
-  )
-  
-  runner = CliRunner()
-  result = runner.invoke(
-    cli.main,
-    [
-      "--project-root", str(repo),
-      "--docs-dir", "docs/requirements",
-      "--status", "proposed",
-      "--as-json",
-      "--non-interactive",
-    ],
-  )
-  
-  assert result.exit_code == 0
-  payload = json.loads(result.output)
-  # Color from project config is applied
-  assert payload["files"][0]["requirements"][0]["id"] == "AC-001"
-  # Color from project config is applied
-  assert payload["files"][0]["requirements"][0]["id"] == "AC-001"
+def test_RQMD_portability_012_user_config_precedence_cli_over_user(
+    tmp_path: Path,
+) -> None:
+    """User config colors are overridden by project config when both exist."""
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        "# Demo\n\nScope: demo.\n\n### AC-001: Item\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+
+    # Create project-level config override
+    project_config = repo / "rqmd.json"
+    project_config.write_text(
+        '{"statuses": [{"name": "Proposed", "emoji": "💡", "shortcode": "P", "color": "yellow"}]}',
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "proposed",
+            "--as-json",
+            "--non-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    # Color from project config is applied
+    assert payload["files"][0]["requirements"][0]["id"] == "AC-001"
+    # Color from project config is applied
+    assert payload["files"][0]["requirements"][0]["id"] == "AC-001"

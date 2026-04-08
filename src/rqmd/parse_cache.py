@@ -16,7 +16,9 @@ from typing import Any
 
 # Cache keyed by resolved path -> (mtime_ns, size, payload).
 _text_cache: dict[Path, tuple[int, int, str]] = {}
-_parse_cache: dict[tuple[Path, tuple[str, ...]], tuple[int, int, list[dict[str, Any]]]] = {}
+_parse_cache: dict[
+    tuple[Path, tuple[str, ...]], tuple[int, int, list[dict[str, Any]]]
+] = {}
 
 
 def _file_key(path: Path) -> tuple[int, int]:
@@ -49,7 +51,9 @@ def get_parsed(path: Path, id_prefixes: tuple[str, ...]) -> list[dict[str, Any]]
     return cached[2]
 
 
-def put_parsed(path: Path, id_prefixes: tuple[str, ...], result: list[dict[str, Any]]) -> None:
+def put_parsed(
+    path: Path, id_prefixes: tuple[str, ...], result: list[dict[str, Any]]
+) -> None:
     """Store parse results in the cache."""
     resolved = path.resolve()
     key = _file_key(resolved)

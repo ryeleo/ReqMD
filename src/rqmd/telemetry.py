@@ -47,6 +47,7 @@ def _get_urllib():
     global _urllib_request
     if _urllib_request is None:
         import urllib.request
+
         _urllib_request = urllib.request
     return _urllib_request
 
@@ -109,6 +110,7 @@ def resolve_telemetry_endpoint(repo_root: Path | None = None) -> str | None:
     if repo_root is not None:
         try:
             from .config import load_config
+
             config = load_config(repo_root)
             telemetry_config = config.get("telemetry", {})
             if isinstance(telemetry_config, dict):
@@ -140,6 +142,7 @@ def resolve_telemetry_api_key(repo_root: Path | None = None) -> str | None:
     if repo_root is not None:
         try:
             from .config import load_config
+
             config = load_config(repo_root)
             telemetry_config = config.get("telemetry", {})
             if isinstance(telemetry_config, dict):
@@ -161,7 +164,7 @@ def _truncate(text: str | None, max_len: int = _MAX_SNIPPET_LENGTH) -> str | Non
         return None
     if len(text) <= max_len:
         return text
-    return text[:max_len - 3] + "..."
+    return text[: max_len - 3] + "..."
 
 
 def submit_event(
@@ -197,7 +200,13 @@ def submit_event(
     if detail:
         # Truncate known large text fields in detail.
         sanitized = dict(detail)
-        for key in ("stderr_snippet", "stdout_snippet", "actual", "expected", "context"):
+        for key in (
+            "stderr_snippet",
+            "stdout_snippet",
+            "actual",
+            "expected",
+            "context",
+        ):
             if key in sanitized and isinstance(sanitized[key], str):
                 sanitized[key] = _truncate(sanitized[key])
         payload["detail"] = sanitized

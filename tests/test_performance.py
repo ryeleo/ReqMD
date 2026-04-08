@@ -7,7 +7,6 @@ import time
 from pathlib import Path
 
 import click
-
 from rqmd.markdown_io import iter_domain_files
 from rqmd.menus import select_from_menu
 from rqmd.req_parser import collect_requirements_by_status
@@ -70,7 +69,9 @@ def _measure_discovery_parse_filter(repo: Path) -> tuple[float, int]:
     return elapsed_s, total_matches
 
 
-def test_RQMD_portability_016_large_corpus_scaling_is_near_linear(tmp_path: Path) -> None:
+def test_RQMD_portability_016_large_corpus_scaling_is_near_linear(
+    tmp_path: Path,
+) -> None:
     """Performance scales near-linearly from 100 -> 1000 -> 10000 requirements."""
     sizes = (100, 1000, 10000)
     timings: dict[int, float] = {}
@@ -242,7 +243,9 @@ def test_RQMD_core_038_parse_cache_avoids_reparse(tmp_path: Path) -> None:
 
     # Mutate file -> cache should invalidate
     path = domain_files[0]
-    path.write_text(path.read_text(encoding="utf-8") + "\n<!-- touched -->\n", encoding="utf-8")
+    path.write_text(
+        path.read_text(encoding="utf-8") + "\n<!-- touched -->\n", encoding="utf-8"
+    )
     third = parse_requirements(domain_files[0])
     assert third is not first, "Cache should invalidate after file modification"
     assert len(third) == len(first)

@@ -70,15 +70,15 @@ def _load_json(path: Path) -> dict[str, Any]:
 def load_config(repo_root: Path) -> dict[str, Any]:
     """
     Load project configuration from a unified .rqmd.* file at repo root.
-    
+
     Precedence:
     1. CLI flags (handled by Click, not this function)
     2. rqmd.yml / rqmd.yaml / rqmd.json values (this function)
     3. Built-in defaults (handled by Click)
-    
+
     Args:
         repo_root: Path to project root
-        
+
     Returns:
         Dictionary of config values; empty dict if no config file exists
     """
@@ -101,7 +101,9 @@ def load_config(repo_root: Path) -> dict[str, Any]:
     if suffix in {".yml", ".yaml"}:
         return _load_yaml(config_path)
 
-    raise ValueError(f"Unsupported config extension for {config_path}. Use .json, .yml, or .yaml")
+    raise ValueError(
+        f"Unsupported config extension for {config_path}. Use .json, .yml, or .yaml"
+    )
 
 
 def load_user_config() -> dict[str, Any]:
@@ -141,7 +143,6 @@ def load_user_config() -> dict[str, Any]:
             return _load_json(config_path)
     except (OSError, ValueError):
         return {}
-
 
 
 def _parse_statuses_from_path(path: Path) -> List[Any]:
@@ -284,10 +285,10 @@ def load_priorities_file(
 def validate_config(config: dict[str, Any]) -> None:
     """
     Validate that config keys are known and values are reasonable.
-    
+
     Args:
         config: Configuration dictionary
-        
+
     Raises:
         ValueError: If config is invalid
     """
@@ -305,11 +306,13 @@ def validate_config(config: dict[str, Any]) -> None:
         "statuses",
         "priorities",
     }
-    
+
     for key in config:
         if key not in allowed_keys:
-            raise ValueError(f"Unknown config key: {key}. Allowed keys: {', '.join(sorted(allowed_keys))}")
-    
+            raise ValueError(
+                f"Unknown config key: {key}. Allowed keys: {', '.join(sorted(allowed_keys))}"
+            )
+
     # Validate types
     if "repo_root" in config and not isinstance(config["repo_root"], str):
         raise ValueError("Config key 'repo_root' must be a string")
@@ -334,7 +337,9 @@ def validate_config(config: dict[str, Any]) -> None:
                     "Config key 'history_retention' contains unknown key: "
                     f"{key}. Allowed keys: {', '.join(sorted(allowed_retention_keys))}"
                 )
-            if value is not None and (not isinstance(value, int) or isinstance(value, bool) or value <= 0):
+            if value is not None and (
+                not isinstance(value, int) or isinstance(value, bool) or value <= 0
+            ):
                 raise ValueError(
                     f"Config key 'history_retention.{key}' must be a positive integer or null"
                 )

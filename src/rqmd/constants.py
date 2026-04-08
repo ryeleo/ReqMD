@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import re
 
-from .default_catalogs import (load_default_priority_catalog_resource,
-                               load_default_status_catalog_resource)
+from .default_catalogs import (
+    load_default_priority_catalog_resource,
+    load_default_status_catalog_resource,
+)
 
 SUMMARY_START = "<!-- acceptance-status-summary:start -->"
 SUMMARY_END = "<!-- acceptance-status-summary:end -->"
@@ -24,12 +26,16 @@ def _normalize_catalog_entries(
     entry_kind: str,
 ) -> list[dict[str, str]]:
     if not isinstance(raw_entries, list) or not raw_entries:
-        raise RuntimeError(f"Packaged default {entry_kind} catalog must be a non-empty list")
+        raise RuntimeError(
+            f"Packaged default {entry_kind} catalog must be a non-empty list"
+        )
 
     entries: list[dict[str, str]] = []
     for index, item in enumerate(raw_entries, start=1):
         if not isinstance(item, dict):
-            raise RuntimeError(f"Packaged default {entry_kind} item #{index} must be a mapping")
+            raise RuntimeError(
+                f"Packaged default {entry_kind} item #{index} must be a mapping"
+            )
         normalized = {key: str(item.get(key, "")).strip() for key in required_keys}
         missing = [key for key, value in normalized.items() if not value]
         if missing:
@@ -55,7 +61,9 @@ DEFAULT_PRIORITY_CATALOG = _normalize_catalog_entries(
     entry_kind="priority",
 )
 
-STATUS_ORDER = [(_catalog_entry_label(entry), entry["slug"]) for entry in DEFAULT_STATUS_CATALOG]
+STATUS_ORDER = [
+    (_catalog_entry_label(entry), entry["slug"]) for entry in DEFAULT_STATUS_CATALOG
+]
 STATUS_TERSE_HEADERS_ASCII = [entry["terse_header"] for entry in DEFAULT_STATUS_CATALOG]
 STATUS_ALIASES = {
     str(alias_from): str(alias_to)
@@ -63,17 +71,23 @@ STATUS_ALIASES = {
 }
 STATUS_PARSE_ALIASES = {
     str(alias_from): str(alias_to)
-    for alias_from, alias_to in dict(_STATUS_DEFAULTS.get("parse_aliases") or {}).items()
+    for alias_from, alias_to in dict(
+        _STATUS_DEFAULTS.get("parse_aliases") or {}
+    ).items()
 }
 
-PRIORITY_ORDER = [(_catalog_entry_label(entry), entry["slug"]) for entry in DEFAULT_PRIORITY_CATALOG]
+PRIORITY_ORDER = [
+    (_catalog_entry_label(entry), entry["slug"]) for entry in DEFAULT_PRIORITY_CATALOG
+]
 PRIORITY_ALIASES = {
     str(alias_from): str(alias_to)
     for alias_from, alias_to in dict(_PRIORITY_DEFAULTS.get("aliases") or {}).items()
 }
 PRIORITY_PARSE_ALIASES = {
     str(alias_from): str(alias_to)
-    for alias_from, alias_to in dict(_PRIORITY_DEFAULTS.get("parse_aliases") or {}).items()
+    for alias_from, alias_to in dict(
+        _PRIORITY_DEFAULTS.get("parse_aliases") or {}
+    ).items()
 }
 
 MENU_UP = "u"
@@ -90,10 +104,16 @@ MENU_PAGE_SIZE = 9
 H2_SUBSECTION_PATTERN = re.compile(r"^##\s+(?P<section_title>.+?)\s*$", re.MULTILINE)
 
 STATUS_PATTERN = re.compile(r"^- \*\*Status:\*\* (?P<status>.+?)\s*$", re.MULTILINE)
-PRIORITY_PATTERN = re.compile(r"^- \*\*Priority:\*\* (?P<priority>.+?)\s*$", re.MULTILINE)
+PRIORITY_PATTERN = re.compile(
+    r"^- \*\*Priority:\*\* (?P<priority>.+?)\s*$", re.MULTILINE
+)
 BLOCKED_REASON_PATTERN = re.compile(r"^\*\*Blocked:\*\*\s*(.+?)\s*$", re.MULTILINE)
-DEPRECATED_REASON_PATTERN = re.compile(r"^\*\*Deprecated:\*\*\s*(.+?)\s*$", re.MULTILINE)
-FLAGGED_PATTERN = re.compile(r"^- \*\*Flagged:\*\* (?P<flagged>true|false)\s*$", re.MULTILINE)
+DEPRECATED_REASON_PATTERN = re.compile(
+    r"^\*\*Deprecated:\*\*\s*(.+?)\s*$", re.MULTILINE
+)
+FLAGGED_PATTERN = re.compile(
+    r"^- \*\*Flagged:\*\* (?P<flagged>true|false)\s*$", re.MULTILINE
+)
 LINKS_HEADER_PATTERN = re.compile(r"^- \*\*Links:\*\*\s*$", re.MULTILINE)
 LINK_ITEM_PATTERN = re.compile(r"^  - (?P<link_text>.+)$", re.MULTILINE)
 ID_PREFIX_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*(-[A-Z][A-Z0-9]*)*$")

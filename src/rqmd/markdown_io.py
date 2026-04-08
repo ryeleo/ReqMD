@@ -27,8 +27,12 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (DEFAULT_PRIORITY_CATALOG, DEFAULT_STATUS_CATALOG,
-                        JSON_SCHEMA_VERSION, REQUIREMENTS_INDEX_NAME)
+from .constants import (
+    DEFAULT_PRIORITY_CATALOG,
+    DEFAULT_STATUS_CATALOG,
+    JSON_SCHEMA_VERSION,
+    REQUIREMENTS_INDEX_NAME,
+)
 from .summary import process_file
 
 _INIT_RESOURCE_ROOT = ("resources", "init")
@@ -95,7 +99,9 @@ def sync_requirements_index_tooling_metadata(index_text: str) -> tuple[str, bool
             rf"\n?## Project Tooling Metadata\n.*?{re.escape(_RQMD_PROJECT_METADATA_START)}\n.*?\n{re.escape(_RQMD_PROJECT_METADATA_END)}\n?",
             re.DOTALL,
         )
-        updated_text, count = pattern.subn(f"\n\n{section_text}\n\n", index_text, count=1)
+        updated_text, count = pattern.subn(
+            f"\n\n{section_text}\n\n", index_text, count=1
+        )
         if count == 0:
             updated_text = index_text
         normalized = updated_text.strip() + "\n"
@@ -149,7 +155,9 @@ def _render_catalog_yaml_section(entries: list[dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
-def _normalize_status_entries(statuses: list[dict[str, object]] | None) -> list[dict[str, str]]:
+def _normalize_status_entries(
+    statuses: list[dict[str, object]] | None,
+) -> list[dict[str, str]]:
     if statuses is None:
         return list(DEFAULT_STATUS_CATALOG)
 
@@ -235,7 +243,9 @@ def initialize_project_config_scaffold(
     return config_path
 
 
-def iter_requirements_search_roots(repo_root: Path, search_start: Path | None = None) -> list[Path]:
+def iter_requirements_search_roots(
+    repo_root: Path, search_start: Path | None = None
+) -> list[Path]:
     """Iterate from a starting point up to repo root, returning all ancestors.
 
     Args:
@@ -310,7 +320,9 @@ def discover_project_root(search_start: Path | None = None) -> tuple[Path, str]:
     return start, "fallback:cwd"
 
 
-def auto_detect_requirements_dir(repo_root: Path, search_start: Path | None = None) -> tuple[Path | None, str | None]:
+def auto_detect_requirements_dir(
+    repo_root: Path, search_start: Path | None = None
+) -> tuple[Path | None, str | None]:
     """Auto-detect the requirements directory via search heuristics.
 
     Searches for docs/requirements/README.md or requirements/README.md, starting
@@ -333,13 +345,22 @@ def auto_detect_requirements_dir(repo_root: Path, search_start: Path | None = No
         for relative_path, derived_dir in candidate_specs:
             candidate = (root / relative_path).resolve()
             derived = (root / derived_dir).resolve()
-            if candidate.is_file() and derived.is_dir() and any(path.name != REQUIREMENTS_INDEX_NAME for path in derived.glob("*.md")):
+            if (
+                candidate.is_file()
+                and derived.is_dir()
+                and any(
+                    path.name != REQUIREMENTS_INDEX_NAME
+                    for path in derived.glob("*.md")
+                )
+            ):
                 return derived, format_path_display(candidate, repo_root)
 
     return None, None
 
 
-def resolve_requirements_dir(repo_root: Path, requirements_dir_input: str | None) -> tuple[Path, str | None]:
+def resolve_requirements_dir(
+    repo_root: Path, requirements_dir_input: str | None
+) -> tuple[Path, str | None]:
     """Resolve the requirements directory with auto-detection fallback.
 
     If requirements_dir_input is provided, use it (after resolving relative paths).
@@ -364,7 +385,9 @@ def resolve_requirements_dir(repo_root: Path, requirements_dir_input: str | None
 
     detected, detected_display = auto_detect_requirements_dir(repo_root)
     if detected is None:
-        raise click.ClickException(render_startup_message("startup-no-docs.md").rstrip())
+        raise click.ClickException(
+            render_startup_message("startup-no-docs.md").rstrip()
+        )
     return detected, f"Auto-selected requirement docs: {detected_display}"
 
 
@@ -394,11 +417,15 @@ def iter_domain_files(repo_root: Path, requirements_dir_input: str) -> list[Path
         )
 
     try:
-        return sorted(path for path in criteria_dir.glob("*.md") if path.name != REQUIREMENTS_INDEX_NAME)
+        return sorted(
+            path
+            for path in criteria_dir.glob("*.md")
+            if path.name != REQUIREMENTS_INDEX_NAME
+        )
     except PermissionError:
         raise click.ClickException(
             f"Permission denied reading requirement docs directory: {format_path_display(criteria_dir, repo_root)}\n"
-            f"  Hint: check permissions with: ls -la \"{criteria_dir.parent}\""
+            f'  Hint: check permissions with: ls -la "{criteria_dir.parent}"'
         )
 
 
@@ -433,11 +460,17 @@ def check_files_writable(domain_files: list[Path], repo_root: Path) -> None:
     """
     not_writable = [f for f in domain_files if not os.access(f, os.W_OK)]
     if not_writable:
-        click.echo("Error: interactive mode requires write access to requirement files.", err=True)
+        click.echo(
+            "Error: interactive mode requires write access to requirement files.",
+            err=True,
+        )
         click.echo("The following files are not writable:", err=True)
         for f in not_writable:
             click.echo(f"  {format_path_display(f, repo_root)}", err=True)
-        click.echo("  Hint: check file permissions (chmod u+w <file>) or run in non-interactive mode (--non-interactive).", err=True)
+        click.echo(
+            "  Hint: check file permissions (chmod u+w <file>) or run in non-interactive mode (--non-interactive).",
+            err=True,
+        )
         raise SystemExit(1)
 
 
@@ -469,7 +502,9 @@ def parse_index_links(index_path: Path) -> list[str]:
     return links
 
 
-def check_index_sync(criteria_dir: Path, index_path: Path) -> tuple[list[str], list[Path]]:
+def check_index_sync(
+    criteria_dir: Path, index_path: Path
+) -> tuple[list[str], list[Path]]:
     """Compare the requirements index against actual domain files.
 
     Args:
@@ -522,7 +557,7 @@ def display_name_from_h1(path: Path) -> str:
             shortened = title
             for prefix in ("Requirements", "Requirement"):
                 if shortened.startswith(prefix):
-                    shortened = shortened[len(prefix):].strip()
+                    shortened = shortened[len(prefix) :].strip()
                     break
             if shortened:
                 return shortened
@@ -557,7 +592,9 @@ def scope_and_body_from_file(
         return None, None
 
     header_pattern = re.compile(
-        r"^###\s+(?:" + "|".join(re.escape(p) for p in id_prefixes) + r")-[A-Z0-9-]+:\s*",
+        r"^###\s+(?:"
+        + "|".join(re.escape(p) for p in id_prefixes)
+        + r")-[A-Z0-9-]+:\s*",
         re.MULTILINE,
     )
 
@@ -569,7 +606,7 @@ def scope_and_body_from_file(
     for i, line in enumerate(lines):
         stripped = line.strip()
         if scope is None and stripped.startswith("Scope:"):
-            scope = stripped[len("Scope:"):].strip().rstrip(".")
+            scope = stripped[len("Scope:") :].strip().rstrip(".")
         if first_subsection_index is None and line.startswith("## "):
             first_subsection_index = i
         if header_pattern.match(line):
@@ -617,7 +654,9 @@ def _load_init_template(template_name: str) -> str:
     Returns:
         The template content as a string.
     """
-    packaged = importlib.resources.files("rqmd").joinpath(*_INIT_RESOURCE_ROOT, template_name)
+    packaged = importlib.resources.files("rqmd").joinpath(
+        *_INIT_RESOURCE_ROOT, template_name
+    )
     return packaged.read_text(encoding="utf-8")
 
 
@@ -656,7 +695,9 @@ def _render_markdown_bullets(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
-def render_startup_message(template_name: str, values: dict[str, str] | None = None) -> str:
+def render_startup_message(
+    template_name: str, values: dict[str, str] | None = None
+) -> str:
     return _render_init_template(template_name, values or {})
 
 
@@ -677,7 +718,9 @@ def render_requirements_index(
             "description": "bootstrap requirement for first-run setup",
         }
     ]
-    extra_section_text = "\n\n".join(section.strip() for section in (extra_sections or []) if section.strip())
+    extra_section_text = "\n\n".join(
+        section.strip() for section in (extra_sections or []) if section.strip()
+    )
     if extra_section_text:
         extra_section_text = f"{extra_section_text}\n"
     return _render_init_template(
@@ -689,7 +732,9 @@ def render_requirements_index(
             "STARTER_PREFIX": starter_prefix,
             "PROJECT_TOOLING_METADATA_SECTION": render_requirements_index_tooling_metadata_section(),
             "INDEX_EXTRA_SECTIONS": extra_section_text,
-            "REQUIREMENT_DOCUMENTS_SECTION": _render_requirement_documents_section(document_entries),
+            "REQUIREMENT_DOCUMENTS_SECTION": _render_requirement_documents_section(
+                document_entries
+            ),
         },
     )
 
@@ -764,7 +809,9 @@ def render_legacy_issue_domain(
         ]
         if label_text:
             lines.append(f"- Issue labels: {label_text}")
-        lines.append("- Review whether this backlog seed belongs in a more specific requirement file.")
+        lines.append(
+            "- Review whether this backlog seed belongs in a more specific requirement file."
+        )
         issue_sections.append("\n".join(lines))
     return _render_init_template(
         "legacy-issue-domain.md",

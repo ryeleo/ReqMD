@@ -58,7 +58,7 @@ def _render_inline_markdown(text: str) -> str:
     parts: list[str] = []
     cursor = 0
     for match in _INLINE_BOLD_PATTERN.finditer(text):
-        parts.append(text[cursor:match.start()])
+        parts.append(text[cursor : match.start()])
         parts.append(click.style(match.group(1), bold=True))
         cursor = match.end()
     parts.append(text[cursor:])
@@ -80,10 +80,14 @@ def _render_requirement_markdown(block_text: str) -> str:
             rendered_lines.append(f"{indent}{click.style(stripped[4:], bold=True)}")
             continue
         if stripped.startswith("## "):
-            rendered_lines.append(f"{indent}{click.style(stripped[3:], bold=True, underline=True)}")
+            rendered_lines.append(
+                f"{indent}{click.style(stripped[3:], bold=True, underline=True)}"
+            )
             continue
         if stripped.startswith("# "):
-            rendered_lines.append(f"{indent}{click.style(stripped[2:], bold=True, underline=True)}")
+            rendered_lines.append(
+                f"{indent}{click.style(stripped[2:], bold=True, underline=True)}"
+            )
             continue
 
         rendered_lines.append(f"{indent}{_render_inline_markdown(stripped)}")
@@ -101,7 +105,9 @@ def format_criterion_panel(
     requirement_id = str(requirement["id"])
     title = str(requirement["title"])
     status = str(requirement.get("status") or "")
-    criterion_text = extract_requirement_block(path, requirement_id, id_prefixes=id_prefixes)
+    criterion_text = extract_requirement_block(
+        path, requirement_id, id_prefixes=id_prefixes
+    )
     term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
     rule = "=" * max(24, min(term_width, 100))
     rule_kwargs = _rule_style_kwargs(status)
@@ -147,7 +153,9 @@ def print_criterion_panel(
         repo_root: Root path of the project (for display formatting).
         id_prefixes: Allowed ID prefixes (used for criterion extraction).
     """
-    click.echo(format_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes))
+    click.echo(
+        format_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
+    )
 
 
 def update_criterion_status(
@@ -285,7 +293,7 @@ def prompt_for_deprecated_reason() -> str:
 def prompt_for_priority() -> str:
     """Interactive priority selection menu."""
     from .constants import PRIORITY_ORDER
-    
+
     click.echo()
     click.echo("Select a priority:")
     for i, (label, _) in enumerate(PRIORITY_ORDER, 1):
@@ -298,14 +306,14 @@ def prompt_for_priority() -> str:
     ).strip()
     if not choice:
         return ""
-    
+
     try:
         idx = int(choice) - 1
         if 0 <= idx < len(PRIORITY_ORDER):
             return PRIORITY_ORDER[idx][0]
     except (ValueError, IndexError):
         pass
-    
+
     click.echo("Invalid choice. Skipping priority update.")
     return ""
 
@@ -332,7 +340,9 @@ def _add_link_to_file(path: Path, requirement: dict, link_text: str) -> None:
             requirement.get("priority_line"),
             requirement.get("status_line"),
         ]
-        insert_after = max((ln for ln in candidates if isinstance(ln, int)), default=None)
+        insert_after = max(
+            (ln for ln in candidates if isinstance(ln, int)), default=None
+        )
         if insert_after is None:
             return
         insert_at = insert_after + 1
@@ -392,7 +402,9 @@ def prompt_for_links_flow(
         else:
             click.echo("No links yet.")
         click.echo("Enter a number to remove, a URL or [label](url) to add,")
-        raw = click.prompt("or press Enter to go back", default="", show_default=False).strip()
+        raw = click.prompt(
+            "or press Enter to go back", default="", show_default=False
+        ).strip()
         if not raw:
             return changed
         if raw.isdigit():
@@ -422,6 +434,7 @@ def prompt_for_links_flow(
         if refreshed:
             req = refreshed
 
+
 def apply_status_change_by_id(
     repo_root: Path,
     domain_files: list[Path],
@@ -449,7 +462,9 @@ def apply_status_change_by_id(
 
     matches: list[tuple[Path, dict[str, object]]] = []
     for path in target_paths:
-        requirement = find_requirement_by_id(path, requirement_id, id_prefixes=id_prefixes)
+        requirement = find_requirement_by_id(
+            path, requirement_id, id_prefixes=id_prefixes
+        )
         if requirement:
             matches.append((path, requirement))
 
@@ -458,18 +473,28 @@ def apply_status_change_by_id(
             raise click.ClickException(
                 f"Requirement '{requirement_id}' not found in {file_filter}."
             )
-        raise click.ClickException(f"Requirement '{requirement_id}' not found in the configured docs.")
+        raise click.ClickException(
+            f"Requirement '{requirement_id}' not found in the configured docs."
+        )
 
     if len(matches) > 1 and not file_filter:
-        locations = ", ".join(path.relative_to(repo_root).as_posix() for path, _ in matches)
+        locations = ", ".join(
+            path.relative_to(repo_root).as_posix() for path, _ in matches
+        )
         raise click.ClickException(
             f"Requirement '{requirement_id}' matched multiple files: {locations}. Use --scope-file to disambiguate."
         )
 
     path, requirement = matches[0]
 
-    if new_status_input is None and new_priority_input is None and new_flagged_value is None:
-        raise click.ClickException("No update requested. Provide status, priority, and/or flagged.")
+    if (
+        new_status_input is None
+        and new_priority_input is None
+        and new_flagged_value is None
+    ):
+        raise click.ClickException(
+            "No update requested. Provide status, priority, and/or flagged."
+        )
 
     current_status = str(requirement.get("status") or "")
     new_status = current_status
@@ -480,7 +505,9 @@ def apply_status_change_by_id(
     if new_priority_input is not None:
         normalized_priority = coerce_priority_label(new_priority_input)
         if normalized_priority == "unset":
-            raise click.ClickException(f"Unrecognized priority input: {new_priority_input}")
+            raise click.ClickException(
+                f"Unrecognized priority input: {new_priority_input}"
+            )
         new_priority = normalized_priority
 
     changed = update_criterion_status(
@@ -496,7 +523,9 @@ def apply_status_change_by_id(
 
     history_manager: HistoryManager | None = None
     if changed and not dry_run:
-        history_manager = HistoryManager(repo_root=repo_root, requirements_dir=path.parent)
+        history_manager = HistoryManager(
+            repo_root=repo_root, requirements_dir=path.parent
+        )
         if not history_manager.list_entries():
             history_manager.capture(
                 command="baseline",
@@ -523,11 +552,23 @@ def apply_status_change_by_id(
         )
         if changed and history_manager is not None:
             operation = "update-requirement"
-            if new_status_input is not None and new_priority_input is None and new_flagged_value is None:
+            if (
+                new_status_input is not None
+                and new_priority_input is None
+                and new_flagged_value is None
+            ):
                 operation = "set-status"
-            elif new_priority_input is not None and new_status_input is None and new_flagged_value is None:
+            elif (
+                new_priority_input is not None
+                and new_status_input is None
+                and new_flagged_value is None
+            ):
                 operation = "set-priority"
-            elif new_flagged_value is not None and new_status_input is None and new_priority_input is None:
+            elif (
+                new_flagged_value is not None
+                and new_status_input is None
+                and new_priority_input is None
+            ):
                 operation = "set-flagged"
             history_manager.capture(
                 command=operation,
@@ -546,8 +587,12 @@ def apply_status_change_by_id(
         update_summary = " | ".join(updates) if updates else "no-op"
         if changed:
             action = "Would update" if dry_run else "Updated"
-            click.echo(f"{action} {requirement['id']} in {path.relative_to(repo_root).as_posix()} -> {update_summary}")
+            click.echo(
+                f"{action} {requirement['id']} in {path.relative_to(repo_root).as_posix()} -> {update_summary}"
+            )
         else:
             prefix = "No dry-run change" if dry_run else "No change"
-            click.echo(f"{prefix} for {requirement['id']} in {path.relative_to(repo_root).as_posix()} ({update_summary})")
+            click.echo(
+                f"{prefix} for {requirement['id']} in {path.relative_to(repo_root).as_posix()} ({update_summary})"
+            )
     return changed

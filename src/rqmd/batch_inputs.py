@@ -108,7 +108,9 @@ def parse_set_flagged_entry(entry: str) -> tuple[str, bool]:
     return requirement_id, flagged_value == "true"
 
 
-def parse_batch_update_file(repo_root: Path, file_path_input: str) -> list[dict[str, str | None]]:
+def parse_batch_update_file(
+    repo_root: Path, file_path_input: str
+) -> list[dict[str, str | None]]:
     """Load and parse a batch update file (JSONL, CSV, or TSV).
 
     Automatically detects file format based on file extension and delegates to the
@@ -198,14 +200,18 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
                 )
             flagged = (flagged_value == "true") if flagged_value is not None else None
 
-            if not requirement_id or (status is None and priority is None and flagged is None):
+            if not requirement_id or (
+                status is None and priority is None and flagged is None
+            ):
                 raise click.ClickException(
                     f"Invalid JSONL row at {path}:{line_number}: requires requirement_id/requirement_id/id/req_id/r_id and at least one of status, priority, or flagged"
                 )
 
             file_filter = str(record.get("file") or "").strip() or None
             blocked_reason = str(record.get("blocked_reason") or "").strip() or None
-            deprecated_reason = str(record.get("deprecated_reason") or "").strip() or None
+            deprecated_reason = (
+                str(record.get("deprecated_reason") or "").strip() or None
+            )
 
             updates.append(
                 {
@@ -225,7 +231,9 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
     return updates
 
 
-def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, str | None]]:
+def parse_batch_update_csv(
+    path: Path, delimiter: str = ","
+) -> list[dict[str, str | None]]:
     """Parse CSV or TSV batch update file using DictReader.
 
     Expected header columns (case-insensitive, flexible):
@@ -270,7 +278,9 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
                 )
             flagged = (flagged_value == "true") if flagged_value is not None else None
 
-            if not requirement_id or (status is None and priority is None and flagged is None):
+            if not requirement_id or (
+                status is None and priority is None and flagged is None
+            ):
                 raise click.ClickException(
                     f"Invalid CSV/TSV row at {path}:{line_number}: requires requirement_id/requirement_id/id/req_id/r_id and at least one of status, priority, or flagged columns"
                 )

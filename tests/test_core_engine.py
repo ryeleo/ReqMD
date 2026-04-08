@@ -6,15 +6,18 @@ import sys
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd import cli
 from rqmd.markdown_io import scope_and_body_from_file
-from rqmd.req_parser import collect_sub_sections
-from rqmd.req_parser import detect_domain_prefix
-from rqmd.req_parser import next_domain_requirement_id
+from rqmd.req_parser import (
+    collect_sub_sections,
+    detect_domain_prefix,
+    next_domain_requirement_id,
+)
 
 
-def test_RQMD_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path: Path) -> None:
+def test_RQMD_core_001_iter_domain_files_sorted_and_markdown_only(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     domain_dir = repo / "docs" / "requirements"
     domain_dir.mkdir(parents=True)
@@ -64,7 +67,10 @@ Scope: demo.
         path.write_text(text, encoding="utf-8")
         requirements = cli.parse_requirements(path, id_prefixes=("R",))
         assert [c["id"] for c in requirements] == ["R-DEMO-001"]
-        assert cli.find_requirement_by_id(path, "r-demo-001", id_prefixes=("R",))["title"] == "First"
+        assert (
+            cli.find_requirement_by_id(path, "r-demo-001", id_prefixes=("R",))["title"]
+            == "First"
+        )
 
 
 def test_RQMD_core_020_parse_h2_subsections_into_sub_domain_metadata() -> None:
@@ -141,13 +147,17 @@ def test_RQMD_core_020a_version_option_reports_installed_version(monkeypatch) ->
     assert result.output.strip() == "rqmd 9.8.7"
 
 
-def test_RQMD_core_020b_version_option_reports_editable_source_path(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_core_020b_version_option_reports_editable_source_path(
+    tmp_path: Path, monkeypatch
+) -> None:
     runner = CliRunner()
     editable_root = tmp_path / "editable-repo"
     editable_root.mkdir()
 
     monkeypatch.setattr(cli.importlib_metadata, "version", lambda _name: "1.2.3")
-    monkeypatch.setattr(cli, "_editable_source_path_from_distribution", lambda: editable_root)
+    monkeypatch.setattr(
+        cli, "_editable_source_path_from_distribution", lambda: editable_root
+    )
 
     result = runner.invoke(cli.main, ["--version"])
 
@@ -270,7 +280,9 @@ def test_next_domain_requirement_id_returns_none_for_empty(tmp_path: Path) -> No
     assert next_domain_requirement_id(f) is None
 
 
-def test_RQMD_core_027_next_id_uses_custom_prefix_and_three_digit_padding(tmp_path: Path) -> None:
+def test_RQMD_core_027_next_id_uses_custom_prefix_and_three_digit_padding(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -455,7 +467,9 @@ Subsection narrative that should not be in domain_body.
     assert scope == "demo"
     assert body == "Global domain note before subsections."
     assert sections[0]["name"] == "Query API"
-    assert sections[0]["body"] == "Subsection narrative that should not be in domain_body."
+    assert (
+        sections[0]["body"] == "Subsection narrative that should not be in domain_body."
+    )
 
 
 def test_RQMD_core_003_normalize_status_aliases() -> None:
@@ -482,7 +496,9 @@ Scope: demo.
     assert cli.SUMMARY_START in inserted
     assert "Summary: 0💡 1🔧" in inserted
 
-    replaced = cli.insert_or_replace_summary(inserted.replace("Summary:", "Summary: stale "), cli.build_summary_block(counts))
+    replaced = cli.insert_or_replace_summary(
+        inserted.replace("Summary:", "Summary: stale "), cli.build_summary_block(counts)
+    )
     assert replaced.count(cli.SUMMARY_START) == 1
     assert "Summary: 0💡 1🔧" in replaced
 
@@ -562,7 +578,9 @@ def test_RQMD_core_009_missing_domain_docs_handling(tmp_path: Path) -> None:
     assert "rqmd init" in result.output
 
 
-def test_RQMD_core_009_missing_requirements_index_shows_first_time_setup_guidance(tmp_path: Path) -> None:
+def test_RQMD_core_009_missing_requirements_index_shows_first_time_setup_guidance(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
 
@@ -577,13 +595,18 @@ def test_RQMD_core_009_missing_requirements_index_shows_first_time_setup_guidanc
     )
 
     assert result.exit_code == 1
-    assert "No requirement docs found. Expected to find docs/requirements/README.md or requirements/README.md." in result.output
+    assert (
+        "No requirement docs found. Expected to find docs/requirements/README.md or requirements/README.md."
+        in result.output
+    )
     assert "First time setup?" in result.output
     assert "rqmd init" in result.output
     assert "rqmd init --scaffold" in result.output
 
 
-def test_RQMD_core_013_verify_index_missing_index_uses_shared_startup_guidance(tmp_path: Path) -> None:
+def test_RQMD_core_013_verify_index_missing_index_uses_shared_startup_guidance(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -608,12 +631,16 @@ def test_RQMD_core_013_verify_index_missing_index_uses_shared_startup_guidance(t
     )
 
     assert result.exit_code == 1
-    assert "No requirements index found at: docs/requirements/README.md" in result.output
+    assert (
+        "No requirements index found at: docs/requirements/README.md" in result.output
+    )
     assert "guided setup flow" in result.output
     assert "rqmd init --scaffold" in result.output
 
 
-def test_RQMD_core_009_missing_domain_docs_yes_initializes_scaffold(tmp_path: Path) -> None:
+def test_RQMD_core_009_missing_domain_docs_yes_initializes_scaffold(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     (repo / "docs" / "requirements").mkdir(parents=True)
 
@@ -632,17 +659,23 @@ def test_RQMD_core_009_missing_domain_docs_yes_initializes_scaffold(tmp_path: Pa
     assert result.exit_code == 0
     assert "Initialized requirement scaffold:" in result.output
     assert (repo / "docs" / "requirements" / "README.md").exists()
-    starter = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
+    starter = (repo / "docs" / "requirements" / "starter.md").read_text(
+        encoding="utf-8"
+    )
     assert "### REQ-HELLO-001: Replace this starter requirement" in starter
 
 
-def test_RQMD_core_009b_missing_domain_docs_prompt_template_matches_cli_confirmation_copy() -> None:
+def test_RQMD_core_009b_missing_domain_docs_prompt_template_matches_cli_confirmation_copy() -> (
+    None
+):
     assert cli.render_startup_message("scaffold-empty-confirm.md").rstrip() == (
         "No requirement files found. Initialize a starter scaffold now?"
     )
 
 
-def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(tmp_path: Path) -> None:
+def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -661,11 +694,15 @@ def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(tmp_path: P
     )
 
     assert result.exit_code == 0
-    starter = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
+    starter = (repo / "docs" / "requirements" / "starter.md").read_text(
+        encoding="utf-8"
+    )
     assert "### REQ-HELLO-001: Replace this starter requirement" in starter
 
 
-def test_RQMD_core_009g_positional_init_emits_chat_handoff_payload(tmp_path: Path) -> None:
+def test_RQMD_core_009g_positional_init_emits_chat_handoff_payload(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -688,7 +725,9 @@ def test_RQMD_core_009g_positional_init_emits_chat_handoff_payload(tmp_path: Pat
     assert payload["handoff_prompt"]
 
 
-def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(tmp_path: Path) -> None:
+def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -707,8 +746,13 @@ def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(tmp_path: Pat
     )
 
     assert result.exit_code == 0
-    readme_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
-    assert "This document is the source-of-truth index for rqmd requirements." in readme_text
+    readme_text = (repo / "docs" / "requirements" / "README.md").read_text(
+        encoding="utf-8"
+    )
+    assert (
+        "This document is the source-of-truth index for rqmd requirements."
+        in readme_text
+    )
     assert "Generated from resources/init/README.md." in readme_text
     assert "## Project Tooling Metadata" in readme_text
     assert "- `rqmd_version`: `" in readme_text
@@ -739,11 +783,13 @@ def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> N
     assert first_payload["mode"] == "init"
     assert first_payload["starter_prefix"] == "REQ"
     assert first_payload["created_count"] == 3
-    assert sorted(first_payload["created_files"]) == sorted([
-        "rqmd.yml",
-        "docs/requirements/README.md",
-        "docs/requirements/starter.md",
-    ])
+    assert sorted(first_payload["created_files"]) == sorted(
+        [
+            "rqmd.yml",
+            "docs/requirements/README.md",
+            "docs/requirements/starter.md",
+        ]
+    )
 
     second = runner.invoke(
         cli.main,
@@ -791,7 +837,9 @@ def test_RQMD_core_011f_init_yes_json_alias_emits_json_payload(tmp_path: Path) -
     assert payload["created_count"] == 3
 
 
-def test_RQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:
+def test_RQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "demo.md"
     path.write_text(
         """# Demo Requirement
@@ -805,14 +853,18 @@ Scope: demo.
     )
     requirement = cli.find_requirement_by_id(path, "AC-DEMO-001")
 
-    changed = cli.update_criterion_status(path, requirement, "⛔ Blocked", blocked_reason="Need API")
+    changed = cli.update_criterion_status(
+        path, requirement, "⛔ Blocked", blocked_reason="Need API"
+    )
     assert changed is True
     blocked_text = path.read_text(encoding="utf-8")
     assert "- **Status:** ⛔ Blocked" in blocked_text
     assert "**Blocked:** Need API" in blocked_text
 
     requirement = cli.find_requirement_by_id(path, "AC-DEMO-001")
-    changed = cli.update_criterion_status(path, requirement, "🗑️ Deprecated", deprecated_reason="Replaced")
+    changed = cli.update_criterion_status(
+        path, requirement, "🗑️ Deprecated", deprecated_reason="Replaced"
+    )
     assert changed is True
     deprecated_text = path.read_text(encoding="utf-8")
     assert "- **Status:** 🗑️ Deprecated" in deprecated_text
@@ -820,7 +872,9 @@ Scope: demo.
     assert "**Deprecated:** Replaced" in deprecated_text
 
 
-def test_RQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path: Path) -> None:
+def test_RQMD_core_011_and_012_init_scaffold_creates_index_and_starter(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -880,7 +934,9 @@ def test_RQMD_core_012b_init_scaffold_allows_custom_starter_key(tmp_path: Path) 
 
     assert result.exit_code == 0
     config_text = (repo / "rqmd.yml").read_text(encoding="utf-8")
-    starter_text = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
+    starter_text = (repo / "docs" / "requirements" / "starter.md").read_text(
+        encoding="utf-8"
+    )
     assert "id_prefix: TEAM" in config_text
     assert "### TEAM-HELLO-001: Replace this starter requirement" in starter_text
 
@@ -905,21 +961,36 @@ def test_RQMD_core_016_init_scaffold_copies_template_content(tmp_path: Path) -> 
 
     assert result.exit_code == 0
 
-    index_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
-    starter_text = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
+    index_text = (repo / "docs" / "requirements" / "README.md").read_text(
+        encoding="utf-8"
+    )
+    starter_text = (repo / "docs" / "requirements" / "starter.md").read_text(
+        encoding="utf-8"
+    )
 
     assert "Generated from resources/init/README.md." in index_text
     assert "## Project Tooling Metadata" in index_text
     assert "rqmd --sync-index-metadata --force-yes" in index_text
     assert "## Schema Reference" in index_text
-    assert "This section is intentionally included in the generated requirements index" in index_text
+    assert (
+        "This section is intentionally included in the generated requirements index"
+        in index_text
+    )
     assert "filter-sub-domain" in index_text
     assert "Prefer pairing a short user story" in index_text
-    assert "And this file content is sourced from resources/init/domain-example.md." in starter_text
-    assert "I want a starter requirement that demonstrates both intent and acceptance detail" in starter_text
+    assert (
+        "And this file content is sourced from resources/init/domain-example.md."
+        in starter_text
+    )
+    assert (
+        "I want a starter requirement that demonstrates both intent and acceptance detail"
+        in starter_text
+    )
 
 
-def test_RQMD_core_033a_sync_index_metadata_adds_project_tooling_block(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_core_033a_sync_index_metadata_adds_project_tooling_block(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -934,7 +1005,9 @@ def test_RQMD_core_033a_sync_index_metadata_adds_project_tooling_block(tmp_path:
     )
     runner = CliRunner()
     monkeypatch.setattr(cli.importlib_metadata, "version", lambda _name: "9.9.9")
-    monkeypatch.setattr("rqmd.markdown_io.importlib_metadata.version", lambda _name: "9.9.9")
+    monkeypatch.setattr(
+        "rqmd.markdown_io.importlib_metadata.version", lambda _name: "9.9.9"
+    )
 
     result = runner.invoke(
         cli.main,
@@ -955,7 +1028,9 @@ def test_RQMD_core_033a_sync_index_metadata_adds_project_tooling_block(tmp_path:
     assert "- `json_schema_version`: `1.0.0`" in updated_text
 
 
-def test_RQMD_core_033b_warns_when_requirements_index_metadata_mismatches(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_core_033b_warns_when_requirements_index_metadata_mismatches(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -969,7 +1044,9 @@ def test_RQMD_core_033b_warns_when_requirements_index_metadata_mismatches(tmp_pa
     )
     runner = CliRunner()
     monkeypatch.setattr(cli.importlib_metadata, "version", lambda _name: "9.9.9")
-    monkeypatch.setattr("rqmd.markdown_io.importlib_metadata.version", lambda _name: "9.9.9")
+    monkeypatch.setattr(
+        "rqmd.markdown_io.importlib_metadata.version", lambda _name: "9.9.9"
+    )
 
     result = runner.invoke(
         cli.main,
@@ -984,7 +1061,9 @@ def test_RQMD_core_033b_warns_when_requirements_index_metadata_mismatches(tmp_pa
 
     assert result.exit_code == 0
     assert "Warning: requirements index metadata mismatch" in result.output
-    assert "run `rqmd --sync-index-metadata --force-yes`".lower() in result.output.lower()
+    assert (
+        "run `rqmd --sync-index-metadata --force-yes`".lower() in result.output.lower()
+    )
 
 
 def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
@@ -1021,7 +1100,9 @@ def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
     assert second.exit_code == 0
 
 
-def test_RQMD_core_037_history_flags_removed_in_simplification_mode(tmp_path: Path) -> None:
+def test_RQMD_core_037_history_flags_removed_in_simplification_mode(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -1049,7 +1130,9 @@ def test_RQMD_core_037_history_flags_removed_in_simplification_mode(tmp_path: Pa
     assert "No such option: --undo" in undo_result.output
 
 
-def test_RQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Path) -> None:
+def test_RQMD_core_011c_init_scaffold_supports_custom_criteria_dir(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -1141,14 +1224,20 @@ Scope: demo.
         requirements = cli.parse_requirements(path)
 
     assert len(requirements) == 2
-    
+
     req_001 = requirements[0]
     assert req_001["id"] == "AC-DEMO-001"
     assert req_001["links"] is not None
     assert len(req_001["links"]) == 3
     assert req_001["links"][0] == {"url": "https://github.com/issue/123", "label": None}
-    assert req_001["links"][1] == {"url": "https://github.com/issues", "label": "GitHub Issues"}
-    assert req_001["links"][2] == {"url": "https://jira.example.com/browse/PROJ-456", "label": "Jira"}
+    assert req_001["links"][1] == {
+        "url": "https://github.com/issues",
+        "label": "GitHub Issues",
+    }
+    assert req_001["links"][2] == {
+        "url": "https://jira.example.com/browse/PROJ-456",
+        "label": "Jira",
+    }
 
     req_002 = requirements[1]
     assert req_002["id"] == "AC-DEMO-002"
@@ -1296,7 +1385,9 @@ def test_RQMD_priority_002_coerce_priority_unknown_yields_unset() -> None:
     assert coerce_priority_label("") == "unset"
 
 
-def test_RQMD_core_023_rename_id_prefix_updates_headers_and_citations(tmp_path: Path) -> None:
+def test_RQMD_core_023_rename_id_prefix_updates_headers_and_citations(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -1314,9 +1405,12 @@ def test_RQMD_core_023_rename_id_prefix_updates_headers_and_citations(tmp_path: 
     result = runner.invoke(
         cli.main,
         [
-            "--project-root", str(repo),
-            "--docs-dir", "docs/requirements",
-            "--rename-id-prefix", "AC=RQMD",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--rename-id-prefix",
+            "AC=RQMD",
         ],
     )
     assert result.exit_code == 0, result.output
@@ -1343,9 +1437,12 @@ def test_RQMD_core_023_rename_id_prefix_detects_conflicts(tmp_path: Path) -> Non
     result = runner.invoke(
         cli.main,
         [
-            "--project-root", str(repo),
-            "--docs-dir", "docs/requirements",
-            "--rename-id-prefix", "AC=RQMD",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--rename-id-prefix",
+            "AC=RQMD",
         ],
     )
     assert result.exit_code != 0
@@ -1357,20 +1454,19 @@ def test_RQMD_core_023_rename_id_prefix_json_dry_run(tmp_path: Path) -> None:
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
     file_path = domain / "alpha.md"
-    original = (
-        "# Alpha\n\n"
-        "### AC-ALPHA-001: First\n"
-        "- **Status:** 💡 Proposed\n"
-    )
+    original = "# Alpha\n\n" "### AC-ALPHA-001: First\n" "- **Status:** 💡 Proposed\n"
     file_path.write_text(original, encoding="utf-8")
 
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
         [
-            "--project-root", str(repo),
-            "--docs-dir", "docs/requirements",
-            "--rename-id-prefix", "AC=RQMD",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--rename-id-prefix",
+            "AC=RQMD",
             "--dry-run",
             "--as-json",
         ],
@@ -1380,4 +1476,5 @@ def test_RQMD_core_023_rename_id_prefix_json_dry_run(tmp_path: Path) -> None:
     assert payload["mode"] == "rename-id-prefix"
     assert payload["dry_run"] is True
     assert payload["replacement_count"] == 1
+    assert file_path.read_text(encoding="utf-8") == original
     assert file_path.read_text(encoding="utf-8") == original

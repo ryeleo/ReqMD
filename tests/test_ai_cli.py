@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd import ai_cli
 from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.constants import JSON_SCHEMA_VERSION
@@ -165,13 +164,17 @@ def test_RQMD_AI_001c_version_option_reports_installed_version(monkeypatch) -> N
     assert result.output.strip() == "rqmd-ai 9.8.7"
 
 
-def test_RQMD_AI_001d_version_option_reports_editable_source_path(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_001d_version_option_reports_editable_source_path(
+    tmp_path: Path, monkeypatch
+) -> None:
     runner = CliRunner()
     editable_root = tmp_path / "editable-repo"
     editable_root.mkdir()
 
     monkeypatch.setattr(ai_cli.importlib_metadata, "version", lambda _name: "1.2.3")
-    monkeypatch.setattr(ai_cli, "_editable_source_path_from_distribution", lambda: editable_root)
+    monkeypatch.setattr(
+        ai_cli, "_editable_source_path_from_distribution", lambda: editable_root
+    )
 
     result = runner.invoke(main, ["--version"])
 
@@ -181,7 +184,9 @@ def test_RQMD_AI_001d_version_option_reports_editable_source_path(tmp_path: Path
     assert "package path:" in result.output
 
 
-def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_path: Path) -> None:
+def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
 
@@ -207,8 +212,14 @@ def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_pat
     assert payload["interview"]["enabled"] is True
     assert payload["handoff_prompt"]
     assert payload["interaction_contract"]["preferred_ui"] == "multi-choice"
-    assert payload["interaction_contract"]["confirmation_policy"] == "defer-recaps-until-review"
-    assert payload["interview"]["interaction_contract"]["presentation"] == "one-question-at-a-time"
+    assert (
+        payload["interaction_contract"]["confirmation_policy"]
+        == "defer-recaps-until-review"
+    )
+    assert (
+        payload["interview"]["interaction_contract"]["presentation"]
+        == "one-question-at-a-time"
+    )
     assert payload["interview"]["interaction_contract"]["instructions"][0] == (
         "Present each question as an interactive multi-choice selection instead of paraphrasing the payload."
     )
@@ -216,20 +227,39 @@ def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_pat
     assert payload["interview"]["flow"][0]["presentation"] == "one-question-at-a-time"
     proposed_paths = [entry["path"] for entry in payload["proposed_files"]]
     assert "rqmd.yml" in proposed_paths
-    assert payload["suggested_commands"]["init_preview"].startswith("rqmd-ai init --chat --json")
-    assert payload["suggested_commands"]["bundle_preview"].startswith("rqmd-ai install --bundle-preset minimal --chat --json --dry-run")
-    assert payload["suggested_commands"]["init_preview_artifact"].startswith("rqmd-ai init --chat --json")
-    assert "--json-output-file" in payload["suggested_commands"]["init_preview_artifact"]
+    assert payload["suggested_commands"]["init_preview"].startswith(
+        "rqmd-ai init --chat --json"
+    )
+    assert payload["suggested_commands"]["bundle_preview"].startswith(
+        "rqmd-ai install --bundle-preset minimal --chat --json --dry-run"
+    )
+    assert payload["suggested_commands"]["init_preview_artifact"].startswith(
+        "rqmd-ai init --chat --json"
+    )
+    assert (
+        "--json-output-file" in payload["suggested_commands"]["init_preview_artifact"]
+    )
     assert "--json-output-file" in payload["handoff_prompt"]
     assert "one-question-at-a-time multi-choice interview" in payload["handoff_prompt"]
-    assert "avoid recapping all prior answers after each question" in payload["handoff_prompt"]
-    assert "Because the rqmd Copilot bundle is currently `absent`" in payload["handoff_prompt"]
-    assert "Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills" in payload["handoff_prompt"]
+    assert (
+        "avoid recapping all prior answers after each question"
+        in payload["handoff_prompt"]
+    )
+    assert (
+        "Because the rqmd Copilot bundle is currently `absent`"
+        in payload["handoff_prompt"]
+    )
+    assert (
+        "Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills"
+        in payload["handoff_prompt"]
+    )
     assert "uv run" not in payload["handoff_prompt"]
     _assert_schema_version(payload)
 
 
-def test_RQMD_AI_001f_init_chat_handoff_prompt_skips_bundle_followup_when_bundle_installed(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_001f_init_chat_handoff_prompt_skips_bundle_followup_when_bundle_installed(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
 
@@ -262,14 +292,27 @@ def test_RQMD_AI_001f_init_chat_handoff_prompt_skips_bundle_followup_when_bundle
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
     assert payload["bundle_installation"]["installed"] is True
-    assert "Because the rqmd Copilot bundle is currently" not in payload["handoff_prompt"]
-    assert "Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills" not in payload["handoff_prompt"]
-    assert "9. Finish by running `rqmd --verify-summaries --non-interactive`." in payload["handoff_prompt"]
-    assert "10. Tell the user the rqmd catalog is ready for refinement passes." in payload["handoff_prompt"]
+    assert (
+        "Because the rqmd Copilot bundle is currently" not in payload["handoff_prompt"]
+    )
+    assert (
+        "Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills"
+        not in payload["handoff_prompt"]
+    )
+    assert (
+        "9. Finish by running `rqmd --verify-summaries --non-interactive`."
+        in payload["handoff_prompt"]
+    )
+    assert (
+        "10. Tell the user the rqmd catalog is ready for refinement passes."
+        in payload["handoff_prompt"]
+    )
     _assert_schema_version(payload)
 
 
-def test_RQMD_AI_001g_json_output_file_writes_artifact_without_redirect(tmp_path: Path) -> None:
+def test_RQMD_AI_001g_json_output_file_writes_artifact_without_redirect(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     output_path = repo / "tmp" / "rqmd-init-preview.json"
@@ -298,10 +341,14 @@ def test_RQMD_AI_001g_json_output_file_writes_artifact_without_redirect(tmp_path
     _assert_schema_version(payload)
 
 
-def test_RQMD_AI_022c_init_legacy_non_json_output_uses_shared_preview_messages(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_022c_init_legacy_non_json_output_uses_shared_preview_messages(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     (repo / "src" / "ac_cli").mkdir(parents=True)
-    (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
+    (repo / "src" / "ac_cli" / "cli.py").write_text(
+        "def main():\n    return 0\n", encoding="utf-8"
+    )
 
     monkeypatch.setattr("rqmd.ai_cli.shutil.which", lambda name: None)
 
@@ -322,7 +369,9 @@ def test_RQMD_AI_022c_init_legacy_non_json_output_uses_shared_preview_messages(t
     assert "Paste this into your AI chat:" in result.output
 
 
-def test_RQMD_AI_001f_init_chat_can_force_legacy_strategy(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_001f_init_chat_can_force_legacy_strategy(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     (repo / "src" / "demo").mkdir(parents=True)
     (repo / "src" / "demo" / "app.py").write_text("print('demo')\n", encoding="utf-8")
@@ -351,7 +400,9 @@ def test_RQMD_AI_001f_init_chat_can_force_legacy_strategy(tmp_path: Path, monkey
     _assert_schema_version(payload)
 
 
-def test_RQMD_AI_017_default_guide_suppresses_packaged_definitions_when_bundle_installed(tmp_path: Path) -> None:
+def test_RQMD_AI_017_default_guide_suppresses_packaged_definitions_when_bundle_installed(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -397,7 +448,10 @@ def test_RQMD_AI_017_default_guide_suppresses_packaged_definitions_when_bundle_i
     assert payload["bundle_installation"]["installed"] is True
     assert payload["bundle_installation"]["preset"] == "minimal"
     assert payload["bundle_installation"]["state"] == "minimal"
-    assert ".github/skills/rqmd-export-context/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
+    assert (
+        ".github/skills/rqmd-export-context/SKILL.md"
+        in payload["bundle_installation"]["active_definition_files"]
+    )
     assert "bundled_definitions" not in payload
     _assert_schema_version(payload)
 
@@ -448,7 +502,9 @@ Scope: demo.
     assert "REQ-001" in result.output
 
 
-def test_RQMD_AI_015_implement_workflow_mode_emits_batch_guidance_json(tmp_path: Path) -> None:
+def test_RQMD_AI_015_implement_workflow_mode_emits_batch_guidance_json(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -473,7 +529,9 @@ def test_RQMD_AI_015_implement_workflow_mode_emits_batch_guidance_json(tmp_path:
     assert payload["mode"] == "guide"
     assert payload["workflow_mode"] == "implement"
     assert payload["batch_policy"]["max_items"] == 3
-    assert payload["batch_policy"]["selection_order"] == "highest-priority proposed first"
+    assert (
+        payload["batch_policy"]["selection_order"] == "highest-priority proposed first"
+    )
     assert "full test suite passes" in payload["validation_checks"]
     assert any("highest-priority 1-3 items" in step for step in payload["workflow"])
     _assert_schema_version(payload)
@@ -504,7 +562,9 @@ def test_RQMD_AI_015_workflow_mode_rejects_update_combinations(tmp_path: Path) -
     assert "guidance surface" in result.output
 
 
-def test_RQMD_AI_022_init_legacy_guide_works_without_existing_requirements_docs(tmp_path: Path) -> None:
+def test_RQMD_AI_022_init_legacy_guide_works_without_existing_requirements_docs(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
 
@@ -529,12 +589,18 @@ def test_RQMD_AI_022_init_legacy_guide_works_without_existing_requirements_docs(
     _assert_schema_version(payload)
 
 
-def test_RQMD_AI_023_init_legacy_plan_seeds_reviewable_requirements(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_023_init_legacy_plan_seeds_reviewable_requirements(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     (repo / "src" / "ac_cli").mkdir(parents=True)
-    (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
+    (repo / "src" / "ac_cli" / "cli.py").write_text(
+        "def main():\n    return 0\n", encoding="utf-8"
+    )
     (repo / "scripts").mkdir(parents=True)
-    (repo / "scripts" / "local-smoke.sh").write_text("#!/bin/sh\necho smoke\n", encoding="utf-8")
+    (repo / "scripts" / "local-smoke.sh").write_text(
+        "#!/bin/sh\necho smoke\n", encoding="utf-8"
+    )
     (repo / "package.json").write_text(
         json.dumps(
             {
@@ -578,11 +644,20 @@ def test_RQMD_AI_023_init_legacy_plan_seeds_reviewable_requirements(tmp_path: Pa
     assert "rqmd.yml" in proposed_paths
     assert "docs/requirements/README.md" in proposed_paths
     assert "docs/requirements/developer-workflows.md" in proposed_paths
-    config_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "rqmd.yml")
+    config_entry = next(
+        entry for entry in payload["proposed_files"] if entry["path"] == "rqmd.yml"
+    )
     assert "id_prefix: RQMD" in config_entry["content"]
     assert "name: Janky" in config_entry["content"]
-    workflow_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "docs/requirements/developer-workflows.md")
-    assert "This file was generated by `rqmd-ai init --chat --legacy` from detected repository commands." in workflow_entry["content"]
+    workflow_entry = next(
+        entry
+        for entry in payload["proposed_files"]
+        if entry["path"] == "docs/requirements/developer-workflows.md"
+    )
+    assert (
+        "This file was generated by `rqmd-ai init --chat --legacy` from detected repository commands."
+        in workflow_entry["content"]
+    )
     assert "npm run dev" in workflow_entry["content"]
     assert "npm run build" in workflow_entry["content"]
     assert "npm run test" in workflow_entry["content"]
@@ -590,10 +665,14 @@ def test_RQMD_AI_023_init_legacy_plan_seeds_reviewable_requirements(tmp_path: Pa
     _assert_schema_version(payload)
 
 
-def test_RQMD_AI_024_init_legacy_apply_can_seed_issue_backlog_from_gh(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_024_init_legacy_apply_can_seed_issue_backlog_from_gh(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     (repo / "src" / "ac_cli").mkdir(parents=True)
-    (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
+    (repo / "src" / "ac_cli" / "cli.py").write_text(
+        "def main():\n    return 0\n", encoding="utf-8"
+    )
 
     monkeypatch.setattr("rqmd.ai_cli.shutil.which", lambda name: "/usr/bin/gh")
     monkeypatch.setattr(
@@ -639,19 +718,31 @@ def test_RQMD_AI_024_init_legacy_apply_can_seed_issue_backlog_from_gh(tmp_path: 
     assert "docs/requirements/issue-backlog.md" in payload["created_files"]
     config_text = (repo / "rqmd.yml").read_text(encoding="utf-8")
     assert "id_prefix: RQMD" in config_text
-    issue_backlog = (repo / "docs" / "requirements" / "issue-backlog.md").read_text(encoding="utf-8")
-    assert "This file was generated from GitHub issues discovered during `rqmd-ai init --chat --legacy`." in issue_backlog
+    issue_backlog = (repo / "docs" / "requirements" / "issue-backlog.md").read_text(
+        encoding="utf-8"
+    )
+    assert (
+        "This file was generated from GitHub issues discovered during `rqmd-ai init --chat --legacy`."
+        in issue_backlog
+    )
     assert "GitHub issue #17" in issue_backlog
     assert "Issue labels: docs, automation" in issue_backlog
-    index_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
+    index_text = (repo / "docs" / "requirements" / "README.md").read_text(
+        encoding="utf-8"
+    )
     assert "Issue Backlog Requirements" in index_text
     assert "Generated from resources/init/README.md." in index_text
     assert "## Schema Reference" in index_text
-    assert "This section is intentionally included in the generated requirements index" in index_text
+    assert (
+        "This section is intentionally included in the generated requirements index"
+        in index_text
+    )
     _assert_schema_version(payload)
 
 
-def test_RQMD_AI_023_init_legacy_write_requires_empty_target_dir(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_023_init_legacy_write_requires_empty_target_dir(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -675,7 +766,9 @@ def test_RQMD_AI_023_init_legacy_write_requires_empty_target_dir(tmp_path: Path,
     assert "requires an empty target requirements directory" in result.output
 
 
-def test_RQMD_AI_014_brainstorm_mode_builds_ranked_proposals_from_note_file(tmp_path: Path) -> None:
+def test_RQMD_AI_014_brainstorm_mode_builds_ranked_proposals_from_note_file(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -747,7 +840,9 @@ def test_RQMD_AI_014_brainstorm_mode_builds_ranked_proposals_from_note_file(tmp_
 
 def test_RQMD_AI_bundle_skill_files_match_checked_in_workspace_copies() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "skills"
+    resource_root = (
+        repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "skills"
+    )
     workspace_root = repo_root / ".github" / "skills"
 
     resource_files = sorted(resource_root.glob("*/SKILL.md"))
@@ -756,13 +851,19 @@ def test_RQMD_AI_bundle_skill_files_match_checked_in_workspace_copies() -> None:
     for resource_file in resource_files:
         relative = resource_file.relative_to(resource_root)
         workspace_file = workspace_root / relative
-        assert workspace_file.exists(), f"Missing workspace skill copy for {relative.as_posix()}"
-        assert workspace_file.read_text(encoding="utf-8") == resource_file.read_text(encoding="utf-8")
+        assert (
+            workspace_file.exists()
+        ), f"Missing workspace skill copy for {relative.as_posix()}"
+        assert workspace_file.read_text(encoding="utf-8") == resource_file.read_text(
+            encoding="utf-8"
+        )
 
 
 def test_RQMD_AI_bundle_prompt_files_match_checked_in_workspace_copies() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "prompts"
+    resource_root = (
+        repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "prompts"
+    )
     workspace_root = repo_root / ".github" / "prompts"
 
     resource_files = sorted(resource_root.glob("*.prompt.md"))
@@ -771,13 +872,19 @@ def test_RQMD_AI_bundle_prompt_files_match_checked_in_workspace_copies() -> None
     for resource_file in resource_files:
         relative = resource_file.relative_to(resource_root)
         workspace_file = workspace_root / relative
-        assert workspace_file.exists(), f"Missing workspace prompt copy for {relative.as_posix()}"
-        assert workspace_file.read_text(encoding="utf-8") == resource_file.read_text(encoding="utf-8")
+        assert (
+            workspace_file.exists()
+        ), f"Missing workspace prompt copy for {relative.as_posix()}"
+        assert workspace_file.read_text(encoding="utf-8") == resource_file.read_text(
+            encoding="utf-8"
+        )
 
 
 def test_RQMD_AI_bundle_prompt_files_have_valid_frontmatter_and_guidance() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "prompts"
+    resource_root = (
+        repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "prompts"
+    )
 
     resource_files = sorted(resource_root.glob("*.prompt.md"))
     assert resource_files
@@ -786,8 +893,14 @@ def test_RQMD_AI_bundle_prompt_files_have_valid_frontmatter_and_guidance() -> No
         text = resource_file.read_text(encoding="utf-8")
         frontmatter = _parse_frontmatter(text)
         assert isinstance(frontmatter.get("name"), str) and frontmatter["name"].strip()
-        assert isinstance(frontmatter.get("description"), str) and frontmatter["description"].strip()
-        assert isinstance(frontmatter.get("argument-hint"), str) and frontmatter["argument-hint"].strip()
+        assert (
+            isinstance(frontmatter.get("description"), str)
+            and frontmatter["description"].strip()
+        )
+        assert (
+            isinstance(frontmatter.get("argument-hint"), str)
+            and frontmatter["argument-hint"].strip()
+        )
         assert frontmatter.get("agent") == "rqmd-dev"
         assert "rqmd" in text.lower()
         assert text.count("- ") >= 3
@@ -795,25 +908,37 @@ def test_RQMD_AI_bundle_prompt_files_have_valid_frontmatter_and_guidance() -> No
 
 def test_RQMD_AI_bundle_skill_files_expose_structured_guide_metadata() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "skills"
+    resource_root = (
+        repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "skills"
+    )
 
     resource_files = sorted(resource_root.glob("*/SKILL.md"))
     assert resource_files
 
     for resource_file in resource_files:
-        frontmatter = _parse_skill_frontmatter(resource_file.read_text(encoding="utf-8"))
+        frontmatter = _parse_skill_frontmatter(
+            resource_file.read_text(encoding="utf-8")
+        )
         metadata = frontmatter.get("metadata")
-        assert isinstance(metadata, dict), f"Missing metadata block in {resource_file.name}"
+        assert isinstance(
+            metadata, dict
+        ), f"Missing metadata block in {resource_file.name}"
         guide = metadata.get("guide")
-        assert isinstance(guide, dict), f"Missing metadata.guide in {resource_file.name}"
+        assert isinstance(
+            guide, dict
+        ), f"Missing metadata.guide in {resource_file.name}"
         assert isinstance(guide.get("summary"), str) and guide["summary"].strip()
         assert isinstance(guide.get("workflow"), list) and guide["workflow"]
         assert isinstance(guide.get("examples"), list) and guide["examples"]
 
 
-def test_RQMD_AI_bundle_agent_files_have_valid_frontmatter_and_guidance_sections() -> None:
+def test_RQMD_AI_bundle_agent_files_have_valid_frontmatter_and_guidance_sections() -> (
+    None
+):
     repo_root = Path(__file__).resolve().parents[1]
-    resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "agents"
+    resource_root = (
+        repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "agents"
+    )
 
     resource_files = sorted(resource_root.glob("rqmd-*.agent.md"))
     assert resource_files
@@ -822,14 +947,22 @@ def test_RQMD_AI_bundle_agent_files_have_valid_frontmatter_and_guidance_sections
         text = resource_file.read_text(encoding="utf-8")
         frontmatter = _parse_frontmatter(text)
         assert isinstance(frontmatter.get("name"), str) and frontmatter["name"].strip()
-        assert isinstance(frontmatter.get("description"), str) and frontmatter["description"].strip()
-        assert isinstance(frontmatter.get("argument-hint"), str) and frontmatter["argument-hint"].strip()
+        assert (
+            isinstance(frontmatter.get("description"), str)
+            and frontmatter["description"].strip()
+        )
+        assert (
+            isinstance(frontmatter.get("argument-hint"), str)
+            and frontmatter["argument-hint"].strip()
+        )
         assert isinstance(frontmatter.get("tools"), list) and frontmatter["tools"]
         assert "Use this agent when" in text
         assert ("Execution contract:" in text) or ("Primary responsibilities:" in text)
 
 
-def test_RQMD_AI_workspace_agent_files_have_valid_frontmatter_and_guidance_sections() -> None:
+def test_RQMD_AI_workspace_agent_files_have_valid_frontmatter_and_guidance_sections() -> (
+    None
+):
     repo_root = Path(__file__).resolve().parents[1]
     workspace_root = repo_root / ".github" / "agents"
 
@@ -840,8 +973,14 @@ def test_RQMD_AI_workspace_agent_files_have_valid_frontmatter_and_guidance_secti
         text = workspace_file.read_text(encoding="utf-8")
         frontmatter = _parse_frontmatter(text)
         assert isinstance(frontmatter.get("name"), str) and frontmatter["name"].strip()
-        assert isinstance(frontmatter.get("description"), str) and frontmatter["description"].strip()
-        assert isinstance(frontmatter.get("argument-hint"), str) and frontmatter["argument-hint"].strip()
+        assert (
+            isinstance(frontmatter.get("description"), str)
+            and frontmatter["description"].strip()
+        )
+        assert (
+            isinstance(frontmatter.get("argument-hint"), str)
+            and frontmatter["argument-hint"].strip()
+        )
         assert isinstance(frontmatter.get("tools"), list) and frontmatter["tools"]
         assert "Use this agent when" in text
         assert ("Execution contract:" in text) or ("Primary responsibilities:" in text)
@@ -849,14 +988,26 @@ def test_RQMD_AI_workspace_agent_files_have_valid_frontmatter_and_guidance_secti
 
 def test_RQMD_AI_014_brainstorm_skill_metadata_drives_title_limits() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    skill_path = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "skills" / "rqmd-brainstorm" / "SKILL.md"
+    skill_path = (
+        repo_root
+        / "src"
+        / "rqmd"
+        / "resources"
+        / "bundle"
+        / ".github"
+        / "skills"
+        / "rqmd-brainstorm"
+        / "SKILL.md"
+    )
     skill_text = skill_path.read_text(encoding="utf-8")
     assert "max_words: 10" in skill_text
     assert "max_chars: 96" in skill_text
     assert "priority_source: runtime-catalog" in skill_text
 
 
-def test_RQMD_AI_014_brainstorm_mode_uses_runtime_priority_catalog(tmp_path: Path) -> None:
+def test_RQMD_AI_014_brainstorm_mode_uses_runtime_priority_catalog(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1118,13 +1269,19 @@ def test_RQMD_AI_010_apply_emits_structured_audit_record(tmp_path: Path) -> None
     assert str(payload["updates"][0]["history_entry"]["stable_id"]).startswith("hid:")
 
     manager = HistoryManager(repo_root=repo, requirements_dir="docs/requirements")
-    resolved = manager.resolve_ref(str(payload["updates"][0]["history_entry"]["entry_index"]))
+    resolved = manager.resolve_ref(
+        str(payload["updates"][0]["history_entry"]["entry_index"])
+    )
     assert resolved is not None
     assert resolved["commit"] == payload["updates"][0]["history_entry"]["commit"]
 
     audit_log = repo / ".rqmd" / "history" / "rqmd-history" / "audit.jsonl"
     assert audit_log.exists()
-    lines = [line for line in audit_log.read_text(encoding="utf-8").splitlines() if line.strip()]
+    lines = [
+        line
+        for line in audit_log.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     assert lines
     record = json.loads(lines[-1])
     assert record["backend"] == "rqmd-history"
@@ -1205,7 +1362,9 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert not (repo / ".github" / "copilot-instructions.md").exists()
 
 
-def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: Path) -> None:
+def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1245,10 +1404,16 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     _assert_dual_requirement_guidance(
         (repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
     )
-    assert ".github/agents/rqmd-requirements.agent.md" not in first_payload["created_files"]
+    assert (
+        ".github/agents/rqmd-requirements.agent.md"
+        not in first_payload["created_files"]
+    )
     assert ".github/agents/rqmd-docs.agent.md" not in first_payload["created_files"]
     assert ".github/agents/rqmd-history.agent.md" not in first_payload["created_files"]
-    assert ".github/agents/rqmd-dev-longrunning.agent.md" not in first_payload["created_files"]
+    assert (
+        ".github/agents/rqmd-dev-longrunning.agent.md"
+        not in first_payload["created_files"]
+    )
     assert ".github/agents/rqmd-dev-easy.agent.md" not in first_payload["created_files"]
     assert ".github/agents/README.md" in first_payload["created_files"]
     assert ".github/prompts/brainstorm.prompt.md" in first_payload["created_files"]
@@ -1261,7 +1426,10 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     assert ".github/prompts/refactor.prompt.md" in first_payload["created_files"]
     assert ".github/prompts/refine.prompt.md" in first_payload["created_files"]
     assert ".github/prompts/ship-check.prompt.md" in first_payload["created_files"]
-    assert ".github/agents/rqmd-bundle-maintainer.agent.md" not in first_payload["created_files"]
+    assert (
+        ".github/agents/rqmd-bundle-maintainer.agent.md"
+        not in first_payload["created_files"]
+    )
     assert ".github/skills/rqmd-init/SKILL.md" in first_payload["created_files"]
     assert ".github/skills/rqmd-init-legacy/SKILL.md" in first_payload["created_files"]
     assert "agent-workflow.sh" in first_payload["created_files"]
@@ -1360,7 +1528,9 @@ def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
     assert payload["changed_count"] == 30
 
 
-def test_RQMD_AI_012_install_bundle_text_output_lists_created_files(tmp_path: Path) -> None:
+def test_RQMD_AI_012_install_bundle_text_output_lists_created_files(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1388,7 +1558,9 @@ def test_RQMD_AI_012_install_bundle_text_output_lists_created_files(tmp_path: Pa
     assert ".github/copilot-instructions.md" in result.output
 
 
-def test_RQMD_AI_012_install_bundle_text_output_lists_skipped_files(tmp_path: Path) -> None:
+def test_RQMD_AI_012_install_bundle_text_output_lists_skipped_files(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1425,10 +1597,15 @@ def test_RQMD_AI_012_install_bundle_text_output_lists_skipped_files(tmp_path: Pa
     assert second.exit_code == 0, second.output
     assert "changed files: 0" in second.output
     assert "skipped existing files:" in second.output
-    assert "Re-run with `--overwrite-existing` to refresh the managed bundle files." in second.output
+    assert (
+        "Re-run with `--overwrite-existing` to refresh the managed bundle files."
+        in second.output
+    )
 
 
-def test_RQMD_AI_012_reinstall_command_overwrites_existing_bundle(tmp_path: Path) -> None:
+def test_RQMD_AI_012_reinstall_command_overwrites_existing_bundle(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1581,7 +1758,9 @@ def test_RQMD_AI_012_reinstall_removes_only_rqmd_managed_files(tmp_path: Path) -
     assert unrelated_file.exists()
 
 
-def test_RQMD_AI_012_installed_bundle_reports_bundle_metadata_and_version_match(tmp_path: Path) -> None:
+def test_RQMD_AI_012_installed_bundle_reports_bundle_metadata_and_version_match(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1619,12 +1798,20 @@ def test_RQMD_AI_012_installed_bundle_reports_bundle_metadata_and_version_match(
     bundle_installation = payload["bundle_installation"]
     assert bundle_installation["metadata_file"] == ".github/rqmd-bundle.json"
     assert bundle_installation["bundle_metadata"]["bundle_preset"] == "minimal"
-    assert bundle_installation["bundle_metadata"]["json_schema_version"] == JSON_SCHEMA_VERSION
-    assert bundle_installation["installed_by_rqmd_version"] == payload["tooling"]["rqmd_version"]
+    assert (
+        bundle_installation["bundle_metadata"]["json_schema_version"]
+        == JSON_SCHEMA_VERSION
+    )
+    assert (
+        bundle_installation["installed_by_rqmd_version"]
+        == payload["tooling"]["rqmd_version"]
+    )
     assert bundle_installation["matches_running_rqmd_version"] is True
 
 
-def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_path: Path) -> None:
+def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1644,7 +1831,9 @@ def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_pa
     )
     smoke_dir = repo / "scripts"
     smoke_dir.mkdir(parents=True)
-    (smoke_dir / "local-smoke.sh").write_text("#!/bin/sh\necho smoke\n", encoding="utf-8")
+    (smoke_dir / "local-smoke.sh").write_text(
+        "#!/bin/sh\necho smoke\n", encoding="utf-8"
+    )
 
     runner = CliRunner()
     result = runner.invoke(
@@ -1667,8 +1856,12 @@ def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_pa
     assert ".github/skills/test/SKILL.md" in payload["created_files"]
 
     agent_workflow = (repo / "agent-workflow.sh").read_text(encoding="utf-8")
-    dev_skill = (repo / ".github" / "skills" / "dev" / "SKILL.md").read_text(encoding="utf-8")
-    test_skill = (repo / ".github" / "skills" / "test" / "SKILL.md").read_text(encoding="utf-8")
+    dev_skill = (repo / ".github" / "skills" / "dev" / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    test_skill = (repo / ".github" / "skills" / "test" / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
     assert "Canonical agent workflow entry point" in dev_skill
     assert "Canonical validation entry point" in test_skill
     assert '"mode": "preflight"' in agent_workflow
@@ -1680,7 +1873,9 @@ def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_pa
     assert "npm run test" in test_skill
 
 
-def test_RQMD_AI_019_generated_agent_workflow_runs_preflight_and_validate(tmp_path: Path) -> None:
+def test_RQMD_AI_019_generated_agent_workflow_runs_preflight_and_validate(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1715,7 +1910,9 @@ def test_RQMD_AI_019_generated_agent_workflow_runs_preflight_and_validate(tmp_pa
     preflight_payload = json.loads(preflight.stdout)
     assert preflight_payload["mode"] == "preflight"
     assert preflight_payload["ok"] is True
-    assert any(check["target"] == "agent-workflow.sh" for check in preflight_payload["checks"])
+    assert any(
+        check["target"] == "agent-workflow.sh" for check in preflight_payload["checks"]
+    )
 
     validate = subprocess.run(
         ["bash", "./agent-workflow.sh", "validate", "--profile", "test"],
@@ -1729,10 +1926,15 @@ def test_RQMD_AI_019_generated_agent_workflow_runs_preflight_and_validate(tmp_pa
     assert validate_payload["mode"] == "validate"
     assert validate_payload["profile"] == "test"
     assert validate_payload["ok"] is True
-    assert [stage["id"] for stage in validate_payload["stages"]] == ["environment", "primary-tests"]
+    assert [stage["id"] for stage in validate_payload["stages"]] == [
+        "environment",
+        "primary-tests",
+    ]
 
 
-def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path: Path) -> None:
+def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1772,7 +1974,10 @@ def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path
     assert payload["mode"] == "install-agent-bundle"
     assert payload["interview"]["enabled"] is True
     assert payload["interview"]["detected_sources"] == ["package.json scripts"]
-    assert payload["interview"]["interaction_contract"]["next_action"] == "collect-answers-before-rerun"
+    assert (
+        payload["interview"]["interaction_contract"]["next_action"]
+        == "collect-answers-before-rerun"
+    )
     assert payload["interview"]["flow"]
     questions = payload["interview"]["questions"]
     question_groups = payload["interview"]["question_groups"]
@@ -1783,24 +1988,43 @@ def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path
     ]
     dev_run_question = next(item for item in questions if item["field"] == "dev_run")
     assert dev_run_question["label"] == "Run or dev-server commands"
-    assert dev_run_question["prompt"] == "Which run or dev-server commands should /dev use?"
+    assert (
+        dev_run_question["prompt"]
+        == "Which run or dev-server commands should /dev use?"
+    )
     assert dev_run_question["custom_answer_prompt"] == "Add another custom command."
     assert dev_run_question["selection_model"]["allow_multiple"] is True
     assert dev_run_question["selection_model"]["allow_custom"] is True
     assert dev_run_question["selection_model"]["allow_skip"] is True
     assert dev_run_question["selection_model"]["first_selected_is_canonical"] is True
-    assert dev_run_question["option_annotations"]["detected_from"] == ["package.json scripts"]
-    assert dev_run_question["option_annotations"]["default_checked_values"] == ["`npm run dev`"]
-    dev_run_option = next(option for option in dev_run_question["options"] if option["value"] == "`npm run dev`")
+    assert dev_run_question["option_annotations"]["detected_from"] == [
+        "package.json scripts"
+    ]
+    assert dev_run_question["option_annotations"]["default_checked_values"] == [
+        "`npm run dev`"
+    ]
+    dev_run_option = next(
+        option
+        for option in dev_run_question["options"]
+        if option["value"] == "`npm run dev`"
+    )
     assert dev_run_option["recommended"] is True
     assert dev_run_option["safe_default"] is True
     assert dev_run_option["detected_from"] == ["package.json scripts"]
     notes_question = next(item for item in questions if item["field"] == "notes")
     assert notes_question["label"] == "Bootstrap notes"
-    assert notes_question["prompt"] == "What review notes or caveats should be carried into the generated skills?"
+    assert (
+        notes_question["prompt"]
+        == "What review notes or caveats should be carried into the generated skills?"
+    )
     assert notes_question["custom_answer_prompt"] == "Add another command or note."
-    preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
-    support_preview_map = {entry["path"]: entry["content"] for entry in payload["generated_support_previews"]}
+    preview_map = {
+        entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]
+    }
+    support_preview_map = {
+        entry["path"]: entry["content"]
+        for entry in payload["generated_support_previews"]
+    }
     assert ".github/skills/dev/SKILL.md" in preview_map
     assert "agent-workflow.sh" in support_preview_map
     assert '"profiles"' in support_preview_map["agent-workflow.sh"]
@@ -1808,7 +2032,9 @@ def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path
     assert "npm run test" in preview_map[".github/skills/test/SKILL.md"]
 
 
-def test_RQMD_AI_020_install_bundle_chat_applies_answer_overrides(tmp_path: Path) -> None:
+def test_RQMD_AI_020_install_bundle_chat_applies_answer_overrides(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1842,20 +2068,31 @@ def test_RQMD_AI_020_install_bundle_chat_applies_answer_overrides(tmp_path: Path
     _assert_schema_version(payload)
     assert payload["interview"]["applied_answers"]["dev_run"] == ["python -m demo.app"]
     assert payload["interview"]["applied_answers"]["test_primary"] == ["pytest -q"]
-    preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
-    support_preview_map = {entry["path"]: entry["content"] for entry in payload["generated_support_previews"]}
+    preview_map = {
+        entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]
+    }
+    support_preview_map = {
+        entry["path"]: entry["content"]
+        for entry in payload["generated_support_previews"]
+    }
     assert "python -m demo.app" in preview_map[".github/skills/dev/SKILL.md"]
     assert "pytest -q" in preview_map[".github/skills/test/SKILL.md"]
     assert "python -m demo.app" in support_preview_map["agent-workflow.sh"]
     assert "pytest -q" in support_preview_map["agent-workflow.sh"]
 
 
-def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     (repo / "src" / "ac_cli").mkdir(parents=True)
-    (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
+    (repo / "src" / "ac_cli" / "cli.py").write_text(
+        "def main():\n    return 0\n", encoding="utf-8"
+    )
     (repo / "tests").mkdir(parents=True)
-    (repo / "tests" / "test_demo.py").write_text("def test_demo():\n    assert True\n", encoding="utf-8")
+    (repo / "tests" / "test_demo.py").write_text(
+        "def test_demo():\n    assert True\n", encoding="utf-8"
+    )
 
     monkeypatch.setattr("rqmd.ai_cli.shutil.which", lambda name: None)
 
@@ -1876,7 +2113,9 @@ def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, 
     _assert_schema_version(payload)
     assert payload["mode"] == "init-chat"
     assert payload["interview"]["enabled"] is True
-    assert payload["interview"]["interaction_contract"]["preferred_ui"] == "multi-choice"
+    assert (
+        payload["interview"]["interaction_contract"]["preferred_ui"] == "multi-choice"
+    )
     assert payload["interview"]["flow"]
     assert [group["id"] for group in payload["interview"]["question_groups"]] == [
         "catalog_setup",
@@ -1887,37 +2126,59 @@ def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, 
         "review_notes",
     ]
     requirements_dir_question = next(
-        item for item in payload["interview"]["questions"] if item["field"] == "requirements_dir"
+        item
+        for item in payload["interview"]["questions"]
+        if item["field"] == "requirements_dir"
     )
     assert requirements_dir_question["selection_model"]["allow_multiple"] is False
     assert requirements_dir_question["selection_model"]["allow_custom"] is True
     id_prefix_question = next(
-        item for item in payload["interview"]["questions"] if item["field"] == "id_prefix"
+        item
+        for item in payload["interview"]["questions"]
+        if item["field"] == "id_prefix"
     )
     assert id_prefix_question["label"] == "Requirement ID prefix"
     assert "project-specific key" in id_prefix_question["prompt"]
     assert "project-specific" in str(id_prefix_question["custom_answer_prompt"])
-    assert any(option["value"] == "REPO" and option["recommended"] is True for option in id_prefix_question["options"])
-    req_option = next(option for option in id_prefix_question["options"] if option["value"] == "REQ")
+    assert any(
+        option["value"] == "REPO" and option["recommended"] is True
+        for option in id_prefix_question["options"]
+    )
+    req_option = next(
+        option for option in id_prefix_question["options"] if option["value"] == "REQ"
+    )
     assert req_option["description"] == (
         "Generic sequential requirement prefix. Use this if you do not want a project-specific key yet."
     )
     assert req_option["safe_default"] is True
-    docs_dir_option = next(option for option in requirements_dir_question["options"] if option["value"] == "docs/requirements")
+    docs_dir_option = next(
+        option
+        for option in requirements_dir_question["options"]
+        if option["value"] == "docs/requirements"
+    )
     assert docs_dir_option["safe_default"] is True
     domain_focus_question = next(
-        item for item in payload["interview"]["questions"] if item["field"] == "domain_focus"
+        item
+        for item in payload["interview"]["questions"]
+        if item["field"] == "domain_focus"
     )
     assert domain_focus_question["selection_model"]["allow_multiple"] is True
     assert domain_focus_question["option_annotations"]["detected_from"]
-    assert any(option["recommended"] is True for option in domain_focus_question["options"])
+    assert any(
+        option["recommended"] is True for option in domain_focus_question["options"]
+    )
     assert domain_focus_question["option_annotations"]["default_checked_values"]
     docs_review_question = next(
-        item for item in payload["interview"]["questions"] if item["field"] == "docs_review"
+        item
+        for item in payload["interview"]["questions"]
+        if item["field"] == "docs_review"
     )
     assert docs_review_question["label"] == "Docs review strategy"
     assert "first-pass catalog" in docs_review_question["prompt"]
-    assert docs_review_question["custom_answer_prompt"] == "Add a custom docs-review note or rule."
+    assert (
+        docs_review_question["custom_answer_prompt"]
+        == "Add a custom docs-review note or rule."
+    )
     assert any(
         option["value"] == "use-current-docs"
         and option["label"] == "Use the current docs as source material"
@@ -1926,7 +2187,9 @@ def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, 
     assert payload["interview"]["detected_source_areas"]
 
 
-def test_RQMD_AI_022b_init_starter_chat_recommends_project_specific_prefix(tmp_path: Path) -> None:
+def test_RQMD_AI_022b_init_starter_chat_recommends_project_specific_prefix(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "ac-cli"
     repo.mkdir(parents=True)
 
@@ -1945,43 +2208,76 @@ def test_RQMD_AI_022b_init_starter_chat_recommends_project_specific_prefix(tmp_p
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     id_prefix_question = next(
-        item for item in payload["interview"]["questions"] if item["field"] == "id_prefix"
+        item
+        for item in payload["interview"]["questions"]
+        if item["field"] == "id_prefix"
     )
     assert id_prefix_question["label"] == "Requirement ID prefix"
     assert "project-specific key" in id_prefix_question["prompt"]
     assert "project-specific" in str(id_prefix_question["custom_answer_prompt"])
-    assert any(option["value"] == "ACCLI" and option["recommended"] is True for option in id_prefix_question["options"])
-    req_option = next(option for option in id_prefix_question["options"] if option["value"] == "REQ")
+    assert any(
+        option["value"] == "ACCLI" and option["recommended"] is True
+        for option in id_prefix_question["options"]
+    )
+    req_option = next(
+        option for option in id_prefix_question["options"] if option["value"] == "REQ"
+    )
     assert req_option["description"] == (
         "Generic sequential requirement prefix. Use this if you do not want a project-specific key yet."
     )
     assert req_option["safe_default"] is True
     requirements_dir_question = next(
-        item for item in payload["interview"]["questions"] if item["field"] == "requirements_dir"
+        item
+        for item in payload["interview"]["questions"]
+        if item["field"] == "requirements_dir"
     )
     assert requirements_dir_question["label"] == "Requirements directory"
-    assert requirements_dir_question["prompt"] == "Where should rqmd create the starter requirements catalog?"
-    assert requirements_dir_question["custom_answer_prompt"] == "Type a custom requirements directory path."
+    assert (
+        requirements_dir_question["prompt"]
+        == "Where should rqmd create the starter requirements catalog?"
+    )
+    assert (
+        requirements_dir_question["custom_answer_prompt"]
+        == "Type a custom requirements directory path."
+    )
     starter_notes_question = next(
-        item for item in payload["interview"]["questions"] if item["field"] == "starter_notes"
+        item
+        for item in payload["interview"]["questions"]
+        if item["field"] == "starter_notes"
     )
     assert starter_notes_question["label"] == "Starter scaffold notes"
-    assert starter_notes_question["prompt"] == "What notes should guide the first refinement pass after the starter scaffold is created?"
+    assert (
+        starter_notes_question["prompt"]
+        == "What notes should guide the first refinement pass after the starter scaffold is created?"
+    )
     assert starter_notes_question["custom_answer_prompt"] == "Add another starter note."
     status_scheme_question = next(
-        item for item in payload["interview"]["questions"] if item["field"] == "status_scheme"
+        item
+        for item in payload["interview"]["questions"]
+        if item["field"] == "status_scheme"
     )
     assert status_scheme_question["label"] == "Status scheme"
     assert status_scheme_question["selection_model"]["allow_custom"] is True
-    assert any(option["value"] == "canonical" and option["recommended"] is True for option in status_scheme_question["options"])
-    assert any(option["value"] == "lean" for option in status_scheme_question["options"])
-    assert any(option["value"] == "delivery" for option in status_scheme_question["options"])
+    assert any(
+        option["value"] == "canonical" and option["recommended"] is True
+        for option in status_scheme_question["options"]
+    )
+    assert any(
+        option["value"] == "lean" for option in status_scheme_question["options"]
+    )
+    assert any(
+        option["value"] == "delivery" for option in status_scheme_question["options"]
+    )
 
 
-def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_023_init_legacy_answers_override_plan(
+    tmp_path: Path, monkeypatch
+) -> None:
     repo = tmp_path / "repo"
     (repo / "src" / "ac_cli").mkdir(parents=True)
-    (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
+    (repo / "src" / "ac_cli" / "cli.py").write_text(
+        "def main():\n    return 0\n", encoding="utf-8"
+    )
     (repo / "package.json").write_text(
         json.dumps({"name": "demo-app", "scripts": {"dev": "vite"}}),
         encoding="utf-8",
@@ -2021,25 +2317,52 @@ def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypat
     assert payload["status_scheme"] == "lean"
     assert payload["issue_discovery"]["used"] is False
     assert payload["issue_discovery"]["reason"] == "skipped by bootstrap interview"
-    workflow_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "requirements/developer-workflows.md")
-    assert "This file was generated by `rqmd-ai init --chat --legacy` from detected repository commands." in workflow_entry["content"]
+    workflow_entry = next(
+        entry
+        for entry in payload["proposed_files"]
+        if entry["path"] == "requirements/developer-workflows.md"
+    )
+    assert (
+        "This file was generated by `rqmd-ai init --chat --legacy` from detected repository commands."
+        in workflow_entry["content"]
+    )
     assert "python -m demo.app" in workflow_entry["content"]
-    assert "requirements/custom-domain.md" in [entry["path"] for entry in payload["proposed_files"]]
-    domain_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "requirements/custom-domain.md")
-    assert "This file was generated by `rqmd-ai init --chat --legacy` as a starting point." in domain_entry["content"]
-    readme_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "requirements/README.md")
-    assert "These files were seeded from the repository's current structure, workflows, and optional issue backlog." in readme_entry["content"]
+    assert "requirements/custom-domain.md" in [
+        entry["path"] for entry in payload["proposed_files"]
+    ]
+    domain_entry = next(
+        entry
+        for entry in payload["proposed_files"]
+        if entry["path"] == "requirements/custom-domain.md"
+    )
+    assert (
+        "This file was generated by `rqmd-ai init --chat --legacy` as a starting point."
+        in domain_entry["content"]
+    )
+    readme_entry = next(
+        entry
+        for entry in payload["proposed_files"]
+        if entry["path"] == "requirements/README.md"
+    )
+    assert (
+        "These files were seeded from the repository's current structure, workflows, and optional issue backlog."
+        in readme_entry["content"]
+    )
     assert "Bootstrap Interview Notes" in readme_entry["content"]
     assert "Generated from resources/init/README.md." in readme_entry["content"]
     assert "## Project Tooling Metadata" in readme_entry["content"]
     assert "## Schema Reference" in readme_entry["content"]
     assert "filter-sub-domain" in readme_entry["content"]
-    config_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "rqmd.yml")
+    config_entry = next(
+        entry for entry in payload["proposed_files"] if entry["path"] == "rqmd.yml"
+    )
     assert "name: In Progress" in config_entry["content"]
     assert "name: Janky" not in config_entry["content"]
 
 
-def test_RQMD_AI_022c_init_starter_can_copy_status_scheme_from_existing_file(tmp_path: Path) -> None:
+def test_RQMD_AI_022c_init_starter_can_copy_status_scheme_from_existing_file(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     source = tmp_path / "old-project"
@@ -2085,7 +2408,9 @@ priorities:
     assert "name: Proposed" not in config_text
 
 
-def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_path: Path) -> None:
+def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -2118,29 +2443,60 @@ def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_
 
     assert result.exit_code == 0
     payload = json.loads(result.output)
-    assert ".github/prompts/brainstorm.prompt.md" in payload["bundle_installation"]["active_definition_files"]
-    assert ".github/prompts/commit-and-go.prompt.md" in payload["bundle_installation"]["active_definition_files"]
-    assert ".github/prompts/polish-docs.prompt.md" in payload["bundle_installation"]["active_definition_files"]
-    assert ".github/prompts/go.prompt.md" in payload["bundle_installation"]["active_definition_files"]
-    assert ".github/prompts/next.prompt.md" in payload["bundle_installation"]["active_definition_files"]
-    assert ".github/prompts/pin.prompt.md" in payload["bundle_installation"]["active_definition_files"]
-    assert ".github/prompts/ship-check.prompt.md" in payload["bundle_installation"]["active_definition_files"]
-    assert ".github/skills/dev/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
-    assert ".github/skills/test/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
+    assert (
+        ".github/prompts/brainstorm.prompt.md"
+        in payload["bundle_installation"]["active_definition_files"]
+    )
+    assert (
+        ".github/prompts/commit-and-go.prompt.md"
+        in payload["bundle_installation"]["active_definition_files"]
+    )
+    assert (
+        ".github/prompts/polish-docs.prompt.md"
+        in payload["bundle_installation"]["active_definition_files"]
+    )
+    assert (
+        ".github/prompts/go.prompt.md"
+        in payload["bundle_installation"]["active_definition_files"]
+    )
+    assert (
+        ".github/prompts/next.prompt.md"
+        in payload["bundle_installation"]["active_definition_files"]
+    )
+    assert (
+        ".github/prompts/pin.prompt.md"
+        in payload["bundle_installation"]["active_definition_files"]
+    )
+    assert (
+        ".github/prompts/ship-check.prompt.md"
+        in payload["bundle_installation"]["active_definition_files"]
+    )
+    assert (
+        ".github/skills/dev/SKILL.md"
+        in payload["bundle_installation"]["active_definition_files"]
+    )
+    assert (
+        ".github/skills/test/SKILL.md"
+        in payload["bundle_installation"]["active_definition_files"]
+    )
 
 
-def test_RQMD_AUTOMATION_038_batch_mode_runs_multiple_queries_in_one_invocation(tmp_path: Path) -> None:
+def test_RQMD_AUTOMATION_038_batch_mode_runs_multiple_queries_in_one_invocation(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
     _write_demo_domain(criteria_dir / "demo.md")
 
     runner = CliRunner()
-    batch_input = json.dumps([
-        {"query": "dump-status", "status": "proposed", "key": "q1"},
-        {"query": "dump-id", "ids": ["RQMD-DEMO-002"], "key": "q2"},
-        {"query": "dump-all", "key": "q3"},
-    ])
+    batch_input = json.dumps(
+        [
+            {"query": "dump-status", "status": "proposed", "key": "q1"},
+            {"query": "dump-id", "ids": ["RQMD-DEMO-002"], "key": "q2"},
+            {"query": "dump-all", "key": "q3"},
+        ]
+    )
     result = runner.invoke(
         main,
         [
@@ -2193,18 +2549,22 @@ def test_RQMD_AUTOMATION_038_batch_mode_runs_multiple_queries_in_one_invocation(
     assert "RQMD-DEMO-002" in q3_ids
 
 
-def test_RQMD_AUTOMATION_038_batch_mode_reports_per_query_errors(tmp_path: Path) -> None:
+def test_RQMD_AUTOMATION_038_batch_mode_reports_per_query_errors(
+    tmp_path: Path,
+) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
     _write_demo_domain(criteria_dir / "demo.md")
 
     runner = CliRunner()
-    batch_input = json.dumps([
-        {"query": "dump-all", "key": "good"},
-        {"query": "nonsense-type", "key": "bad"},
-        "not-a-dict",
-    ])
+    batch_input = json.dumps(
+        [
+            {"query": "dump-all", "key": "good"},
+            {"query": "nonsense-type", "key": "bad"},
+            "not-a-dict",
+        ]
+    )
     result = runner.invoke(
         main,
         [
@@ -2230,5 +2590,3 @@ def test_RQMD_AUTOMATION_038_batch_mode_reports_per_query_errors(tmp_path: Path)
     assert "error" in results[1]["result"]
     # Third query (non-dict) returns an error at result level
     assert "error" in results[2]
-
-

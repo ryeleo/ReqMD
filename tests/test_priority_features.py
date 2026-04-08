@@ -6,11 +6,14 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli
 from rqmd.req_parser import parse_requirements
-from rqmd.summary import (build_summary_block, collect_summary_rows,
-                          count_priorities, process_file)
+from rqmd.summary import (
+    build_summary_block,
+    collect_summary_rows,
+    count_priorities,
+    process_file,
+)
 
 
 @pytest.fixture
@@ -43,7 +46,9 @@ Final requirement.
 
 
 class TestRQMDPriority005SummaryIntegration:
-    def test_count_priorities_extracts_all_levels(self, sample_file_with_priorities: Path):
+    def test_count_priorities_extracts_all_levels(
+        self, sample_file_with_priorities: Path
+    ):
         content = sample_file_with_priorities.read_text()
         counts = count_priorities(content)
 
@@ -52,8 +57,16 @@ class TestRQMDPriority005SummaryIntegration:
         assert counts.get("🟢 P3 - Low", 0) == 1
         assert counts.get("🟠 P1 - High", 0) == 0
 
-    def test_build_summary_block_without_priorities(self, sample_file_with_priorities: Path):
-        counts = {"💡 Proposed": 1, "🔧 Implemented": 1, "✅ Verified": 1, "⛔ Blocked": 0, "🗑️ Deprecated": 0}
+    def test_build_summary_block_without_priorities(
+        self, sample_file_with_priorities: Path
+    ):
+        counts = {
+            "💡 Proposed": 1,
+            "🔧 Implemented": 1,
+            "✅ Verified": 1,
+            "⛔ Blocked": 0,
+            "🗑️ Deprecated": 0,
+        }
 
         summary = build_summary_block(counts, priority_counts=None)
 
@@ -61,9 +74,22 @@ class TestRQMDPriority005SummaryIntegration:
         assert "Priorities:" not in summary
         assert "<!-- acceptance-status-summary:start -->" in summary
 
-    def test_build_summary_block_with_priorities(self, sample_file_with_priorities: Path):
-        counts = {"💡 Proposed": 1, "🔧 Implemented": 1, "✅ Verified": 1, "⛔ Blocked": 0, "🗑️ Deprecated": 0}
-        priority_counts = {"🔴 P0 - Critical": 1, "🟠 P1 - High": 0, "🟡 P2 - Medium": 1, "🟢 P3 - Low": 1}
+    def test_build_summary_block_with_priorities(
+        self, sample_file_with_priorities: Path
+    ):
+        counts = {
+            "💡 Proposed": 1,
+            "🔧 Implemented": 1,
+            "✅ Verified": 1,
+            "⛔ Blocked": 0,
+            "🗑️ Deprecated": 0,
+        }
+        priority_counts = {
+            "🔴 P0 - Critical": 1,
+            "🟠 P1 - High": 0,
+            "🟡 P2 - Medium": 1,
+            "🟢 P3 - Low": 1,
+        }
 
         summary = build_summary_block(counts, priority_counts=priority_counts)
 
@@ -73,7 +99,9 @@ class TestRQMDPriority005SummaryIntegration:
         assert "1🟡" in summary
         assert "1🟢" in summary
 
-    def test_process_file_writes_priority_summary_when_flag_set(self, sample_file_with_priorities: Path):
+    def test_process_file_writes_priority_summary_when_flag_set(
+        self, sample_file_with_priorities: Path
+    ):
         changed, _counts = process_file(
             sample_file_with_priorities,
             check_only=False,
@@ -84,7 +112,9 @@ class TestRQMDPriority005SummaryIntegration:
         assert changed is True
         assert "Priorities: 1🔴 0🟠 1🟡 1🟢" in content
 
-    def test_collect_summary_rows_writes_priority_summaries(self, sample_file_with_priorities: Path, tmp_path: Path):
+    def test_collect_summary_rows_writes_priority_summaries(
+        self, sample_file_with_priorities: Path, tmp_path: Path
+    ):
         file2_content = """\
 # Test 2
 
@@ -118,7 +148,9 @@ class TestRQMDPriority004ModeFlag:
         assert "--priority-rollup" in result.output
         assert "--seed-priorities" in result.output
 
-    def test_cli_set_priority_updates_existing_and_missing_priority(self, tmp_path: Path):
+    def test_cli_set_priority_updates_existing_and_missing_priority(
+        self, tmp_path: Path
+    ):
         repo = tmp_path / "repo"
         criteria_dir = repo / "docs" / "requirements"
         criteria_dir.mkdir(parents=True)
@@ -189,8 +221,12 @@ class TestRQMDPriority004ModeFlag:
         assert payload["updates"][0]["priority"] == "high"
         assert payload["updates"][0]["changed"] is True
 
-    def test_priority_field_extraction_in_criteria(self, sample_file_with_priorities: Path):
-        requirements = parse_requirements(sample_file_with_priorities, id_prefixes=("AC",))
+    def test_priority_field_extraction_in_criteria(
+        self, sample_file_with_priorities: Path
+    ):
+        requirements = parse_requirements(
+            sample_file_with_priorities, id_prefixes=("AC",)
+        )
 
         assert len(requirements) == 3
         assert requirements[0]["id"] == "AC-001"
@@ -198,7 +234,9 @@ class TestRQMDPriority004ModeFlag:
         assert requirements[1]["id"] == "AC-002"
         assert "🟡 P2 - Medium" in requirements[1].get("priority", "")
 
-    def test_lookup_priority_mode_starts_on_priority_panel(self, sample_file_with_priorities: Path, monkeypatch):
+    def test_lookup_priority_mode_starts_on_priority_panel(
+        self, sample_file_with_priorities: Path, monkeypatch
+    ):
         titles: list[str] = []
 
         def fake_select(title, options, **kwargs):
@@ -218,9 +256,13 @@ class TestRQMDPriority004ModeFlag:
 
         assert result == 0
         assert titles
-        assert re.sub(r"\x1b\[[0-9;]*m", "", titles[0]).startswith("Choose Status or Priority for AC-001.")
+        assert re.sub(r"\x1b\[[0-9;]*m", "", titles[0]).startswith(
+            "Choose Status or Priority for AC-001."
+        )
 
-    def test_main_forwards_priority_mode_to_interactive_wrapper(self, monkeypatch, tmp_path: Path):
+    def test_main_forwards_priority_mode_to_interactive_wrapper(
+        self, monkeypatch, tmp_path: Path
+    ):
         repo = tmp_path / "repo"
         criteria_dir = repo / "docs" / "requirements"
         criteria_dir.mkdir(parents=True)
@@ -235,7 +277,19 @@ class TestRQMDPriority004ModeFlag:
 
         captured: dict[str, object] = {}
 
-        def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary, **kwargs):
+        def fake_loop(
+            repo_root,
+            criteria_dir,
+            domain_files,
+            emoji_columns,
+            sort_files,
+            sort_strategy,
+            id_prefixes,
+            include_status_emojis,
+            priority_mode,
+            include_priority_summary,
+            **kwargs,
+        ):
             captured["priority_mode"] = priority_mode
             captured["include_priority_summary"] = include_priority_summary
             return 0
@@ -500,7 +554,9 @@ Scope: demo.
         assert result.exit_code != 0
         assert "--seed-priorities cannot be combined" in result.output
 
-    def test_requirement_menu_cycles_to_priority_sort(self, monkeypatch, tmp_path: Path):
+    def test_requirement_menu_cycles_to_priority_sort(
+        self, monkeypatch, tmp_path: Path
+    ):
         repo = tmp_path / "repo"
         criteria_dir = repo / "docs" / "requirements"
         criteria_dir.mkdir(parents=True)

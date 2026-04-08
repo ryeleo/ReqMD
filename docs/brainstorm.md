@@ -2,6 +2,13 @@
 
 ## Prompts
 
+/improve-rqmd: Send telemetry data to rqmd telemetry server based on the current users context. 
+- First, send some telemetry whenever this is invoked
+- Then, work with the user to craft the telemetry payload to be as useful as possible for future development/improvement of rqmd. Send updates to the telemetry server as the payload evolves based on user feedback and input.
+- Developer commentary: This will probably become one of my (rqmd's primary developer's) primary development workflows to make changes to rqmd. As I go use rqmd in many other projects with a mind on making improvements to rqmd itself.
+
+---
+
 /refactor: Refactor code, docs, or other project artifacts to improve readability, maintainability, or performance. 
 - Naming: Consistent naming of all domain logic -- work with the developer on making names consistent and semantically meaninful throughout their code base. Use names from Software Design Patterns and Domain-Driven Design where possible, and make sure that the names chosen align with the overall goals and language of the project.
 - Splitting large functions into smaller more focused more testable functions.

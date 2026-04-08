@@ -6,7 +6,9 @@ from rqmd.render_heuristics import RenderModeController
 
 
 def test_RQMD_ui_009_degrades_only_on_sustained_latency() -> None:
-    controller = RenderModeController(target_ms=50.0, upper_ms=60.0, cooldown_seconds=2.0, window_size=9)
+    controller = RenderModeController(
+        target_ms=50.0, upper_ms=60.0, cooldown_seconds=2.0, window_size=9
+    )
 
     # Single spike should not switch modes due to smoothing.
     for sample in [30.0, 31.0, 32.0, 120.0, 30.0, 31.0, 30.0, 32.0, 31.0]:

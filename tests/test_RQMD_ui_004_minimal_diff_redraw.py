@@ -17,7 +17,6 @@ Key requirements:
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from rqmd import menus as menus_mod
 
 
@@ -28,25 +27,25 @@ class TestRowDiffComparison:
         """Verify diff correctly identifies when content is identical."""
         old_content = ["Line 1", "Line 2", "Line 3"]
         new_content = ["Line 1", "Line 2", "Line 3"]
-        
+
         # Simple diff: should find no changes
         changed_rows = []
         for i, (old, new) in enumerate(zip(old_content, new_content)):
             if old != new:
                 changed_rows.append(i)
-        
+
         assert len(changed_rows) == 0, "Identical content should have no diff"
 
     def test_RQMD_ui_004_simple_row_diff_single_change(self):
         """Verify diff detects single row change."""
         old_content = ["Item A", "Item B", "Item C"]
         new_content = ["Item A", "MODIFIED", "Item C"]
-        
+
         changed_rows = []
         for i, (old, new) in enumerate(zip(old_content, new_content)):
             if old != new:
                 changed_rows.append(i)
-        
+
         assert len(changed_rows) == 1
         assert changed_rows[0] == 1, "Should detect change at row 1"
 
@@ -54,9 +53,13 @@ class TestRowDiffComparison:
         """Verify diff detects multiple row changes."""
         old_content = ["A", "B", "C", "D", "E"]
         new_content = ["A", "X", "C", "Y", "E"]
-        
-        changed_rows = [i for i, (old, new) in enumerate(zip(old_content, new_content)) if old != new]
-        
+
+        changed_rows = [
+            i
+            for i, (old, new) in enumerate(zip(old_content, new_content))
+            if old != new
+        ]
+
         assert len(changed_rows) == 2
         assert changed_rows == [1, 3], "Should detect changes at rows 1 and 3"
 
@@ -64,7 +67,7 @@ class TestRowDiffComparison:
         """Verify diff handles ANSI color codes correctly."""
         old = "  1) \x1b[38;5;226mOption A\x1b[0m"
         new = "  1) \x1b[38;5;226mOption A\x1b[0m"
-        
+
         # Same content including ANSI codes
         assert old == new
 
@@ -72,12 +75,12 @@ class TestRowDiffComparison:
         """Verify diff handles content with different lengths."""
         old_content = ["Line 1", "Line 2"]
         new_content = ["Line 1", "Line 2", "Line 3", "Line 4"]
-        
+
         # Compare up to min length and flag length difference
         min_len = min(len(old_content), len(new_content))
         changed_rows = [i for i in range(min_len) if old_content[i] != new_content[i]]
         length_changed = len(old_content) != len(new_content)
-        
+
         assert len(changed_rows) == 0, "First two lines unchanged"
         assert length_changed is True, "Length difference should be detected"
 
@@ -85,16 +88,20 @@ class TestRowDiffComparison:
         """Verify diff is sensitive to whitespace changes."""
         old = "  Option A"
         new = " Option A"  # One fewer space
-        
+
         assert old != new, "Whitespace differences should be detected"
 
     def test_RQMD_ui_004_row_diff_empty_lines(self):
         """Verify diff handles empty lines correctly."""
         old_content = ["Item 1", "", "Item 2"]
         new_content = ["Item 1", "  ", "Item 2"]  # Space instead of empty
-        
-        changed_rows = [i for i, (old, new) in enumerate(zip(old_content, new_content)) if old != new]
-        
+
+        changed_rows = [
+            i
+            for i, (old, new) in enumerate(zip(old_content, new_content))
+            if old != new
+        ]
+
         assert len(changed_rows) == 1
         assert changed_rows[0] == 1, "Empty vs space should be detected"
 
@@ -105,13 +112,14 @@ class TestDiffOptimization:
     def test_RQMD_ui_004_diff_parameter_accepted(self):
         """Verify select_from_menu accepts diff_enabled parameter."""
         options = ["A", "B", "C"]
-        
+
         with patch("rqmd.menus.click.echo"):
             with patch("sys.stdout.isatty", return_value=False):
                 with patch("click.getchar", return_value="q"):
                     try:
                         result = menus_mod.select_from_menu(
-                            "Menu", options,
+                            "Menu",
+                            options,
                             # diff_enabled=True  # Once implemented
                         )
                         # Should accept the parameter when implemented
@@ -122,14 +130,15 @@ class TestDiffOptimization:
     def test_RQMD_ui_004_fallback_to_full_redraw_when_disabled(self):
         """Verify full screen clear is used when diff is explicitly disabled."""
         options = ["Item 1", "Item 2", "Item 3"]
-        
+
         # When diffing is disabled, should fall back to full clear + re-render
         with patch("rqmd.menus.click.echo") as mock_echo:
             with patch("sys.stdout.isatty", return_value=True):  # TTY mode
                 with patch("click.getchar", return_value="q"):
                     try:
                         menus_mod.select_from_menu(
-                            "Menu", options,
+                            "Menu",
+                            options,
                             # diff_enabled=False  # Fallback scenario
                         )
                         # Full clear should be sent
@@ -139,25 +148,45 @@ class TestDiffOptimization:
     def test_RQMD_ui_004_partial_redraw_efficiency(self):
         """Verify partial redraw skips unchanged lines."""
         # Simulate two renders with minimal difference
-        old_render = ["=== Menu ===", "1) Item A", "2) Item B", "3) Item C", "keys: q=quit"]
-        new_render = ["=== Menu ===", "1) Item A", "2) CHANGED", "3) Item C", "keys: q=quit"]
-        
+        old_render = [
+            "=== Menu ===",
+            "1) Item A",
+            "2) Item B",
+            "3) Item C",
+            "keys: q=quit",
+        ]
+        new_render = [
+            "=== Menu ===",
+            "1) Item A",
+            "2) CHANGED",
+            "3) Item C",
+            "keys: q=quit",
+        ]
+
         # Diff should identify only row 2 as changed
-        changed_indices = [i for i in range(len(old_render)) if old_render[i] != new_render[i]]
-        
+        changed_indices = [
+            i for i in range(len(old_render)) if old_render[i] != new_render[i]
+        ]
+
         # Only row 2 should be redrawn
-        assert changed_indices == [2], f"Should identify row 2 as changed, got {changed_indices}"
-        
+        assert changed_indices == [
+            2
+        ], f"Should identify row 2 as changed, got {changed_indices}"
+
         # Lines 0, 1, 3, 4 should NOT be redrawn
-        unchanged_count = len([i for i in range(len(old_render)) if old_render[i] == new_render[i]])
-        assert unchanged_count == 4, f"Should have 4 unchanged lines, got {unchanged_count}"
+        unchanged_count = len(
+            [i for i in range(len(old_render)) if old_render[i] == new_render[i]]
+        )
+        assert (
+            unchanged_count == 4
+        ), f"Should have 4 unchanged lines, got {unchanged_count}"
 
     def test_RQMD_ui_004_cursor_movement_without_redraw(self):
         """Verify cursor-only changes don't require full screen redraw."""
         # Menu content unchanged, only cursor position changed (e.g., selection highlight)
         old = "  1) Item A (no highlight)"
         new = "  1) Item A (highlighted)"
-        
+
         # Even though displayed differently, if we're just moving a cursor,
         # we could skip content redraw and only move cursor
         # This is an optimization hint for implementation
@@ -168,13 +197,14 @@ class TestDiffOptimization:
         old_lines = [f"Item {i:04d}" for i in range(1000)]
         new_lines = old_lines.copy()
         new_lines[500] = "Item Modified"  # Change only middle item
-        
+
         # Diff should be computed quickly
         import time
+
         start = time.time()
         changed = [i for i in range(len(old_lines)) if old_lines[i] != new_lines[i]]
         elapsed = time.time() - start
-        
+
         # Should be nearly instant (< 10ms for 1000 items)
         assert elapsed < 0.01, f"Diff should be fast, took {elapsed}s"
         assert len(changed) == 1, "Should find the one changed item"
@@ -186,7 +216,7 @@ class TestDiffFallbackScenarios:
     def test_RQMD_ui_004_fallback_nonTTY_no_diff(self):
         """Verify non-TTY always falls back to scrolling (no screen-write)."""
         options = ["A", "B", "C"]
-        
+
         # Non-TTY environment doesn't need diff optimization
         with patch("rqmd.menus.click.echo"):
             with patch("sys.stdout.isatty", return_value=False):
@@ -200,7 +230,7 @@ class TestDiffFallbackScenarios:
     def test_RQMD_ui_004_fallback_slow_terminal(self):
         """Verify fallback for terminals where diff might be disabled."""
         options = ["Item 1", "Item 2"]
-        
+
         # Some slow terminals might disable differ to avoid latency overhead
         with patch("rqmd.menus.click.echo"):
             with patch("sys.stdout.isatty", return_value=True):
@@ -213,10 +243,11 @@ class TestDiffFallbackScenarios:
 
     def test_RQMD_ui_004_error_in_diff_falls_back_to_full_redraw(self):
         """Verify if diff computation fails, falls back to full redraw."""
+
         # Simulate diff error scenario
         def failing_diff(old, new):
             raise ValueError("Diff computation failed")
-        
+
         # Should catch and fall back to full clear + re-render
         try:
             failing_diff(["A"], ["B"])
@@ -231,13 +262,17 @@ class TestDiffRenderingIntegration:
     def test_RQMD_ui_004_pagination_with_diff(self):
         """Verify diff works correctly across page navigation."""
         options = [f"Item {i}" for i in range(50)]
-        
+
         # Page 1 render
-        page1_lines = ["=== Menu ===", "Page 1/3"] + [f"  {i+1}) Item {i}" for i in range(10)]
-        
+        page1_lines = ["=== Menu ===", "Page 1/3"] + [
+            f"  {i+1}) Item {i}" for i in range(10)
+        ]
+
         # Page 2 render (different content)
-        page2_lines = ["=== Menu ===", "Page 2/3"] + [f"  {i+11}) Item {i+10}" for i in range(10)]
-        
+        page2_lines = ["=== Menu ===", "Page 2/3"] + [
+            f"  {i+11}) Item {i+10}" for i in range(10)
+        ]
+
         # Diff should show most lines changed due to page change
         changed = sum(1 for o, n in zip(page1_lines, page2_lines) if o != n)
         assert changed > 0, "Page change should show diffs"
@@ -247,7 +282,7 @@ class TestDiffRenderingIntegration:
         # Only selection ANSI code changed, item text same
         old_item = "  5) Item Name"
         new_item = "\x1b[48;5;226m  5) Item Name\x1b[0m"
-        
+
         # Would be detected as different (entire line has ANSI wrapping)
         assert old_item != new_item
 
@@ -255,18 +290,18 @@ class TestDiffRenderingIntegration:
         """Verify zebra stripe background changes detected by diff."""
         old = "  2) Option B"
         new = "\x1b[48;5;254m  2) Option B\x1b[0m"  # ANSI background added
-        
+
         assert old != new, "Striping change should be detected"
 
     def test_RQMD_ui_004_footer_update_independent_of_content(self):
         """Verify footer changes are isolated and can skip content redraw."""
         # Content lines 0-8 identical
         content = ["Line " + str(i) for i in range(9)]
-        
+
         # Only footer differs
         old_footer = "keys: q=quit"
         new_footer = "keys: q=quit | (unsaved)"
-        
+
         # Diff would show only footer row changed
         changed_row = 9 if old_footer != new_footer else None
         assert changed_row == 9, "Only footer should be modified"
@@ -279,7 +314,7 @@ class TestDiffPerformanceOptimization:
         """Verify partial redraw reduces flicker compared to full redraw."""
         # Full redraw: clears entire screen
         # Partial redraw: only updates changed lines
-        
+
         # With 50 lines and only 1 changed, partial is much more efficient
         assert 1 < 50, "Partial redraw should be more efficient"
 
@@ -289,7 +324,7 @@ class TestDiffPerformanceOptimization:
         old = list(f"Item {i:04d}" for i in range(n))
         new = old.copy()
         new[n // 2] = "CHANGED"
-        
+
         # Compute diff
         diff_count = sum(1 for o, n in zip(old, new) if o != n)
         assert diff_count == 1
@@ -299,13 +334,13 @@ class TestDiffPerformanceOptimization:
         """Verify row-level (not char-level) diff is implemented."""
         # Row-level is simpler and faster than character-level diff
         row = "  5) This is a very long menu item with lots of text"
-        
+
         # If we change one character at position 10:
         variations = [
             row,  # Original
             "  5) This IS a very long menu item with lots of text",  # Char changed
         ]
-        
+
         # Both should be detected as same row by row-level diff (for row comparison)
         # But different if we compare the full row string
 

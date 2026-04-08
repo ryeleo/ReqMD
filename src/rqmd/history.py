@@ -35,7 +35,9 @@ class HistoryRestoreError(Exception):
     """Raised when a historical snapshot cannot be restored."""
 
 
-def normalize_retention_policy(raw_policy: dict[str, Any] | None = None) -> dict[str, int | None]:
+def normalize_retention_policy(
+    raw_policy: dict[str, Any] | None = None,
+) -> dict[str, int | None]:
     """Normalize a history retention policy dictionary."""
     normalized = dict(DEFAULT_HISTORY_RETENTION_POLICY)
     if raw_policy is None:
@@ -49,7 +51,9 @@ def normalize_retention_policy(raw_policy: dict[str, Any] | None = None) -> dict
             normalized[key] = None
             continue
         if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
-            raise ValueError(f"History retention policy '{key}' must be a positive integer or null")
+            raise ValueError(
+                f"History retention policy '{key}' must be a positive integer or null"
+            )
         normalized[key] = value
     return normalized
 
@@ -66,7 +70,11 @@ def merge_retention_policies(*policies: dict[str, Any] | None) -> dict[str, int 
 class HistoryManager:
     """Manage persistent catalog snapshots in a local hidden git repository."""
 
-    def __init__(self, repo_root: Path | str = ".", requirements_dir: Path | str = "docs/requirements"):
+    def __init__(
+        self,
+        repo_root: Path | str = ".",
+        requirements_dir: Path | str = "docs/requirements",
+    ):
         self.repo_root = Path(repo_root).resolve()
         self.requirements_dir = self._normalize_requirements_dir(requirements_dir)
         self.history_root = self.repo_root / HISTORY_ROOT_RELATIVE
@@ -85,7 +93,9 @@ class HistoryManager:
                 ) from exc
         return path
 
-    def _git(self, *args: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
+    def _git(
+        self, *args: str, input_text: str | None = None
+    ) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         env.setdefault("GIT_AUTHOR_NAME", "rqmd")
         env.setdefault("GIT_AUTHOR_EMAIL", "rqmd@local")
@@ -137,7 +147,9 @@ class HistoryManager:
         requirements_root = (self.repo_root / self.requirements_dir).resolve()
         if not requirements_root.exists():
             return []
-        return sorted(path for path in requirements_root.rglob("*.md") if path.is_file())
+        return sorted(
+            path for path in requirements_root.rglob("*.md") if path.is_file()
+        )
 
     def _replace_catalog_snapshot(self) -> list[str]:
         if self.catalog_dir.exists():
@@ -166,7 +178,9 @@ class HistoryManager:
         try:
             self._git("checkout", "--force", commit_hash)
         except HistoryCommitError as exc:
-            raise HistoryRestoreError(f"Failed to checkout history commit {commit_hash}: {exc}") from exc
+            raise HistoryRestoreError(
+                f"Failed to checkout history commit {commit_hash}: {exc}"
+            ) from exc
 
         requirements_root = self.repo_root / self.requirements_dir
         current_files = []
@@ -210,7 +224,11 @@ class HistoryManager:
         title = command
         if reason:
             title = f"{command}: {reason}"
-        return title + "\n\n[rqmd-metadata]\n" + json.dumps(metadata, ensure_ascii=False, indent=2)
+        return (
+            title
+            + "\n\n[rqmd-metadata]\n"
+            + json.dumps(metadata, ensure_ascii=False, indent=2)
+        )
 
     def _build_delta_payload(self, commit_hash: str) -> dict[str, Any]:
         """Build a lightweight file-delta summary for a captured history commit."""
@@ -242,7 +260,7 @@ class HistoryManager:
             total_deletions += deleted
             files.append(
                 {
-                    "path": raw_path[len(prefix):],
+                    "path": raw_path[len(prefix) :],
                     "additions": added,
                     "deletions": deleted,
                     "binary": not (raw_added.isdigit() and raw_deleted.isdigit()),
@@ -273,7 +291,9 @@ class HistoryManager:
             )
         except subprocess.CalledProcessError as exc:
             message = exc.stderr.strip() or exc.stdout.strip() or str(exc)
-            raise HistoryInitError(f"Failed to initialize history repository: {message}") from exc
+            raise HistoryInitError(
+                f"Failed to initialize history repository: {message}"
+            ) from exc
 
         gitignore_path = self.repo_dir / ".gitignore"
         if not gitignore_path.exists():
@@ -297,7 +317,7 @@ class HistoryManager:
             return None
 
         if normalized.lower().startswith(STABLE_HISTORY_ID_PREFIX):
-            normalized = normalized[len(STABLE_HISTORY_ID_PREFIX):]
+            normalized = normalized[len(STABLE_HISTORY_ID_PREFIX) :]
             if not normalized:
                 return None
 
@@ -331,14 +351,16 @@ class HistoryManager:
             item = line.strip()
             if not item.startswith(prefix):
                 continue
-            files.append(item[len(prefix):])
+            files.append(item[len(prefix) :])
         return sorted(files)
 
     def read_snapshot_file(self, commit_hash: str, relative_path: str) -> str:
         git_path = f"{commit_hash}:{CATALOG_DIRNAME}/{relative_path}"
         return self._git("show", git_path).stdout
 
-    def materialize_snapshot(self, commit_hash: str, target_root: Path | str) -> list[Path]:
+    def materialize_snapshot(
+        self, commit_hash: str, target_root: Path | str
+    ) -> list[Path]:
         target = Path(target_root)
         materialized: list[Path] = []
         for relative_path in self.list_snapshot_files(commit_hash):
@@ -351,7 +373,9 @@ class HistoryManager:
             materialized.append(destination)
         return materialized
 
-    def materialize_snapshot_tempdir(self, commit_hash: str) -> tempfile.TemporaryDirectory[str]:
+    def materialize_snapshot_tempdir(
+        self, commit_hash: str
+    ) -> tempfile.TemporaryDirectory[str]:
         tempdir = tempfile.TemporaryDirectory()
         self.materialize_snapshot(commit_hash, Path(tempdir.name))
         return tempdir
@@ -373,18 +397,20 @@ class HistoryManager:
         cursor = int(state.get("cursor", -1))
         return 0 <= cursor < len(entries) - 1
 
-    def capture(self, command: str, actor: str = "rqmd", reason: str | None = None) -> str:
+    def capture(
+        self, command: str, actor: str = "rqmd", reason: str | None = None
+    ) -> str:
         self._ensure_initialized()
         state = self._read_state()
         entries = list(state.get("entries", []))
         cursor = int(state.get("cursor", -1))
-        
+
         # Detect divergence: if cursor < len(entries)-1, we're branching from an old point
         diverging = cursor < len(entries) - 1
         parent_commit: str | None = None
         branch_point_commit: str | None = None
         new_branch: str | None = None
-        
+
         if diverging:
             # Save the old branch head before truncating
             if entries:
@@ -396,7 +422,7 @@ class HistoryManager:
             new_branch = f"recovery-{timestamp_label}"
         else:
             parent_commit = str(entries[cursor]["commit"]) if entries else None
-        
+
         snapshot_files = self._replace_catalog_snapshot()
         entry_path = self.repo_dir / "entry.json"
         entry_payload = {
@@ -406,10 +432,18 @@ class HistoryManager:
             "files": snapshot_files,
             "requirements_dir": self.requirements_dir.as_posix(),
         }
-        entry_path.write_text(json.dumps(entry_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        entry_path.write_text(
+            json.dumps(entry_payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
 
         self._git("add", "-A")
-        self._git("commit", "--allow-empty", "-m", self._build_commit_message(command, actor, reason, snapshot_files))
+        self._git(
+            "commit",
+            "--allow-empty",
+            "-m",
+            self._build_commit_message(command, actor, reason, snapshot_files),
+        )
         commit_hash = self._git("rev-parse", "HEAD").stdout.strip()
         delta = self._build_delta_payload(commit_hash)
 
@@ -431,15 +465,18 @@ class HistoryManager:
         state["requirements_dir"] = self.requirements_dir.as_posix()
         state.setdefault("branches", {})
         state.setdefault("current_branch", "main")
-        
+
         # Track branch heads in state
         if new_branch:
-            state["branches"][new_branch] = {"head": commit_hash, "label": f"Alternate timeline starting at {timestamp_label}"}
+            state["branches"][new_branch] = {
+                "head": commit_hash,
+                "label": f"Alternate timeline starting at {timestamp_label}",
+            }
             state["current_branch"] = new_branch
         else:
             current_branch = state.get("current_branch", "main")
             state["branches"][current_branch]["head"] = commit_hash
-        
+
         state.setdefault("version", "2.0")
         self._write_state(state)
         return commit_hash
@@ -481,7 +518,7 @@ class HistoryManager:
         branches = state.get("branches", {})
         cursor = int(state.get("cursor", -1))
         current_branch = state.get("current_branch", "main")
-        
+
         # Build nodes indexed by commit hash
         nodes: dict[str, dict[str, Any]] = {}
         for index, entry in enumerate(entries):
@@ -499,7 +536,7 @@ class HistoryManager:
                 "branch_point": entry.get("branch_point"),
                 "is_current_head": index == cursor,
             }
-        
+
         return {
             "nodes": nodes,
             "branches": branches,
@@ -514,7 +551,7 @@ class HistoryManager:
         branches = state.get("branches", {})
         current_branch = state.get("current_branch", "main")
         entries = state.get("entries", [])
-        
+
         branches_info: dict[str, dict[str, Any]] = {}
         for branch_name, branch_data in branches.items():
             head_commit = branch_data.get("head")
@@ -613,8 +650,12 @@ class HistoryManager:
             else:
                 dropped_entries.append(payload)
 
-        size_threshold_exceeded = bool(max_size_kib is not None and repo_size_kib > max_size_kib)
-        count_threshold_exceeded = bool(retain_last is not None and len(entries) > retain_last)
+        size_threshold_exceeded = bool(
+            max_size_kib is not None and repo_size_kib > max_size_kib
+        )
+        count_threshold_exceeded = bool(
+            retain_last is not None and len(entries) > retain_last
+        )
         age_threshold_exceeded = bool(dropped_entries and retain_days is not None)
 
         return {
@@ -631,7 +672,9 @@ class HistoryManager:
             "count_threshold_exceeded": count_threshold_exceeded,
             "age_threshold_exceeded": age_threshold_exceeded,
             "policy_triggered": bool(
-                size_threshold_exceeded or count_threshold_exceeded or age_threshold_exceeded
+                size_threshold_exceeded
+                or count_threshold_exceeded
+                or age_threshold_exceeded
             ),
         }
 
@@ -647,7 +690,9 @@ class HistoryManager:
         current_branch = str(state.get("current_branch") or "main")
 
         plan = self.get_retention_plan(retention_policy)
-        retained_commits = {str(item.get("commit") or "") for item in plan["retained_entries"]}
+        retained_commits = {
+            str(item.get("commit") or "") for item in plan["retained_entries"]
+        }
         old_cursor = int(state.get("cursor", -1))
         old_cursor_commit = None
         if 0 <= old_cursor < len(entries):
@@ -710,11 +755,15 @@ class HistoryManager:
                 removed_branches.append(branch_name)
 
         if current_branch not in new_branches:
-            current_branch = "main" if "main" in new_branches else next(iter(new_branches), "main")
+            current_branch = (
+                "main" if "main" in new_branches else next(iter(new_branches), "main")
+            )
 
         state["entries"] = new_entries
         state["cursor"] = new_cursor if new_entries else -1
-        state["branches"] = new_branches or {"main": {"head": None, "label": "Main timeline"}}
+        state["branches"] = new_branches or {
+            "main": {"head": None, "label": "Main timeline"}
+        }
         state["current_branch"] = current_branch
         self._write_state(state)
 
@@ -777,19 +826,19 @@ class HistoryManager:
         """Checkout a branch by name and restore its HEAD state."""
         state = self._read_state()
         branches = state.get("branches", {})
-        
+
         if branch_name not in branches:
             return None
-        
+
         branch_data = branches[branch_name]
         head_commit = branch_data.get("head")
-        
+
         if not head_commit:
             return None
-        
+
         # Restore the commit for this branch
         self._restore_commit(head_commit)
-        
+
         # Find the entry index for this commit
         entries = state.get("entries", [])
         cursor = -1
@@ -797,38 +846,40 @@ class HistoryManager:
             if entry.get("commit") == head_commit:
                 cursor = i
                 break
-        
+
         if cursor >= 0:
             state["cursor"] = cursor
             state["current_branch"] = branch_name
             self._write_state(state)
             return head_commit
-        
+
         return None
 
-    def cherry_pick(self, commit_hash: str, target_branch: str | None = None) -> str | None:
+    def cherry_pick(
+        self, commit_hash: str, target_branch: str | None = None
+    ) -> str | None:
         """Apply a single commit's changes on top of the current/target branch HEAD."""
         self._ensure_initialized()
         state = self._read_state()
         entries = state.get("entries", [])
-        
+
         # Find the source commit
         source_entry = None
         for entry in entries:
             if entry.get("commit") == commit_hash:
                 source_entry = entry
                 break
-        
+
         if not source_entry:
             return None
-        
+
         # Get the current branch and checkout target if specified
         current_branch = state.get("current_branch", "main")
         if target_branch and target_branch != current_branch:
             self.checkout_branch(target_branch)
             state = self._read_state()
             current_branch = target_branch
-        
+
         # Create a new entry that represents the cherry-pick
         reason = f"Cherry-picked from {commit_hash[:8]}"
         try:
@@ -841,43 +892,47 @@ class HistoryManager:
         except (HistoryCommitError, HistoryRestoreError):
             return None
 
-    def replay_branch(self, from_branch: str, onto_branch: str | None = None) -> list[str] | None:
+    def replay_branch(
+        self, from_branch: str, onto_branch: str | None = None
+    ) -> list[str] | None:
         """Replay all commits from one branch onto another (or current HEAD)."""
         state = self._read_state()
         branches = state.get("branches", {})
         entries = state.get("entries", [])
-        
+
         if from_branch not in branches:
             return None
-        
+
         # Get commits on the source branch in order
-        source_commits = [e.get("commit") for e in entries if e.get("branch") == from_branch]
+        source_commits = [
+            e.get("commit") for e in entries if e.get("branch") == from_branch
+        ]
         if not source_commits:
             return None
-        
+
         # Checkout target branch if specified
         target_branch = onto_branch or state.get("current_branch", "main")
         if target_branch != state.get("current_branch", "main"):
             self.checkout_branch(target_branch)
             state = self._read_state()
-        
+
         # Apply each commit in sequence
         new_commits = []
         for commit_hash in source_commits:
             new_commit = self.cherry_pick(commit_hash, target_branch=target_branch)
             if new_commit:
                 new_commits.append(new_commit)
-        
+
         return new_commits if new_commits else None
 
     def label_branch(self, branch_name: str, label: str) -> bool:
         """Set or update a human-readable label for a branch."""
         state = self._read_state()
         branches = state.get("branches", {})
-        
+
         if branch_name not in branches:
             return False
-        
+
         branches[branch_name]["label"] = label
         state["branches"] = branches
         self._write_state(state)
@@ -887,22 +942,22 @@ class HistoryManager:
         """Delete a branch and remove its entries (requires confirmation w/u interactive calls)."""
         if branch_name == "main":
             return False  # Cannot delete main branch
-        
+
         state = self._read_state()
         branches = state.get("branches", {})
         entries = state.get("entries", [])
-        
+
         if branch_name not in branches:
             return False
-        
+
         # Remove the branch from tracking
         del branches[branch_name]
         state["branches"] = branches
-        
+
         # Optionally remove entries from this branch
         # For now, keep entries but mark them as removed
         # (They remain in git history but are no longer accessible via branch nav)
-        
+
         # If we're on the discarded branch, switch to main
         if state.get("current_branch") == branch_name:
             state["current_branch"] = "main"
@@ -915,6 +970,6 @@ class HistoryManager:
                         break
                 if cursor >= 0:
                     state["cursor"] = cursor
-        
+
         self._write_state(state)
         return True
