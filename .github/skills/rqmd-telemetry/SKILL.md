@@ -26,7 +26,7 @@ Telemetry is active out of the box — the rqmd client ships with a built-in pro
 The resolution order for the endpoint is:
 
 1. `RQMD_TELEMETRY_ENDPOINT` environment variable (highest priority).
-2. `telemetry.endpoint` in the project `.rqmd.yml` / `.rqmd.yaml` / `.rqmd.json` config file.
+2. `telemetry.endpoint` in the project `rqmd.yml` / `rqmd.yaml` / `rqmd.json` config file.
 3. Built-in production default.
 
 To **opt out**, set `RQMD_TELEMETRY_DISABLED=1` in the environment. When disabled, no events are sent and both `resolve_telemetry_endpoint` and `resolve_telemetry_api_key` return `None`.
@@ -36,7 +36,7 @@ To **opt out**, set `RQMD_TELEMETRY_DISABLED=1` in the environment. When disable
 All gateway endpoints except `/health` and `/api/v1/token` require a Bearer token. The token is resolved automatically:
 
 1. `RQMD_TELEMETRY_API_KEY` environment variable (highest priority) — use for local dev or overrides.
-2. `telemetry.api_key` in the project `.rqmd.yml` / `.rqmd.yaml` / `.rqmd.json` config file.
+2. `telemetry.api_key` in the project `rqmd.yml` / `rqmd.yaml` / `rqmd.json` config file.
 3. **Automatic token exchange** — the client sends its public client ID to `POST /api/v1/token` on the gateway and receives a short-lived session token (default 1 hour TTL). The token is cached in-process and refreshed transparently.
 
 No plaintext API key is shipped in source. You do not need to configure anything for this to work — the client exchanges a token automatically using the built-in production endpoint.

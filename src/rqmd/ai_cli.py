@@ -132,7 +132,7 @@ def _status_scheme_suggested_options(repo_root: Path) -> tuple[dict[str, object]
         )
 
     copy_candidates = [
-        repo_root / ".rqmd.yml",
+        repo_root / "rqmd.yml",
         repo_root / ".rqmd" / "statuses.yml",
         repo_root / ".rqmd" / "statuses.yaml",
         repo_root / ".rqmd" / "statuses.json",
@@ -3939,7 +3939,7 @@ def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dic
         "instructions": (
             "Telemetry endpoint is active. AI agents can POST events to {}/api/v1/events".format(endpoint)
             if configured and reachable
-            else "No telemetry endpoint configured. Set RQMD_TELEMETRY_ENDPOINT or add telemetry.endpoint to .rqmd.yml."
+            else "No telemetry endpoint configured. Set RQMD_TELEMETRY_ENDPOINT or add telemetry.endpoint to rqmd.yml."
             if not configured
             else "Telemetry endpoint configured but not reachable at {}.".format(endpoint)
         ),
@@ -3962,7 +3962,7 @@ def _handle_telemetry_test_command(repo_root: Path, json_output: bool = False) -
         return {
             "mode": "telemetry-test",
             "success": False,
-            "error": "No telemetry endpoint configured. Set RQMD_TELEMETRY_ENDPOINT or add telemetry.endpoint to .rqmd.yml.",
+            "error": "No telemetry endpoint configured. Set RQMD_TELEMETRY_ENDPOINT or add telemetry.endpoint to rqmd.yml.",
         }
 
     # --- Step 1: test event submission (Postgres) ---

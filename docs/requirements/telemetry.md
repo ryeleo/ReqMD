@@ -97,7 +97,7 @@ Summary: 2💡 11🔧 0✅ 0⚠️ 0⛔ 1🗑️
 - Then the endpoint URL is taken from that variable
 - And when the `RQMD_TELEMETRY_API_KEY` environment variable is set
 - Then the API key is taken from that variable
-- And when the environment variables are not set but a `.rqmd.yml` / `.rqmd.yaml` / `.rqmd.json` config file contains `telemetry.endpoint` and/or `telemetry.api_key`
+- And when the environment variables are not set but a `rqmd.yml` / `rqmd.yaml` / `rqmd.json` config file contains `telemetry.endpoint` and/or `telemetry.api_key`
 - Then those config-file values are used as fallbacks
 - And when neither source provides an endpoint, telemetry is silently disabled
 - And the `submit_event` client includes the resolved API key as a `Bearer` token in the `Authorization` header on every request

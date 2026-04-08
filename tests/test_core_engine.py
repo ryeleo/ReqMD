@@ -739,11 +739,11 @@ def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> N
     assert first_payload["mode"] == "init"
     assert first_payload["starter_prefix"] == "REQ"
     assert first_payload["created_count"] == 3
-    assert sorted(first_payload["created_files"]) == [
-        ".rqmd.yml",
+    assert sorted(first_payload["created_files"]) == sorted([
+        "rqmd.yml",
         "docs/requirements/README.md",
         "docs/requirements/starter.md",
-    ]
+    ])
 
     second = runner.invoke(
         cli.main,
@@ -842,7 +842,7 @@ def test_RQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path:
     assert "Initialize scaffold: choose a requirement ID key prefix" in result.output
     assert "Tip: customize this for your project to avoid generic IDs." in result.output
     assert "Initialized requirement scaffold:" in result.output
-    config_path = repo / ".rqmd.yml"
+    config_path = repo / "rqmd.yml"
     index_path = repo / "docs" / "requirements" / "README.md"
     starter_path = repo / "docs" / "requirements" / "starter.md"
     assert config_path.exists()
@@ -879,7 +879,7 @@ def test_RQMD_core_012b_init_scaffold_allows_custom_starter_key(tmp_path: Path) 
     )
 
     assert result.exit_code == 0
-    config_text = (repo / ".rqmd.yml").read_text(encoding="utf-8")
+    config_text = (repo / "rqmd.yml").read_text(encoding="utf-8")
     starter_text = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
     assert "id_prefix: TEAM" in config_text
     assert "### TEAM-HELLO-001: Replace this starter requirement" in starter_text
@@ -1068,7 +1068,7 @@ def test_RQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Pat
     )
 
     assert result.exit_code == 0
-    config_text = (repo / ".rqmd.yml").read_text(encoding="utf-8")
+    config_text = (repo / "rqmd.yml").read_text(encoding="utf-8")
     assert (repo / "custom" / "ac" / "README.md").exists()
     assert (repo / "custom" / "ac" / "starter.md").exists()
     assert "requirements_dir: custom/ac" in config_text

@@ -73,7 +73,7 @@ def load_config(repo_root: Path) -> dict[str, Any]:
     
     Precedence:
     1. CLI flags (handled by Click, not this function)
-    2. .rqmd.yml / .rqmd.yaml / .rqmd.json values (this function)
+    2. rqmd.yml / rqmd.yaml / rqmd.json values (this function)
     3. Built-in defaults (handled by Click)
     
     Args:
@@ -83,9 +83,9 @@ def load_config(repo_root: Path) -> dict[str, Any]:
         Dictionary of config values; empty dict if no config file exists
     """
     candidate_paths = [
-        repo_root / ".rqmd.yml",
-        repo_root / ".rqmd.yaml",
-        repo_root / ".rqmd.json",
+        repo_root / "rqmd.yml",
+        repo_root / "rqmd.yaml",
+        repo_root / "rqmd.json",
     ]
 
     config_path = next((p for p in candidate_paths if p.exists()), None)

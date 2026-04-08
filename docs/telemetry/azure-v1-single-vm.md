@@ -108,7 +108,7 @@ Set these in your shell profile, CI secrets, or `.env` file (never commit the ke
 
 ### Option 2: Project config file
 
-Add a `telemetry` section to your `.rqmd.yml` (or `.rqmd.yaml` / `.rqmd.json`):
+Add a `telemetry` section to your `rqmd.yml` (or `rqmd.yaml` / `rqmd.json`):
 
 ```yaml
 telemetry:
@@ -116,7 +116,7 @@ telemetry:
   api_key: "<your-telemetry-api-key>"
 ```
 
-> **⚠️ Note:** If you commit `.rqmd.yml` to version control, use a placeholder for `api_key` and override it via the environment variable at runtime. Never commit real secrets.
+> **⚠️ Note:** If you commit `rqmd.yml` to version control, use a placeholder for `api_key` and override it via the environment variable at runtime. Never commit real secrets.
 
 ### Verify agent configuration
 

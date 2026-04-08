@@ -297,7 +297,7 @@ Summary: 5💡 19🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I initialize rqmd in a repository
-- I want init flows to create a `.rqmd.yml` file at the project root by default
+- I want init flows to create a `rqmd.yml` file at the project root by default
 - So that the chosen requirements directory, ID prefix, status catalog, and priority catalog are explicit for both humans and AI agents from the first run.
 - So that `rqmd init --scaffold`, `rqmd-ai init`, and legacy-init apply flows all converge on the same project-root config convention instead of leaving those defaults implicit.
 - So that the generated config uses the canonical built-in status and priority models as the starting point while remaining easy for teams to customize afterward.

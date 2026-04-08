@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `screen_write` redraws to clear terminal scrollback as well as the visible frame before each render.
 - Updated PyPI publishing so stable versions ship from GitHub Releases while `rc` tags publish automatically on push.
 - Requirement ID allocation is now per-domain: IDs use compound prefixes like `RQMD-CORE-041`, `RQMD-TELEMETRY-015` instead of a single global counter. `--id-namespace` accepts compound prefixes (e.g., `rqmd --next-id --id-namespace RQMD-CORE`), and `rqmd-ai --json` export includes a `next_id` field per domain file so agents can read the next available ID directly. Legacy init uses domain-scoped compound prefixes (`<PREFIX>-<SLUG>`, `<PREFIX>-WORKFLOW`, `<PREFIX>-ISSUE`).
+- Project config files are no longer hidden (dot-prefixed): `rqmd.yml`, `rqmd.yaml`, and `rqmd.json` replace the previous `.rqmd.yml`, `.rqmd.yaml`, and `.rqmd.json` names. Project root auto-discovery and scaffold generation use the new names.
 
 ## [0.1.0] - 2026-04-02
 
@@ -87,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added a chat-first onboarding flow built around `rqmd init` and `rqmd-ai init`, with grouped interview prompts, preview-first handoff guidance, legacy-repo seeding support, and generated `.rqmd.yml` scaffolding so new or existing repositories can adopt rqmd with less manual setup.
+- Added a chat-first onboarding flow built around `rqmd init` and `rqmd-ai init`, with grouped interview prompts, preview-first handoff guidance, legacy-repo seeding support, and generated `rqmd.yml` scaffolding so new or existing repositories can adopt rqmd with less manual setup.
 - Added an installable Copilot bundle with reusable workflow skills and specialized agents, plus project-local `/dev` and `/test` skill scaffolding so AI-assisted work can stay closer to the repository's actual commands and review loop.
 - Added richer history and recovery tooling across `rqmd` and `rqmd-ai`, including persistent undo/redo, branch-aware history, detached historical views, replay and cherry-pick planning, timeline filtering, and exportable history reports.
 - Added stronger interactive and automation support, including duplicate-ID validation and next-ID allocation, machine-readable JSON output, custom priority-catalog loading, shell-completion improvements, external-link editing, and broader interactive navigation/search/history affordances.

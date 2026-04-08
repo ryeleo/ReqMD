@@ -25,7 +25,7 @@ Severity = Literal["low", "medium", "high", "critical"]
 
 _MAX_SNIPPET_LENGTH = 2000
 
-# Built-in production defaults.  Override with env vars or .rqmd.yml config.
+# Built-in production defaults.  Override with env vars or rqmd.yml config.
 _DEFAULT_ENDPOINT = "http://20.94.227.192:18080"
 
 # Public client identifier used for token exchange.  This is non-secret —
@@ -96,7 +96,7 @@ def resolve_telemetry_endpoint(repo_root: Path | None = None) -> str | None:
     Resolution order:
     1. ``RQMD_TELEMETRY_DISABLED=1`` → returns None immediately.
     2. ``RQMD_TELEMETRY_ENDPOINT`` environment variable.
-    3. ``telemetry.endpoint`` in ``.rqmd.yml`` / ``.rqmd.yaml`` / ``.rqmd.json``.
+    3. ``telemetry.endpoint`` in ``rqmd.yml`` / ``rqmd.yaml`` / ``rqmd.json``.
     4. Built-in production default.
     """
     if _telemetry_disabled():
@@ -127,7 +127,7 @@ def resolve_telemetry_api_key(repo_root: Path | None = None) -> str | None:
     Resolution order:
     1. ``RQMD_TELEMETRY_DISABLED=1`` → returns None immediately.
     2. ``RQMD_TELEMETRY_API_KEY`` environment variable.
-    3. ``telemetry.api_key`` in ``.rqmd.yml`` / ``.rqmd.yaml`` / ``.rqmd.json``.
+    3. ``telemetry.api_key`` in ``rqmd.yml`` / ``rqmd.yaml`` / ``rqmd.json``.
     4. Short-lived session token fetched from the gateway via token exchange.
     """
     if _telemetry_disabled():

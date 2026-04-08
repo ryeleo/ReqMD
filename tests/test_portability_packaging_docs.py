@@ -850,7 +850,7 @@ def test_RQMD_portability_015_upward_root_discovery_prefers_nearest_ancestor(tmp
 def test_RQMD_portability_015_marker_priority_prefers_rqmd_config(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
-    (repo / ".rqmd.yml").write_text("requirements_dir: docs/requirements\n", encoding="utf-8")
+    (repo / "rqmd.yml").write_text("requirements_dir: docs/requirements\n", encoding="utf-8")
     (repo / "requirements").mkdir(parents=True)
     requirements = repo / "docs" / "requirements"
     requirements.mkdir(parents=True)
@@ -872,14 +872,14 @@ def test_RQMD_portability_015_marker_priority_prefers_rqmd_config(tmp_path: Path
     )
 
     assert result.exit_code == 0
-    assert "marker:.rqmd.yml" in result.output
+    assert "marker:rqmd.yml" in result.output
 
 
 def test_RQMD_portability_015_explicit_repo_root_bypasses_discovery(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "repo"
     nested = repo / "nested"
     nested.mkdir(parents=True)
-    (nested / ".rqmd.yml").write_text("requirements_dir: requirements\n", encoding="utf-8")
+    (nested / "rqmd.yml").write_text("requirements_dir: requirements\n", encoding="utf-8")
     (nested / "requirements").mkdir(parents=True)
 
     root_criteria = repo / "docs" / "requirements"

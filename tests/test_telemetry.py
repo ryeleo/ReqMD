@@ -32,7 +32,7 @@ class TestResolveTelemetryEndpoint:
 
     def test_env_var_takes_precedence(self, tmp_path: Path):
         """RQMD-TELEMETRY-007: Env var is highest priority."""
-        config_file = tmp_path / ".rqmd.yml"
+        config_file = tmp_path / "rqmd.yml"
         config_file.write_text("telemetry:\n  endpoint: http://from-config:8080\n")
         with patch.dict("os.environ", {"RQMD_TELEMETRY_ENDPOINT": "http://from-env:8080"}):
             assert resolve_telemetry_endpoint(tmp_path) == "http://from-env:8080"
@@ -42,13 +42,13 @@ class TestResolveTelemetryEndpoint:
             assert resolve_telemetry_endpoint(tmp_path) == "http://localhost:8080"
 
     def test_reads_from_config_file(self, tmp_path: Path):
-        config_file = tmp_path / ".rqmd.yml"
+        config_file = tmp_path / "rqmd.yml"
         config_file.write_text("telemetry:\n  endpoint: http://config-host:18080\n")
         with patch.dict("os.environ", {}, clear=True):
             assert resolve_telemetry_endpoint(tmp_path) == "http://config-host:18080"
 
     def test_returns_none_when_config_has_no_telemetry(self, tmp_path: Path):
-        config_file = tmp_path / ".rqmd.yml"
+        config_file = tmp_path / "rqmd.yml"
         config_file.write_text("requirements_dir: docs/requirements\n")
         with patch.dict("os.environ", {}, clear=True):
             assert resolve_telemetry_endpoint(tmp_path) == _DEFAULT_ENDPOINT

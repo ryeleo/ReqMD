@@ -133,7 +133,7 @@ def format_path_display(path: Path, repo_root: Path) -> str:
 
 def default_project_config_path(repo_root: Path) -> Path:
     """Return the preferred project config path for scaffold generation."""
-    return repo_root / ".rqmd.yml"
+    return repo_root / "rqmd.yml"
 
 
 def _render_catalog_yaml_section(entries: list[dict[str, str]]) -> str:
@@ -281,7 +281,7 @@ def discover_project_root(search_start: Path | None = None) -> tuple[Path, str]:
     """Discover project root by searching upward from CWD-like start.
 
     Marker precedence within each directory is:
-    1) .rqmd.yml/.rqmd.yaml/.rqmd.json
+    1) rqmd.yml/rqmd.yaml/rqmd.json
     2) docs/requirements/
     3) requirements/
 
@@ -291,9 +291,9 @@ def discover_project_root(search_start: Path | None = None) -> tuple[Path, str]:
 
     for candidate_root in _iter_ancestors_inclusive(start):
         config_markers = [
-            ".rqmd.yml",
-            ".rqmd.yaml",
-            ".rqmd.json",
+            "rqmd.yml",
+            "rqmd.yaml",
+            "rqmd.json",
         ]
         for marker_name in config_markers:
             if (candidate_root / marker_name).is_file():

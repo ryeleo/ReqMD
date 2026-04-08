@@ -185,7 +185,7 @@ First time setup?
 
 ### SSVR custom-status failure note
 
-The `Speed Shooting VR` status issue is not a generic parser incompatibility. It only fails when rqmd is pointed at `test-corpus/SSVR/requirements` while the project root stays at this repository, which means the corpus-local `.rqmd.yml` is not loaded. If we want cross-root `--docs-dir` flows to auto-discover a neighboring config, that is a separate future requirement.
+The `Speed Shooting VR` status issue is not a generic parser incompatibility. It only fails when rqmd is pointed at `test-corpus/SSVR/requirements` while the project root stays at this repository, which means the corpus-local `rqmd.yml` is not loaded. If we want cross-root `--docs-dir` flows to auto-discover a neighboring config, that is a separate future requirement.
 
 ## Still worth triaging later
 

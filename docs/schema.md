@@ -311,10 +311,10 @@ Override with `--id-namespace AC,R` (comma-separated list).
 
 ### Project Config Files
 
-rqmd supports optional `.rqmd.yml` or `.rqmd.json` for custom status/priority catalogs:
+rqmd supports optional `rqmd.yml` or `rqmd.json` for custom status/priority catalogs:
 
 ```yaml
-# .rqmd.yml
+# rqmd.yml
 statuses:
   - name: Proposed
     shortcode: P

@@ -1548,7 +1548,7 @@ def main(
             f"Auto-discovered project root: {repo_root} ({discovered_source})"
         )
 
-    # Load project config from .rqmd.json
+    # Load project config from rqmd.json
     try:
         config = load_config(repo_root)
         validate_config(config)

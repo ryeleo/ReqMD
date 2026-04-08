@@ -18,7 +18,7 @@ from rqmd.status_model import (_STATUS_COLORS, configure_status_catalog,
 def test_RQMD_portability_006_load_config_from_rqmd_json(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
-    config_file = repo / ".rqmd.json"
+    config_file = repo / "rqmd.json"
     config_file.write_text('{"requirements_dir": "custom/reqs", "id_prefix": "PROJ"}', encoding="utf-8")
 
     config = load_config(repo)
@@ -37,7 +37,7 @@ def test_RQMD_portability_006_load_config_empty_when_file_missing(tmp_path: Path
 def test_RQMD_portability_006_load_config_handles_malformed_json(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
-    config_file = repo / ".rqmd.json"
+    config_file = repo / "rqmd.json"
     config_file.write_text("{ invalid json", encoding="utf-8")
 
     with pytest.raises(ValueError, match="Invalid JSON"):
@@ -47,7 +47,7 @@ def test_RQMD_portability_006_load_config_handles_malformed_json(tmp_path: Path)
 def test_RQMD_portability_006_load_config_fails_if_not_file(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
-    (repo / ".rqmd.json").mkdir()  # Create as directory instead of file
+    (repo / "rqmd.json").mkdir()  # Create as directory instead of file
 
     with pytest.raises(ValueError, match="is not a file"):
         load_config(repo)
@@ -102,7 +102,7 @@ def test_RQMD_portability_006_cli_flag_overrides_config(tmp_path: Path) -> None:
     """
     repo = tmp_path / "repo"
     repo.mkdir()
-    config_file = repo / ".rqmd.json"
+    config_file = repo / "rqmd.json"
     config_file.write_text('{"requirements_dir": "config-dir"}', encoding="utf-8")
 
     config = load_config(repo)
@@ -116,7 +116,7 @@ def test_RQMD_portability_011_custom_status_catalog_from_yaml_supports_rollup(tm
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
 
-    (repo / ".rqmd.yml").write_text(
+    (repo / "rqmd.yml").write_text(
         """statuses:
   - name: Proposed
     shortcode: P
@@ -204,7 +204,7 @@ def test_RQMD_portability_011_custom_status_catalog_allows_set_status_input(tmp_
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
 
-    (repo / ".rqmd.yml").write_text(
+    (repo / "rqmd.yml").write_text(
         """statuses:
   - name: Proposed
     shortcode: P
@@ -267,7 +267,7 @@ def test_RQMD_portability_011_custom_status_catalog_does_not_leak_between_runs(t
     custom_repo = tmp_path / "custom"
     custom_domain = custom_repo / "docs" / "requirements"
     custom_domain.mkdir(parents=True)
-    (custom_repo / ".rqmd.yml").write_text(
+    (custom_repo / "rqmd.yml").write_text(
         """statuses:
   - name: Proposed
     shortcode: P
@@ -488,13 +488,13 @@ def test_RQMD_portability_020_packaged_default_catalogs_drive_scaffold() -> None
 
 
 def test_RQMD_portability_007_cli_status_config_overrides_unified_config(tmp_path: Path) -> None:
-  """--status-config file takes precedence over statuses in .rqmd.yml."""
+  """--status-config file takes precedence over statuses in rqmd.yml."""
   repo = tmp_path / "repo"
   domain = repo / "docs" / "requirements"
   domain.mkdir(parents=True)
 
   # Unified config with standard statuses
-  (repo / ".rqmd.yml").write_text(
+  (repo / "rqmd.yml").write_text(
     "statuses:\n  - name: Proposed\n    shortcode: P\n    emoji: \"💡\"\n",
     encoding="utf-8",
   )
@@ -621,7 +621,7 @@ def test_RQMD_portability_012_user_config_precedence_cli_over_user(tmp_path: Pat
   )
   
   # Create project-level config override
-  project_config = repo / ".rqmd.json"
+  project_config = repo / "rqmd.json"
   project_config.write_text(
     '{"statuses": [{"name": "Proposed", "emoji": "💡", "shortcode": "P", "color": "yellow"}]}',
     encoding="utf-8"

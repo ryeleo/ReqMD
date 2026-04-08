@@ -179,7 +179,7 @@ Priority is optional; requirements without a priority line parse successfully wi
 
 Priority values are normalized case-insensitively, so `p0`, `P0`, `critical`, and `CRITICAL` all map to `🔴 P0 - Critical`.
 
-Project config can still override these built-ins with `.rqmd.yml`, `.rqmd.json`, or standalone status/priority catalog files.
+Project config can still override these built-ins with `rqmd.yml`, `rqmd.json`, or standalone status/priority catalog files.
 
 ## Development install (from source)
 
@@ -575,7 +575,7 @@ Bundle installation can also be driven through a structured chat-style preview w
 
 New-project flow: run `rqmd init`, paste the output into your AI chat, let that chat drive `rqmd-ai init --chat --json`, review the generated requirements catalog and any suggested bundle skill setup, and then start refining the resulting requirements docs.
 
-The init interview now also lets you choose a default status scheme (`canonical`, `lean`, or `delivery`) or copy a status catalog from an existing project path (for example another repository's `.rqmd.yml`) before writing the new scaffold.
+The init interview now also lets you choose a default status scheme (`canonical`, `lean`, or `delivery`) or copy a status catalog from an existing project path (for example another repository's `rqmd.yml`) before writing the new scaffold.
 
 Legacy-style repository seeding can still be previewed with `rqmd-ai init --chat --json --legacy`. The grouped interview covers catalog setup, developer workflows, repository understanding, backlog handling, and review notes, and its options include recommended choices, detected-from hints, and safe defaults. The generated starter catalog seeds a requirements index, developer workflow requirements, repository-area seed files, and an issue backlog file when `gh issue list` succeeds.
 
@@ -599,8 +599,6 @@ For repositories that use `/rqmd-pin`, a practical default is `docs/pins/README.
 The `full` preset currently keeps the same single-agent execution model and adds extra bundled reference docs (`.github/agents/README.md`) for teams that want broader bundle context in-repo.
 
 Bundle workflows assume the core lifecycle states remain representable in your status catalog. Custom labels are fine, but if you want `rqmd-ai` guidance, examples, and installed skills to work well out of the box, keep lifecycle equivalents for `💡 Proposed`, `🔧 Implemented`, `✅ Verified`, `⛔ Blocked`, and `🗑️ Deprecated`.
-
-When apply mode runs, rqmd-ai appends a structured audit event to the local shared history backend at `.rqmd/history/rqmd-history/audit.jsonl` (JSON Lines, one JSON object per line).
 
 Batch set from a JSON Lines (`.jsonl`) file:
 
@@ -715,13 +713,13 @@ rqmd --totals --totals-map "C1=I+V" --totals-map "C2=P" --non-interactive
 Custom roll-up columns from config (`.json`, `.yml`, `.yaml`):
 
 ```bash
-rqmd --totals --totals-config .rqmd.yml --json --non-interactive
+rqmd --totals --totals-config rqmd.yml --json --non-interactive
 ```
 
 Example project config for a repo that defines a custom status catalog and wants RQMD-ROLLUP-007 roll-up buckets:
 
 ```yaml
-# .rqmd.yml
+# rqmd.yml
 statuses:
 	- name: Proposed
 		shortcode: P
@@ -763,7 +761,7 @@ When no CLI map/config is passed, rqmd resolves roll-up mappings with this prece
 > **ℹ️ Info:** A "roll-up" is a combined total such as grouping multiple statuses into one higher-level bucket like `Build-Ready` or `Complete`.
 
 1. `--totals-map` CLI equations
-2. project config (`.rqmd.yml|.rqmd.yaml` in `--project-root`)
+2. project config (`rqmd.yml|rqmd.yaml` in `--project-root`)
 3. user config (`~/.config/rqmd/rollup.json|yaml|yml`)
 4. built-in status totals
 
@@ -824,7 +822,7 @@ The nearest ancestor with a supported marker wins.
 
 Marker priority within each directory is deterministic:
 
-1. `.rqmd.yml`, `.rqmd.yaml`, `.rqmd.json`
+1. `rqmd.yml`, `rqmd.yaml`, `rqmd.json`
 2. `docs/requirements/`
 3. `requirements/`
 
@@ -863,9 +861,9 @@ If no prefixes are discovered, it falls back to `AC-`, `R-`, and `RQMD-`.
 
 ### Project configuration file
 
-To avoid repeating CLI flags across team members, use a single project config file at the project root: `.rqmd.yml` (preferred).
-Accepted extensions are `.rqmd.yml`, `.rqmd.yaml`, or `.rqmd.json`.
-`rqmd init --scaffold` and `rqmd-ai init --write` now create `.rqmd.yml` by default so the repository's requirements path, ID prefix, and canonical status/priority catalogs are explicit from day one.
+To avoid repeating CLI flags across team members, use a single project config file at the project root: `rqmd.yml` (preferred).
+Accepted extensions are `rqmd.yml`, `rqmd.yaml`, or `rqmd.json`.
+`rqmd init --scaffold` and `rqmd-ai init --write` now create `rqmd.yml` by default so the repository's requirements path, ID prefix, and canonical status/priority catalogs are explicit from day one.
 
 Example:
 
@@ -885,7 +883,7 @@ Supported keys:
 - `sort_strategy`: Default sort strategy for interactive mode (standard, status-focus, alpha-asc)
 - `state_dir`: Default state directory for filtered walk resume (system-temp, project-local, or custom path)
 
-CLI flags always override config file values. When `.rqmd.yml` (or `.rqmd.yaml` / `.rqmd.json`) is present, rqmd loads it automatically; no additional flag is needed.
+CLI flags always override config file values. When `rqmd.yml` (or `rqmd.yaml` / `rqmd.json`) is present, rqmd loads it automatically; no additional flag is needed.
 
 ## Recommended docs recipe for projects
 

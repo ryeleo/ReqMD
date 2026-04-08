@@ -213,7 +213,7 @@ class TestScreenWritePrecedence:
             encoding="utf-8",
         )
         if config_text is not None:
-            (repo / ".rqmd.json").write_text(config_text, encoding="utf-8")
+            (repo / "rqmd.json").write_text(config_text, encoding="utf-8")
         return repo
 
     def test_cli_no_screen_write_overrides_project_config(self, tmp_path: Path):

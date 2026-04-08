@@ -215,7 +215,7 @@ def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_pat
     assert payload["interview"]["flow"]
     assert payload["interview"]["flow"][0]["presentation"] == "one-question-at-a-time"
     proposed_paths = [entry["path"] for entry in payload["proposed_files"]]
-    assert ".rqmd.yml" in proposed_paths
+    assert "rqmd.yml" in proposed_paths
     assert payload["suggested_commands"]["init_preview"].startswith("rqmd-ai init --chat --json")
     assert payload["suggested_commands"]["bundle_preview"].startswith("rqmd-ai install --bundle-preset minimal --chat --json --dry-run")
     assert payload["suggested_commands"]["init_preview_artifact"].startswith("rqmd-ai init --chat --json")
@@ -575,10 +575,10 @@ def test_RQMD_AI_023_init_legacy_plan_seeds_reviewable_requirements(tmp_path: Pa
     assert payload["issue_discovery"]["used"] is False
     assert payload["issue_discovery"]["reason"] == "gh CLI not found"
     proposed_paths = [entry["path"] for entry in payload["proposed_files"]]
-    assert ".rqmd.yml" in proposed_paths
+    assert "rqmd.yml" in proposed_paths
     assert "docs/requirements/README.md" in proposed_paths
     assert "docs/requirements/developer-workflows.md" in proposed_paths
-    config_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == ".rqmd.yml")
+    config_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "rqmd.yml")
     assert "id_prefix: RQMD" in config_entry["content"]
     assert "name: Janky" in config_entry["content"]
     workflow_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "docs/requirements/developer-workflows.md")
@@ -635,9 +635,9 @@ def test_RQMD_AI_024_init_legacy_apply_can_seed_issue_backlog_from_gh(tmp_path: 
     assert payload["mode"] == "legacy-init-apply"
     assert payload["read_only"] is False
     assert payload["issue_discovery"]["used"] is True
-    assert ".rqmd.yml" in payload["created_files"]
+    assert "rqmd.yml" in payload["created_files"]
     assert "docs/requirements/issue-backlog.md" in payload["created_files"]
-    config_text = (repo / ".rqmd.yml").read_text(encoding="utf-8")
+    config_text = (repo / "rqmd.yml").read_text(encoding="utf-8")
     assert "id_prefix: RQMD" in config_text
     issue_backlog = (repo / "docs" / "requirements" / "issue-backlog.md").read_text(encoding="utf-8")
     assert "This file was generated from GitHub issues discovered during `rqmd-ai init --chat --legacy`." in issue_backlog
@@ -2034,7 +2034,7 @@ def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypat
     assert "## Project Tooling Metadata" in readme_entry["content"]
     assert "## Schema Reference" in readme_entry["content"]
     assert "filter-sub-domain" in readme_entry["content"]
-    config_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == ".rqmd.yml")
+    config_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "rqmd.yml")
     assert "name: In Progress" in config_entry["content"]
     assert "name: Janky" not in config_entry["content"]
 
@@ -2044,7 +2044,7 @@ def test_RQMD_AI_022c_init_starter_can_copy_status_scheme_from_existing_file(tmp
     repo.mkdir(parents=True)
     source = tmp_path / "old-project"
     source.mkdir(parents=True)
-    source_config = source / ".rqmd.yml"
+    source_config = source / "rqmd.yml"
     source_config.write_text(
         """statuses:
   - name: Planned
@@ -2079,7 +2079,7 @@ priorities:
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["status_scheme"].startswith("copy:")
-    config_text = (repo / ".rqmd.yml").read_text(encoding="utf-8")
+    config_text = (repo / "rqmd.yml").read_text(encoding="utf-8")
     assert "name: Planned" in config_text
     assert "name: QA Verified" in config_text
     assert "name: Proposed" not in config_text

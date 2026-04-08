@@ -263,8 +263,8 @@ def resolve_rollup_columns(
         return load_rollup_columns_from_file(path), str(path)
 
     project_candidates = [
-        repo_root / ".rqmd.yml",
-        repo_root / ".rqmd.yaml",
+        repo_root / "rqmd.yml",
+        repo_root / "rqmd.yaml",
     ]
     for candidate in project_candidates:
         if candidate.exists() and candidate.is_file():

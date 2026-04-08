@@ -141,7 +141,7 @@ Summary: 0💡 8🔧 10✅ 0⚠️ 0⛔ 1🗑️
 - As a rqmd user when I run commands from nested subdirectories
 - I want rqmd to discover project root by searching CWD and parent paths up to filesystem root
 - So that root resolution follows git-like behavior and finds the nearest valid project context.
-- So that discovery checks for any of `.rqmd.yml/.rqmd.yaml/.rqmd.json`, `requirements/`, or `docs/requirements/`.
+- So that discovery checks for any of `rqmd.yml/rqmd.yaml/rqmd.json`, `requirements/`, or `docs/requirements/`.
 
 ### RQMD-PORTABILITY-016: Automated performance testing for large requirement datasets
 - **Status:** 🔧 Implemented
