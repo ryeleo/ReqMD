@@ -19,10 +19,13 @@ If you want the fastest path to a working rqmd setup:
 Main prompt shortcuts after bundle install:
 
 - `/go`: start or continue the standard rqmd implementation loop
+- `/commit`: commit the current work with a well-structured git message
 - `/commit-and-go`: checkpoint existing related work if needed, then keep going and create a clean commit after each validated slice
 - `/next`: pick the highest-priority feasible next slice and work it through validation
+- `/refine`: refine existing requirements or shape new ones through focused discussion
 - `/brainstorm`: turn loose ideas or notes into ranked rqmd proposals before implementation
-- `/docs-pass`: run a focused documentation quality or sync pass
+- `/polish-docs`: run a focused documentation quality or sync pass
+- `/refactor`: refactor code, docs, or other artifacts to improve readability, maintainability, or performance
 - `/pin`: capture durable context or decision notes into a maintainable pinned note
 - `/ship-check`: run a release or handoff readiness pass and call out blockers
 
@@ -102,7 +105,7 @@ Rendered:
 ### Tree output is fast to scan during triage
 
 ```text
-$ rqmd --status implemented --as-tree --no-walk --no-table
+$ rqmd --status implemented --as-tree --non-interactive
 core-engine.md
 	RQMD-CORE-001: Domain file discovery
 	RQMD-CORE-011: Project scaffold initialization
@@ -375,7 +378,7 @@ Use positional filters for fast narrowing without explicit flags:
 
 ```bash
 rqmd all
-rqmd P1 Proposed --json --no-walk --no-table
+rqmd P1 Proposed --json --non-interactive
 rqmd Proposed core-engine
 ```
 
@@ -404,21 +407,21 @@ From the same detail panel, press `v` to open the current requirement in VS Code
 Regenerate summary blocks with priority aggregates included:
 
 ```bash
-rqmd --priority-rollup --no-walk
+rqmd --priority-rollup --non-interactive
 ```
 
 Filter by priority in tree, JSON, or interactive walk modes:
 
 ```bash
 rqmd --priority critical --as-tree
-rqmd --priority p1 --json --no-walk
+rqmd --priority p1 --json --non-interactive
 ```
 
 Filter by subsection name with case-insensitive prefix matching:
 
 ```bash
 rqmd --sub-domain query --as-tree
-rqmd --sub-domain api --json --no-walk
+rqmd --sub-domain api --json --non-interactive
 ```
 
 Combine filters for slicing/dicing requirements:
@@ -428,17 +431,17 @@ Combine filters for slicing/dicing requirements:
 
 ```bash
 rqmd --status proposed --priority p0 --as-tree
-rqmd --no-flag --json --no-walk
-rqmd --has-link --json --no-walk
-rqmd --status proposed --status implemented --json --no-walk
-rqmd --sub-domain query --sub-domain api --json --no-walk
+rqmd --no-flag --json --non-interactive
+rqmd --has-link --json --non-interactive
+rqmd --status proposed --status implemented --json --non-interactive
+rqmd --sub-domain query --sub-domain api --json --non-interactive
 ```
 
 Target an explicit worklist from CLI tokens or a reusable file:
 
 ```bash
 rqmd demo "Query API"
-rqmd --targets-file tmp/focus.txt --json --no-walk
+rqmd --targets-file tmp/focus.txt --json --non-interactive
 ```
 
 `--targets-file` accepts `.txt`, `.conf`, or `.md` files with one-per-line or whitespace/comma-separated tokens, and supports `#` comments.
@@ -579,10 +582,13 @@ Legacy-style repository seeding can still be previewed with `rqmd-ai init --chat
 Installed prompt shortcuts:
 
 - `/go`: start or continue the standard rqmd implementation loop; `/go 10` means work through up to 10 validated slices before stopping
+- `/commit`: commit the current work with a well-structured git message
 - `/commit-and-go`: work through one or more validated slices and create a clean git commit after each slice; `/commit-and-go 10` means keep going for up to 10 validated committed slices
 - `/next`: pick the highest-priority feasible next slice and work it through validation
+- `/refine`: refine existing requirements or shape new ones through focused discussion
 - `/brainstorm`: turn loose ideas or notes into ranked rqmd proposals before implementation
-- `/docs-pass`: run a focused documentation quality or sync pass
+- `/polish-docs`: run a focused documentation quality or sync pass
+- `/refactor`: refactor code, docs, or other artifacts to improve readability, maintainability, or performance
 - `/pin`: capture durable context or decision notes into a maintainable pinned note
 - `/ship-check`: run a release or handoff readiness pass and call out blockers
 
@@ -656,10 +662,10 @@ rqmd --status proposed --json --no-requirement-body
 Summary/check/set JSON examples:
 
 ```bash
-rqmd --json --no-walk
-rqmd --verify-summaries --json --no-walk
+rqmd --json --non-interactive
+rqmd --verify-summaries --json --non-interactive
 rqmd --update-id RQ-001 --update-status verified --json
-rqmd --totals --json --no-walk
+rqmd --totals --json --non-interactive
 ```
 
 ### JSON contract (stable keys)
@@ -697,19 +703,19 @@ RQMD uses this exit-code matrix for automation:
 Explicit global roll-up totals (combined totals from multiple statuses):
 
 ```bash
-rqmd --totals --no-walk
+rqmd --totals --non-interactive
 ```
 
 Custom roll-up columns from CLI equations:
 
 ```bash
-rqmd --totals --totals-map "C1=I+V" --totals-map "C2=P" --no-walk
+rqmd --totals --totals-map "C1=I+V" --totals-map "C2=P" --non-interactive
 ```
 
 Custom roll-up columns from config (`.json`, `.yml`, `.yaml`):
 
 ```bash
-rqmd --totals --totals-config .rqmd.yml --json --no-walk
+rqmd --totals --totals-config .rqmd.yml --json --non-interactive
 ```
 
 Example project config for a repo that defines a custom status catalog and wants RQMD-ROLLUP-007 roll-up buckets:

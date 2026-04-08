@@ -116,7 +116,7 @@ def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> 
     bundled_paths = {entry["path"] for entry in payload["bundled_definitions"]["files"]}
     assert ".github/prompts/brainstorm.prompt.md" in bundled_paths
     assert ".github/prompts/commit-and-go.prompt.md" in bundled_paths
-    assert ".github/prompts/docs-pass.prompt.md" in bundled_paths
+    assert ".github/prompts/polish-docs.prompt.md" in bundled_paths
     assert ".github/prompts/go.prompt.md" in bundled_paths
     assert ".github/prompts/next.prompt.md" in bundled_paths
     assert ".github/prompts/pin.prompt.md" in bundled_paths
@@ -264,7 +264,7 @@ def test_RQMD_AI_001f_init_chat_handoff_prompt_skips_bundle_followup_when_bundle
     assert payload["bundle_installation"]["installed"] is True
     assert "Because the rqmd Copilot bundle is currently" not in payload["handoff_prompt"]
     assert "Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills" not in payload["handoff_prompt"]
-    assert "9. Finish by running `rqmd --verify-summaries --no-walk --no-table`." in payload["handoff_prompt"]
+    assert "9. Finish by running `rqmd --verify-summaries --non-interactive`." in payload["handoff_prompt"]
     assert "10. Tell the user the rqmd catalog is ready for refinement passes." in payload["handoff_prompt"]
     _assert_schema_version(payload)
 
@@ -1165,7 +1165,7 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert payload["mode"] == "install-agent-bundle"
     assert payload["dry_run"] is True
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 27
+    assert payload["changed_count"] == 30
     assert payload["metadata_file"] == ".github/rqmd-bundle.json"
     assert payload["generated_support_files"] == ["agent-workflow.sh"]
     assert payload["generated_skill_files"] == [
@@ -1177,11 +1177,14 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert ".github/rqmd-bundle.json" in payload["created_files"]
     assert ".github/agents/rqmd-dev.agent.md" in payload["created_files"]
     assert ".github/prompts/brainstorm.prompt.md" in payload["created_files"]
+    assert ".github/prompts/commit.prompt.md" in payload["created_files"]
     assert ".github/prompts/commit-and-go.prompt.md" in payload["created_files"]
-    assert ".github/prompts/docs-pass.prompt.md" in payload["created_files"]
+    assert ".github/prompts/polish-docs.prompt.md" in payload["created_files"]
     assert ".github/prompts/go.prompt.md" in payload["created_files"]
     assert ".github/prompts/next.prompt.md" in payload["created_files"]
     assert ".github/prompts/pin.prompt.md" in payload["created_files"]
+    assert ".github/prompts/refactor.prompt.md" in payload["created_files"]
+    assert ".github/prompts/refine.prompt.md" in payload["created_files"]
     assert ".github/prompts/ship-check.prompt.md" in payload["created_files"]
     assert ".github/skills/dev/SKILL.md" in payload["created_files"]
     assert ".github/skills/test/SKILL.md" in payload["created_files"]
@@ -1225,7 +1228,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 28
+    assert first_payload["changed_count"] == 31
     assert (repo / ".github" / "copilot-instructions.md").exists()
     metadata_path = repo / ".github" / "rqmd-bundle.json"
     assert metadata_path.exists()
@@ -1249,11 +1252,14 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     assert ".github/agents/rqmd-dev-easy.agent.md" not in first_payload["created_files"]
     assert ".github/agents/README.md" in first_payload["created_files"]
     assert ".github/prompts/brainstorm.prompt.md" in first_payload["created_files"]
+    assert ".github/prompts/commit.prompt.md" in first_payload["created_files"]
     assert ".github/prompts/commit-and-go.prompt.md" in first_payload["created_files"]
-    assert ".github/prompts/docs-pass.prompt.md" in first_payload["created_files"]
+    assert ".github/prompts/polish-docs.prompt.md" in first_payload["created_files"]
     assert ".github/prompts/go.prompt.md" in first_payload["created_files"]
     assert ".github/prompts/next.prompt.md" in first_payload["created_files"]
     assert ".github/prompts/pin.prompt.md" in first_payload["created_files"]
+    assert ".github/prompts/refactor.prompt.md" in first_payload["created_files"]
+    assert ".github/prompts/refine.prompt.md" in first_payload["created_files"]
     assert ".github/prompts/ship-check.prompt.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-bundle-maintainer.agent.md" not in first_payload["created_files"]
     assert ".github/skills/rqmd-init/SKILL.md" in first_payload["created_files"]
@@ -1279,7 +1285,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 28
+    assert len(second_payload["skipped_existing"]) == 31
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
@@ -1325,7 +1331,7 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
-    assert payload["changed_count"] == 27
+    assert payload["changed_count"] == 30
 
 
 def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
@@ -1351,7 +1357,7 @@ def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 27
+    assert payload["changed_count"] == 30
 
 
 def test_RQMD_AI_012_install_bundle_text_output_lists_created_files(tmp_path: Path) -> None:
@@ -1453,7 +1459,7 @@ def test_RQMD_AI_012_reinstall_command_overwrites_existing_bundle(tmp_path: Path
     payload = json.loads(reinstall.output)
     assert payload["operation"] == "reinstall"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 27
+    assert payload["changed_count"] == 30
     assert ".github/copilot-instructions.md" in payload["overwritten_files"]
 
 
@@ -1490,7 +1496,7 @@ def test_RQMD_AI_012_upgrade_command_preserves_installed_preset(tmp_path: Path) 
     payload = json.loads(upgrade.output)
     assert payload["operation"] == "upgrade"
     assert payload["preset"] == "full"
-    assert payload["changed_count"] == 28
+    assert payload["changed_count"] == 31
 
 
 def test_RQMD_AI_012_upgrade_protects_customized_bundle_files(tmp_path: Path) -> None:
@@ -2114,7 +2120,7 @@ def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_
     payload = json.loads(result.output)
     assert ".github/prompts/brainstorm.prompt.md" in payload["bundle_installation"]["active_definition_files"]
     assert ".github/prompts/commit-and-go.prompt.md" in payload["bundle_installation"]["active_definition_files"]
-    assert ".github/prompts/docs-pass.prompt.md" in payload["bundle_installation"]["active_definition_files"]
+    assert ".github/prompts/polish-docs.prompt.md" in payload["bundle_installation"]["active_definition_files"]
     assert ".github/prompts/go.prompt.md" in payload["bundle_installation"]["active_definition_files"]
     assert ".github/prompts/next.prompt.md" in payload["bundle_installation"]["active_definition_files"]
     assert ".github/prompts/pin.prompt.md" in payload["bundle_installation"]["active_definition_files"]

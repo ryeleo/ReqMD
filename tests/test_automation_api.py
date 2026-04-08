@@ -29,8 +29,7 @@ def test_RQMD_automation_001_check_only_mode_detects_needed_changes(repo_with_do
             "--docs-dir",
             "docs/requirements",
             "--verify-summaries",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -51,7 +50,6 @@ def test_RQMD_automation_002_single_set_updates_criterion(repo_with_domain_docs:
             "AC-HELLO-001",
             "--update-status",
             "done",
-            "--no-table",
         ],
     )
     assert result.exit_code == 0
@@ -88,7 +86,6 @@ Scope: demo.
             "R-HELLO-001",
             "--update-status",
             "done",
-            "--no-table",
         ],
     )
 
@@ -134,7 +131,6 @@ Scope: core.
             "TEAM-CORE-001",
             "--update-status",
             "Implemented",
-            "--no-table",
         ],
     )
 
@@ -168,7 +164,6 @@ Scope: extra.
             "AC-HELLO-001=implemented",
             "--update",
             "AC-HELLO-002=verified",
-            "--no-table",
         ],
     )
     assert result.exit_code == 0
@@ -187,7 +182,6 @@ def test_RQMD_automation_003b_repeatable_set_rejects_removed_legacy_status(repo_
             "docs/requirements",
             "--update",
             "AC-HELLO-001=desktop-verified",
-            "--no-table",
         ],
     )
 
@@ -212,7 +206,6 @@ def test_RQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_do
             "docs/requirements",
             "--update-file",
             str(update_file),
-            "--no-table",
         ],
     )
     assert result.exit_code == 0
@@ -241,7 +234,6 @@ def test_RQMD_automation_005b_set_file_accepts_all_id_alias_keys(
             "docs/requirements",
             "--update-file",
             str(update_file),
-            "--no-table",
         ],
     )
 
@@ -268,7 +260,6 @@ def test_RQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_d
             "docs/requirements",
             "--update-file",
             str(csv_file),
-            "--no-table",
         ],
     )
     assert csv_result.exit_code == 0
@@ -284,7 +275,6 @@ def test_RQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_d
             "docs/requirements",
             "--update-file",
             str(tsv_file),
-            "--no-table",
         ],
     )
     assert tsv_result.exit_code == 0
@@ -309,7 +299,6 @@ def test_RQMD_priority_009_set_file_jsonl_accepts_priority_only_rows(repo_with_d
             "docs/requirements",
             "--update-file",
             str(update_file),
-            "--no-table",
         ],
     )
 
@@ -335,7 +324,6 @@ def test_RQMD_priority_009_set_file_jsonl_applies_status_and_priority_together(r
             "docs/requirements",
             "--update-file",
             str(update_file),
-            "--no-table",
         ],
     )
 
@@ -373,7 +361,6 @@ Scope: demo.
             "docs/requirements",
             "--update-file",
             str(update_file),
-            "--no-table",
         ],
     )
 
@@ -418,7 +405,6 @@ def test_RQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> N
             "AC-OVERLAP-001",
             "--update-status",
             "done",
-            "--no-table",
         ],
     )
     assert ambiguous.exit_code != 0
@@ -437,7 +423,6 @@ def test_RQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> N
             "done",
             "--scope-file",
             "docs/requirements/first.md",
-            "--no-table",
         ],
     )
     assert scoped.exit_code == 0
@@ -459,8 +444,7 @@ def test_RQMD_automation_008_filtered_tree_output(repo_with_domain_docs: Path) -
             "--status",
             "implemented",
             "--as-tree",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
     assert result.exit_code == 0
@@ -493,8 +477,7 @@ Scope: core.
             "--status",
             "Implemented",
             "--as-tree",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -538,8 +521,7 @@ Scope: custom.
             "--status",
             "Implemented",
             "--as-tree",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -556,8 +538,7 @@ def test_RQMD_automation_009_no_summary_table_suppresses_table(repo_with_domain_
             str(repo_with_domain_docs),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
     assert result.exit_code == 0
@@ -577,8 +558,7 @@ def test_RQMD_automation_008d_filtered_tree_accepts_plain_proposed_label(two_fil
             "--status",
             "proposed",
             "--as-tree",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -617,8 +597,7 @@ Scope: demo.
             "--status",
             "Ver",
             "--as-tree",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -656,8 +635,7 @@ Scope: demo.
             "--status",
             "D",
             "--as-tree",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -678,8 +656,7 @@ def test_RQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: P
             "--status",
             "proposed",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -709,8 +686,7 @@ def test_RQMD_automation_008e_filtered_json_output_supports_no_body(two_file_rep
             "proposed",
             "--as-json",
             "--no-requirement-body",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -731,8 +707,7 @@ def test_RQMD_automation_008f_json_summary_output_without_filter_status(repo_wit
             "--docs-dir",
             "docs/requirements",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -755,8 +730,7 @@ def test_RQMD_automation_008g_json_check_mode_reports_failure(repo_with_domain_d
             "docs/requirements",
             "--verify-summaries",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -781,7 +755,6 @@ def test_RQMD_automation_008h_json_set_mode_reports_updates(repo_with_domain_doc
             "--update-status",
             "verified",
             "--as-json",
-            "--no-table",
         ],
     )
 
@@ -814,8 +787,7 @@ Scope: extra.
             "--docs-dir",
             "docs/requirements",
             "--totals",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -837,8 +809,7 @@ def test_RQMD_rollup_005_json_mode_reports_global_totals(repo_with_domain_docs: 
             "docs/requirements",
             "--totals",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -861,8 +832,7 @@ def test_RQMD_rollup_001_json_totals_match_live_file_counts(repo_with_domain_doc
             "docs/requirements",
             "--totals",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -894,8 +864,7 @@ def test_RQMD_rollup_007_cli_rollup_map_equations_apply_in_text_mode(repo_with_d
             "C1=I+V",
             "--totals-map",
             "C2=P",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -932,8 +901,7 @@ def test_RQMD_rollup_007_json_mode_includes_custom_columns_from_config(repo_with
             "--totals-config",
             str(config),
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -967,8 +935,7 @@ def test_RQMD_rollup_007_cli_map_takes_precedence_over_rollup_config(repo_with_d
             "--totals-map",
             "FromCli=I+V",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -993,8 +960,7 @@ def test_RQMD_automation_010_filter_status_implemented_json_entries_match_live_r
             "--status",
             "Implemented",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -1037,8 +1003,7 @@ def test_RQMD_automation_011_filter_status_json_empty_result_has_zero_total(two_
             "--status",
             "blocked",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1087,8 +1052,7 @@ Scope: demo.
             "--priority",
             "p0",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1145,7 +1109,6 @@ Scope: demo.
             "proposed",
             "--priority",
             "p0",
-            "--no-table",
         ],
     )
 
@@ -1202,7 +1165,6 @@ Scope: demo.
             "SSVR",
             "SSVR-0001",
             "SSVR-0002",
-            "--no-table",
         ],
     )
 
@@ -1242,8 +1204,7 @@ Scope: demo.
             "--status",
             "implemented",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1284,8 +1245,7 @@ Scope: demo.
             "--status",
             "proposed",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1318,7 +1278,6 @@ def test_RQMD_automation_015_update_file_text_mode_reports_partial_failures(repo
             "docs/requirements",
             "--update-file",
             str(update_file),
-            "--no-table",
         ],
     )
 
@@ -1355,7 +1314,6 @@ def test_RQMD_automation_015_update_file_json_mode_reports_partial_failures(repo
             "--update-file",
             str(update_file),
             "--as-json",
-            "--no-table",
         ],
     )
 
@@ -1387,8 +1345,7 @@ def test_RQMD_automation_023_and_024_filter_flagged_json(two_file_repo: Path) ->
             "docs/requirements",
             "--flagged",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1413,8 +1370,7 @@ def test_RQMD_automation_024_filter_flagged_json_empty(two_file_repo: Path) -> N
             "docs/requirements",
             "--flagged",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1443,8 +1399,7 @@ def test_RQMD_automation_034_filter_no_flag_json_includes_unset(two_file_repo: P
             "docs/requirements",
             "--no-flag",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1470,7 +1425,6 @@ def test_RQMD_automation_034_no_flag_and_flagged_are_mutually_exclusive(two_file
             "docs/requirements",
             "--flagged",
             "--no-flag",
-            "--no-table",
         ],
     )
 
@@ -1513,8 +1467,7 @@ Scope: demo.
             "implemented",
             "--no-flag",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1557,8 +1510,7 @@ Scope: demo.
             "docs/requirements",
             "--has-link",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1602,8 +1554,7 @@ Scope: demo.
             "docs/requirements",
             "--no-link",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1642,7 +1593,6 @@ Scope: demo.
             "docs/requirements",
             "--has-link",
             "--no-link",
-            "--no-table",
         ],
     )
 
@@ -1687,8 +1637,7 @@ Scope: demo.
             "verified",
             "--has-link",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1737,8 +1686,7 @@ Read-only routes.
             "--sub-domain",
             "que",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1784,8 +1732,7 @@ Scope: demo.
             "--sub-domain",
             "mutation",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1829,8 +1776,7 @@ Scope: demo.
             "--status",
             "proposed",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1850,16 +1796,15 @@ Scope: demo.
 @pytest.mark.parametrize(
     "args",
     [
-        ["--as-json", "--no-walk", "--no-table"],
-        ["--status", "proposed", "--as-json", "--no-walk", "--no-table"],
-        ["--totals", "--as-json", "--no-walk", "--no-table"],
+        ["--as-json", "--non-interactive"],
+        ["--status", "proposed", "--as-json", "--non-interactive"],
+        ["--totals", "--as-json", "--non-interactive"],
         [
             "--update-id",
             "AC-HELLO-001",
             "--update-status",
             "implemented",
             "--as-json",
-            "--no-table",
         ],
     ],
 )
@@ -1936,7 +1881,6 @@ Scope: demo.
             "--seed-priority",
             "p1",
             "--as-json",
-            "--no-table",
         ],
     )
 
@@ -1977,8 +1921,7 @@ Scope: demo.
             "--sub-domain",
             "query",
             "--as-list",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2015,8 +1958,7 @@ Scope: demo.
             "--docs-dir",
             "docs/requirements",
             "--as-list",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2076,8 +2018,7 @@ Scope: other.
             "--targets-file",
             str(target_file),
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2106,8 +2047,7 @@ def test_RQMD_automation_027b_positional_target_tree_rejects_invalid_token(repo_
             "--docs-dir",
             "docs/requirements",
             "--as-tree",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2150,8 +2090,7 @@ Scope: demo.
             "--docs-dir",
             "docs/requirements",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2207,8 +2146,7 @@ Scope: api.
             "--docs-dir",
             "docs/requirements",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2253,8 +2191,7 @@ Scope: demo.
             "--docs-dir",
             "docs/requirements",
             "--json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
             "--id-namespace",
             "REQ",
         ],
@@ -2281,8 +2218,7 @@ def test_RQMD_automation_025_set_flagged_and_json_mode(repo_with_domain_docs: Pa
             "--update-flagged",
             "AC-HELLO-001=true",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -2310,8 +2246,7 @@ def test_RQMD_automation_025_set_file_accepts_flagged_rows(repo_with_domain_docs
             "docs/requirements",
             "--update-file",
             str(update_file),
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -2332,8 +2267,7 @@ def test_RQMD_automation_022_filter_priority_json_returns_ambiguity_payload(repo
             "--priority",
             "P",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -2366,8 +2300,7 @@ def test_RQMD_automation_017_json_no_interactive_never_prompts(tmp_path: Path, m
             "--docs-dir",
             "docs/requirements",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2392,8 +2325,7 @@ def test_RQMD_automation_014_set_dry_run_does_not_write(repo_with_domain_docs: P
             "--update-status",
             "verified",
             "--dry-run",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -2420,8 +2352,7 @@ def test_RQMD_automation_014_set_file_dry_run_does_not_write(repo_with_domain_do
             "--update-file",
             str(update_file),
             "--dry-run",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -2446,8 +2377,7 @@ def test_RQMD_automation_014_set_flagged_dry_run_json_reports_without_write(repo
             "AC-HELLO-001=true",
             "--dry-run",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -2493,8 +2423,7 @@ def test_RQMD_automation_021_ambiguous_priority_prefix_error_includes_recommenda
             "docs/requirements",
             "--priority",
             "P",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -2515,8 +2444,7 @@ def test_RQMD_automation_026_filter_json_domain_entry_includes_scope(repo_with_d
             "--status",
             "implemented",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -2556,8 +2484,7 @@ This is a freeform domain body paragraph.
             "--status",
             "proposed",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -2581,8 +2508,7 @@ def test_RQMD_automation_026_domain_body_is_none_when_no_preamble(repo_with_doma
             "--status",
             "implemented",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -2603,8 +2529,7 @@ def test_RQMD_automation_026_summary_json_domain_entry_includes_scope(repo_with_
             "--docs-dir",
             "docs/requirements",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2626,7 +2551,7 @@ def test_RQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_d
             str(repo_with_domain_docs),
             "--docs-dir",
             "docs/requirements",
-            "--no-walk",
+            "--summary",
         ],
     )
 
@@ -2672,7 +2597,7 @@ Scope: bravo.
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-walk",
+            "--summary",
         ],
     )
 
@@ -2715,7 +2640,7 @@ Scope: alpha.
             "docs/requirements",
             "--sort-profile",
             "status-focus",
-            "--no-walk",
+            "--summary",
         ],
     )
 
@@ -2753,8 +2678,7 @@ Scope: demo.
             "--targets-file",
             str(target_file),
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2800,8 +2724,7 @@ Scope: demo.
             "--targets-file",
             str(target_file),
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2844,8 +2767,7 @@ Scope: demo.
             "--targets-file",
             str(target_file),
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2906,7 +2828,6 @@ Scope: demo.
             "--update-status",
             prefix,
             "--as-json",
-            "--no-table",
         ],
     )
 
@@ -2946,8 +2867,7 @@ Scope: demo.
             "--status",
             prefix,
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -2983,8 +2903,7 @@ Scope: demo.
             "--docs",
             "docs/requirements",
             "--as-j",
-            "--no-wa",
-            "--no-ta",
+            "--non-i",
             "--status",
             "prop",
         ],
@@ -3029,8 +2948,7 @@ Scope: demo.
             "--docs-dir",
             "docs/requirements",
             "--as",  # ambiguous: --as-json, --as-list, --as-tree all share this prefix
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 

@@ -147,7 +147,6 @@ class TestRQMDPriority004ModeFlag:
                 "AC-001=p0",
                 "--update-priority",
                 "AC-002=medium",
-                "--no-table",
             ],
         )
 
@@ -180,7 +179,6 @@ class TestRQMDPriority004ModeFlag:
                 "--update-priority",
                 "AC-001=high",
                 "--as-json",
-                "--no-table",
             ],
         )
 
@@ -254,7 +252,6 @@ class TestRQMDPriority004ModeFlag:
                 "docs/requirements",
                 "--focus-priority",
                 "--priority-rollup",
-                "--no-table",
             ],
         )
 
@@ -291,8 +288,7 @@ class TestRQMDPriority004ModeFlag:
                 "--priority",
                 "critical",
                 "--as-json",
-                "--no-walk",
-                "--no-table",
+                "--non-interactive",
             ],
         )
 
@@ -330,8 +326,7 @@ class TestRQMDPriority004ModeFlag:
                 "--priority",
                 "M",
                 "--as-json",
-                "--no-walk",
-                "--no-table",
+                "--non-interactive",
             ],
         )
 
@@ -370,8 +365,7 @@ class TestRQMDPriority004ModeFlag:
                 "--priority",
                 "P",
                 "--as-json",
-                "--no-walk",
-                "--no-table",
+                "--non-interactive",
             ],
         )
 
@@ -411,7 +405,6 @@ Scope: demo.
                 "p2",
                 "--dry-run",
                 "--as-json",
-                "--no-table",
             ],
         )
 
@@ -451,7 +444,6 @@ Scope: demo.
                 "--seed-priorities",
                 "--seed-priority",
                 "medium",
-                "--no-table",
             ],
         )
         assert first.exit_code == 0
@@ -472,7 +464,6 @@ Scope: demo.
                 "--seed-priority",
                 "medium",
                 "--as-json",
-                "--no-table",
             ],
         )
         assert second.exit_code == 0
@@ -503,7 +494,6 @@ Scope: demo.
                 "docs/requirements",
                 "--seed-priorities",
                 "--verify-summaries",
-                "--no-table",
             ],
         )
 
@@ -554,7 +544,6 @@ Scope: demo.
                 str(repo),
                 "--docs-dir",
                 "docs/requirements",
-                "--no-table",
             ],
         )
 

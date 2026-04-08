@@ -2,6 +2,17 @@
 
 ## Prompts
 
+/refactor: Refactor code, docs, or other project artifacts to improve readability, maintainability, or performance. 
+- Naming: Consistent naming of all domain logic -- work with the developer on making names consistent and semantically meaninful throughout their code base. Use names from Software Design Patterns and Domain-Driven Design where possible, and make sure that the names chosen align with the overall goals and language of the project.
+- Splitting large functions into smaller more focused more testable functions.
+- Splitting large files into smaller more focused files that each have a clear purpose and responsibility.
+- Ensuring docstrings are up to date and accurately describe the behavior of the code, and that they follow a consistent style and format throughout the codebase.
+
+
+/polish-docs: Extra Note, we should make sure all docstrings are up to date and accurate when doing docs polish in general. Hate it when project docs and docstrings get out of sync!
+
+---
+
 /commit: Commit the current work with a nice git commit message to make it easier to keep track of changes and have a clear history of what was done and why. This is especially important when working with AI agents, as it helps maintain a clear record of the decisions made and the changes implemented based on those decisions. Similar to rqmd-changelog skill, make sure that the human inputs and decisions are clearly reflected in the commit messages, while the AI work is given a custom H1 heading to make it clear what was done by AI vs humans in the commit history. This way we can maintain a clear narrative in our commit history that highlights the human-driven decisions and changes, while still acknowledging the important AI-driven work that supports those changes. Having the AI Agent specify its own model and version in the commit message can also help with tracking how our AI capabilities evolve over time and provide context for the reliability of the changes made.
 /go: Continue with what you were currently doing.
 /next: Work with the user on picking what to work on next.

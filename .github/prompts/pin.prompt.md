@@ -1,13 +1,13 @@
 ---
-description: "Capture durable rqmd context, decisions, or quick-reference notes in a maintainable pinned note instead of leaving them in chat history."
+description: "Capture durable context, decisions, or quick-reference notes in a maintainable pinned note instead of leaving them in chat history."
 name: "pin"
 argument-hint: "Describe what should be pinned and, if known, where it should live."
 agent: "rqmd-dev"
 ---
 
-Use the rqmd pinning workflow for this task.
+Capture something worth keeping in a durable repository note.
 
-- Capture the durable context, decision, or reminder in a readable repository note instead of ad hoc chat text.
-- Prefer the installed rqmd pin workflow and default to `docs/pins/` when the right location is not obvious.
+- Write the context, decision, or reminder as a readable note instead of leaving it buried in chat history.
+- Default to `docs/pins/` when the right location is not obvious, but prefer a more specific home if one exists (e.g., an ADR folder, a design doc, or a project wiki).
 - Keep the note concise, reviewable, and easy to rediscover later.
-- If the pin collection or surrounding docs need cleanup, use the rqmd docs workflow to improve structure.
+- If the pin collection or surrounding docs need cleanup, tidy them as part of the same pass.

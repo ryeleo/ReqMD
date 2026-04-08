@@ -74,7 +74,7 @@ Summary: 0💡 28🔧 10✅ 0⚠️ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - Given automation may not want console tables
-- When `--no-table` is used
+- When `--non-interactive` is used
 - Then summary table output is suppressed
 - And command behavior otherwise remains unchanged.
 
@@ -231,7 +231,7 @@ Summary: 0💡 28🔧 10✅ 0⚠️ 0⛔ 0🗑️
 - I want a `--sub-domain <NAME>` flag to filter results by subsection
 - So that similar to `--status`, only requirements matching the subsection name are included
 - So that matching is case-insensitive prefix-based (e.g., `--sub-domain api` matches "API", "api-v1", etc.)
-- So that subsection filtering works with `--as-tree`, `--json`, `--no-table`, and `--as-list` output modes
+- So that subsection filtering works with `--as-tree`, `--json`, `--non-interactive`, and `--as-list` output modes
 - So that in `--json` mode, filter context metadata includes the active `sub_domain` filter
 - So that empty results are handled consistently with other filter modes.
 

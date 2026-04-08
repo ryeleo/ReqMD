@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bundle and AI workflow
 
-- Prompt-aware bundle support and a bundled prompt suite including `/go`, `/commit-and-go`, `/next`, `/brainstorm`, `/docs-pass`, `/pin`, and `/ship-check`.
+- Prompt-aware bundle support and a bundled prompt suite including `/go`, `/commit-and-go`, `/next`, `/brainstorm`, `/polish-docs`, `/pin`, and `/ship-check`.
 - Workspace bundle provenance metadata at `.github/rqmd-bundle.json`.
 - Generated `agent-workflow.sh` scaffold during bundle install for machine-readable `preflight` and `validate` workflows.
 - Visible project tooling metadata block for requirements indexes plus `rqmd --sync-index-metadata`.

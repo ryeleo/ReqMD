@@ -171,7 +171,6 @@ Scope: demo.
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -246,7 +245,6 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -293,7 +291,6 @@ def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, 
             "--docs-dir",
             "docs/requirements",
             "--emoji-headers",
-            "--no-table",
         ],
     )
 
@@ -342,7 +339,6 @@ def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(m
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -388,7 +384,6 @@ def test_RQMD_sorting_shift_s_cycles_file_sort_backward(monkeypatch, tmp_path: P
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -435,7 +430,6 @@ def test_RQMD_sorting_011_header_columns_stay_fixed_when_indicator_moves(monkeyp
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -485,7 +479,6 @@ def test_RQMD_sorting_008_direction_token_updates_in_legend(monkeypatch, tmp_pat
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -526,7 +519,6 @@ def test_RQMD_sorting_009_refresh_reopens_file_menu(monkeypatch, tmp_path: Path)
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -579,7 +571,6 @@ def test_RQMD_sorting_refresh_preserves_page_selection_context(monkeypatch, tmp_
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -627,7 +618,6 @@ def test_RQMD_sorting_003_refresh_keeps_deterministic_file_order(monkeypatch, tm
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -677,7 +667,6 @@ def test_RQMD_sorting_004_refresh_preserves_selected_sort_mode(monkeypatch, tmp_
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -778,7 +767,6 @@ def test_RQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_doma
             str(repo_with_domain_docs),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -830,7 +818,6 @@ Scope: two.
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -877,7 +864,6 @@ Scope: two.
             "docs/requirements",
             "--update",
             "AC-SHARED-001=verified",
-            "--no-table",
         ],
     )
 
@@ -930,7 +916,6 @@ Scope: two.
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -978,7 +963,6 @@ Scope: demo.
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -1194,7 +1178,6 @@ Scope: demo.
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -2139,7 +2122,6 @@ Scope: demo.
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -2187,7 +2169,6 @@ Scope: demo.
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
             "--id-namespace",
             "REQ",
         ],
@@ -2566,7 +2547,6 @@ def test_RQMD_interactive_001_default_invokes_interactive_loop(monkeypatch, repo
             str(repo_with_domain_docs),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -2612,7 +2592,6 @@ def test_RQMD_sorting_005_alpha_asc_strategy_changes_default_direction(monkeypat
             "docs/requirements",
             "--sort-profile",
             "alpha-asc",
-            "--no-table",
         ],
     )
 
@@ -2661,7 +2640,6 @@ def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(monkeyp
             "docs/requirements",
             "--sort-profile",
             "status-focus",
-            "--no-table",
         ],
     )
 
@@ -2683,7 +2661,6 @@ def test_RQMD_sorting_unsorted_flag_warns_as_deprecated_alias(monkeypatch, repo_
             str(repo_with_domain_docs),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
             "--filesystem-order",
         ],
     )
@@ -2709,7 +2686,6 @@ def test_RQMD_interactive_001b_default_auto_detect_reaches_interactive(monkeypat
         [
             "--project-root",
             str(repo_with_domain_docs),
-            "--no-table",
         ],
     )
 
@@ -2756,7 +2732,6 @@ def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkey
                 str(repo_root),
                 "--docs-dir",
                 criteria_rel,
-                "--no-table",
             ],
         )
 
@@ -2803,8 +2778,6 @@ def test_RQMD_interactive_011_unwritable_file_blocks_interactive_mode(tmp_path: 
             [
                 "--project-root", str(repo),
                 "--docs-dir", "docs/requirements",
-                "--no-table",
-                "--walk",
             ],
         )
         assert result.exit_code != 0

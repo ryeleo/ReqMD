@@ -38,8 +38,7 @@ Scope: x.
             "--docs-dir",
             "custom/ac",
             "--verify-summaries",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
     assert result.exit_code == 1
@@ -66,7 +65,7 @@ Scope: demo.
 """,
             encoding="utf-8",
         )
-        result = runner.invoke(cli.main, ["--verify-summaries", "--no-walk", "--no-table"])
+        result = runner.invoke(cli.main, ["--verify-summaries", "--non-interactive", "--non-interactive"])
         assert result.exit_code == 1
 
 
@@ -112,7 +111,7 @@ Scope: generic.
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--docs-dir", "docs/requirements", "--no-walk", "--no-table"],
+        ["--project-root", str(repo), "--docs-dir", "docs/requirements", "--non-interactive", "--non-interactive"],
     )
     assert result.exit_code == 0
 
@@ -151,8 +150,7 @@ Scope: demo.
             "--docs-dir",
             "docs/requirements",
             "--verify-summaries",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -187,8 +185,7 @@ Scope: demo.
             "--docs-dir",
             "docs/requirements",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -248,7 +245,6 @@ Scope: demo.
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--no-table",
         ],
     )
 
@@ -306,7 +302,7 @@ Scope: demo.
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--status", "Implemented", "--as-tree", "--no-walk", "--no-table"],
+        ["--project-root", str(repo), "--status", "Implemented", "--as-tree", "--non-interactive", "--non-interactive"],
     )
 
     assert result.exit_code == 0
@@ -354,7 +350,7 @@ Scope: feature.
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--status", "Implemented", "--as-tree", "--no-walk", "--no-table"],
+        ["--project-root", str(repo), "--status", "Implemented", "--as-tree", "--non-interactive", "--non-interactive"],
     )
 
     assert result.exit_code == 0
@@ -399,7 +395,6 @@ Scope: demo.
             "implemented",
             "--session-state-dir",
             "project-local",
-            "--no-table",
         ],
     )
 
@@ -432,7 +427,6 @@ Scope: demo.
             "--project-root", str(repo),
             "--docs-dir", "docs/requirements",
             "--strip-status-icons",
-            "--no-table",
         ],
     )
     assert strip_result.exit_code == 0
@@ -446,8 +440,7 @@ Scope: demo.
         [
             "--project-root", str(repo),
             "--docs-dir", "docs/requirements",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
     assert no_reintroduce_result.exit_code == 0
@@ -459,7 +452,6 @@ Scope: demo.
             "--project-root", str(repo),
             "--docs-dir", "docs/requirements",
             "--restore-status-icons",
-            "--no-table",
         ],
     )
     assert restore_result.exit_code == 0
@@ -664,8 +656,7 @@ def test_RQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_
             "--status",
             "Implemented",
             "--as-tree",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -691,8 +682,7 @@ def test_RQMD_portability_009_nonexistent_criteria_dir_gives_not_found_error(tmp
             "--project-root", str(repo),
             "--docs-dir", "no/such/dir",
             "--verify-summaries",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -722,8 +712,7 @@ def test_RQMD_portability_009_unreadable_domain_file_gives_permission_error(tmp_
                 "--project-root", str(repo),
                 "--docs-dir", "docs/requirements",
                 "--verify-summaries",
-                "--no-walk",
-                "--no-table",
+                "--non-interactive",
             ],
         )
         assert result.exit_code != 0
@@ -762,7 +751,7 @@ def test_RQMD_core_013_check_index_clean_exits_zero(tmp_path: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--verify-index", "--no-walk", "--no-table"],
+        ["--project-root", str(repo), "--verify-index", "--non-interactive", "--non-interactive"],
     )
     assert result.exit_code == 0
     assert "in sync" in result.output.lower()
@@ -778,7 +767,7 @@ def test_RQMD_core_013_check_index_stale_link_exits_nonzero(tmp_path: Path) -> N
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--verify-index", "--no-walk", "--no-table"],
+        ["--project-root", str(repo), "--verify-index", "--non-interactive", "--non-interactive"],
     )
     assert result.exit_code != 0
     assert "stale" in result.output.lower()
@@ -795,7 +784,7 @@ def test_RQMD_core_013_check_index_orphan_file_exits_nonzero(tmp_path: Path) -> 
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--project-root", str(repo), "--verify-index", "--no-walk", "--no-table"],
+        ["--project-root", str(repo), "--verify-index", "--non-interactive", "--non-interactive"],
     )
     assert result.exit_code != 0
     assert "orphan" in result.output.lower()
@@ -850,7 +839,7 @@ def test_RQMD_portability_015_upward_root_discovery_prefers_nearest_ancestor(tmp
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--status", "Implemented", "--as-tree", "--no-walk", "--no-table"],
+        ["--status", "Implemented", "--as-tree", "--non-interactive", "--non-interactive"],
     )
 
     assert result.exit_code == 0
@@ -879,7 +868,7 @@ def test_RQMD_portability_015_marker_priority_prefers_rqmd_config(tmp_path: Path
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--status", "Implemented", "--as-tree", "--no-walk", "--no-table"],
+        ["--status", "Implemented", "--as-tree", "--non-interactive", "--non-interactive"],
     )
 
     assert result.exit_code == 0
@@ -916,8 +905,7 @@ def test_RQMD_portability_015_explicit_repo_root_bypasses_discovery(tmp_path: Pa
             "--status",
             "Implemented",
             "--as-tree",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 

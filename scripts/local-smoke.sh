@@ -40,6 +40,6 @@ echo "[rqmd] Running pytest"
 "$UV_BIN" run --extra dev pytest -q
 
 echo "[rqmd] Running acceptance summary check"
-"$UV_BIN" run rqmd --project-root . --docs-dir docs/requirements --verify-summaries --no-walk --no-table
+"$UV_BIN" run rqmd --project-root . --docs-dir docs/requirements --verify-summaries --non-interactive
 
 echo "[rqmd] Smoke checks passed"

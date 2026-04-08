@@ -161,7 +161,6 @@ class TestThemeCliOption:
                 [
                     "--project-root", str(repo),
                     "--docs-dir", "docs/requirements",
-                    "--no-table",
                     "--theme", "light",
                 ],
                 catch_exceptions=False,
@@ -181,7 +180,6 @@ class TestThemeCliOption:
                 [
                     "--project-root", str(repo),
                     "--docs-dir", "docs/requirements",
-                    "--no-table",
                     "--theme", "dark",
                 ],
                 catch_exceptions=False,
@@ -198,7 +196,6 @@ class TestThemeCliOption:
             [
                 "--project-root", str(repo),
                 "--docs-dir", "docs/requirements",
-                "--no-table",
                 "--theme", "purple",
             ],
         )
@@ -231,7 +228,6 @@ class TestScreenWritePrecedence:
                             [
                                 "--project-root", str(repo),
                                 "--docs-dir", "docs/requirements",
-                                "--no-table",
                                 "--no-screen-write",
                             ],
                             catch_exceptions=False,
@@ -253,7 +249,6 @@ class TestScreenWritePrecedence:
                             [
                                 "--project-root", str(repo),
                                 "--docs-dir", "docs/requirements",
-                                "--no-table",
                             ],
                             catch_exceptions=False,
                         )
@@ -274,7 +269,6 @@ class TestScreenWritePrecedence:
                             [
                                 "--project-root", str(repo),
                                 "--docs-dir", "docs/requirements",
-                                "--no-table",
                             ],
                             catch_exceptions=False,
                         )
@@ -296,7 +290,6 @@ class TestScreenWritePrecedence:
                             [
                                 "--project-root", str(repo),
                                 "--docs-dir", "docs/requirements",
-                                "--no-table",
                                 "--screen-write",
                             ],
                             catch_exceptions=False,

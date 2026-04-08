@@ -1663,7 +1663,7 @@ def _build_agent_workflow_plan(repo_root: Path, hints: dict[str, list[str]]) -> 
             {
                 "id": "rqmd-verify",
                 "label": "rqmd verification",
-                "commands": ["rqmd --verify-summaries --no-walk --no-table"],
+                "commands": ["rqmd --verify-summaries --non-interactive"],
             }
         )
 
@@ -1681,8 +1681,8 @@ def _build_agent_workflow_plan(repo_root: Path, hints: dict[str, list[str]]) -> 
             normalized = _strip_command_markup(item)
             if normalized and normalized not in preflight_commands:
                 preflight_commands.append(normalized)
-    if requirements_index is not None and "rqmd --verify-summaries --no-walk --no-table" not in preflight_commands:
-        preflight_commands.append("rqmd --verify-summaries --no-walk --no-table")
+    if requirements_index is not None and "rqmd --verify-summaries --non-interactive" not in preflight_commands:
+        preflight_commands.append("rqmd --verify-summaries --non-interactive")
 
     profile_candidates: dict[str, list[str]] = {
         "all": [stage["id"] for stage in stages],

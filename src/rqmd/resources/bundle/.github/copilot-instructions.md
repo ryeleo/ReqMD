@@ -7,7 +7,7 @@ Purpose:
 Repository conventions:
 - Requirements index: docs/requirements/README.md
 - Domain docs: docs/requirements/*.md
-- Verify-only pass: rqmd --verify-summaries --no-walk --no-table
+- Verify-only pass: rqmd --verify-summaries --non-interactive
 
 AI workflow defaults:
 - Start with read-only context export via rqmd-ai.
@@ -31,7 +31,7 @@ AI workflow defaults:
 - Under `Direction`, give a concrete next recommendation derived from the active backlog state.
 - If you customize statuses, keep lifecycle equivalents for Proposed, Implemented, Verified, Blocked, and Deprecated so the bundled AI workflows and examples still map cleanly onto your catalog.
 - When referencing lifecycle states in prose, prefer consistent emoji plus label formatting such as `💡 Proposed`, `🔧 Implemented`, `✅ Verified`, `⛔ Blocked`, and `🗑️ Deprecated`, or their repository-local equivalents.
-- Prefer the installed Copilot prompts and skills for repeatable workflows, such as `/go`, `/commit`, `/commit-and-go`, `/next`, `/refine`, `/brainstorm`, `/docs-pass`, `/pin`, `/ship-check`, `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-pin`, `/rqmd-bundle`, `/rqmd-verify`, and `/rqmd-telemetry`.
+- Prefer the installed Copilot prompts and skills for repeatable workflows, such as `/go`, `/commit`, `/commit-and-go`, `/next`, `/refine`, `/brainstorm`, `/polish-docs`, `/refactor`, `/pin`, `/ship-check`, `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-pin`, `/rqmd-bundle`, `/rqmd-verify`, and `/rqmd-telemetry`.
 - The standard bundle install keeps `rqmd-dev` as the primary implementation agent, adds prompt entrypoints such as `/go` for common actions, and includes specialized agents for exploration, requirements, docs sync, history inspection, and optional advanced development modes. Use `--bundle-preset minimal` when you only want the lean bundle.
 - Bundle install also scaffolds project-local `/dev` and `/test` skills based on detected repository commands so implementation agents have a concrete starting point for build, smoke, and validation workflows.
 - Skills improve workflow discovery and reuse, but they do not bypass terminal/tool approval prompts.

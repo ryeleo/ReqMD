@@ -367,7 +367,7 @@ Summary: 5💡 19🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - **Priority:** 🟠 P1 - High
 - As a rqmd maintainer when optimizing the AI agent feedback loop
 - I want a defined latency budget for non-interactive JSON and automation paths, separate from the interactive RQMD-UI-009 budget
-- So that AI-path commands such as `rqmd-ai --json --dump-status` and `rqmd --json --no-walk` have an explicit measurable target (e.g., <=80ms for single-requirement lookups, <=150ms for full catalog exports on a warm cache).
+- So that AI-path commands such as `rqmd-ai --json --dump-status` and `rqmd --json --non-interactive` have an explicit measurable target (e.g., <=80ms for single-requirement lookups, <=150ms for full catalog exports on a warm cache).
 - So that CI includes a latency gate for the non-interactive paths that fails the build when regressions push commands above the defined budget.
 - So that the budget accounts for both cold-start (first invocation, no cache) and warm-start (cached catalog) scenarios with separate documented thresholds.
 - So that profiling instrumentation can be enabled via an environment variable or flag to emit per-phase timing (import, parse, filter, serialize) without affecting normal output.

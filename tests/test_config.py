@@ -188,8 +188,7 @@ Scope: demo.
             "docs/requirements",
             "--totals",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -256,7 +255,6 @@ Scope: demo.
             "AC-001",
             "--update-status",
             "desktop-verified",
-            "--no-table",
         ],
     )
 
@@ -320,8 +318,7 @@ Scope: demo.
             "--docs-dir",
             "docs/requirements",
             "--verify-summaries",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
     assert custom_result.exit_code in (0, 1)
@@ -338,7 +335,6 @@ Scope: demo.
             "AC-001",
             "--update-status",
             "desktop-verified",
-            "--no-table",
         ],
     )
     assert default_result.exit_code != 0
@@ -359,8 +355,7 @@ def test_RQMD_portability_011_ssvr_corpus_rollup_uses_custom_status_catalog() ->
             "requirements",
             "--totals",
             "--as-json",
-            "--no-table",
-            "--no-walk",
+            "--non-interactive",
         ],
     )
 
@@ -398,7 +393,6 @@ def test_RQMD_portability_011_ssvr_corpus_copy_accepts_desktop_verified_set_stat
         "SSVR-0155",
         "--update-status",
         "desktop-verified",
-        "--no-table",
       ],
     )
 
@@ -526,8 +520,7 @@ def test_RQMD_portability_007_cli_status_config_overrides_unified_config(tmp_pat
       "--docs-dir", "docs/requirements",
       "--status-config", str(override),
       "--verify-summaries",
-      "--no-walk",
-      "--no-table",
+      "--non-interactive",
     ],
   )
 
@@ -553,7 +546,6 @@ def test_RQMD_portability_007_cli_status_config_error_on_missing_file(tmp_path: 
       "--docs-dir", "docs/requirements",
       "--status-config", "nonexistent/statuses.yml",
       "--verify-summaries",
-      "--no-table",
     ],
   )
 
@@ -643,8 +635,7 @@ def test_RQMD_portability_012_user_config_precedence_cli_over_user(tmp_path: Pat
       "--docs-dir", "docs/requirements",
       "--status", "proposed",
       "--as-json",
-      "--no-walk",
-      "--no-table",
+      "--non-interactive",
     ],
   )
   

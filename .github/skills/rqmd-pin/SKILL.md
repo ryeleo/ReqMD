@@ -12,7 +12,7 @@ metadata:
       - Keep pin collections navigable with an index page and hand broader organization cleanup to `/rqmd-docs` when needed.
     examples:
       - rqmd-ai --json --dump-id RQMD-AI-042 --include-requirement-body
-      - rqmd --verify-summaries --no-walk --no-table
+      - rqmd --verify-summaries --non-interactive
       - rqmd-ai --json --dump-status proposed
 ---
 

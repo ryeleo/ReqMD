@@ -1149,10 +1149,11 @@ def _filter_timeline_nodes(
     help="Use emoji column headers in terse table output (may misalign in some terminals).",
 )
 @click.option(
-    "--walk/--no-walk",
-    "interactive",
-    default=True,
-    help="Open interactive file/requirement/status flow after summary table.",
+    "--non-interactive",
+    "non_interactive",
+    is_flag=True,
+    default=False,
+    help="Skip interactive walkthrough; print output and exit.",
 )
 @click.option(
     "--screen-write/--no-screen-write",
@@ -1312,10 +1313,11 @@ def _filter_timeline_nodes(
     help="With filters or explicit target tokens: print a flat list and exit.",
 )
 @click.option(
-    "--table/--no-table",
+    "--summary",
     "summary_table",
-    default=True,
-    help="Print the summary table output (disable in automation with --no-table).",
+    is_flag=True,
+    default=False,
+    help="Print the summary table and exit (implies --non-interactive).",
 )
 @click.option(
     "--sort-profile",
@@ -1478,7 +1480,7 @@ def main(
     check: bool,
     verbose: bool,
     emoji_columns: bool,
-    interactive: bool,
+    non_interactive: bool,
     screen_write: bool | None,
     unsorted: bool,
     set_requirement_id: str | None,
@@ -1530,6 +1532,9 @@ def main(
     status_config: str | None,
     priorities_config: str | None,
 ) -> None:
+    # --summary implies --non-interactive
+    interactive = not (non_interactive or summary_table)
+
     repo_root_source = ctx.get_parameter_source("repo_root")
     repo_root_explicit = repo_root_source != click.core.ParameterSource.DEFAULT
 

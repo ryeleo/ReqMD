@@ -1,13 +1,15 @@
 ---
-description: "Turn loose ideas, notes, or a selected brainstorm into ranked rqmd proposals before implementation begins."
+description: "Think broadly and creatively about the project — explore ideas, generate proposals, and promote the best ones into tracked requirements."
 name: "brainstorm"
-argument-hint: "Describe the idea set or point at the notes you want turned into tracked requirements."
+argument-hint: "Describe the idea set, point at notes, or just say what area you want to explore."
 agent: "rqmd-dev"
 ---
 
-Use the rqmd brainstorm workflow for this task.
+Brainstorm mode — think broadly and creatively.
 
-- Treat the current request, selection, or referenced note file as brainstorm input.
+- Treat the current request, selection, or referenced notes as brainstorm input.
+- Explore the problem space openly: consider alternative designs, trade-offs, edge cases, and adjacent opportunities.
+- Offer loose requirement titles as you go rather than fully fleshed-out specs — keep the conversation generative.
+- When a promising idea solidifies, offer to draft it as a tracked proposal so it does not get lost in chat history.
 - Prefer promoting ideas into tracked requirements before implementation instead of jumping straight to code.
-- Use the installed rqmd brainstorm and triage workflows when they help keep the proposals ranked, scoped, and requirement-first.
-- Keep the result concise, concrete, and ready to move into the next validated rqmd slice.
+- Keep the output concise and concrete enough to act on in a follow-up implementation pass.

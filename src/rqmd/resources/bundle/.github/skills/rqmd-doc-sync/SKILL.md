@@ -12,7 +12,7 @@ metadata:
       - Hand broader readability, structure, or page-splitting work to `/rqmd-docs` when needed.
       - Re-run summary verification before finishing.
     examples:
-      - rqmd --verify-summaries --no-walk --no-table
+      - rqmd --verify-summaries --non-interactive
       - rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
       - rqmd-ai --json --workflow-mode implement
 ---
@@ -24,7 +24,7 @@ Workflow:
 - Keep `docs/requirements/README.md`, top-level `README.md`, and `CHANGELOG.md` aligned with shipped behavior.
 - Use `/rqmd-docs` instead when the real task is improving structure, headings, jargon explanations, or splitting long pages.
 - If work changed AI workflows or onboarding, update `.github/copilot-instructions.md` and any installed bundle text as needed.
-- Re-run `rqmd --verify-summaries --no-walk --no-table`.
+- Re-run `rqmd --verify-summaries --non-interactive`.
 - Call out any remaining drift or docs that still need manual judgment.
 
 Constraints:

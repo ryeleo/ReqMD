@@ -17,7 +17,7 @@ Use it to define exactly how game features should behave in a testable format.
 ## rqmd Workflow
 
 - Treat this populated catalog as the live rqmd catalog; do not rerun legacy-init writes into `docs/requirements/`.
-- Use `rqmd --verify-summaries --no-walk --no-table` after requirement edits to confirm the catalog structure still verifies.
+- Use `rqmd --verify-summaries --non-interactive` after requirement edits to confirm the catalog structure still verifies.
 - Use `rqmd-ai --json --dump-status proposed` when you want the next backlog slice for refinement or implementation.
 - Treat `rqmd` as the only supported summary-verification workflow for this catalog.
 - Prefer refining the existing domain files over generating coarse seed requirements.
@@ -137,4 +137,4 @@ Optional future statuses:
 - Prefer moving `💡 Proposed` -> `🔧 Implemented` -> `✅ Verified` as confidence increases.
 - If implementation regresses, lower the status instead of deleting the criterion.
 - Keep the `acceptance-status-summary` comment blocks accurate when requirement statuses change.
-- Run `rqmd --verify-summaries --no-walk --no-table` before closing a requirement-editing pass.
+- Run `rqmd --verify-summaries --non-interactive` before closing a requirement-editing pass.

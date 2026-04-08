@@ -11,7 +11,7 @@ metadata:
       - Improve headings, page structure, hyperlinks, jargon explanations, and list formatting so the doc is faster to scan and easier to trust.
       - Split oversized pages into smaller linked pages or index pages when that meaningfully improves navigation.
     examples:
-      - rqmd --verify-summaries --no-walk --no-table
+      - rqmd --verify-summaries --non-interactive
       - rqmd-ai --json --dump-id RQMD-AI-040 --include-requirement-body
       - rqmd-ai --json --dump-status proposed
 ---
@@ -30,7 +30,7 @@ Workflow:
 
 Callout examples:
 
-> **ℹ️ Info:** `rqmd --verify-summaries --no-walk --no-table` only verifies summary blocks and does not rewrite requirement files.
+> **ℹ️ Info:** `rqmd --verify-summaries --non-interactive` only verifies summary blocks and does not rewrite requirement files.
 
 > **⚠️ Note:** If a page introduces `rqmd-ai` before `rqmd`, expand the acronym on first use and explain the relationship once rather than assuming prior context.
 

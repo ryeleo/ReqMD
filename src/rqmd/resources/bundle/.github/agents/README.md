@@ -26,10 +26,13 @@ Useful commands:
 
 Installed prompts:
 - `/go`: start or continue the standard rqmd implementation loop through `rqmd-dev`
+- `/commit`: commit the current work with a well-structured git message
 - `/commit-and-go`: keep going through one or more validated slices and create a clean git commit after each slice
 - `/next`: pick the next highest-priority feasible rqmd slice and work it through validation
+- `/refine`: refine existing requirements or shape new ones through focused discussion
 - `/brainstorm`: turn loose ideas or notes into ranked rqmd proposals before implementation
-- `/docs-pass`: run a focused documentation quality or sync pass for rqmd work
+- `/polish-docs`: run a focused documentation quality or sync pass for rqmd work
+- `/refactor`: refactor code, docs, or other artifacts to improve readability, maintainability, or performance
 - `/pin`: capture durable context or decision notes into a maintainable pinned note
 - `/ship-check`: run a release or handoff readiness pass with verification and blocker review
 

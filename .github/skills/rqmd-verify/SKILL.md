@@ -11,7 +11,7 @@ metadata:
       - Run targeted tests for the touched area.
       - Run the full test suite before calling the batch complete.
     examples:
-      - rqmd --verify-summaries --no-walk --no-table
+      - rqmd --verify-summaries --non-interactive
       - uv run --extra dev pytest tests/test_ai_cli.py -q
       - uv run --extra dev pytest -q
 ---
@@ -19,7 +19,7 @@ metadata:
 Use this skill when changes are already in progress and you need a disciplined finish pass.
 
 Workflow:
-- Re-run requirement summary verification with `rqmd --verify-summaries --no-walk --no-table`.
+- Re-run requirement summary verification with `rqmd --verify-summaries --non-interactive`.
 - Run targeted tests for the touched area first.
 - Run the full test suite with `uv run --extra dev pytest -q`.
 - If work affected backlog state, re-check `rqmd-ai --json --dump-status proposed` so priorities remain accurate.

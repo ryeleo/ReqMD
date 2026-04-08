@@ -211,8 +211,7 @@ Scope: demo.
             "docs/requirements",
             "--id-namespace",
             "REQ",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -452,8 +451,7 @@ def test_RQMD_core_009_missing_domain_docs_handling(tmp_path: Path) -> None:
             "--docs-dir",
             "docs/requirements",
             "--verify-summaries",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -473,8 +471,7 @@ def test_RQMD_core_009_missing_requirements_index_shows_first_time_setup_guidanc
         [
             "--project-root",
             str(repo),
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -506,7 +503,6 @@ def test_RQMD_core_013_verify_index_missing_index_uses_shared_startup_guidance(t
             "--docs-dir",
             "docs/requirements",
             "--verify-index",
-            "--no-table",
         ],
     )
 
@@ -1090,8 +1086,7 @@ Scope: demo.
             "--status",
             "proposed",
             "--as-json",
-            "--no-walk",
-            "--no-table",
+            "--non-interactive",
         ],
     )
 
@@ -1221,7 +1216,6 @@ def test_RQMD_core_023_rename_id_prefix_updates_headers_and_citations(tmp_path: 
             "--project-root", str(repo),
             "--docs-dir", "docs/requirements",
             "--rename-id-prefix", "AC=RQMD",
-            "--no-table",
         ],
     )
     assert result.exit_code == 0, result.output
@@ -1251,7 +1245,6 @@ def test_RQMD_core_023_rename_id_prefix_detects_conflicts(tmp_path: Path) -> Non
             "--project-root", str(repo),
             "--docs-dir", "docs/requirements",
             "--rename-id-prefix", "AC=RQMD",
-            "--no-table",
         ],
     )
     assert result.exit_code != 0
@@ -1279,7 +1272,6 @@ def test_RQMD_core_023_rename_id_prefix_json_dry_run(tmp_path: Path) -> None:
             "--rename-id-prefix", "AC=RQMD",
             "--dry-run",
             "--as-json",
-            "--no-table",
         ],
     )
     assert result.exit_code == 0, result.output

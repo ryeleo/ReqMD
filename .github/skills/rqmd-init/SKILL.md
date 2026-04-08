@@ -30,7 +30,7 @@ Workflow:
 - Paste the generated handoff prompt into your AI chat and let the chat agent run the grouped interview.
 - Let init choose the setup strategy automatically unless the repository clearly needs `--legacy`.
 - Review the generated requirements index, starter files, and any follow-up bundle skill previews before writing.
-- Apply only after confirmation, then run `rqmd --verify-summaries --no-walk --no-table` and start refining the generated requirements.
+- Apply only after confirmation, then run `rqmd --verify-summaries --non-interactive` and start refining the generated requirements.
 
 Constraints:
 - Treat generated requirements as a starting point, not final truth.

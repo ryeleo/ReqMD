@@ -13,7 +13,7 @@ metadata:
     examples:
       - rqmd-ai --json --dump-status proposed
       - rqmd-ai --json --dump-file core-engine.md
-      - rqmd --status proposed --priority p1 --json --no-walk
+      - rqmd --status proposed --priority p1 --json --non-interactive
 ---
 
 Use this skill when tracked requirements already exist and you need to decide what to work next.

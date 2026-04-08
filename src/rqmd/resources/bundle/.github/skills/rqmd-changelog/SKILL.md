@@ -11,7 +11,7 @@ metadata:
       - Write the primary changelog bullets for end-user impact, release-relevant decisions, and notable workflow shifts.
       - Keep supporting AI implementation detail subordinate under a nested heading such as `AI Development` when it adds useful context.
     examples:
-      - rqmd --verify-summaries --no-walk --no-table
+      - rqmd --verify-summaries --non-interactive
       - rqmd-ai --json --dump-status proposed
       - rqmd-ai --json --workflow-mode implement
 ---

@@ -48,8 +48,7 @@ def test_RQMD_ui_007_cli_disables_colorized_redraw_for_unsafe_override(tmp_path:
                             "--as-json",
                             "--status",
                             "proposed",
-                            "--no-walk",
-                            "--no-table",
+                            "--non-interactive",
                         ],
                     )
 
