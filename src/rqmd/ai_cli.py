@@ -52,9 +52,10 @@ from .markdown_io import (discover_project_root, format_path_display,
                           render_requirements_index, render_startup_message,
                           resolve_requirements_dir, validate_files_readable)
 from .priority_model import configure_priority_catalog
-from .req_parser import (extract_blocking_id,
+from .req_parser import (detect_domain_prefix, extract_blocking_id,
                          extract_requirement_block_with_lines,
-                         find_duplicate_requirement_ids, normalize_id_prefixes,
+                         find_duplicate_requirement_ids, next_domain_requirement_id,
+                         normalize_id_prefixes,
                          parse_domain_priority_metadata, parse_requirements,
                          resolve_id_prefixes)
 from .status_model import normalize_status_input
@@ -2168,7 +2169,6 @@ def _build_legacy_init_files(
     prefix = id_prefixes[0] if id_prefixes else str(legacy_answer_map.get("id_prefix", ["REQ"])[0]).strip().upper().rstrip("-")
     status_scheme_raw = str(legacy_answer_map.get("status_scheme", ["canonical"])[0]).strip()
     status_scheme_key, selected_statuses = _resolve_status_scheme(repo_root, status_scheme_raw)
-    next_number = 1
     command_hints = _apply_command_answers(command_hints, legacy_answer_map)
     source_areas = _match_domain_focus_answers(source_areas, legacy_answer_map.get("domain_focus", []))
     if any(value == "skip-gh-issues" for value in legacy_answer_map.get("issue_backlog", [])):
@@ -2182,7 +2182,8 @@ def _build_legacy_init_files(
 
     source_domain_entries: list[dict[str, str]] = []
     for area in source_areas:
-        requirement_id, next_number = _allocate_sequential_id(prefix, next_number)
+        domain_prefix = f"{prefix}-{area['slug'].upper().replace('-', '')}"
+        requirement_id, _ = _allocate_sequential_id(domain_prefix, 1)
         relative_path = f"{requirements_dir.as_posix()}/{area['slug']}.md"
         source_domain_entries.append(
             {
@@ -2199,8 +2200,9 @@ def _build_legacy_init_files(
         )
 
     workflow_ids = []
-    for _index in range(2):
-        requirement_id, next_number = _allocate_sequential_id(prefix, next_number)
+    workflow_prefix = f"{prefix}-WORKFLOW"
+    for idx in range(2):
+        requirement_id, _ = _allocate_sequential_id(workflow_prefix, idx + 1)
         workflow_ids.append(requirement_id)
     workflow_entry = {
         "path": f"{requirements_dir.as_posix()}/developer-workflows.md",
@@ -2219,8 +2221,9 @@ def _build_legacy_init_files(
     issues = issue_context.get("issues") if isinstance(issue_context.get("issues"), list) else []
     if issues:
         issue_ids: list[str] = []
-        for _issue in issues:
-            requirement_id, next_number = _allocate_sequential_id(prefix, next_number)
+        issue_prefix = f"{prefix}-ISSUE"
+        for idx, _issue in enumerate(issues, start=1):
+            requirement_id, _ = _allocate_sequential_id(issue_prefix, idx)
             issue_ids.append(requirement_id)
         issue_entry = {
             "path": f"{requirements_dir.as_posix()}/issue-backlog.md",
@@ -3789,6 +3792,10 @@ def _export_context(
                 "path": format_path_display(path, repo_root),
                 "requirements": entries,
             }
+            # Include per-domain next-ID so agents know exactly where to allocate.
+            nid = next_domain_requirement_id(path, id_prefixes=id_prefixes)
+            if nid is not None:
+                file_payload["next_id"] = nid[0]
             domain_priority_meta = parse_domain_priority_metadata(path, id_prefixes=id_prefixes)
             if domain_priority_meta["domain_priority"] is not None:
                 file_payload["domain_priority"] = domain_priority_meta["domain_priority"]

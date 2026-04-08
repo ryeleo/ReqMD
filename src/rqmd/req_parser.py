@@ -78,7 +78,7 @@ def normalize_id_prefixes(raw_prefixes: tuple[str, ...] | list[str] | None) -> t
                 continue
             if not ID_PREFIX_PATTERN.fullmatch(prefix):
                 raise ValueError(
-                    f"Invalid id prefix '{part.strip()}'. Use uppercase letters/numbers, for example AC, R, or REQ."
+                    f"Invalid id prefix '{part.strip()}'. Use uppercase letters/numbers with optional hyphens, for example AC, REQ, or RQMD-CORE."
                 )
             if prefix not in seen:
                 seen.add(prefix)
@@ -268,8 +268,8 @@ def next_sequential_requirement_id(
 ) -> tuple[str, int]:
     """Allocate the next numeric requirement ID for a single namespace.
 
-    Only IDs in the exact form ``PREFIX-<digits>`` participate in numeric
-    allocation. Existing semantic IDs such as ``RQMD-CORE-001`` are ignored.
+    Handles both flat prefixes (``REQ``) matching ``REQ-<digits>`` and compound
+    prefixes (``RQMD-CORE``) matching ``RQMD-CORE-<digits>``.
     """
 
     normalized_prefix = normalize_id_prefixes((prefix,))[0]
@@ -285,6 +285,50 @@ def next_sequential_requirement_id(
 
     width = max(min_width, len(str(next_number)))
     return f"{normalized_prefix}-{next_number:0{width}d}", next_number
+
+
+def detect_domain_prefix(
+    domain_file: Path,
+    *,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> str | None:
+    """Detect the compound ID prefix used in a single domain file.
+
+    Scans requirement headers and returns the most common compound prefix
+    (e.g., ``RQMD-CORE``).  Returns ``None`` if no IDs are found.
+    """
+    prefix_counts: dict[str, int] = {}
+    for requirement_id, _line_number in _iter_requirement_headers(domain_file, id_prefixes=id_prefixes):
+        match = re.match(r"^(?P<prefix>.+)-\d+$", requirement_id)
+        if match:
+            p = match.group("prefix")
+            prefix_counts[p] = prefix_counts.get(p, 0) + 1
+    if not prefix_counts:
+        return None
+    return max(prefix_counts, key=lambda k: prefix_counts[k])
+
+
+def next_domain_requirement_id(
+    domain_file: Path,
+    *,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    min_width: int = 3,
+    fallback_prefix: str | None = None,
+) -> tuple[str, int] | None:
+    """Allocate the next requirement ID scoped to a single domain file.
+
+    Auto-detects the compound prefix from existing IDs in the file and returns
+    the next sequential number.  Returns ``None`` if no prefix can be detected
+    and no *fallback_prefix* is provided.
+    """
+    prefix = detect_domain_prefix(domain_file, id_prefixes=id_prefixes)
+    if prefix is None:
+        if fallback_prefix is not None:
+            return f"{fallback_prefix}-001", 1
+        return None
+    return next_sequential_requirement_id(
+        [domain_file], prefix, id_prefixes=id_prefixes, min_width=min_width,
+    )
 
 
 def requirement_newest_first_sort_key(requirement_id: str) -> tuple[int, int, str]:

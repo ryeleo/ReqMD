@@ -250,9 +250,10 @@ Summary: 5💡 19🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when creating new requirements
-- I want rqmd to allocate IDs in a simple sequential numeric format such as `REQ-001`, `REQ-002`, `REQ-003`
-- So that ID order communicates relative creation order across the tracked requirement set.
-- So that allocated numbers are unique within the active ID namespace across all requirement documents.
+- I want rqmd to allocate IDs using compound per-domain prefixes such as `RQMD-CORE-001`, `RQMD-CORE-002`, `RQMD-UI-001`
+- So that ID order communicates relative creation order within each domain.
+- So that allocated numbers are unique within each domain's compound prefix rather than a single global counter.
+- So that `--id-namespace` accepts compound prefixes like `RQMD-CORE` for domain-scoped `--next-id` queries.
 - So that the default rendered format uses at least 3 digits of zero-padding for readability.
 
 ### RQMD-CORE-028: Sequential ID width overflow past 999

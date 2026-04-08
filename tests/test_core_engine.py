@@ -10,6 +10,8 @@ from click.testing import CliRunner
 from rqmd import cli
 from rqmd.markdown_io import scope_and_body_from_file
 from rqmd.req_parser import collect_sub_sections
+from rqmd.req_parser import detect_domain_prefix
+from rqmd.req_parser import next_domain_requirement_id
 
 
 def test_RQMD_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path: Path) -> None:
@@ -220,6 +222,54 @@ Scope: demo.
     assert "REQ-001" in result.output
 
 
+def test_detect_domain_prefix_returns_most_common(tmp_path: Path) -> None:
+    f = tmp_path / "core.md"
+    f.write_text(
+        """# Core
+
+### TEAM-CORE-001: First
+- **Status:** 💡 Proposed
+
+### TEAM-CORE-002: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+    assert detect_domain_prefix(f, id_prefixes=("TEAM",)) == "TEAM-CORE"
+
+
+def test_detect_domain_prefix_returns_none_for_empty(tmp_path: Path) -> None:
+    f = tmp_path / "empty.md"
+    f.write_text("# Empty\n\nNo requirements here.\n", encoding="utf-8")
+    assert detect_domain_prefix(f) is None
+
+
+def test_next_domain_requirement_id_returns_next(tmp_path: Path) -> None:
+    f = tmp_path / "core.md"
+    f.write_text(
+        """# Core
+
+### PROJ-CORE-001: First
+- **Status:** 💡 Proposed
+
+### PROJ-CORE-005: Fifth
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    result = next_domain_requirement_id(f, id_prefixes=("PROJ",))
+    assert result is not None
+    rid, num = result
+    assert rid == "PROJ-CORE-006"
+    assert num == 6
+
+
+def test_next_domain_requirement_id_returns_none_for_empty(tmp_path: Path) -> None:
+    f = tmp_path / "empty.md"
+    f.write_text("# Empty\n", encoding="utf-8")
+    assert next_domain_requirement_id(f) is None
+
+
 def test_RQMD_core_027_next_id_uses_custom_prefix_and_three_digit_padding(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
@@ -327,6 +377,57 @@ Scope: demo.
 
     assert result.exit_code != 0
     assert "requires a single active ID namespace" in result.output
+
+
+def test_RQMD_core_027_next_id_compound_prefix(tmp_path: Path) -> None:
+    """--next-id with compound prefix like TEAM-CORE scopes IDs per domain."""
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "core.md").write_text(
+        """# Core
+
+Scope: core.
+
+### TEAM-CORE-001: First
+- **Status:** 💡 Proposed
+
+### TEAM-CORE-002: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+    (criteria_dir / "ui.md").write_text(
+        """# UI
+
+Scope: ui.
+
+### TEAM-UI-001: Widget
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--id-namespace",
+            "TEAM-CORE",
+            "--next-id",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["prefix"] == "TEAM-CORE"
+    assert payload["requirement_id"] == "TEAM-CORE-003"
+    assert payload["next_number"] == 3
 
 
 def test_RQMD_core_019_domain_body_excludes_h2_subsection_content() -> None:

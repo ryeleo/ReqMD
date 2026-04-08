@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardened interactive `screen_write` rendering on small terminals to prevent redraw overflow on wrapped lines (notably in Windows VS Code terminals).
 - Updated `screen_write` redraws to clear terminal scrollback as well as the visible frame before each render.
 - Updated PyPI publishing so stable versions ship from GitHub Releases while `rc` tags publish automatically on push.
+- Requirement ID allocation is now per-domain: IDs use compound prefixes like `RQMD-CORE-041`, `RQMD-TELEMETRY-015` instead of a single global counter. `--id-namespace` accepts compound prefixes (e.g., `rqmd --next-id --id-namespace RQMD-CORE`), and `rqmd-ai --json` export includes a `next_id` field per domain file so agents can read the next available ID directly. Legacy init uses domain-scoped compound prefixes (`<PREFIX>-<SLUG>`, `<PREFIX>-WORKFLOW`, `<PREFIX>-ISSUE`).
 
 ## [0.1.0] - 2026-04-02
 
