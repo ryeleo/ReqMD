@@ -17,3 +17,4 @@ test-corpus/NSM/
 *.tfstate.*
 infra/azure/telemetry-vm/.terraform.lock.hcl
 infra/azure/telemetry-vm/terraform.tfvars
+.rqmd-telemetry-token

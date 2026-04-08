@@ -95,6 +95,123 @@ class TestResolveTelemetryApiKey:
 
 
 # ---------------------------------------------------------------------------
+# File-based token cache (cross-invocation persistence)
+# ---------------------------------------------------------------------------
+
+
+class TestFileBasedTokenCache:
+    def test_writes_token_to_disk(self, telemetry_server: str, tmp_path: Path):
+        """Token exchange persists the token to .rqmd-telemetry-token."""
+        import rqmd.telemetry as _tmod
+
+        # Create a marker so _token_cache_path finds this as a repo root.
+        (tmp_path / "docs" / "requirements").mkdir(parents=True)
+        with (
+            patch.dict(
+                "os.environ", {"RQMD_TELEMETRY_ENDPOINT": telemetry_server}, clear=True
+            ),
+            patch.object(_tmod, "_token_cache_path", return_value=tmp_path / ".rqmd-telemetry-token"),
+        ):
+            key = resolve_telemetry_api_key(tmp_path)
+
+        assert key == "stub-session-token"
+        cache_file = tmp_path / ".rqmd-telemetry-token"
+        assert cache_file.is_file()
+        data = json.loads(cache_file.read_text(encoding="utf-8"))
+        assert data["token"] == "stub-session-token"
+        assert data["expiry"] > 0
+
+    def test_reads_token_from_disk_cache(self, tmp_path: Path):
+        """Cached token on disk is reused without hitting the gateway."""
+        import time
+        import rqmd.telemetry as _tmod
+
+        (tmp_path / "docs" / "requirements").mkdir(parents=True)
+        cache_file = tmp_path / ".rqmd-telemetry-token"
+        cache_file.write_text(
+            json.dumps({"token": "disk-cached-token", "expiry": time.time() + 3600}),
+            encoding="utf-8",
+        )
+
+        with (
+            patch.dict(
+                "os.environ",
+                {"RQMD_TELEMETRY_ENDPOINT": "http://127.0.0.1:1"},  # unreachable
+                clear=True,
+            ),
+            patch.object(_tmod, "_token_cache_path", return_value=cache_file),
+        ):
+            key = resolve_telemetry_api_key(tmp_path)
+
+        assert key == "disk-cached-token"
+
+    def test_expired_disk_token_triggers_fresh_exchange(
+        self, telemetry_server: str, tmp_path: Path
+    ):
+        """Expired on-disk token is replaced by a fresh gateway exchange."""
+        import rqmd.telemetry as _tmod
+
+        (tmp_path / "docs" / "requirements").mkdir(parents=True)
+        cache_file = tmp_path / ".rqmd-telemetry-token"
+        cache_file.write_text(
+            json.dumps({"token": "expired-token", "expiry": 0.0}),
+            encoding="utf-8",
+        )
+
+        with (
+            patch.dict(
+                "os.environ", {"RQMD_TELEMETRY_ENDPOINT": telemetry_server}, clear=True
+            ),
+            patch.object(_tmod, "_token_cache_path", return_value=cache_file),
+        ):
+            key = resolve_telemetry_api_key(tmp_path)
+
+        assert key == "stub-session-token"
+        data = json.loads(cache_file.read_text(encoding="utf-8"))
+        assert data["token"] == "stub-session-token"
+
+    def test_ensures_gitignore_entry(self, telemetry_server: str, tmp_path: Path):
+        """Token exchange adds .rqmd-telemetry-token to .gitignore."""
+        import rqmd.telemetry as _tmod
+
+        (tmp_path / "docs" / "requirements").mkdir(parents=True)
+        (tmp_path / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+
+        with (
+            patch.dict(
+                "os.environ", {"RQMD_TELEMETRY_ENDPOINT": telemetry_server}, clear=True
+            ),
+            patch.object(_tmod, "_token_cache_path", return_value=tmp_path / ".rqmd-telemetry-token"),
+        ):
+            resolve_telemetry_api_key(tmp_path)
+
+        gitignore = (tmp_path / ".gitignore").read_text(encoding="utf-8")
+        assert ".rqmd-telemetry-token" in gitignore
+
+    def test_does_not_duplicate_gitignore_entry(
+        self, telemetry_server: str, tmp_path: Path
+    ):
+        """If .rqmd-telemetry-token is already in .gitignore, don't add it again."""
+        import rqmd.telemetry as _tmod
+
+        (tmp_path / "docs" / "requirements").mkdir(parents=True)
+        (tmp_path / ".gitignore").write_text(
+            "node_modules/\n.rqmd-telemetry-token\n", encoding="utf-8"
+        )
+
+        with (
+            patch.dict(
+                "os.environ", {"RQMD_TELEMETRY_ENDPOINT": telemetry_server}, clear=True
+            ),
+            patch.object(_tmod, "_token_cache_path", return_value=tmp_path / ".rqmd-telemetry-token"),
+        ):
+            resolve_telemetry_api_key(tmp_path)
+
+        gitignore = (tmp_path / ".gitignore").read_text(encoding="utf-8")
+        assert gitignore.count(".rqmd-telemetry-token") == 1
+
+
+# ---------------------------------------------------------------------------
 # Stub HTTP server for event submission tests
 # ---------------------------------------------------------------------------
 

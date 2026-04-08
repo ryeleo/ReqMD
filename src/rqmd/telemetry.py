@@ -36,6 +36,9 @@ _CLIENT_ID = "rqmd-agent-v1"
 _cached_token: str | None = None
 _cached_token_expiry: float = 0.0
 
+# Hidden file name for persisting the session token across CLI invocations.
+_TOKEN_CACHE_FILENAME = ".rqmd-telemetry-token"
+
 
 def _telemetry_disabled() -> bool:
     """Return True when the user has explicitly opted out of telemetry."""
@@ -52,20 +55,107 @@ def _get_urllib():
     return _urllib_request
 
 
+def _token_cache_path() -> Path | None:
+    """Return the path to the on-disk token cache file, or None if no repo root is findable."""
+    # Walk up from cwd looking for a docs/requirements directory (rqmd project marker).
+    try:
+        cur = Path.cwd()
+    except OSError:
+        return None
+    for parent in [cur, *cur.parents]:
+        if (parent / "docs" / "requirements").is_dir():
+            return parent / _TOKEN_CACHE_FILENAME
+        if (parent / ".git").exists():
+            return parent / _TOKEN_CACHE_FILENAME
+    return None
+
+
+def _read_cached_token_from_disk() -> tuple[str | None, float]:
+    """Read a previously cached token from disk.
+
+    Returns (token, expiry_timestamp) or (None, 0.0) if no valid cache exists.
+    """
+    cache_path = _token_cache_path()
+    if cache_path is None or not cache_path.is_file():
+        return None, 0.0
+    try:
+        data = json.loads(cache_path.read_text(encoding="utf-8"))
+        token = data.get("token")
+        expiry = float(data.get("expiry", 0.0))
+        if token and isinstance(token, str):
+            return token, expiry
+    except (json.JSONDecodeError, OSError, ValueError, TypeError):
+        pass
+    return None, 0.0
+
+
+def _write_token_to_disk(token: str, expiry: float) -> None:
+    """Persist a session token to the on-disk cache file."""
+    cache_path = _token_cache_path()
+    if cache_path is None:
+        return
+    try:
+        cache_path.write_text(
+            json.dumps({"token": token, "expiry": expiry}),
+            encoding="utf-8",
+        )
+        # Best-effort: restrict permissions to owner-only.
+        cache_path.chmod(0o600)
+    except OSError:
+        pass
+
+
+def _ensure_gitignore_entry() -> None:
+    """Add the token cache filename to .gitignore if not already present."""
+    cache_path = _token_cache_path()
+    if cache_path is None:
+        return
+    gitignore = cache_path.parent / ".gitignore"
+    try:
+        if gitignore.is_file():
+            contents = gitignore.read_text(encoding="utf-8")
+            # Check if already covered (exact line match).
+            for line in contents.splitlines():
+                stripped = line.strip()
+                if stripped == _TOKEN_CACHE_FILENAME or stripped == f"/{_TOKEN_CACHE_FILENAME}":
+                    return
+            # Append with a preceding newline if file doesn't end with one.
+            suffix = "" if contents.endswith("\n") else "\n"
+            gitignore.write_text(
+                contents + suffix + _TOKEN_CACHE_FILENAME + "\n",
+                encoding="utf-8",
+            )
+        else:
+            gitignore.write_text(_TOKEN_CACHE_FILENAME + "\n", encoding="utf-8")
+    except OSError:
+        pass
+
+
 def _get_session_token(endpoint: str) -> str | None:
     """Fetch a short-lived session token from the gateway via token exchange.
 
-    Caches the token in-process and re-fetches when expired.
+    Checks in-process cache first, then on-disk cache, then fetches fresh.
+    Persists new tokens to disk for reuse across CLI invocations.
     Returns None on any failure (network, auth, etc.).
     """
     import time as _time
 
     global _cached_token, _cached_token_expiry
 
-    # Return cached token if still valid (with 60s safety margin).
-    if _cached_token and _time.time() < (_cached_token_expiry - 60):
+    now = _time.time()
+
+    # 1. In-process cache (fastest).
+    if _cached_token and now < (_cached_token_expiry - 60):
         return _cached_token
 
+    # 2. On-disk cache (survives across CLI invocations).
+    disk_token, disk_expiry = _read_cached_token_from_disk()
+    if disk_token and now < (disk_expiry - 60):
+        _cached_token = disk_token
+        _cached_token_expiry = disk_expiry
+        return disk_token
+
+    # 3. Fresh token exchange with the gateway.
     url = f"{endpoint}/api/v1/token"
     body = json.dumps({"client_id": _CLIENT_ID}).encode("utf-8")
 
@@ -82,8 +172,12 @@ def _get_session_token(endpoint: str) -> str | None:
             token = data.get("token")
             expires_in = data.get("expires_in", 3600)
             if token:
+                expiry = now + expires_in
                 _cached_token = token
-                _cached_token_expiry = _time.time() + expires_in
+                _cached_token_expiry = expiry
+                # Persist to disk and ensure gitignored.
+                _write_token_to_disk(token, expiry)
+                _ensure_gitignore_entry()
                 return token
     except Exception as exc:
         print(f"rqmd-telemetry: token exchange failed: {exc}", file=sys.stderr)
