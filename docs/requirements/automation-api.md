@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 28🔧 10✅ 0⚠️ 0⛔ 0🗑️
+Summary: 0💡 29🔧 10✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -344,3 +344,12 @@ Summary: 0💡 28🔧 10✅ 0⚠️ 0⛔ 0🗑️
 - So that each query in the batch produces a separate keyed result in the JSON output so agents can correlate responses to requests.
 - So that errors in one query do not abort the entire batch; per-query success/failure is reported consistently with the existing partial-failure model.
 - So that the batch path reuses the already-parsed and optionally cached catalog (RQMD-CORE-038) rather than re-parsing per query.
+
+### RQMD-AUTOMATION-039: `--dump-type` filter for rqmd-ai
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As an AI agent or user who needs to see only bugs or only features from the catalog
+- I want `rqmd-ai` to accept a `--dump-type bug` (or `--dump-type feature`) flag that filters output by the `type` metadata field introduced in RQMD-CORE-041
+- So that `--dump-type` composes with existing filters like `--dump-status`, enabling queries such as `--dump-type bug --dump-status proposed` (open unfixed bugs) or `--dump-type feature --dump-status proposed` (net-new feature proposals).
+- So that when `--dump-type` is omitted, all types are included (preserving backwards compatibility).
+- So that the `--json` export includes the `type` field in each requirement object regardless of whether `--dump-type` is used.

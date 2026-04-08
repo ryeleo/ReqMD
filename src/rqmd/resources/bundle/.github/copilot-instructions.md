@@ -20,6 +20,7 @@ AI workflow defaults:
 - When drafting or editing requirement text, prefer a short user-story block (`As a ...`, `I want ...`, `So that ...`) plus Given/When/Then acceptance bullets when both add value.
 - Treat the user-story and Given/When/Then sections as complementary views of the same requirement and keep them semantically aligned rather than letting one drift.
 - For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
+- **Use `next_id` from the `rqmd-ai --json` output to allocate new requirement IDs.** Each domain file includes a `next_id` field (e.g., `"next_id": "RQMD-CORE-044"`) that tells you the next safe sequential ID. ***Never*** calculate the next ID manually by grepping or counting — always read it from the JSON output to avoid duplicate ID collisions.
 - After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
 - Use the same rqmd output conventions across projects where possible: concise markdown closeouts, consistent lifecycle emoji/labels, and the standard Info/Note/Warning block-quote style when callouts help readability.
 - Prefer final markdown closeouts that use these exact sections in order:

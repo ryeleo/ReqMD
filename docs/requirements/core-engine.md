@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 19🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 5💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -384,3 +384,30 @@ Summary: 5💡 19🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - So that the native extension is distributed as a pre-built wheel for common platforms (macOS arm64, macOS x86_64, Linux x86_64, Windows x86_64) and falls back to pure-Python when no wheel is available.
 - So that the native extension scope can grow incrementally: start with parsing, then indexing, then full catalog load, without requiring a single monolithic rewrite.
 - So that this requirement supersedes the narrow JSON-export scope of RQMD-CORE-025 and establishes the broader native acceleration roadmap.
+
+### RQMD-CORE-041: `type` metadata field and parser support
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a project maintainer with a mix of feature work and defect reports
+- I want rqmd to recognize a `type` metadata field in requirement headers (e.g., `<!-- type: bug -->`) so I can distinguish bugs from features without abusing the status lifecycle
+- So that `type` defaults to `feature` when omitted, keeping backwards compatibility with every existing requirement doc.
+- So that the parser exposes the `type` value in the parsed catalog, the JSON export, and the interactive UI.
+- So that the initial allowed values are `bug` and `feature`, with the enum extensible for future values like `chore` or `tech-debt`.
+- So that the interactive UI can display a type-appropriate status alias (e.g., "🐛 Open" instead of "💡 Proposed") when `type: bug` is set, without changing the canonical status value stored in the file.
+
+### RQMD-CORE-042: `affects` cross-reference field for bugs
+- **Status:** 🔧 Implemented
+- **Priority:** 🟡 P2 - Medium
+- As a developer filing a bug against a tracked requirement
+- I want to add an `affects: PROJ-XXX` metadata comment to a bug so it is linked back to the requirement it is a defect against
+- So that `affects` is semantically distinct from `blocked-by` — a bug *affects* the parent requirement's validity rather than blocking its own implementation.
+- So that `rqmd` validates the target ID exists in the catalog and warns if it does not.
+- So that the `rqmd-ai --json` export includes `affects` in each requirement object for agents to filter and cross-reference.
+
+### RQMD-CORE-043: Bug-specific template in scaffold and skills
+- **Status:** 🔧 Implemented
+- **Priority:** 🟡 P2 - Medium
+- As a developer reporting a defect
+- I want rqmd to offer a Steps to Reproduce / Expected / Actual / Root Cause template when creating a bug, since the user-story + Given/When/Then shape does not fit defect reports naturally
+- So that `rqmd init --scaffold` includes an example bug entry alongside the feature example.
+- So that the template includes `type: bug`, `affects:`, and the four-section body (Steps to Reproduce, Expected, Actual, Root Cause) with Root Cause marked as optional at filing time.

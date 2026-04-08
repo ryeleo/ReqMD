@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- First-class bug tracking — rqmd now parses `- **Type:** bug` and `- **Affects:** PROJ-XXX` metadata fields from requirement headers (`RQMD-CORE-041`, `RQMD-CORE-042`). Requirements default to `type: feature` when omitted, preserving backward compatibility.
+- `--dump-type` CLI filter for `rqmd-ai` exports (`RQMD-AUTOMATION-039`). Composable with `--dump-status` for multi-axis filtering (e.g., `--dump-type bug --dump-status proposed`). Batch mode also supports the new `dump-type` query type.
+- Packaged bug-report template (`RQMD-CORE-043`) with Steps to Reproduce / Expected / Actual / Root Cause sections. The `/brainstorm` and `/refine` prompts now detect defect descriptions and offer this template instead of the user-story + Given/When/Then shape.
+
+### Fixed
+
+- Duplicate requirement IDs (`RQMD-CORE-041`–`043`, `RQMD-AUTOMATION-039`) caused by agents manually calculating the next ID instead of reading `next_id` from `rqmd-ai --json` output. Renumbered the duplicates to `RQMD-CORE-044`–`046` and `RQMD-AUTOMATION-040`.
+- `next_id` guidance added to `copilot-instructions.md`, `/rqmd-brainstorm`, and `/rqmd-implement` skills so agents always allocate IDs from the JSON output rather than grepping markdown files.
+
 ## [0.2.0] - 2026-04-08
 
 ### Added

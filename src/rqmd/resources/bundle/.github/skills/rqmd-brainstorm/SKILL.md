@@ -42,7 +42,7 @@ metadata:
       - tokens: [performance, rust, native]
         target_file: core-engine.md
     priority_hints:
-      - tokens: [critical, p0, must, crash, fails, regression]
+      - tokens: [critical, p0, must, crash, fails, regression, broken, bug]
         priority_rank: 0
       - tokens: [implement, workflow, agent, ai, summary, readme, blocking]
         priority_rank: 1
@@ -57,6 +57,8 @@ Workflow:
 - Read the brainstorm source, usually `docs/brainstorm.md`.
 - Cross-check existing backlog with `rqmd-ai --json --dump-status proposed`.
 - Convert viable ideas into tracked proposals with target requirement docs, suggested IDs, canonical `💡 Proposed` status, and priorities that follow the active project priority catalog.
+- **Use `next_id` from the `rqmd-ai --json` output to allocate new requirement IDs.** Each domain file includes a `next_id` field (e.g., `"next_id": "RQMD-CORE-044"`) that tells you the next safe ID to use. ***Never*** calculate the next ID manually by grepping or counting — always read it from the JSON output to avoid duplicate ID collisions.
+- When a brainstorm item describes a defect — broken behavior, a regression, something that "used to work," or a Steps to Reproduce pattern — treat it as a bug report. Use `- **Type:** bug` and `- **Affects:** <ID>` metadata, and prefer the Steps to Reproduce / Expected / Actual / Root Cause template instead of the user-story + Given/When/Then shape.
 - Update requirement docs, the requirements index, and `CHANGELOG.md` before code when the proposal changes shipped behavior or workflow.
 
 Constraints:
