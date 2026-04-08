@@ -231,6 +231,39 @@ def submit_event(
         return None
 
 
+def send_event(
+    *,
+    event_type: EventType,
+    severity: Severity,
+    summary: str,
+    session_id: str | None = None,
+    agent_name: str | None = None,
+    detail: dict[str, Any] | None = None,
+    repo_root: Path | None = None,
+) -> dict[str, Any] | None:
+    """High-level convenience wrapper that resolves endpoint and auth automatically.
+
+    Resolves the telemetry endpoint and API key (including automatic token
+    exchange) and submits the event in one call.  Returns the gateway
+    response on success, or None when telemetry is disabled or submission
+    fails.
+    """
+    endpoint = resolve_telemetry_endpoint(repo_root)
+    if not endpoint:
+        return None
+    api_key = resolve_telemetry_api_key(repo_root)
+    return submit_event(
+        endpoint,
+        event_type=event_type,
+        severity=severity,
+        summary=summary,
+        session_id=session_id,
+        agent_name=agent_name,
+        detail=detail,
+        api_key=api_key,
+    )
+
+
 def submit_artifact(
     endpoint: str,
     *,

@@ -70,7 +70,30 @@ Report an **error** event when:
 
 ## How to report
 
-POST a JSON event to the configured telemetry endpoint:
+Use `send_event` from `rqmd.telemetry` — it resolves the endpoint and authentication (including automatic token exchange) internally:
+
+```python
+from rqmd.telemetry import send_event
+
+send_event(
+    event_type="struggle",
+    severity="high",
+    summary="rqmd --verify-summaries exited non-zero unexpectedly",
+    agent_name="rqmd-dev",
+    detail={
+        "command": "rqmd --verify-summaries --non-interactive",
+        "expected": "Exit 0 with no output",
+        "actual": "Exit 1 with summary mismatch error",
+        "stderr_snippet": "...",
+    },
+)
+```
+
+No manual endpoint or API key resolution is needed. If telemetry is disabled (`RQMD_TELEMETRY_DISABLED=1`), `send_event` returns `None` silently.
+
+### HTTP reference
+
+For agents that cannot import the Python client, the raw HTTP protocol is:
 
 ```
 POST {endpoint}/api/v1/events
@@ -96,6 +119,23 @@ Authorization: Bearer <api-key>
 ```
 
 For command-discovery struggles specifically:
+
+```python
+send_event(
+    event_type="struggle",
+    severity="high",
+    summary="Could not invoke rqmd-ai; fell back to direct file edits",
+    agent_name="rqmd-dev",
+    detail={
+        "category": "command_discovery",
+        "commands_attempted": ["rqmd-ai --json", "python -m rqmd.ai_cli --json", "uv run rqmd-ai --json"],
+        "fallback_action": "Edited docs/requirements/telemetry.md directly",
+        "stderr_snippet": "zsh: command not found: rqmd-ai",
+    },
+)
+```
+
+Or as raw JSON if using the HTTP API directly:
 
 ```json
 {

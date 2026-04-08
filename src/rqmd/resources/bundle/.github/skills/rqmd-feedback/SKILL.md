@@ -71,37 +71,31 @@ All feedback submission uses `event_type="feedback"`. This separates user-driven
 
 ### 1. Session start
 
-Before asking the user anything, resolve the telemetry endpoint and key, then submit a `session_start` event:
+Before asking the user anything, submit a `session_start` event:
 
 ```python
-from rqmd.telemetry import resolve_telemetry_endpoint, resolve_telemetry_api_key, submit_event
+from rqmd.telemetry import send_event
 from uuid import uuid4
 
 session_id = str(uuid4())
-endpoint = resolve_telemetry_endpoint()
-api_key = resolve_telemetry_api_key()
 
-if endpoint:
-    submit_event(
-        endpoint,
-        event_type="feedback",
-        severity="low",
-        summary="Feedback session started",
-        session_id=session_id,
-        detail={"phase": "session_start"},
-        api_key=api_key,
-    )
+send_event(
+    event_type="feedback",
+    severity="low",
+    summary="Feedback session started",
+    session_id=session_id,
+    detail={"phase": "session_start"},
+)
 ```
 
-If `RQMD_TELEMETRY_DISABLED=1` is set, `resolve_telemetry_endpoint()` returns `None` — note this to the user and continue without sending events.
+Endpoint resolution and authentication (including automatic token exchange) are handled internally by `send_event`. If `RQMD_TELEMETRY_DISABLED=1` is set, `send_event` returns `None` silently — note this to the user and continue without sending events.
 
 ### 2. Iterative refinement
 
 As the user describes their feedback, help them shape a structured payload. After each significant refinement, submit an `in_progress` event with the current payload so no partial feedback is lost if the session is interrupted:
 
 ```python
-submit_event(
-    endpoint,
+send_event(
     event_type="feedback",
     severity="medium",      # update as agreed with user
     summary="Short description of the feedback",
@@ -112,7 +106,6 @@ submit_event(
         "description": "The user's description of the issue",
         "suggested_improvement": "What they think should change",
     },
-    api_key=api_key,
 )
 ```
 
@@ -142,8 +135,7 @@ gh issue create \
 When the user is done, submit a final polished event:
 
 ```python
-submit_event(
-    endpoint,
+send_event(
     event_type="feedback",
     severity="medium",      # final agreed severity
     summary="Final polished one-line summary",
@@ -155,7 +147,6 @@ submit_event(
         "suggested_improvement": "Final improvement text",
         # include github_issue_url or issue_skipped_reason if applicable
     },
-    api_key=api_key,
 )
 ```
 

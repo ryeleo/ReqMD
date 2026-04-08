@@ -1,5 +1,38 @@
 # Brainstorm
 
+## Bugs
+
+Feature request: first-class bug tracking in rqmd
+
+Context: When working on a VR game project with ~170 tracked requirements,
+I keep running into defects that don't fit cleanly into the requirement lifecycle.
+A teleport feature is marked 🔧 Implemented, but it's broken — the reticle doesn't
+show and the player doesn't actually move. I have to create new "proposed" requirements
+for what are really bug reports against existing requirements.
+
+Pain points:
+1. No way to distinguish "net-new feature" from "regression against SSVR-0190".
+2. No reproduction-steps template (Given/When/Then works but "Steps to Reproduce /
+   Expected / Actual / Root Cause" is the natural shape for bugs).
+3. No way to link a bug back to the requirement it violates (e.g. "blocks SSVR-0190").
+4. Status lifecycle is wrong — bugs want Open → Fixed → Verified, not Proposed →
+   Implemented → Verified.
+5. rqmd-ai --dump-status has no way to filter "show me all open bugs" vs "show me
+   proposed features."
+
+Suggested shape:
+- A `🐛 Bug` status or a `type: bug` field in requirement metadata.
+- Optional `blocks: SSVR-XXXX` cross-reference.
+- A bug-specific template with Steps to Reproduce / Expected / Actual / Root Cause.
+- `rqmd-ai --dump-status bug` or `--dump-type bug` filter.
+- Brainstorm skill should detect when an idea is really a bug report and suggest the
+  bug template instead of the requirement template.
+- Keep it lightweight — bugs should live in the same requirement docs, not a separate
+  tracker, so the single-source-of-truth model is preserved.
+
+Priority: I think this would significantly improve the workflow for any project past
+the early prototype stage where things start breaking as often as they get built.
+
 ## Iteration via: Brainstorm/Refine + Implement
 
 New primary **mult-agent** workflow for users when they are using rqmd-ai: `brainstorm+refine requirements -> implement requirements -- repeat`
