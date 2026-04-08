@@ -7,15 +7,19 @@ uploads to MinIO.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import os
+import time
 import uuid
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Literal
 
 import asyncpg
 from fastapi import (Depends, FastAPI, File, Form, Header, HTTPException,
-                     UploadFile)
+                     Request, UploadFile)
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
@@ -33,6 +37,52 @@ MINIO_BUCKET = os.environ.get("MINIO_BUCKET", "rqmd-telemetry")
 MINIO_REGION = os.environ.get("MINIO_REGION", "us-east-1")
 MINIO_SECURE = os.environ.get("MINIO_SECURE", "false").lower() == "true"
 TELEMETRY_API_KEY = os.environ.get("TELEMETRY_API_KEY", "changeme-dev-only")
+
+# Token exchange settings
+TOKEN_SECRET = os.environ.get("TELEMETRY_TOKEN_SECRET", "dev-token-secret-change-in-prod")
+TOKEN_TTL_SECONDS = int(os.environ.get("TELEMETRY_TOKEN_TTL", "3600"))  # 1 hour
+
+# Accepted client identifiers that may request a session token.
+# The client_id shipped in the rqmd package is public and non-secret.
+ALLOWED_CLIENT_IDS = set(
+    filter(None, os.environ.get("TELEMETRY_ALLOWED_CLIENT_IDS", "rqmd-agent-v1").split(","))
+)
+
+# Rate limiting (in-memory sliding window)
+RATE_LIMIT_EVENTS_PER_WINDOW = int(os.environ.get("RATE_LIMIT_EVENTS_PER_WINDOW", "60"))
+RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("RATE_LIMIT_WINDOW_SECONDS", "60"))
+RATE_LIMIT_TOKEN_REQUESTS_PER_WINDOW = int(os.environ.get("RATE_LIMIT_TOKEN_PER_WINDOW", "10"))
+RATE_LIMIT_GLOBAL_PER_WINDOW = int(os.environ.get("RATE_LIMIT_GLOBAL_PER_WINDOW", "600"))
+
+
+# ---------------------------------------------------------------------------
+# In-memory sliding-window rate limiter
+# ---------------------------------------------------------------------------
+
+class _RateLimiter:
+    """Simple per-key sliding-window counter stored in-memory."""
+
+    def __init__(self) -> None:
+        self._hits: dict[str, list[float]] = defaultdict(list)
+
+    def is_allowed(self, key: str, limit: int, window: int) -> tuple[bool, int]:
+        """Check whether *key* is under the limit.
+
+        Returns ``(allowed, retry_after_seconds)``.
+        """
+        now = time.monotonic()
+        bucket = self._hits[key]
+        # Evict expired entries.
+        cutoff = now - window
+        bucket[:] = [t for t in bucket if t > cutoff]
+        if len(bucket) >= limit:
+            retry_after = int(bucket[0] - cutoff) + 1
+            return False, max(retry_after, 1)
+        bucket.append(now)
+        return True, 0
+
+
+_rate_limiter = _RateLimiter()
 
 # ---------------------------------------------------------------------------
 # Database schema (applied on startup)
@@ -72,6 +122,17 @@ CREATE TABLE IF NOT EXISTS telemetry_artifacts (
 
 CREATE INDEX IF NOT EXISTS idx_artifacts_event   ON telemetry_artifacts (event_id);
 CREATE INDEX IF NOT EXISTS idx_artifacts_session ON telemetry_artifacts (session_id);
+
+CREATE TABLE IF NOT EXISTS session_tokens (
+    token_hash      TEXT PRIMARY KEY,
+    client_id       TEXT NOT NULL,
+    session_id      UUID NOT NULL,
+    issued_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at      TIMESTAMPTZ NOT NULL,
+    revoked         BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS idx_tokens_expires ON session_tokens (expires_at);
 """
 
 # ---------------------------------------------------------------------------
@@ -108,6 +169,16 @@ class HealthResponse(BaseModel):
     minio: bool = False
 
 
+class TokenRequest(BaseModel):
+    client_id: str = Field(description="Public client identifier shipped in the rqmd package")
+
+
+class TokenResponse(BaseModel):
+    token: str = Field(description="Short-lived Bearer token for the session")
+    expires_in: int = Field(description="Token lifetime in seconds")
+    session_id: str = Field(description="Session UUID bound to this token")
+
+
 # ---------------------------------------------------------------------------
 # Application
 # ---------------------------------------------------------------------------
@@ -135,21 +206,56 @@ def _get_minio_client():
     return _minio_client
 
 
-def _verify_api_key(authorization: str = Header(None)) -> None:
-    """Verify the API key from the Authorization header.
-    
-    Expects: Authorization: Bearer <api-key>
-    """
+def _extract_bearer_token(authorization: str = Header(None)) -> str:
+    """Extract the Bearer token from the Authorization header."""
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
-    
     parts = authorization.split(" ")
     if len(parts) != 2 or parts[0].lower() != "bearer":
         raise HTTPException(status_code=401, detail="Invalid Authorization header format")
-    
-    token = parts[1]
-    if token != TELEMETRY_API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid API key")
+    return parts[1]
+
+
+async def _verify_api_key(request: Request, token: str = Depends(_extract_bearer_token)) -> None:
+    """Verify the Bearer token is either the static API key or a valid session token."""
+    # Check rate limit (per-IP for event endpoints).
+    client_ip = request.client.host if request.client else "unknown"
+    allowed, retry_after = _rate_limiter.is_allowed(
+        f"events:{client_ip}", RATE_LIMIT_EVENTS_PER_WINDOW, RATE_LIMIT_WINDOW_SECONDS
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded",
+            headers={"Retry-After": str(retry_after)},
+        )
+    # Global rate limit.
+    g_allowed, g_retry = _rate_limiter.is_allowed(
+        "global:events", RATE_LIMIT_GLOBAL_PER_WINDOW, RATE_LIMIT_WINDOW_SECONDS
+    )
+    if not g_allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Global rate limit exceeded",
+            headers={"Retry-After": str(g_retry)},
+        )
+
+    # Legacy static API key.
+    if token == TELEMETRY_API_KEY:
+        return
+
+    # Session token — look up by hash.
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    if _pool:
+        async with _pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT expires_at, revoked FROM session_tokens WHERE token_hash = $1",
+                token_hash,
+            )
+            if row and not row["revoked"] and row["expires_at"] > datetime.now(timezone.utc):
+                return
+
+    raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
 @asynccontextmanager
@@ -196,6 +302,57 @@ async def health():
         status="healthy" if (pg_ok and minio_ok) else "degraded",
         postgres=pg_ok,
         minio=minio_ok,
+    )
+
+
+@app.post("/api/v1/token", response_model=TokenResponse, status_code=201)
+async def exchange_token(req: TokenRequest, request: Request):
+    """Exchange a public client_id for a short-lived session token."""
+    # Rate-limit token requests per IP.
+    client_ip = request.client.host if request.client else "unknown"
+    allowed, retry_after = _rate_limiter.is_allowed(
+        f"token:{client_ip}", RATE_LIMIT_TOKEN_REQUESTS_PER_WINDOW, RATE_LIMIT_WINDOW_SECONDS
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Token request rate limit exceeded",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    if req.client_id not in ALLOWED_CLIENT_IDS:
+        raise HTTPException(status_code=403, detail="Unknown client_id")
+
+    if not _pool:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    session_id = uuid.uuid4()
+    now = datetime.now(timezone.utc)
+    from datetime import timedelta
+    expires_at = now + timedelta(seconds=TOKEN_TTL_SECONDS)
+
+    # Generate an opaque token: HMAC(secret, session_id + timestamp).
+    raw = f"{session_id}:{now.isoformat()}:{uuid.uuid4().hex}"
+    token = hmac.new(TOKEN_SECRET.encode(), raw.encode(), hashlib.sha256).hexdigest()
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+    async with _pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO session_tokens (token_hash, client_id, session_id, issued_at, expires_at)
+            VALUES ($1, $2, $3, $4, $5)
+            """,
+            token_hash,
+            req.client_id,
+            session_id,
+            now,
+            expires_at,
+        )
+
+    return TokenResponse(
+        token=token,
+        expires_in=TOKEN_TTL_SECONDS,
+        session_id=str(session_id),
     )
 
 

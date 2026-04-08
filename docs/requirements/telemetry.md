@@ -3,7 +3,7 @@
 Scope: agent-facing telemetry infrastructure for capturing AI workflow friction, improvement suggestions, and session diagnostics — enabling rqmd's own AI agents to report how rqmd can be improved.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 9🔧 0✅ 0⚠️ 0⛔ 0🗑️
+Summary: 2💡 11🔧 0✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TELEMETRY-001: Local telemetry development stack
@@ -73,17 +73,18 @@ Summary: 2💡 9🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - Then it submits a telemetry event with event_type "suggestion", a concise description of the observed friction, a proposed improvement or change, and an optional confidence level
 - And the suggestion captures enough detail for a developer to evaluate whether the idea is actionable without needing the full session context.
 
-### RQMD-TELEMETRY-007: Telemetry opt-in and privacy controls
+### RQMD-TELEMETRY-007: Telemetry opt-out and privacy controls
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a user who values privacy and does not want silent data collection
-- I want telemetry to be explicitly opt-in, default to local-only storage, and never transmit data without clear configuration
+- As a user who values privacy and does not want telemetry data sent to external services
+- I want a clear opt-out mechanism that disables all telemetry transmission
 - So that rqmd telemetry cannot become a trust liability.
 - Given a repository has the rqmd AI bundle installed with the telemetry skill
-- When no telemetry endpoint has been explicitly configured
-- Then agents must not attempt to send telemetry events anywhere
-- And when a local telemetry endpoint is configured, events stay on the local machine unless a remote endpoint is separately and explicitly opted into
-- And the skill guidance makes the opt-in contract visible to both agents and humans reviewing the installed bundle.
+- When telemetry is enabled by default with built-in production defaults
+- Then agents can submit events without any manual configuration
+- And when a user sets `RQMD_TELEMETRY_DISABLED=1` in their environment
+- Then both `resolve_telemetry_endpoint` and `resolve_telemetry_api_key` return None and no events are sent
+- And the skill guidance makes the opt-out contract visible to both agents and humans reviewing the installed bundle.
 
 ### RQMD-TELEMETRY-008: Agent telemetry configuration discovery
 - **Status:** 🔧 Implemented
@@ -137,3 +138,38 @@ Summary: 2💡 9🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - Then it runs the feedback-loop review, filters for proposals above a configurable confidence threshold, and applies accepted patches to a new branch
 - And it opens a pull request with a summary of the telemetry patterns found, the changes proposed, and links back to the originating events
 - And the PR is labeled for human review so no changes merge without approval.
+
+### RQMD-TELEMETRY-012: Short-lived session tokens via gateway exchange
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer who ships rqmd as a public package
+- I want the telemetry client to authenticate via short-lived tokens fetched at runtime from the gateway instead of shipping a long-lived plaintext API key in the source code
+- So that credential exposure in the published package cannot be used to spam or poison the telemetry database indefinitely.
+- Given the rqmd client starts a telemetry session
+- When it needs to submit its first event
+- Then it calls `POST /api/v1/token` on the gateway with a package-embedded client identifier (public, non-secret)
+- And the gateway returns a short-lived HMAC token (1-hour TTL) scoped to that session
+- And the client caches the token for the session lifetime and includes it as the Bearer token on all subsequent event POSTs
+- And when the token expires, the client transparently re-fetches a new one
+- And key rotation is a gateway-side config change that does not require a new rqmd package release
+- And the `_DEFAULT_API_KEY` plaintext fallback has been removed — the client now uses `_CLIENT_ID` for token exchange.
+
+### RQMD-TELEMETRY-013: Gateway rate limiting
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a gateway operator who wants to protect the telemetry database from abuse and misconfigured agents
+- I want per-client and global rate limits enforced at the gateway layer
+- So that no single source can flood the database, whether through malice or misconfiguration.
+- Given the telemetry gateway is running
+- When a client submits events faster than the configured rate limit
+- Then the gateway responds with `429 Too Many Requests` and a `Retry-After` header
+- And the Python telemetry client respects the 429 and backs off gracefully without crashing or losing the event
+- And rate limits are configurable per dimension: per-IP, per-session, per-token, and global
+- And the default limits are generous enough for normal agent usage (e.g. 60 events/minute per session, 600 events/minute global) but block obvious abuse patterns
+- And the token exchange endpoint (`POST /api/v1/token`) is also rate-limited so bulk token farming is throttled server-side without adding client-side latency
+- And rate limit state is stored in-memory or in Postgres (not an external Redis dependency for the v1 single-VM deployment).
+
+### RQMD-TELEMETRY-014: Proof-of-work challenge for token exchange
+- **Status:** 🗑️ Deprecated
+- **Priority:** 🟢 P3 - Low
+- Deprecated: Adds client-side compute latency (~50-200ms) to every token exchange with no way to eliminate it. Rate limiting on the token endpoint (RQMD-TELEMETRY-013) achieves the same anti-abuse goal server-side at zero client cost. Not worth the latency trade-off for a developer telemetry service.

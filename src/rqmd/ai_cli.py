@@ -2925,6 +2925,57 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
                 click.echo(f"- created {path}")
         return
 
+    if mode == "telemetry":
+        configured = payload.get("configured", False)
+        endpoint = payload.get("endpoint")
+        reachable = payload.get("reachable", False)
+        api_key_ok = payload.get("api_key_configured", False)
+        status_icon = click.style("✓", fg="green") if (configured and reachable) else click.style("✗", fg="red")
+        click.echo(f"{status_icon} Telemetry endpoint: {endpoint or '(not configured)'}")
+        if configured:
+            click.echo(f"  reachable: {'yes' if reachable else 'no'}")
+            click.echo(f"  api key:   {'configured' if api_key_ok else 'not set'}")
+        instructions = payload.get("instructions")
+        if isinstance(instructions, str):
+            click.echo(f"\n{instructions}")
+        return
+
+    if mode == "telemetry-test":
+        ok = click.style("✓", fg="green")
+        fail = click.style("✗", fg="red")
+        endpoint = payload.get("endpoint")
+
+        event_info = payload.get("event") or {}
+        artifact_info = payload.get("artifact") or {}
+        event_ok = event_info.get("success", False) if isinstance(event_info, dict) else False
+        artifact_ok = artifact_info.get("success", False) if isinstance(artifact_info, dict) else False
+
+        # Event (Postgres) line
+        if event_ok:
+            event_id = event_info.get("event_id", "") if isinstance(event_info, dict) else ""
+            click.echo(f"  {ok} Event (Postgres):  accepted  id={event_id}")
+        else:
+            click.echo(f"  {fail} Event (Postgres):  failed")
+
+        # Artifact (MinIO) line
+        if artifact_ok:
+            artifact_id = artifact_info.get("artifact_id", "") if isinstance(artifact_info, dict) else ""
+            click.echo(f"  {ok} Artifact (MinIO):  stored    id={artifact_id}")
+        else:
+            art_err = artifact_info.get("error", "") if isinstance(artifact_info, dict) else ""
+            click.echo(f"  {fail} Artifact (MinIO):  {art_err or 'failed'}")
+
+        # Summary
+        overall = payload.get("success", False)
+        if overall:
+            click.echo(f"\n{ok} All checks passed — endpoint: {endpoint}")
+        else:
+            message = payload.get("message") or payload.get("error") or "Partial failure"
+            click.echo(f"\n{fail} {message}")
+            if endpoint:
+                click.echo(f"  endpoint: {endpoint}")
+        return
+
     click.echo(f"rqmd-ai mode: {mode}")
     read_only = payload.get("read_only")
     if isinstance(read_only, bool):
@@ -3870,7 +3921,8 @@ def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dic
                 reachable = True
         except Exception:
             pass
-    from .telemetry import resolve_telemetry_api_key, resolve_telemetry_endpoint
+
+    return {
         "mode": "telemetry",
         "configured": configured,
         "endpoint": endpoint,
@@ -3885,6 +3937,91 @@ def _handle_telemetry_command(repo_root: Path, json_output: bool = False) -> dic
             else "Telemetry endpoint configured but not reachable at {}.".format(endpoint)
         ),
     }
+
+
+def _handle_telemetry_test_command(repo_root: Path, json_output: bool = False) -> dict[str, object]:
+    """Handle `rqmd-ai telemetry-test` — send a test event and artifact, report results."""
+    from .telemetry import (
+        resolve_telemetry_api_key,
+        resolve_telemetry_endpoint,
+        submit_artifact,
+        submit_event,
+    )
+
+    endpoint = resolve_telemetry_endpoint(repo_root)
+    api_key = resolve_telemetry_api_key(repo_root)
+
+    if not endpoint:
+        return {
+            "mode": "telemetry-test",
+            "success": False,
+            "error": "No telemetry endpoint configured. Set RQMD_TELEMETRY_ENDPOINT or add telemetry.endpoint to .rqmd.yml.",
+        }
+
+    # --- Step 1: test event submission (Postgres) ---
+    event_result = submit_event(
+        endpoint,
+        event_type="success",
+        severity="low",
+        summary="Telemetry test event from rqmd-ai telemetry-test",
+        agent_name="rqmd-ai-telemetry-test",
+        detail={
+            "purpose": "Verify telemetry pipeline is working end-to-end.",
+            "project_root": str(repo_root),
+        },
+        api_key=api_key,
+    )
+
+    event_ok = event_result is not None
+    event_id = event_result.get("event_id") if event_ok else None
+    session_id = event_result.get("session_id") if event_ok else None
+
+    # --- Step 2: test artifact upload (MinIO) ---
+    artifact_ok = False
+    artifact_id: str | None = None
+    artifact_error: str | None = None
+
+    if event_ok and event_id and session_id:
+        artifact_result = submit_artifact(
+            endpoint,
+            session_id=session_id,
+            event_id=event_id,
+            filename="telemetry-test.txt",
+            content=b"rqmd-ai telemetry-test artifact probe",
+            content_type="text/plain",
+            api_key=api_key,
+        )
+        if artifact_result is not None:
+            artifact_ok = True
+            artifact_id = artifact_result.get("artifact_id")
+        else:
+            artifact_error = "Failed to upload test artifact. MinIO may be unreachable."
+    elif not event_ok:
+        artifact_error = "Skipped — event submission failed."
+
+    overall_success = event_ok and artifact_ok
+    payload: dict[str, object] = {
+        "mode": "telemetry-test",
+        "success": overall_success,
+        "endpoint": endpoint,
+        "event": {
+            "success": event_ok,
+            "event_id": event_id,
+        },
+        "artifact": {
+            "success": artifact_ok,
+            "artifact_id": artifact_id,
+            **({"error": artifact_error} if artifact_error else {}),
+        },
+    }
+    if overall_success:
+        payload["message"] = "Postgres and MinIO pipelines are working end-to-end."
+    elif event_ok and not artifact_ok:
+        payload["message"] = "Event accepted (Postgres OK) but artifact upload failed (MinIO)."
+    else:
+        payload["error"] = "Failed to submit test event. Check that the endpoint is reachable and the API key is correct."
+
+    return payload
 
 
 def _handle_batch(
@@ -4006,7 +4143,19 @@ def _handle_batch(
     }
 
 
-@click.command(context_settings={"help_option_names": ["-h", "--help"]})
+@click.command(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    epilog="""
+\b
+Commands:
+  install (i)       Install the rqmd agent bundle.
+  reinstall (ri)    Reinstall the bundle, overwriting existing files.
+  upgrade (up)      Upgrade the bundle, preserving detected preset.
+  init              Initialize rqmd in the project.
+  telemetry         Show telemetry configuration.
+  telemetry-test    Send a test telemetry event.
+""",
+)
 @click.argument("command_name", required=False)
 @click.option(
     "--version",
@@ -4179,6 +4328,8 @@ def main(
             workflow_mode = "init"
         elif normalized_command == "telemetry":
             workflow_mode = "telemetry"
+        elif normalized_command in {"telemetry-test", "telemetry test"}:
+            workflow_mode = "telemetry-test"
         else:
             raise click.ClickException(f"Unknown rqmd-ai command: {command_name}")
     if chat_mode is None:
@@ -4188,6 +4339,11 @@ def main(
 
     if workflow_mode == "telemetry":
         payload = _handle_telemetry_command(repo_root, json_output=json_output)
+        _emit(payload, json_output=json_output, json_output_file=json_output_file)
+        return
+
+    if workflow_mode == "telemetry-test":
+        payload = _handle_telemetry_test_command(repo_root, json_output=json_output)
         _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 

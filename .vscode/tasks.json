@@ -1,0 +1,44 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Tunnel to Az TeleVM",
+      "type": "shell",
+      "command": "./scripts/telemetry-tunnel.sh",
+      "args": ["20.94.227.192"],
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "close": false
+      }
+    },
+    {
+      "label": "Start Remote Admin Tools",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.telemetry-admin.yml up -d && echo '\n  Adminer: http://localhost:8081\n'",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "SSH to Az TeleVM",
+      "type": "shell",
+      "command": "ssh",
+      "args": ["azureuser@20.94.227.192"],
+      "isBackground": true,
+      "runOptions": {
+        "instanceLimit": 5
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      }
+    }
+  ]
+}

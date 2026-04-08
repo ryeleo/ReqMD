@@ -6,8 +6,7 @@
 /go: Continue with what you were currently doing.
 /next: Work with the user on picking what to work on next.
 /refine: Work with the user on refining requirements. (This can easily become brainstorming if the user isn't sure what they want yet, or it can be more focused on fixing-up existing requirements if they have a specific requirement in mind that they want to refine.)
-
-/brainstorm
+/brainstorm: Think broadly and creatively about the project, requirements, implementation, or any other aspect of the work. This is a more open-ended prompt that encourages exploration and idea generation. Regularly suggest that new requirements could be drafted/created (and existing ones updated to reflect the new brainstorm). When in brainstorm mode, offer loose titles to requirements only, not full requirements.
 
 
 ## Performance optimizing for rqmd-ai speed

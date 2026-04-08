@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Short-lived session tokens via gateway token exchange (`RQMD-TELEMETRY-012`). The client no longer ships a plaintext API key in source — instead it sends a public client ID to `POST /api/v1/token` and receives a short-lived Bearer token (1 hour TTL) cached in-process with transparent refresh.
+- Gateway rate limiting (`RQMD-TELEMETRY-013`). In-memory sliding-window limiters protect the event ingestion endpoint (60 req/min per-IP, 600 req/min global) and the token exchange endpoint (10 req/min per-IP). Exceeded limits return `429 Too Many Requests` with a `Retry-After` header.
+- Built-in production telemetry defaults so agents report friction out of the box without any manual endpoint or key configuration. The telemetry client falls back to the production gateway (`20.94.227.192:18080`) when no env var or `.rqmd.yml` override is set.
+- `RQMD_TELEMETRY_DISABLED=1` opt-out mechanism for users who do not want telemetry sent to external services.
+- `RQMD-TELEMETRY-012` requirement tracking the move from plaintext hardcoded API key to a secure distribution mechanism.
 - Lazy import strategy for the rqmd package init so that `rqmd-ai` and other non-interactive entry points no longer pay the ~90ms cost of eagerly importing the full interactive CLI module chain (`RQMD-CORE-037`). Measured improvement: `rqmd-ai --json --dump-status proposed` dropped from ~155ms to ~81ms (warm).
 - Non-interactive latency budget tests gating warm full-catalog parse and single-ID lookup performance, plus a regression test verifying lazy init does not eagerly load `rqmd.cli` (`RQMD-CORE-039`).
 - Five new performance-focused requirements promoted from brainstorm: `RQMD-CORE-037` (lazy imports), `RQMD-CORE-038` (filesystem parse cache), `RQMD-CORE-039` (non-interactive latency budget), `RQMD-CORE-040` (native Rust/C acceleration roadmap), and `RQMD-AUTOMATION-038` (multi-query batch mode for rqmd-ai).
@@ -18,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added agent-facing telemetry infrastructure so AI agents can self-report workflow friction, improvement suggestions, and errors back to rqmd developers — implemented as a new `RQMD-TELEMETRY` requirement domain with Postgres + MinIO local dev stack, a FastAPI gateway, a Python telemetry client, and an `/rqmd-telemetry` bundle skill that teaches agents when and how to submit events.
 - Added an Azure single-VM telemetry deployment blueprint with Terraform provisioning (`infra/azure/telemetry-vm`), a GitHub Actions workflow (`deploy-telemetry-vm`), a production compose stack (`docker-compose.telemetry.v1.yml`), systemd wiring, and backup/restore scripts for best-effort developer-server hosting.
 - Added `rqmd-ai telemetry` command for checking endpoint configuration and health.
+- Added `rqmd-ai telemetry-test` command for sending a test event to verify the telemetry pipeline is working end-to-end from any project.
 - Added agent telemetry configuration discovery (`RQMD_TELEMETRY_API_KEY` env var and `telemetry.api_key` config) so agents can authenticate with the gateway via Bearer token without ad-hoc credential handling.
 - Added command-discovery struggle reporting so agents explicitly report when `rqmd` or `rqmd-ai` cannot be invoked and they fall back to direct file manipulation — tracked as a distinct high-severity `"category": "command_discovery"` telemetry event with the exact commands attempted and the fallback action taken.
 - Added prompt-aware bundle support and a bundled prompt suite including `/go`, `/commit-and-go`, `/next`, `/brainstorm`, `/docs-pass`, `/pin`, and `/ship-check` so the installed rqmd AI experience can stay centered on one primary implementation agent with simpler slash-command entrypoints.

@@ -10,16 +10,24 @@ from unittest.mock import patch
 
 import pytest
 from rqmd.telemetry import (
+    _CLIENT_ID,
+    _DEFAULT_ENDPOINT,
     report_error,
     report_struggle,
     report_suggestion,
     resolve_telemetry_endpoint,
+    resolve_telemetry_api_key,
     submit_event,
 )
 class TestResolveTelemetryEndpoint:
-    def test_returns_none_when_unconfigured(self, tmp_path: Path):
-        """RQMD-TELEMETRY-007: No endpoint configured means no telemetry."""
+    def test_returns_default_when_unconfigured(self, tmp_path: Path):
+        """Falls back to built-in production endpoint."""
         with patch.dict("os.environ", {}, clear=True):
+            assert resolve_telemetry_endpoint(tmp_path) == _DEFAULT_ENDPOINT
+
+    def test_returns_none_when_disabled(self, tmp_path: Path):
+        """RQMD_TELEMETRY_DISABLED=1 opts out entirely."""
+        with patch.dict("os.environ", {"RQMD_TELEMETRY_DISABLED": "1"}, clear=True):
             assert resolve_telemetry_endpoint(tmp_path) is None
 
     def test_env_var_takes_precedence(self, tmp_path: Path):
@@ -43,7 +51,35 @@ class TestResolveTelemetryEndpoint:
         config_file = tmp_path / ".rqmd.yml"
         config_file.write_text("requirements_dir: docs/requirements\n")
         with patch.dict("os.environ", {}, clear=True):
-            assert resolve_telemetry_endpoint(tmp_path) is None
+            assert resolve_telemetry_endpoint(tmp_path) == _DEFAULT_ENDPOINT
+
+
+# ---------------------------------------------------------------------------
+# resolve_telemetry_api_key with token exchange
+# ---------------------------------------------------------------------------
+
+
+class TestResolveTelemetryApiKey:
+    def test_env_var_takes_precedence(self, tmp_path: Path):
+        with patch.dict("os.environ", {"RQMD_TELEMETRY_API_KEY": "my-key"}, clear=True):
+            assert resolve_telemetry_api_key(tmp_path) == "my-key"
+
+    def test_returns_none_when_disabled(self, tmp_path: Path):
+        with patch.dict("os.environ", {"RQMD_TELEMETRY_DISABLED": "1"}, clear=True):
+            assert resolve_telemetry_api_key(tmp_path) is None
+
+    def test_fetches_session_token_from_gateway(self, telemetry_server: str, tmp_path: Path):
+        """Falls back to token exchange when no static key is configured."""
+        with patch.dict("os.environ", {"RQMD_TELEMETRY_ENDPOINT": telemetry_server}, clear=True):
+            key = resolve_telemetry_api_key(tmp_path)
+        assert key == "stub-session-token"
+
+    def test_caches_session_token(self, telemetry_server: str, tmp_path: Path):
+        """Second call returns the cached token without another HTTP request."""
+        with patch.dict("os.environ", {"RQMD_TELEMETRY_ENDPOINT": telemetry_server}, clear=True):
+            key1 = resolve_telemetry_api_key(tmp_path)
+            key2 = resolve_telemetry_api_key(tmp_path)
+        assert key1 == key2 == "stub-session-token"
 
 
 # ---------------------------------------------------------------------------
@@ -52,13 +88,40 @@ class TestResolveTelemetryEndpoint:
 
 
 class _StubHandler(BaseHTTPRequestHandler):
-    """Minimal handler that records POSTed JSON bodies."""
+    """Minimal handler that records POSTed JSON bodies and supports token exchange."""
 
     received: list[dict] = []
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
-        body = json.loads(self.rfile.read(length))
+        raw = self.rfile.read(length)
+
+        if self.path == "/api/v1/token":
+            # Token exchange endpoint.
+            response = json.dumps({
+                "token": "stub-session-token",
+                "expires_in": 3600,
+                "session_id": "00000000-0000-0000-0000-000000000099",
+            })
+            self.send_response(201)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(response.encode())
+            return
+
+        if self.path == "/api/v1/artifacts":
+            # Artifact upload endpoint (multipart — not JSON).
+            response = json.dumps({
+                "artifact_id": "stub-artifact-id",
+                "status": "accepted",
+            })
+            self.send_response(201)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(response.encode())
+            return
+
+        body = json.loads(raw)
         _StubHandler.received.append(body)
         response = json.dumps({"event_id": "test-event-id", "session_id": body.get("session_id"), "status": "accepted"})
         self.send_response(201)
@@ -79,13 +142,19 @@ class _StubHandler(BaseHTTPRequestHandler):
 @pytest.fixture
 def telemetry_server():
     """Start a local stub telemetry server and yield its base URL."""
+    import rqmd.telemetry as _tmod
     _StubHandler.received = []
+    # Reset the cached session token between tests.
+    _tmod._cached_token = None
+    _tmod._cached_token_expiry = 0.0
     server = HTTPServer(("127.0.0.1", 0), _StubHandler)
     port = server.server_address[1]
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     yield f"http://127.0.0.1:{port}"
     server.shutdown()
+    _tmod._cached_token = None
+    _tmod._cached_token_expiry = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -207,3 +276,49 @@ class TestReportError:
         body = _StubHandler.received[0]
         assert body["event_type"] == "error"
         assert body["severity"] == "high"
+
+
+# ---------------------------------------------------------------------------
+# _handle_telemetry_test_command (CLI integration)
+# ---------------------------------------------------------------------------
+
+
+class TestHandleTelemetryTestCommand:
+    def test_success_with_reachable_endpoint(self, telemetry_server: str, tmp_path: Path):
+        """Sends a test event and returns success payload."""
+        from rqmd.ai_cli import _handle_telemetry_test_command
+
+        with patch.dict("os.environ", {"RQMD_TELEMETRY_ENDPOINT": telemetry_server}):
+            result = _handle_telemetry_test_command(tmp_path)
+
+        assert result["mode"] == "telemetry-test"
+        assert result["success"] is True
+        assert result["endpoint"] == telemetry_server
+        assert result["event"]["event_id"] is not None
+        assert result["artifact"]["success"] is True
+        assert len(_StubHandler.received) == 1
+        body = _StubHandler.received[0]
+        assert body["event_type"] == "success"
+        assert body["agent_name"] == "rqmd-ai-telemetry-test"
+
+    def test_failure_when_telemetry_disabled(self, tmp_path: Path):
+        """Returns an error payload when telemetry is disabled."""
+        from rqmd.ai_cli import _handle_telemetry_test_command
+
+        with patch.dict("os.environ", {"RQMD_TELEMETRY_DISABLED": "1"}, clear=True):
+            result = _handle_telemetry_test_command(tmp_path)
+
+        assert result["mode"] == "telemetry-test"
+        assert result["success"] is False
+        assert "No telemetry endpoint configured" in result["error"]
+
+    def test_failure_when_endpoint_unreachable(self, tmp_path: Path):
+        """Returns an error payload when the endpoint is down."""
+        from rqmd.ai_cli import _handle_telemetry_test_command
+
+        with patch.dict("os.environ", {"RQMD_TELEMETRY_ENDPOINT": "http://127.0.0.1:1"}):
+            result = _handle_telemetry_test_command(tmp_path)
+
+        assert result["mode"] == "telemetry-test"
+        assert result["success"] is False
+        assert "Failed to submit test event" in result["error"]

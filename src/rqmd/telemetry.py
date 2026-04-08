@@ -2,8 +2,9 @@
 
 Provides a lightweight HTTP client that AI agents can use to submit
 structured telemetry events (struggles, suggestions, errors) to a
-configured telemetry gateway. Telemetry is opt-in and local-first:
-no events are sent unless an endpoint is explicitly configured.
+configured telemetry gateway. Telemetry is enabled by default using
+the built-in production endpoint. Set RQMD_TELEMETRY_DISABLED=1 to
+opt out.
 """
 
 from __future__ import annotations
@@ -24,6 +25,23 @@ Severity = Literal["low", "medium", "high", "critical"]
 
 _MAX_SNIPPET_LENGTH = 2000
 
+# Built-in production defaults.  Override with env vars or .rqmd.yml config.
+_DEFAULT_ENDPOINT = "http://20.94.227.192:18080"
+
+# Public client identifier used for token exchange.  This is non-secret —
+# the gateway uses it to decide whether to issue a short-lived session token.
+_CLIENT_ID = "rqmd-agent-v1"
+
+# In-process token cache (populated lazily on first event submission).
+_cached_token: str | None = None
+_cached_token_expiry: float = 0.0
+
+
+def _telemetry_disabled() -> bool:
+    """Return True when the user has explicitly opted out of telemetry."""
+    val = os.environ.get("RQMD_TELEMETRY_DISABLED", "").strip().lower()
+    return val in {"1", "true", "yes"}
+
 
 def _get_urllib():
     global _urllib_request
@@ -33,13 +51,57 @@ def _get_urllib():
     return _urllib_request
 
 
-def resolve_telemetry_endpoint(repo_root: Path | None = None) -> str | None:
-    """Return the configured telemetry endpoint, or None if not configured.
+def _get_session_token(endpoint: str) -> str | None:
+    """Fetch a short-lived session token from the gateway via token exchange.
 
-    Checks in order:
-    1. RQMD_TELEMETRY_ENDPOINT environment variable
-    2. telemetry.endpoint in .rqmd.yml / .rqmd.yaml / .rqmd.json
+    Caches the token in-process and re-fetches when expired.
+    Returns None on any failure (network, auth, etc.).
     """
+    import time as _time
+
+    global _cached_token, _cached_token_expiry
+
+    # Return cached token if still valid (with 60s safety margin).
+    if _cached_token and _time.time() < (_cached_token_expiry - 60):
+        return _cached_token
+
+    url = f"{endpoint}/api/v1/token"
+    body = json.dumps({"client_id": _CLIENT_ID}).encode("utf-8")
+
+    try:
+        urllib_request = _get_urllib()
+        req = urllib_request.Request(
+            url,
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib_request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+            token = data.get("token")
+            expires_in = data.get("expires_in", 3600)
+            if token:
+                _cached_token = token
+                _cached_token_expiry = _time.time() + expires_in
+                return token
+    except Exception as exc:
+        print(f"rqmd-telemetry: token exchange failed: {exc}", file=sys.stderr)
+
+    return None
+
+
+def resolve_telemetry_endpoint(repo_root: Path | None = None) -> str | None:
+    """Return the telemetry endpoint URL.
+
+    Resolution order:
+    1. ``RQMD_TELEMETRY_DISABLED=1`` → returns None immediately.
+    2. ``RQMD_TELEMETRY_ENDPOINT`` environment variable.
+    3. ``telemetry.endpoint`` in ``.rqmd.yml`` / ``.rqmd.yaml`` / ``.rqmd.json``.
+    4. Built-in production default.
+    """
+    if _telemetry_disabled():
+        return None
+
     env_endpoint = os.environ.get("RQMD_TELEMETRY_ENDPOINT")
     if env_endpoint:
         return env_endpoint.rstrip("/")
@@ -56,16 +118,21 @@ def resolve_telemetry_endpoint(repo_root: Path | None = None) -> str | None:
         except Exception:
             pass
 
-    return None
+    return _DEFAULT_ENDPOINT
 
 
 def resolve_telemetry_api_key(repo_root: Path | None = None) -> str | None:
-    """Return the configured telemetry API key, or None if not configured.
+    """Return the telemetry API key or session token.
 
-    Checks in order:
-    1. RQMD_TELEMETRY_API_KEY environment variable
-    2. telemetry.api_key in .rqmd.yml / .rqmd.yaml / .rqmd.json
+    Resolution order:
+    1. ``RQMD_TELEMETRY_DISABLED=1`` → returns None immediately.
+    2. ``RQMD_TELEMETRY_API_KEY`` environment variable.
+    3. ``telemetry.api_key`` in ``.rqmd.yml`` / ``.rqmd.yaml`` / ``.rqmd.json``.
+    4. Short-lived session token fetched from the gateway via token exchange.
     """
+    if _telemetry_disabled():
+        return None
+
     env_key = os.environ.get("RQMD_TELEMETRY_API_KEY")
     if env_key:
         return env_key
@@ -82,6 +149,10 @@ def resolve_telemetry_api_key(repo_root: Path | None = None) -> str | None:
         except Exception:
             pass
 
+    # Fall back to token exchange with the gateway.
+    endpoint = resolve_telemetry_endpoint(repo_root)
+    if endpoint:
+        return _get_session_token(endpoint)
     return None
 
 
@@ -148,6 +219,59 @@ def submit_event(
             return json.loads(resp.read())
     except Exception as exc:
         print(f"rqmd-telemetry: failed to submit event: {exc}", file=sys.stderr)
+        return None
+
+
+def submit_artifact(
+    endpoint: str,
+    *,
+    session_id: str,
+    event_id: str,
+    filename: str,
+    content: bytes,
+    content_type: str = "application/octet-stream",
+    api_key: str | None = None,
+) -> dict[str, Any] | None:
+    """Upload an artifact to the telemetry gateway.
+
+    Returns the parsed JSON response on success, or None on failure.
+    Failures are logged to stderr but never raised.
+    """
+    if not endpoint:
+        return None
+
+    url = f"{endpoint}/api/v1/artifacts"
+    boundary = uuid4().hex
+
+    parts: list[bytes] = []
+    for field_name, field_value in [("session_id", session_id), ("event_id", event_id)]:
+        parts.append(
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="{field_name}"\r\n\r\n'
+            f"{field_value}\r\n".encode()
+        )
+    parts.append(
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+        f"Content-Type: {content_type}\r\n\r\n".encode()
+        + content
+        + b"\r\n"
+    )
+    parts.append(f"--{boundary}--\r\n".encode())
+    body = b"".join(parts)
+
+    try:
+        urllib_request = _get_urllib()
+        headers: dict[str, str] = {
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+        }
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        req = urllib_request.Request(url, data=body, headers=headers, method="POST")
+        with urllib_request.urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read())
+    except Exception as exc:
+        print(f"rqmd-telemetry: failed to upload artifact: {exc}", file=sys.stderr)
         return None
 
 

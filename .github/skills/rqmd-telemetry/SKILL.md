@@ -19,28 +19,27 @@ metadata:
 
 Use this skill when you encounter friction, errors, or improvement opportunities while using rqmd workflows.
 
-## Telemetry is opt-in and local-first
+## Telemetry is enabled by default
 
-Telemetry is **never** sent unless a telemetry endpoint has been explicitly configured. Check for a configured endpoint before attempting to send events:
+Telemetry is active out of the box — the rqmd client ships with a built-in production endpoint and uses automatic token exchange so agents can report friction without any setup.
 
-1. Look for `telemetry.endpoint` in the project `.rqmd.yml` / `.rqmd.yaml` / `.rqmd.json` config file.
-2. Check the `RQMD_TELEMETRY_ENDPOINT` environment variable.
-3. If neither is set, **do not attempt to send telemetry**. You may still log the event to stderr for the user's awareness.
+The resolution order for the endpoint is:
+
+1. `RQMD_TELEMETRY_ENDPOINT` environment variable (highest priority).
+2. `telemetry.endpoint` in the project `.rqmd.yml` / `.rqmd.yaml` / `.rqmd.json` config file.
+3. Built-in production default.
+
+To **opt out**, set `RQMD_TELEMETRY_DISABLED=1` in the environment. When disabled, no events are sent and both `resolve_telemetry_endpoint` and `resolve_telemetry_api_key` return `None`.
 
 ## Authentication
 
-All gateway endpoints except `/health` require an API key. The key is resolved the same way as the endpoint:
+All gateway endpoints except `/health` and `/api/v1/token` require a Bearer token. The token is resolved automatically:
 
-1. `RQMD_TELEMETRY_API_KEY` environment variable.
+1. `RQMD_TELEMETRY_API_KEY` environment variable (highest priority) — use for local dev or overrides.
 2. `telemetry.api_key` in the project `.rqmd.yml` / `.rqmd.yaml` / `.rqmd.json` config file.
+3. **Automatic token exchange** — the client sends its public client ID to `POST /api/v1/token` on the gateway and receives a short-lived session token (default 1 hour TTL). The token is cached in-process and refreshed transparently.
 
-Include the key as a Bearer token on every request:
-
-```
-Authorization: Bearer <api-key>
-```
-
-If no API key is configured but an endpoint is, requests will likely receive a `403 Forbidden` response from the gateway.
+No plaintext API key is shipped in source. You do not need to configure anything for this to work — the client exchanges a token automatically using the built-in production endpoint.
 
 ## When to report
 
@@ -142,11 +141,20 @@ Fields:
 
 The gateway stores artifacts in MinIO and links them to the originating event.
 
+## Quick pipeline test
+
+Before reporting real events, verify the telemetry pipeline is working with:
+
+```bash
+rqmd-ai telemetry-test --json
+```
+
+This sends a lightweight `success`-type test event and confirms the gateway accepted it. If the response shows `"success": true`, end-to-end telemetry is working. Use this anytime you want to confirm your setup before submitting real struggle or suggestion reports.
+
 ## Constraints
 
-- **Never send telemetry without an explicitly configured endpoint.**
+- **Never include secrets, tokens, passwords, or file contents that may contain sensitive data in telemetry payloads.**
 - Truncate stderr and stdout snippets to 2000 characters maximum.
-- Do not include secrets, tokens, passwords, or file contents that may contain sensitive data in telemetry payloads.
 - Prefer structured `detail` fields over dumping raw text into `summary`.
 - One event per observed issue. Do not batch multiple unrelated issues into a single event.
 - Skills improve workflow discovery; shell and tool approvals may still be required.

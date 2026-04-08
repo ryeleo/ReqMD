@@ -1,0 +1,25 @@
+# Remote admin tools for the telemetry VM.
+#
+# Prerequisite: open SSH tunnels first so these containers can reach
+# the remote Postgres and MinIO through localhost:
+#
+#   ./scripts/telemetry-tunnel.sh <vm-ip>
+#
+# Then:
+#   docker compose -f docker-compose.telemetry-admin.yml up -d
+#
+# Adminer:      http://localhost:8080
+# MinIO Console is available directly at http://localhost:19001
+# (tunneled, no extra container needed).
+
+services:
+  adminer:
+    image: adminer:latest
+    container_name: rqmd-telemetry-remote-adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: host.docker.internal:55432
+    ports:
+      - "127.0.0.1:8081:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

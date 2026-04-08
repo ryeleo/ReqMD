@@ -203,7 +203,32 @@ Expected:
 }
 ```
 
-### 7. Verify in Adminer
+### 7. Quick smoke test via CLI
+
+The fastest way to verify your telemetry pipeline is working end-to-end:
+
+```bash
+export RQMD_TELEMETRY_ENDPOINT=http://localhost:18080
+export RQMD_TELEMETRY_API_KEY=changeme-dev-only
+
+uv run rqmd-ai telemetry-test --json
+```
+
+Expected:
+
+```json
+{
+  "mode": "telemetry-test",
+  "success": true,
+  "endpoint": "http://localhost:18080",
+  "event_id": "<uuid>",
+  "message": "Test event accepted by the telemetry gateway."
+}
+```
+
+This sends a single `success`-type test event and confirms the gateway accepted it. Use this from any project where rqmd is installed to verify your telemetry setup.
+
+### 8. Verify in Adminer
 
 After sending test events, open [http://localhost:8080](http://localhost:8080), navigate to the `telemetry_events` table, and click **Select data**. You should see your test rows with all fields populated.
 
@@ -233,13 +258,79 @@ docker compose -f docker-compose.telemetry.yml down -v
 
 ## Connecting to the remote Azure VM
 
-If the VM is deployed and you want to test against production:
+The production telemetry endpoint is built in — `rqmd-ai telemetry-test --json` works without any environment variables. If you need to override the endpoint for debugging:
 
 ```bash
-export RQMD_TELEMETRY_ENDPOINT=http://<vm-public-ip>:18080
-export RQMD_TELEMETRY_API_KEY=<your-production-api-key>
+export RQMD_TELEMETRY_ENDPOINT=http://20.94.227.192:18080
+export RQMD_TELEMETRY_API_KEY=<your-api-key>
 
 uv run rqmd-ai telemetry --json
 ```
 
+To **disable** telemetry entirely:
+
+```bash
+export RQMD_TELEMETRY_DISABLED=1
+```
+
 See [azure-v1-single-vm.md](azure-v1-single-vm.md) for deployment details.
+
+## Remote admin access (browsing the Azure VM databases)
+
+The remote Postgres and MinIO are bound to `127.0.0.1` on the VM and are not publicly exposed. To browse them from your laptop, open SSH tunnels and then use local admin tools.
+
+### 1. Open SSH tunnels
+
+```bash
+./scripts/telemetry-tunnel.sh <vm-public-ip>
+# or with explicit user and key:
+./scripts/telemetry-tunnel.sh <vm-public-ip> azureuser ~/.ssh/id_ed25519
+```
+
+This forwards three ports through SSH:
+
+| Local port | Remote service |
+|---|---|
+| `localhost:55432` | Postgres |
+| `localhost:19000` | MinIO API |
+| `localhost:19001` | MinIO Console |
+
+Leave it running in a terminal tab. Press `Ctrl+C` to close.
+
+### 2. Launch Adminer (auto-configured)
+
+In a separate terminal:
+
+```bash
+docker compose -f docker-compose.telemetry-admin.yml up -d
+```
+
+Open [http://localhost:8081](http://localhost:8081) and log in:
+
+| Field | Value |
+|---|---|
+| System | PostgreSQL |
+| Server | `host.docker.internal:55432` |
+| Username | *(your production POSTGRES_USER)* |
+| Password | *(your production POSTGRES_PASSWORD)* |
+| Database | `rqmd_telemetry` |
+
+> **ℹ️ Info:** The Adminer container is pre-configured to default to the tunneled Postgres port. You only need to fill in your production credentials.
+
+### 3. Browse MinIO
+
+Open [http://localhost:19001](http://localhost:19001) directly in your browser (tunneled straight through, no extra container). Log in with your production MinIO credentials.
+
+### 4. VS Code extensions (alternative to Adminer)
+
+With the tunnels open, VS Code database extensions connect to `localhost:55432` just like they do for local dev:
+
+- **[Database Client](https://marketplace.visualstudio.com/items?itemName=cweijan.vscode-database-client2)** — host `localhost`, port `55432`, use production credentials.
+- **[SQLTools](https://marketplace.visualstudio.com/items?itemName=mtxr.sqltools)** + **[SQLTools PostgreSQL Driver](https://marketplace.visualstudio.com/items?itemName=mtxr.sqltools-driver-pg)** — same connection details.
+
+### 5. Tear down admin tools
+
+```bash
+docker compose -f docker-compose.telemetry-admin.yml down
+# Then Ctrl+C in the tunnel terminal
+```
