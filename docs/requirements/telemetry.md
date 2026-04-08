@@ -3,7 +3,7 @@
 Scope: agent-facing telemetry infrastructure for capturing AI workflow friction, improvement suggestions, and session diagnostics — enabling rqmd's own AI agents to report how rqmd can be improved.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 11🔧 0✅ 0⚠️ 0⛔ 1🗑️
+Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TELEMETRY-001: Local telemetry development stack
@@ -175,7 +175,7 @@ Summary: 3💡 11🔧 0✅ 0⚠️ 0⛔ 1🗑️
 - Deprecated: Adds client-side compute latency (~50-200ms) to every token exchange with no way to eliminate it. Rate limiting on the token endpoint (RQMD-TELEMETRY-013) achieves the same anti-abuse goal server-side at zero client cost. Not worth the latency trade-off for a developer telemetry service.
 
 ### RQMD-TELEMETRY-015: `feedback` event type for user-driven improvement telemetry
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a developer reviewing telemetry to prioritize rqmd improvements
 - I want a dedicated `feedback` event type that captures user-driven improvement feedback separately from autonomous agent reports

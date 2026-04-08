@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 6💡 44🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 5💡 45🔧 2✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -491,7 +491,7 @@ Summary: 6💡 44🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And the guidance should remain technology-neutral, supporting shell scripts, Makefiles, justfiles, or other task-runner conventions without forcing one choice.
 
 ### RQMD-AI-053: `/feedback` prompt for user-driven rqmd improvement feedback
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As an rqmd developer using rqmd agents in other projects
 - I want a `/feedback` prompt that starts an interactive feedback session focused on improving rqmd itself

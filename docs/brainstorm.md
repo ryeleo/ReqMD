@@ -1,5 +1,26 @@
 # Brainstorm
 
+## Iteration via: Brainstorm/Refine + Implement
+
+New primary **mult-agent** workflow for users when they are using rqmd-ai: `brainstorm+refine requirements -> implement requirements -- repeat`
+
+> In current version we have a single-agent workflow that loops within itself always saying: "What got done, Up Next, Direction"
+> "Explicit Handoff Suggestions" we are adding (discussed below) should be added in the "Direction" section.
+
+- `brainstorm+refine` will be the "rqmd agent" for all intents and purposes. It will be the primary agent that the user will interact with to create / refine / manage their requirements for their project.
+- `implement` will also be a "rqmd agent" just the same, but it will generally be more short lived
+- `brainstorm+refine` should almost always be done by an highest power AI agent (higher complexity).
+    - focused on higher-level thinking and shaping the requirements in a way that is more actionable for implementation agents.
+- Explicit Handoff Suggestions: If the user seems keen to implement the refined/brainstormed requirements, then provide them a simple prompt they can easily copy-paste into another `implmentation` agent. Even put it in a code block to make it easier to copy, like:
+    > Ready to implement? Copy the following prompt and paste it into your implementation agent to get started:
+    > ```
+    > /rqmd-implement Start with REQ-005 (one-line EventType change) and REQ-053 (prompt file creation) as the first batch, then REQ-067 (skill) and REQ-042 (gh integration) as the second. The telemetry type change unblocks everything else.
+    > ```
+- `implement` can be done by a lower-power agent that is more focused on execution and making smaller code changes. It can be done in the same prompt window of technically with the same power AI agent, but we should recommend that the user should prefer spawning new cheaper / quicker agents to implement work instead of doing all their work with the one costly / slower / bigger agent!
+
+
+
+
 ## Prompts
 
 /feedback: Send feedback aimed at improving rqmd.

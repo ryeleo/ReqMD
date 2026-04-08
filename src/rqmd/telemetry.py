@@ -20,7 +20,7 @@ from uuid import uuid4
 # Lazy import to keep startup fast when telemetry is not used.
 _urllib_request = None
 
-EventType = Literal["struggle", "suggestion", "error", "success", "workflow_step"]
+EventType = Literal["struggle", "suggestion", "error", "success", "workflow_step", "feedback"]
 Severity = Literal["low", "medium", "high", "critical"]
 
 _MAX_SNIPPET_LENGTH = 2000

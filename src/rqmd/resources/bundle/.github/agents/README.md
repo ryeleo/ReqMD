@@ -35,6 +35,7 @@ Installed prompts:
 - `/refactor`: refactor code, docs, or other artifacts to improve readability, maintainability, or performance
 - `/pin`: capture durable context or decision notes into a maintainable pinned note
 - `/ship-check`: run a release or handoff readiness pass with verification and blocker review
+- `/feedback`: send user-driven improvement feedback about rqmd via the telemetry service
 
 Installed workflow skills:
 - `/rqmd-brainstorm`
@@ -48,6 +49,7 @@ Installed workflow skills:
 - `/rqmd-pin`
 - `/rqmd-bundle`
 - `/rqmd-verify`
+- `/rqmd-feedback`
 
 Installed agents in the full preset:
 - `rqmd-dev`: primary implementation and orchestration agent
