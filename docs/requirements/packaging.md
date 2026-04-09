@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 3🔧 9✅ 0⚠️ 0⛔ 0🗑️
+Summary: 2💡 5🔧 9✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -109,3 +109,57 @@ Summary: 0💡 3🔧 9✅ 0⚠️ 0⛔ 0🗑️
 - So that the project can adopt `reqmd` branding or a dual-command transition without breaking existing installs, docs, or automation unexpectedly.
 - So that any rename decision includes PyPI package-name availability checks, console-script alias behavior, documentation updates, and a compatibility window for existing `rqmd` users.
 - So that the package can ship `reqmd` and `reqmd-ai` as pre-release console-script aliases while keeping `rqmd` and `rqmd-ai` as the canonical commands until a future rename decision is finalized.
+
+### RQMD-PACKAGING-013: Distribute rqmd AI bundle as a VS Code extension
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As an rqmd user who uses AI agents across multiple projects
+- I want the rqmd agent bundle (prompts, skills, agent definitions, copilot-instructions) distributed as a VS Code extension named "rqmd" on the Marketplace instead of files written into each project's `.github/` folder
+- So that upgrading rqmd's AI bundle is a VS Code extension update — no git diff, no PR churn, no maintaining generated files I didn't write.
+- So that reproducibility is handled by pinning the extension version, not by git-tracking generated config files.
+- So that rqmd behaves like other project-agnostic developer tools (linters, formatters) that ship as extensions rather than committed repo config.
+- So that the Python package (`rqmd` on PyPI) stays focused on what it does well — CLI for managing the requirements/ folder — while the VS Code extension owns the entire AI/IDE integration surface.
+- So that per-project overrides (e.g., `/dev` and `/test` skill scaffolds, project-specific copilot-instructions) can optionally live in `.github/` as workspace-level customizations while the shared rqmd defaults come from the extension.
+- Given a user who has the rqmd VS Code extension installed
+- When they open any workspace
+- Then Copilot discovers the extension-contributed prompts, skills, and agent definitions without any files in `.github/`.
+- And `rqmd-ai install` is no longer needed — the extension replaces the file-based bundle entirely.
+
+### RQMD-PACKAGING-014: Fold rqmd-ai query flags into rqmd CLI
+- **Status:** � Proposed
+- **Priority:** 🟠 P1 - High
+- As a user or AI agent querying requirements in machine-readable format
+- I want the structured JSON export and query flags currently on `rqmd-ai` (e.g., `--json`, `--dump-status`, `--dump-type`, `--dump-id`, `--dump-file`, `--include-requirement-body`, `--include-domain-markdown`, batch mode) folded into the `rqmd` CLI itself
+- So that querying requirements in JSON is just a standard `rqmd` feature, not something that requires a separate AI-specific entrypoint.
+- So that `rqmd --json` becomes the canonical machine-readable export and agents call `rqmd` directly.
+- So that the `--update` and `--write` mutation flags also move to `rqmd` (e.g., `rqmd --update RQMD-CORE-001=implemented --write`).
+- Given a user who runs `rqmd --json --dump-status proposed`
+- When the command executes
+- Then the output is identical to what `rqmd-ai --json --dump-status proposed` produces today.
+- And `rqmd --json` includes `next_id` per domain file, the same schema version, and all existing export fields.
+
+### RQMD-PACKAGING-015: Deprecate and remove rqmd-ai CLI entrypoint
+- **Status:** � Proposed
+- **Priority:** 🟡 P2 - Medium
+- **Blocked by:** RQMD-PACKAGING-013
+- As the rqmd maintainer after the VS Code extension ships and query flags are folded into `rqmd`
+- I want to deprecate and eventually remove the `rqmd-ai` console-script entrypoint
+- So that there is one CLI command (`rqmd`) and one IDE integration point (the VS Code extension), not a confusing split between `rqmd` and `rqmd-ai`.
+- So that `rqmd-ai` emits a deprecation warning pointing users to `rqmd --json` for a transition period before removal.
+- Given a user who runs `rqmd-ai --json`
+- When the deprecation period is active
+- Then the command still works but prints a stderr warning: "rqmd-ai is deprecated. Use `rqmd --json` instead."
+- And after the removal version, the `rqmd-ai` entrypoint is no longer registered in the package.
+
+### RQMD-PACKAGING-016: VS Code extension project scaffolding via command palette
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- **Blocked by:** RQMD-PACKAGING-013
+- As a developer setting up rqmd in a new project
+- I want the VS Code extension to provide a command palette action (e.g., "rqmd: Initialize Project") that runs the interview flow and scaffolds project-specific files (`/dev`, `/test` skills, starter requirement docs)
+- So that project setup is an IDE-native experience rather than a CLI command that writes files I then have to understand.
+- So that the extension can detect the repository's build/test/run commands and generate project-specific skill scaffolds just like `rqmd-ai install --chat` does today, but as a VS Code command.
+- Given a user who opens the command palette and runs "rqmd: Initialize Project"
+- When the interview flow completes
+- Then only project-specific files are written to `.github/` (e.g., `/dev` and `/test` skills, project copilot-instructions overrides).
+- And shared rqmd defaults (prompts, skills, agent defs) remain in the extension, not written to the workspace.
