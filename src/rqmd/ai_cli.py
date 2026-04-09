@@ -4232,11 +4232,15 @@ def _export_context(
     max_domain_body_chars: int,
     history_source: dict[str, object] | None = None,
     history_activity: dict[str, object] | None = None,
+    export_type: str | None = None,
 ) -> dict[str, object]:
     normalized_ids = {value.strip().upper() for value in export_ids if value.strip()}
     normalized_status: str | None = None
     if export_status:
         normalized_status = normalize_status_input(export_status)
+    normalized_type: str | None = None
+    if export_type:
+        normalized_type = export_type.strip().lower()
 
     allowed_file_paths: set[Path] | None = None
     if export_files:
@@ -4274,6 +4278,11 @@ def _export_context(
                 and str(requirement.get("status")) != normalized_status
             ):
                 continue
+            if (
+                normalized_type
+                and str(requirement.get("type") or "feature") != normalized_type
+            ):
+                continue
 
             entry: dict[str, object] = {
                 "id": req_id,
@@ -4281,6 +4290,8 @@ def _export_context(
                 "status": requirement.get("status"),
                 "priority": requirement.get("priority"),
                 "flagged": requirement.get("flagged"),
+                "type": requirement.get("type"),
+                "affects": requirement.get("affects"),
                 "sub_domain": requirement.get("sub_domain"),
             }
             blocked_reason = requirement.get("blocked_reason")
@@ -4627,6 +4638,7 @@ def _handle_batch(
         try:
             if query_type == "dump-status":
                 status_arg = str(query.get("status", ""))
+                type_arg = str(query.get("type", ""))
                 result = _export_context(
                     repo_root=repo_root,
                     requirements_dir=resolved_criteria_dir,
@@ -4638,6 +4650,23 @@ def _handle_batch(
                     include_body=include_body,
                     include_domain_body=include_domain_body,
                     max_domain_body_chars=max_domain_body_chars,
+                    export_type=type_arg or None,
+                )
+            elif query_type == "dump-type":
+                type_arg = str(query.get("type", ""))
+                status_arg = str(query.get("status", ""))
+                result = _export_context(
+                    repo_root=repo_root,
+                    requirements_dir=resolved_criteria_dir,
+                    domain_files=domain_files,
+                    id_prefixes=id_prefixes,
+                    export_ids=(),
+                    export_files=(),
+                    export_status=status_arg or None,
+                    include_body=include_body,
+                    include_domain_body=include_domain_body,
+                    max_domain_body_chars=max_domain_body_chars,
+                    export_type=type_arg or None,
                 )
             elif query_type == "dump-id":
                 ids_arg = query.get("ids", [])
@@ -4806,6 +4835,13 @@ Commands:
     help="Export context filtered by status label or slug.",
 )
 @click.option(
+    "--dump-type",
+    "export_type",
+    type=str,
+    default=None,
+    help="Export context filtered by requirement type (e.g., 'bug' or 'feature').",
+)
+@click.option(
     "--include-requirement-body/--no-include-requirement-body",
     "include_body",
     default=True,
@@ -4908,6 +4944,7 @@ def main(
     export_ids: tuple[str, ...],
     export_files: tuple[str, ...],
     export_status: str | None,
+    export_type: str | None,
     include_body: bool,
     include_domain_body: bool,
     max_domain_body_chars: int,
@@ -4924,6 +4961,21 @@ def main(
     batch_mode: bool,
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
+
+    # RQMD-PACKAGING-015: deprecation warning for query flags now available on rqmd
+    _deprecated_query = bool(
+        batch_mode or export_ids or export_files or export_status or export_type
+        or (set_entries and apply)
+    )
+    if _deprecated_query:
+        import warnings
+
+        warnings.warn(
+            "rqmd-ai query flags are deprecated. "
+            "Use rqmd --dump-status/--dump-id/--dump-type/--batch instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     if batch_mode:
         payload = _handle_batch(
@@ -5139,7 +5191,7 @@ def main(
         _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 
-    if export_ids or export_files or export_status:
+    if export_ids or export_files or export_status or export_type:
         payload = _export_context(
             repo_root=effective_repo_root,
             requirements_dir=effective_requirements_dir,
@@ -5153,6 +5205,7 @@ def main(
             max_domain_body_chars=max_domain_body_chars,
             history_source=None,
             history_activity=None,
+            export_type=export_type,
         )
         _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return

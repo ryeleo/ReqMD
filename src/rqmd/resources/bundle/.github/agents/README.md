@@ -36,6 +36,7 @@ Installed prompts:
 - `/pin`: capture durable context or decision notes into a maintainable pinned note
 - `/ship-check`: run a release or handoff readiness pass with verification and blocker review
 - `/feedback`: send user-driven improvement feedback about rqmd via the telemetry service
+- `/bug`: quickly file a tracked bug requirement from the current chat context
 
 Installed workflow skills:
 - `/rqmd-brainstorm`

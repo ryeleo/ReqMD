@@ -16,21 +16,15 @@ from functools import lru_cache
 from pathlib import Path
 
 from . import parse_cache
-from .constants import (
-    BLOCKED_REASON_PATTERN,
-    DEFAULT_ID_PREFIXES,
-    DEPRECATED_REASON_PATTERN,
-    FLAGGED_PATTERN,
-    GENERIC_REQUIREMENT_HEADER_PATTERN,
-    H2_SUBSECTION_PATTERN,
-    ID_PREFIX_PATTERN,
-    LINK_ITEM_PATTERN,
-    LINKS_HEADER_PATTERN,
-    MARKDOWN_LINK_PATTERN,
-    PRIORITY_PATTERN,
-    REQUIREMENTS_INDEX_NAME,
-    STATUS_PATTERN,
-)
+from .constants import (AFFECTS_PATTERN, BLOCKED_REASON_PATTERN,
+                        DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENT_TYPE,
+                        DEPRECATED_REASON_PATTERN, FLAGGED_PATTERN,
+                        GENERIC_REQUIREMENT_HEADER_PATTERN,
+                        H2_SUBSECTION_PATTERN, ID_PREFIX_PATTERN,
+                        LINK_ITEM_PATTERN, LINKS_HEADER_PATTERN,
+                        MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
+                        REQUIREMENT_TYPES, REQUIREMENTS_INDEX_NAME,
+                        STATUS_PATTERN, TYPE_PATTERN)
 from .priority_model import coerce_priority_label
 from .status_model import coerce_status_label
 
@@ -490,6 +484,10 @@ def parse_requirements(
                 "deprecated_reason_line": None,
                 "flagged": None,
                 "flagged_line": None,
+                "type": DEFAULT_REQUIREMENT_TYPE,
+                "type_line": None,
+                "affects": None,
+                "affects_line": None,
                 "links": None,
                 "links_line": None,
                 "sub_domain": current_subsection,  # Assign current subsection if present
@@ -533,6 +531,20 @@ def parse_requirements(
         if flagged_match and current and current["status_line"] is not None:
             current["flagged"] = flagged_match.group("flagged") == "true"
             current["flagged_line"] = index
+
+        type_match = TYPE_PATTERN.match(line)
+        if type_match and current and current["type_line"] is None:
+            raw_type = type_match.group("type").strip().lower()
+            if raw_type in REQUIREMENT_TYPES:
+                current["type"] = raw_type
+            else:
+                current["type"] = raw_type  # preserve unknown values for round-tripping
+            current["type_line"] = index
+
+        affects_match = AFFECTS_PATTERN.match(line)
+        if affects_match and current and current["affects_line"] is None:
+            current["affects"] = affects_match.group("affects").strip()
+            current["affects_line"] = index
 
         links_match = LINKS_HEADER_PATTERN.match(line)
         if links_match and current and current["status_line"] is not None:

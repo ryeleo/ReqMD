@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import re
 
-from .default_catalogs import (
-    load_default_priority_catalog_resource,
-    load_default_status_catalog_resource,
-)
+from .default_catalogs import (load_default_priority_catalog_resource,
+                               load_default_status_catalog_resource)
 
 SUMMARY_START = "<!-- acceptance-status-summary:start -->"
 SUMMARY_END = "<!-- acceptance-status-summary:end -->"
@@ -114,6 +112,17 @@ DEPRECATED_REASON_PATTERN = re.compile(
 FLAGGED_PATTERN = re.compile(
     r"^- \*\*Flagged:\*\* (?P<flagged>true|false)\s*$", re.MULTILINE
 )
+TYPE_PATTERN = re.compile(
+    r"^- \*\*Type:\*\* (?P<type>.+?)\s*$", re.MULTILINE
+)
+AFFECTS_PATTERN = re.compile(
+    r"^- \*\*Affects:\*\* (?P<affects>.+?)\s*$", re.MULTILINE
+)
+
+# Canonical requirement type values.
+REQUIREMENT_TYPES = ("feature", "bug")
+DEFAULT_REQUIREMENT_TYPE = "feature"
+
 LINKS_HEADER_PATTERN = re.compile(r"^- \*\*Links:\*\*\s*$", re.MULTILINE)
 LINK_ITEM_PATTERN = re.compile(r"^  - (?P<link_text>.+)$", re.MULTILINE)
 ID_PREFIX_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*(-[A-Z][A-Z0-9]*)*$")

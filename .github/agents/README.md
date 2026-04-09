@@ -34,6 +34,7 @@ Installed prompts:
 - `/polish-docs`: run a focused documentation quality or sync pass for rqmd work
 - `/refactor`: refactor code, docs, or other artifacts to improve readability, maintainability, or performance
 - `/pin`: capture durable context or decision notes into a maintainable pinned note
+- `/bug`: quickly file a tracked bug requirement from the current chat context
 - `/ship-check`: run a release or handoff readiness pass with verification and blocker review
 
 Installed workflow skills:

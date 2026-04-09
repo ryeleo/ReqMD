@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 47🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 7💡 48🔧 2✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -531,3 +531,48 @@ Summary: 3💡 47🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And if `gh` is available, the agent drafts an issue title and body from the feedback payload and runs `gh issue create --repo ryeleo/rqmd --title "..." --body "..."` to create the issue
 - And the created issue URL is included in the final feedback telemetry event under `detail.github_issue_url`
 - And if `gh` is not available or the user declines, the agent skips issue creation gracefully and notes it in the feedback payload as `detail.issue_skipped_reason`.
+
+### RQMD-AI-056: Rename primary agent from `rqmd-dev` to `rqmd`
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As an rqmd user
+- I want the primary agent to be named `rqmd` instead of `rqmd-dev`, since it is the agent I interact with 95% of the time and the `-dev` suffix makes it sound like a secondary internal tool
+- So that `rqmd` becomes the obvious, default agent name across all projects that install the bundle.
+- So that the bundle install renames `rqmd-dev.agent.md` to `rqmd.agent.md` and updates all internal references (copilot-instructions, prompts, skill files, agents README).
+- So that existing workspaces with `rqmd-dev.agent.md` are migrated cleanly during `rqmd-ai reinstall` or `rqmd-ai upgrade`, with the old file removed after the new one is confirmed.
+
+### RQMD-AI-057: Auto-draft requirements during brainstorm and refine sessions
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a user brainstorming or refining requirements with the rqmd agent
+- I want the agent to automatically write solidified ideas into `docs/requirements/` as 💡 Proposed entries rather than asking me for permission each time
+- So that when I copy-paste a `/go` handoff prompt into a cheaper agent, the requirements it references already exist in the tracked docs and the implementation agent has a clear contract to work from.
+- So that the agent tells me what it drafted and where (e.g., "I added RQMD-CORE-041 through RQMD-CORE-043 to core-engine.md") so I can review and adjust.
+- So that the agent picks the right domain file based on the requirement's subject matter and uses the next available ID in that domain.
+
+### RQMD-AI-058: Brainstorm and refine modes resist jumping to implementation
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a user in a `/brainstorm` or `/refine` session
+- I want the agent to actively resist writing code, tests, or implementation changes and instead focus on shaping, clarifying, and tracking requirements
+- So that the brainstorm/refine workflow stays focused on *what* to build and *why*, with implementation deferred to a `/go` handoff in a separate (typically cheaper) agent session.
+- So that the agent declines implementation requests with a brief explanation and redirects toward requirement refinement or a `/go` handoff.
+
+### RQMD-AI-059: Brainstorm and refine skills detect bug reports and offer bug template
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a user describing a defect during a brainstorm or refine session
+- I want the agent to recognize that I am describing a bug (keywords like "broken", "regression", "doesn't work", "used to work") and offer the Steps to Reproduce / Expected / Actual / Root Cause template from RQMD-CORE-043 instead of the user-story template
+- So that bugs are drafted with the right shape from the start, with `type: bug` and an `affects:` cross-reference pre-filled when the parent requirement is identifiable.
+
+### RQMD-AI-060: `/bug` prompt for quick bug filing from chat context
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a user who has been debugging a problem in a chat session
+- I want to type `/bug` and have the agent automatically draft a tracked bug requirement from the conversation context
+- So that filing a bug is zero-friction — no template hunting, no manual ID allocation, no asking permission — the agent just writes it to the appropriate domain file and tells me the ID.
+- Given a chat session where a defect was discussed
+- When the user invokes `/bug`
+- Then the agent reviews conversation context, runs `rqmd-ai --json` to discover the next available ID and best-fit domain file, and writes a complete bug requirement using the Steps to Reproduce / Expected / Actual / Root Cause template with `type: bug` and an `affects:` cross-reference when identifiable.
+- And the agent appends the requirement directly to the domain file without asking for confirmation.
+- And the prompt file lives at `.github/prompts/bug.prompt.md` in the workspace and in the bundle at `src/rqmd/resources/bundle/.github/prompts/bug.prompt.md`.

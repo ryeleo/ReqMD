@@ -1,5 +1,26 @@
 # Brainstorm
 
+
+## Provide GitHub CICD Examples
+
+Maybe it could end up being that some requirements are linked to GH issues. So tiithat GH issues closes, it could be nice to auto update the status using rqmd then pmaking a PR with that docs-fix!
+
+
+## Top Level Agent
+Rename `rqmd-dev` to `rqmd` and give it a 2ndary mode that it tries to follow when in `brainstorm` or `refine` sessions. This mode would be focused on shaping requirements in a way that is more actionable for implementation agents, and it would have more latitude to make changes to requirements and docs than the regular `rqmd-dev` agent. When in this `brainstorm+refine` mode, the agent should resist jumping into implementation and instead focus on shaping requirements, exploring trade-offs, and helping the user clarify their thinking. Stay on target to get the job done well, and then handoff the work to a cheaper agent with a clear and actionable: 
+"`/go`" prompt when the requirements are ready to be implemented.
+
+Existing refine/brainstorm skills should automatically make changes to "requiremens/" directory! It shouldn't ask the user, "would you like me to add these requirements to the requirements/ directory?" It should just do it, and then tell the user "hey, I went ahead and drafted those ideas into requirements in the requirements/ directory so they are easier to track and act on. You can find them here: requirements/REQ-XXX.md" or something like that. 
+
+- This division of responsibilities will help reinforce the workflow of focusing on refining requirements well and then having lighter weight AI models go implement/execute on those requirements.
+
+The user should easily be able to `/fork` this agent, choose a lower cost AI model for the fork, and copy-paste the provided "`/go ...`" prompt directly into that fork and see their requirements get implemented!
+
+Promoted into tracked requirements: `RQMD-AI-056` (rename agent to `rqmd`), `RQMD-AI-057` (auto-draft requirements during brainstorm/refine), `RQMD-AI-058` (brainstorm/refine resist implementation).
+
+
+
+
 ## Bugs
 
 Feature request: first-class bug tracking in rqmd
@@ -33,6 +54,10 @@ Suggested shape:
 Priority: I think this would significantly improve the workflow for any project past
 the early prototype stage where things start breaking as often as they get built.
 
+Promoted into tracked requirements: `RQMD-CORE-041` (type metadata field), `RQMD-CORE-042` (affects cross-reference), `RQMD-CORE-043` (bug template), `RQMD-AUTOMATION-039` (--dump-type filter), `RQMD-AI-059` (brainstorm/refine detect bug reports).
+
+Promoted into tracked requirements: `RQMD-CORE-041` (type metadata field), `RQMD-CORE-042` (affects cross-reference), `RQMD-CORE-043` (bug-report template), `RQMD-AUTOMATION-039` (--dump-type filter). Display aliases for bug lifecycle labels remain proposed for a future batch.
+
 ## Iteration via: Brainstorm/Refine + Implement
 
 New primary **mult-agent** workflow for users when they are using rqmd-ai: `brainstorm+refine requirements -> implement requirements -- repeat`
@@ -65,6 +90,12 @@ Promoted into tracked requirements: `RQMD-AI-053` (/feedback prompt), `RQMD-AI-0
 
 ---
 
+/bug: Quickly file a tracked bug requirement from the current chat context. When a user has been battling a bug in a conversation, `/bug` synthesizes everything into a proper bug requirement (Steps to Reproduce / Expected / Actual / Root Cause) and writes it directly to the appropriate domain file — no permission prompts, no manual ID allocation, just instant bug filing for frustrated developers.
+
+Promoted into tracked requirement: `RQMD-AI-060` (/bug prompt).
+
+---
+
 /refactor: Refactor code, docs, or other project artifacts to improve readability, maintainability, or performance. 
 - Naming: Consistent naming of all domain logic -- work with the developer on making names consistent and semantically meaninful throughout their code base. Use names from Software Design Patterns and Domain-Driven Design where possible, and make sure that the names chosen align with the overall goals and language of the project.
 - Splitting large functions into smaller more focused more testable functions.
@@ -88,6 +119,12 @@ Promoted into tracked requirements: `RQMD-AI-053` (/feedback prompt), `RQMD-AI-0
 Figure out how to make rqmd commands used by AI MUCH faster so the feedback loop is much tighter and we can do more iterative prompting and less "put in a big prompt, wait a long time, get a big response" cycles.
 
 Promoted into tracked requirements: `RQMD-CORE-037` (lazy imports), `RQMD-CORE-038` (filesystem cache), `RQMD-CORE-039` (non-interactive latency budget), `RQMD-CORE-040` (native Rust/C acceleration roadmap), and `RQMD-AUTOMATION-038` (multi-query batch mode).
+
+## VS Code Extension Distribution
+
+rqmd-ai bundle should be installable as a VS Code extension instead of committing files to `.github/`. rqmd is intentionally project-agnostic — it doesn't belong in version control. Reproducibility is handled by pinning the extension version. Per-project overrides (`/dev`, `/test` scaffolds) can still live in `.github/` as opt-in customizations.
+
+Promoted into tracked requirement: `RQMD-PACKAGING-013` (VS Code extension distribution), `RQMD-PACKAGING-014` (fold rqmd-ai into rqmd CLI), `RQMD-PACKAGING-015` (deprecate rqmd-ai entrypoint), `RQMD-PACKAGING-016` (command palette scaffolding).
 
 ## Telemetry Local Dev
 
@@ -226,6 +263,18 @@ This file is now a checkpointed backlog scratchpad rather than a raw dump. Ideas
 - `RQMD-CORE-039`: non-interactive latency budget and CI gate.
 - `RQMD-CORE-040`: native Rust/C acceleration for parse and index hot paths.
 - `RQMD-AUTOMATION-038`: multi-query batch mode for rqmd-ai.
+- `RQMD-AI-056`: rename primary agent from `rqmd-dev` to `rqmd`.
+- `RQMD-AI-057`: auto-draft requirements during brainstorm/refine sessions.
+- `RQMD-AI-058`: brainstorm/refine modes resist jumping to implementation.
+- `RQMD-AI-059`: brainstorm/refine skills detect bug reports and offer bug template.
+- `RQMD-CORE-041`: `type` metadata field and parser support.
+- `RQMD-CORE-042`: `affects` cross-reference field for bugs.
+- `RQMD-CORE-043`: bug-specific template in scaffold and skills.
+- `RQMD-AUTOMATION-039`: `--dump-type` filter for rqmd-ai.
+- `RQMD-PACKAGING-013`: VS Code extension distribution for the AI bundle.
+- `RQMD-PACKAGING-014`: fold `rqmd-ai` query flags into `rqmd` CLI.
+- `RQMD-PACKAGING-015`: deprecate and remove `rqmd-ai` entrypoint.
+- `RQMD-PACKAGING-016`: VS Code extension command palette scaffolding.
 
 ## Clarified notes
 

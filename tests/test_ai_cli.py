@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd import ai_cli
 from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.constants import JSON_SCHEMA_VERSION
@@ -2590,3 +2591,258 @@ def test_RQMD_AUTOMATION_038_batch_mode_reports_per_query_errors(
     assert "error" in results[1]["result"]
     # Third query (non-dict) returns an error at result level
     assert "error" in results[2]
+
+
+# ---------------------------------------------------------------------------
+# --dump-type filter (RQMD-AUTOMATION-039)
+# ---------------------------------------------------------------------------
+
+
+def _write_mixed_type_domain(path: Path) -> None:
+    """Write a domain file with both feature and bug requirements."""
+    path.write_text(
+        """# Mixed Domain
+
+### RQMD-DEMO-001: A feature
+- **Status:** 💡 Proposed
+
+### RQMD-DEMO-002: A bug report
+- **Status:** 💡 Proposed
+- **Type:** bug
+- **Affects:** RQMD-DEMO-001
+
+### RQMD-DEMO-003: Implemented feature
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+
+def test_RQMD_automation_039_dump_type_bug_filter(tmp_path: Path) -> None:
+    """--dump-type bug should only return requirements with type: bug."""
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    (domain_dir / "README.md").write_text("# Index\n- [demo](demo.md)\n")
+    _write_mixed_type_domain(domain_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root", str(repo),
+            "--docs-dir", "docs/requirements",
+            "--json",
+            "--dump-type", "bug",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["total"] == 1
+    reqs = payload["files"][0]["requirements"]
+    assert len(reqs) == 1
+    assert reqs[0]["id"] == "RQMD-DEMO-002"
+    assert reqs[0]["type"] == "bug"
+    assert reqs[0]["affects"] == "RQMD-DEMO-001"
+
+
+def test_RQMD_automation_039_dump_type_feature_filter(tmp_path: Path) -> None:
+    """--dump-type feature should return only feature requirements (including implicit)."""
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    (domain_dir / "README.md").write_text("# Index\n- [demo](demo.md)\n")
+    _write_mixed_type_domain(domain_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root", str(repo),
+            "--docs-dir", "docs/requirements",
+            "--json",
+            "--dump-type", "feature",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["total"] == 2
+    ids = [r["id"] for f in payload["files"] for r in f["requirements"]]
+    assert "RQMD-DEMO-001" in ids
+    assert "RQMD-DEMO-003" in ids
+
+
+def test_RQMD_automation_039_dump_type_composable_with_status(tmp_path: Path) -> None:
+    """--dump-type and --dump-status should compose: bug + proposed."""
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    (domain_dir / "README.md").write_text("# Index\n- [demo](demo.md)\n")
+    _write_mixed_type_domain(domain_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root", str(repo),
+            "--docs-dir", "docs/requirements",
+            "--json",
+            "--dump-type", "bug",
+            "--dump-status", "proposed",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["total"] == 1
+    assert payload["files"][0]["requirements"][0]["id"] == "RQMD-DEMO-002"
+
+
+def test_RQMD_automation_039_export_includes_type_and_affects(tmp_path: Path) -> None:
+    """JSON export should include type and affects fields for all requirements."""
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    (domain_dir / "README.md").write_text("# Index\n- [demo](demo.md)\n")
+    _write_mixed_type_domain(domain_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root", str(repo),
+            "--docs-dir", "docs/requirements",
+            "--json",
+            "--dump-type", "feature",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    req = payload["files"][0]["requirements"][0]
+    assert "type" in req
+    assert "affects" in req
+    assert req["type"] == "feature"
+    assert req["affects"] is None
+
+
+# ---------------------------------------------------------------------------
+# RQMD-PACKAGING-015: deprecation warning for rqmd-ai query flags
+# ---------------------------------------------------------------------------
+
+
+def test_RQMD_packaging_015_dump_status_emits_deprecation_warning(
+    tmp_path: Path,
+) -> None:
+    """rqmd-ai --dump-status should emit a DeprecationWarning."""
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    (domain_dir / "README.md").write_text("# Index\n- [demo](demo.md)\n")
+    _write_demo_domain(domain_dir / "demo.md")
+
+    runner = CliRunner()
+    import warnings
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = runner.invoke(
+            main,
+            [
+                "--project-root", str(repo),
+                "--docs-dir", "docs/requirements",
+                "--json",
+                "--dump-status", "proposed",
+            ],
+        )
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "export-context"
+    dep_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+    assert len(dep_warnings) >= 1
+    assert "rqmd-ai query flags are deprecated" in str(dep_warnings[0].message)
+
+
+def test_RQMD_packaging_015_dump_type_emits_deprecation_warning(
+    tmp_path: Path,
+) -> None:
+    """rqmd-ai --dump-type should emit a DeprecationWarning."""
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    (domain_dir / "README.md").write_text("# Index\n- [demo](demo.md)\n")
+    _write_mixed_type_domain(domain_dir / "demo.md")
+
+    runner = CliRunner()
+    import warnings
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = runner.invoke(
+            main,
+            [
+                "--project-root", str(repo),
+                "--docs-dir", "docs/requirements",
+                "--json",
+                "--dump-type", "bug",
+            ],
+        )
+    assert result.exit_code == 0
+    dep_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+    assert len(dep_warnings) >= 1
+    assert "rqmd-ai query flags are deprecated" in str(dep_warnings[0].message)
+
+
+def test_RQMD_packaging_015_batch_mode_emits_deprecation_warning(
+    tmp_path: Path,
+) -> None:
+    """rqmd-ai --batch should emit a DeprecationWarning."""
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    _write_demo_domain(domain_dir / "demo.md")
+
+    runner = CliRunner()
+    import warnings
+
+    batch_input = json.dumps([{"query": "dump-all", "key": "q1"}])
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = runner.invoke(
+            main,
+            [
+                "--project-root", str(repo),
+                "--docs-dir", "docs/requirements",
+                "--json",
+                "--batch",
+            ],
+            input=batch_input,
+        )
+    assert result.exit_code == 0
+    dep_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+    assert len(dep_warnings) >= 1
+    assert "rqmd-ai query flags are deprecated" in str(dep_warnings[0].message)
+
+
+def test_RQMD_packaging_015_no_warning_for_non_query_flags(tmp_path: Path) -> None:
+    """rqmd-ai without query flags should NOT emit a deprecation warning."""
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    _write_demo_domain(domain_dir / "demo.md")
+
+    runner = CliRunner()
+    import warnings
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = runner.invoke(
+            main,
+            [
+                "--project-root", str(repo),
+                "--docs-dir", "docs/requirements",
+                "--json",
+            ],
+        )
+    assert result.exit_code == 0
+    dep_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)
+                    and "rqmd-ai query flags are deprecated" in str(w.message)]
+    assert len(dep_warnings) == 0

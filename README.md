@@ -27,6 +27,7 @@ Main prompt shortcuts after bundle install:
 - `/polish-docs`: run a focused documentation quality or sync pass
 - `/refactor`: refactor code, docs, or other artifacts to improve readability, maintainability, or performance
 - `/pin`: capture durable context or decision notes into a maintainable pinned note
+- `/bug`: quickly file a tracked bug requirement from the current chat context
 - `/ship-check`: run a release or handoff readiness pass and call out blockers
 
 > **ℹ️ Info:** `/go 10` means work through up to 10 validated slices before stopping. `/commit-and-go 10` means do the same thing, but create a clean git commit after each validated slice.
@@ -590,6 +591,7 @@ Installed prompt shortcuts:
 - `/polish-docs`: run a focused documentation quality or sync pass
 - `/refactor`: refactor code, docs, or other artifacts to improve readability, maintainability, or performance
 - `/pin`: capture durable context or decision notes into a maintainable pinned note
+- `/bug`: quickly file a tracked bug requirement from the current chat context
 - `/ship-check`: run a release or handoff readiness pass and call out blockers
 
 The installed bundle also includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-pin`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, unified init, compatibility legacy bootstrap, documentation-quality, docs-sync, changelog-authoring, pinning durable project context, bundle-management, and verification loops without rewriting those instructions in every workspace. Prompts and skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.

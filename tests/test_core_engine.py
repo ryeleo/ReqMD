@@ -6,13 +6,11 @@ import sys
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd import cli
 from rqmd.markdown_io import scope_and_body_from_file
-from rqmd.req_parser import (
-    collect_sub_sections,
-    detect_domain_prefix,
-    next_domain_requirement_id,
-)
+from rqmd.req_parser import (collect_sub_sections, detect_domain_prefix,
+                             next_domain_requirement_id)
 
 
 def test_RQMD_core_001_iter_domain_files_sorted_and_markdown_only(
@@ -1478,3 +1476,123 @@ def test_RQMD_core_023_rename_id_prefix_json_dry_run(tmp_path: Path) -> None:
     assert payload["replacement_count"] == 1
     assert file_path.read_text(encoding="utf-8") == original
     assert file_path.read_text(encoding="utf-8") == original
+
+
+# ---------------------------------------------------------------------------
+# Type and Affects metadata parsing (RQMD-CORE-041)
+# ---------------------------------------------------------------------------
+
+
+def test_RQMD_core_041_parse_type_field_defaults_to_feature() -> None:
+    """Requirements without an explicit type should default to 'feature'."""
+    text = """# Domain
+
+### AC-001: A feature
+- **Status:** 💡 Proposed
+"""
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "domain.md"
+        path.write_text(text, encoding="utf-8")
+        requirements = cli.parse_requirements(path)
+        assert len(requirements) == 1
+        assert requirements[0]["type"] == "feature"
+        assert requirements[0]["type_line"] is None
+
+
+def test_RQMD_core_041_parse_type_field_bug() -> None:
+    """A requirement with `- **Type:** bug` should parse type as 'bug'."""
+    text = """# Domain
+
+### AC-BUG-001: Teleport reticle does not appear
+- **Status:** 💡 Proposed
+- **Type:** bug
+"""
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "domain.md"
+        path.write_text(text, encoding="utf-8")
+        requirements = cli.parse_requirements(path)
+        assert len(requirements) == 1
+        assert requirements[0]["type"] == "bug"
+        assert requirements[0]["type_line"] is not None
+
+
+def test_RQMD_core_041_parse_type_field_case_insensitive() -> None:
+    """Type parsing should be case-insensitive."""
+    text = """# Domain
+
+### AC-BUG-001: Broken thing
+- **Status:** 💡 Proposed
+- **Type:** Bug
+"""
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "domain.md"
+        path.write_text(text, encoding="utf-8")
+        requirements = cli.parse_requirements(path)
+        assert requirements[0]["type"] == "bug"
+
+
+def test_RQMD_core_041_parse_affects_field() -> None:
+    """A requirement with `- **Affects:** SSVR-0190` should parse the cross-ref."""
+    text = """# Domain
+
+### AC-BUG-001: Teleport broken
+- **Status:** 💡 Proposed
+- **Type:** bug
+- **Affects:** SSVR-0190
+"""
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "domain.md"
+        path.write_text(text, encoding="utf-8")
+        requirements = cli.parse_requirements(path)
+        assert len(requirements) == 1
+        assert requirements[0]["affects"] == "SSVR-0190"
+        assert requirements[0]["affects_line"] is not None
+
+
+def test_RQMD_core_041_affects_absent_when_not_specified() -> None:
+    """Requirements without an affects line should have affects=None."""
+    text = """# Domain
+
+### AC-001: Normal feature
+- **Status:** 💡 Proposed
+"""
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "domain.md"
+        path.write_text(text, encoding="utf-8")
+        requirements = cli.parse_requirements(path)
+        assert requirements[0]["affects"] is None
+
+
+def test_RQMD_core_041_mixed_types_in_same_file() -> None:
+    """A domain file can contain both feature and bug requirements."""
+    text = """# Domain
+
+### AC-001: Normal feature
+- **Status:** 💡 Proposed
+
+### AC-BUG-001: Something broken
+- **Status:** 💡 Proposed
+- **Type:** bug
+- **Affects:** AC-001
+"""
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "domain.md"
+        path.write_text(text, encoding="utf-8")
+        requirements = cli.parse_requirements(path)
+        assert len(requirements) == 2
+        assert requirements[0]["type"] == "feature"
+        assert requirements[0]["affects"] is None
+        assert requirements[1]["type"] == "bug"
+        assert requirements[1]["affects"] == "AC-001"
