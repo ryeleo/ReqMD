@@ -68,7 +68,7 @@ class TestExtractBlockingId:
 
 class TestBlockingIdInJSONExport:
     def test_blocking_id_in_ai_export(self, tmp_path: Path):
-        from rqmd.ai_cli import main as ai_main
+        from rqmd.cli import main as rqmd_main
 
         req_dir = tmp_path / "docs" / "requirements"
         req_dir.mkdir(parents=True)
@@ -83,13 +83,12 @@ class TestBlockingIdInJSONExport:
         )
         runner = CliRunner()
         result = runner.invoke(
-            ai_main,
+            rqmd_main,
             [
                 "--project-root",
                 str(tmp_path),
                 "--docs-dir",
                 "docs/requirements",
-                "--as-json",
                 "--dump-status",
                 "blocked",
             ],
@@ -102,7 +101,7 @@ class TestBlockingIdInJSONExport:
         assert reqs[0]["blocked_reason"] == "Waiting for RQMD-DOM-002 to be implemented"
 
     def test_no_blocking_id_for_freeform_reason(self, tmp_path: Path):
-        from rqmd.ai_cli import main as ai_main
+        from rqmd.cli import main as rqmd_main
 
         req_dir = tmp_path / "docs" / "requirements"
         req_dir.mkdir(parents=True)
@@ -115,13 +114,12 @@ class TestBlockingIdInJSONExport:
         )
         runner = CliRunner()
         result = runner.invoke(
-            ai_main,
+            rqmd_main,
             [
                 "--project-root",
                 str(tmp_path),
                 "--docs-dir",
                 "docs/requirements",
-                "--as-json",
                 "--dump-status",
                 "blocked",
             ],
@@ -133,7 +131,7 @@ class TestBlockingIdInJSONExport:
         assert reqs[0]["blocked_reason"] == "Awaiting technical design review"
 
     def test_blocking_id_with_markdown_link(self, tmp_path: Path):
-        from rqmd.ai_cli import main as ai_main
+        from rqmd.cli import main as rqmd_main
 
         req_dir = tmp_path / "docs" / "requirements"
         req_dir.mkdir(parents=True)
@@ -146,13 +144,12 @@ class TestBlockingIdInJSONExport:
         )
         runner = CliRunner()
         result = runner.invoke(
-            ai_main,
+            rqmd_main,
             [
                 "--project-root",
                 str(tmp_path),
                 "--docs-dir",
                 "docs/requirements",
-                "--as-json",
                 "--dump-status",
                 "blocked",
             ],

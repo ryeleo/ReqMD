@@ -517,7 +517,7 @@ def report_command_discovery_struggle(
     agent_name: str | None = None,
     api_key: str | None = None,
 ) -> dict[str, Any] | None:
-    """Report a command-discovery struggle when rqmd/rqmd-ai cannot be invoked.
+    """Report a command-discovery struggle when rqmd cannot be invoked.
 
     This is a high-signal friction category: when agents cannot find or run
     the CLI, the entire rqmd workflow contract breaks and the agent falls back

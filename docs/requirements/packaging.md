@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 7🔧 9✅ 0⚠️ 0⛔ 0🗑️
+Summary: 0💡 6🔧 10✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -139,7 +139,7 @@ Summary: 0💡 7🔧 9✅ 0⚠️ 0⛔ 0🗑️
 - And `rqmd --json` includes `next_id` per domain file, the same schema version, and all existing export fields.
 
 ### RQMD-PACKAGING-015: Deprecate and remove rqmd-ai CLI entrypoint
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - **Blocked by:** RQMD-PACKAGING-013
 - As the rqmd maintainer after the VS Code extension ships and query flags are folded into `rqmd`

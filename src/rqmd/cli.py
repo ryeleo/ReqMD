@@ -1340,7 +1340,7 @@ def _filter_timeline_nodes(
     "--write",
     "apply_write",
     is_flag=True,
-    help="Apply planned --update changes when used with --json (rqmd-ai compatibility). Without --write, --json --update shows a plan only.",
+    help="Apply planned --update changes when used with --json. Without --write, --json --update shows a plan only.",
 )
 @click.option(
     "--rename-id-prefix",
@@ -2078,9 +2078,7 @@ As a user, I encountered [problem] so that [impact].
             click.echo(render_startup_message("chat-handoff-heading.md").rstrip())
             click.echo("")
             click.echo(
-                str(
-                    payload.get("handoff_prompt") or "Run `rqmd-ai init --chat --json`."
-                )
+                str(payload.get("handoff_prompt") or "Run `rqmd init --chat --json`.")
             )
         raise SystemExit(0)
 

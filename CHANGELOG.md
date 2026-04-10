@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<a id="v0-2-4"></a>
+## [0.2.4] - 2026-04-09
+
+### Changed
+
+- Repository cleanup after extension rollout: removed bundled `.github/agents`, `.github/prompts`, rqmd-managed skills, `copilot-instructions.md`, and `rqmd-bundle.json` from `.github/`, preserving only project-local `.github/skills/dev` and `.github/skills/test`.
+- Removed entire `src/rqmd/resources/bundle/` from the Python package — the packaged bundle source (agents, prompts, skills, templates, preset manifests) is no longer shipped with the CLI, since the VS Code extension now owns that surface.
+- `/next` prompt reworked to prefer planning and `/go` handoff over immediate implementation; now reminds users to commit before switching slices when the worktree is dirty.
+- Agent-level worktree-health rule added to both `rqmd.agent.md` variants: check `git status` and recommend committing (or stashing) before handing off to the next slice.
+- `RQMD-PACKAGING-015` marked ✅ Verified — `rqmd-ai` entrypoint fully removed.
+
+### Added
+
+- `scripts/rqmd-bundle-cleanup.sh` — portable cleanup script for removing rqmd-ai–installed bundle files from any project's `.github/`. Keeps `skills/dev/` and `skills/test/`; removes `agents/`, `prompts/`, rqmd-managed skills, `rqmd-bundle.json`, and `copilot-instructions.md` only when it was installed by rqmd (identified by rqmd header).
+
+### Removed
+
+- Removed `rqmd-ai` and `reqmd-ai` console-script entrypoints from `pyproject.toml`; `rqmd --json` remains the canonical machine-readable workflow surface.
+
 <a id="v0-2-3"></a>
 ## [0.2.3] - 2026-04-09
 

@@ -209,7 +209,7 @@ Then run:
 rqmd --help
 ```
 
-`reqmd` and `reqmd-ai` remain available as compatibility aliases, but the primary supported command is `rqmd`.
+`reqmd` remains available as a compatibility alias, but the primary supported command is `rqmd`.
 
 Module entrypoint:
 
@@ -220,7 +220,7 @@ python -m rqmd --help
 Pre-release alias plan:
 
 - `rqmd` remains the canonical package name and primary command for now.
-- `reqmd` and `reqmd-ai` are shipped as compatibility aliases so teams can trial the shorter branding before any package regname decision.
+- `reqmd` is shipped as a compatibility alias so teams can trial the shorter branding before any package regname decision.
 - Any future package-name rename should happen only after a manual PyPI availability check and a documented compatibility window for existing `rqmd` users.
 
 ## Shell completion
@@ -466,7 +466,7 @@ rqmd --update RQ-001=implemented --update RQ-002=verified
 
 > **⚠️ Note:** Treat `rqmd --json` as preview-first. It stays read-only unless you explicitly add `--write`.
 
-> **⚠️ Note:** `rqmd-ai` is the legacy entrypoint and now emits a deprecation warning on every invocation. Use `rqmd --json` instead.
+> **⚠️ Note:** `rqmd-ai` is no longer shipped as a console entrypoint. Use `rqmd --json` for machine-readable workflows.
 
 ### Preview guidance and plan payloads
 

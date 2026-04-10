@@ -93,7 +93,7 @@ class TestParseDomainPriorityMetadata:
 
 class TestDomainPriorityInExport:
     def test_domain_priority_in_ai_export(self, tmp_path: Path):
-        from rqmd.ai_cli import main as ai_main
+        from rqmd.cli import main as rqmd_main
 
         req_dir = tmp_path / "docs" / "requirements"
         req_dir.mkdir(parents=True)
@@ -106,13 +106,12 @@ class TestDomainPriorityInExport:
         )
         runner = CliRunner()
         result = runner.invoke(
-            ai_main,
+            rqmd_main,
             [
                 "--project-root",
                 str(tmp_path),
                 "--docs-dir",
                 "docs/requirements",
-                "--as-json",
                 "--dump-status",
                 "proposed",
             ],
@@ -123,7 +122,7 @@ class TestDomainPriorityInExport:
         assert file_entry["domain_priority"] == "🟠 P1 - High"
 
     def test_no_domain_priority_absent_from_export(self, tmp_path: Path):
-        from rqmd.ai_cli import main as ai_main
+        from rqmd.cli import main as rqmd_main
 
         req_dir = tmp_path / "docs" / "requirements"
         req_dir.mkdir(parents=True)
@@ -133,13 +132,12 @@ class TestDomainPriorityInExport:
         )
         runner = CliRunner()
         result = runner.invoke(
-            ai_main,
+            rqmd_main,
             [
                 "--project-root",
                 str(tmp_path),
                 "--docs-dir",
                 "docs/requirements",
-                "--as-json",
                 "--dump-status",
                 "proposed",
             ],
@@ -150,7 +148,7 @@ class TestDomainPriorityInExport:
         assert "domain_priority" not in file_entry
 
     def test_sub_section_priorities_in_export(self, tmp_path: Path):
-        from rqmd.ai_cli import main as ai_main
+        from rqmd.cli import main as rqmd_main
 
         req_dir = tmp_path / "docs" / "requirements"
         req_dir.mkdir(parents=True)
@@ -164,13 +162,12 @@ class TestDomainPriorityInExport:
         )
         runner = CliRunner()
         result = runner.invoke(
-            ai_main,
+            rqmd_main,
             [
                 "--project-root",
                 str(tmp_path),
                 "--docs-dir",
                 "docs/requirements",
-                "--as-json",
                 "--dump-status",
                 "proposed",
             ],

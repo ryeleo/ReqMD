@@ -533,7 +533,7 @@ Summary: 8💡 50🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And if `gh` is not available or the user declines, the agent skips issue creation gracefully and notes it in the feedback payload as `detail.issue_skipped_reason`.
 
 ### RQMD-AI-056: Rename primary agent from `rqmd-dev` to `rqmd`
-- **Status:** � Implemented
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As an rqmd user
 - I want the primary agent to be named `rqmd` instead of `rqmd-dev`, since it is the agent I interact with 95% of the time and the `-dev` suffix makes it sound like a secondary internal tool

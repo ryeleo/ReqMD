@@ -538,8 +538,8 @@ def test_RQMD_packaging_001_to_005_metadata_and_layout() -> None:
     pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
     assert 'rqmd = "rqmd.cli:main"' in pyproject
     assert 'reqmd = "rqmd.cli:main"' in pyproject
-    assert 'rqmd-ai = "rqmd.ai_cli:main"' in pyproject
-    assert 'reqmd-ai = "rqmd.ai_cli:main"' in pyproject
+    assert 'rqmd-ai = "rqmd.ai_cli:main"' not in pyproject
+    assert 'reqmd-ai = "rqmd.ai_cli:main"' not in pyproject
     assert "speedups = [" in pyproject
     assert "orjson>=3.10.0" in pyproject
     assert "click>=8.1.0" in pyproject
@@ -548,7 +548,7 @@ def test_RQMD_packaging_001_to_005_metadata_and_layout() -> None:
     readme = (project_root / "README.md").read_text(encoding="utf-8")
     assert "rqmd --verify-summaries" in readme
     assert "rqmd --help" in readme
-    assert "`reqmd` and `reqmd-ai` remain available as compatibility aliases" in readme
+    assert "`reqmd` remains available as a compatibility alias" in readme
     assert "uv sync --extra speedups" in readme
     assert "--project-root" in readme
     assert "--docs-dir" in readme
@@ -560,7 +560,7 @@ def test_RQMD_packaging_012_readme_documents_reqmd_alias_plan() -> None:
     readme = (project_root / "README.md").read_text(encoding="utf-8")
 
     assert "Pre-release alias plan" in readme
-    assert "`reqmd` and `reqmd-ai` are shipped as compatibility aliases" in readme
+    assert "`reqmd` is shipped as a compatibility alias" in readme
     assert "manual PyPI availability check" in readme
 
 
