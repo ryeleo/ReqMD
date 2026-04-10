@@ -2,7 +2,7 @@
 description: "Refactor code, docs, or other project artifacts to improve readability, maintainability, or performance without changing external behavior."
 name: "refactor"
 argument-hint: "Describe what to refactor, or point at the file or area that needs attention."
-agent: "rqmd-dev"
+agent: "rqmd"
 ---
 
 Refactor the indicated code, docs, or project artifacts.

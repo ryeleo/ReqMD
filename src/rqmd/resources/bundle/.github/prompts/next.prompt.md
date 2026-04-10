@@ -2,7 +2,7 @@
 description: "Pick the highest-priority feasible next slice and work it through the standard validation loop."
 name: "next"
 argument-hint: "Say 'next' to continue the backlog, or add a constraint such as 'easy-win', 'docs-only', or 'release-prep'."
-agent: "rqmd-dev"
+agent: "rqmd"
 ---
 
 Choose the next coherent slice and work it through implementation and validation.

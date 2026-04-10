@@ -4,15 +4,17 @@ This document is the source-of-truth index for rqmd requirements.
 
 
 
+
 ## Project Tooling Metadata
 
 This section records the rqmd tooling versions currently expected by this repository.
 Refresh it after upgrading rqmd by running `rqmd --sync-index-metadata --force-yes`.
 
 <!-- rqmd-project-metadata:start -->
-- `rqmd_version`: `0.2.0`
+- `rqmd_version`: `0.2.2`
 - `json_schema_version`: `1.0.0`
 <!-- rqmd-project-metadata:end -->
+
 
 
 

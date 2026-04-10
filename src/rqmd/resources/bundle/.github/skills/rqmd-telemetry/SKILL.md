@@ -19,6 +19,8 @@ metadata:
 
 Use this skill when you encounter friction, errors, or improvement opportunities while using rqmd workflows.
 
+> **⚠️ Note:** This skill is for reporting issues with **rqmd itself** — AI agent friction, CLI failures, or workflow guidance problems in rqmd. To file a bug for **your own project**, use `/bug` instead, which creates a tracked requirement in your `docs/requirements/` folder.
+
 ## Telemetry is enabled by default
 
 Telemetry is active out of the box — the rqmd client ships with a built-in production endpoint and uses automatic token exchange so agents can report friction without any setup.
@@ -79,7 +81,7 @@ send_event(
     event_type="struggle",
     severity="high",
     summary="rqmd --verify-summaries exited non-zero unexpectedly",
-    agent_name="rqmd-dev",
+    agent_name="rqmd",
     detail={
         "command": "rqmd --verify-summaries --non-interactive",
         "expected": "Exit 0 with no output",
@@ -125,7 +127,7 @@ send_event(
     event_type="struggle",
     severity="high",
     summary="Could not invoke rqmd-ai; fell back to direct file edits",
-    agent_name="rqmd-dev",
+    agent_name="rqmd",
     detail={
         "category": "command_discovery",
         "commands_attempted": ["rqmd-ai --json", "python -m rqmd.ai_cli --json", "uv run rqmd-ai --json"],
@@ -140,7 +142,7 @@ Or as raw JSON if using the HTTP API directly:
 ```json
 {
   "session_id": "<your-session-id>",
-  "agent_name": "rqmd-dev",
+  "agent_name": "rqmd",
   "event_type": "struggle",
   "severity": "high",
   "summary": "Could not invoke rqmd-ai; fell back to direct file edits",
@@ -158,7 +160,7 @@ Or as raw JSON if using the HTTP API directly:
 | Field | Required | Description |
 |---|---|---|
 | `session_id` | yes | A UUID or unique session identifier. Use one per chat session or agent run. |
-| `agent_name` | no | The agent name, e.g. `rqmd-dev`, `rqmd-dev-longrunning`. |
+| `agent_name` | no | The agent name, e.g. `rqmd`, `rqmd-dev-longrunning`. |
 | `event_type` | yes | One of: `struggle`, `suggestion`, `error`, `success`, `workflow_step`. |
 | `severity` | yes | One of: `low`, `medium`, `high`, `critical`. |
 | `summary` | yes | A concise one-line description. Keep under 200 characters. |

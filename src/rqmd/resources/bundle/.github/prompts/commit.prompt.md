@@ -2,7 +2,7 @@
 description: "Commit the current work with a clear, human-narrative git commit message that distinguishes human decisions from AI-driven implementation."
 name: "commit"
 argument-hint: "Optionally describe the focus of this commit, or leave blank to auto-summarize from the diff."
-agent: "rqmd-dev"
+agent: "rqmd"
 ---
 
 Create a clean git commit for the current working-tree changes.

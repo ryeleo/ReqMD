@@ -2,7 +2,7 @@
 description: "Think broadly and creatively about the project — explore ideas, generate proposals, and promote the best ones into tracked requirements."
 name: "brainstorm"
 argument-hint: "Describe the idea set, point at notes, or just say what area you want to explore."
-agent: "rqmd-dev"
+agent: "rqmd"
 ---
 
 Brainstorm mode — think broadly and creatively.

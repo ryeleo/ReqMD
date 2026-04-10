@@ -2,7 +2,7 @@
 description: "Refine existing requirements or help shape new ones through focused discussion. Adapts to the user's certainty level — from targeted fix-ups to exploratory brainstorming."
 name: "refine"
 argument-hint: "Name a requirement ID to refine, or describe what you want to work on."
-agent: "rqmd-dev"
+agent: "rqmd"
 ---
 
 Help the user refine requirements, specs, or design documents.

@@ -1868,6 +1868,136 @@ def main(
     positional_init_requested = (
         len(targets) == 1 and str(targets[0]).strip().casefold() == "init"
     )
+    positional_bug_requested = (
+        len(targets) >= 1 and str(targets[0]).strip().casefold() == "bug"
+    )
+
+    if positional_bug_requested:
+        if (
+            check
+            or filter_status
+            or filter_priority
+            or filter_flagged
+            or filter_no_flag
+            or filter_has_link
+            or filter_no_link
+            or filter_sub_domain
+            or filter_ids_file
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+            or tree
+            or rollup_mode
+            or init_scaffold
+        ):
+            raise click.ClickException(
+                "bug command cannot be combined with filter, mutation, history, tree/list, rollup, or bootstrap modes."
+            )
+
+        if len(targets) < 2:
+            raise click.ClickException('bug command requires a title, e.g. rqmd bug "Short title"')
+
+        bug_title = " ".join(targets[1:])
+        resolved_criteria_dir, _ = resolve_requirements_dir(repo_root, requirements_dir)
+        bug_file_path = resolved_criteria_dir / "bugs.md"
+
+        # Ensure bugs.md exists
+        if not bug_file_path.exists():
+            if not bug_file_path.parent.exists():
+                bug_file_path.parent.mkdir(parents=True, exist_ok=True)
+            bug_file_path.write_text("# Bugs\n\nThis file tracks project defects as requirements.\n", encoding="utf-8")
+
+        # Resolve prefixes for next-id calculation
+        try:
+            effective_prefixes = resolve_id_prefixes(
+                repo_root, str(resolved_criteria_dir), id_prefixes
+            )
+        except ValueError:
+            effective_prefixes = id_prefixes or DEFAULT_ID_PREFIXES
+
+        # Find domain files to check for next ID
+        domain_files = list(iter_domain_files(repo_root, str(resolved_criteria_dir)))
+        
+        # Determine bug prefix: if user provided --id-namespace use it, else try to detect from bugs.md, else fallback to RQMD-BUG
+        bug_prefix = "RQMD-BUG"
+        if id_prefixes:
+            bug_prefix = id_prefixes[0]
+        else:
+            from .req_parser import detect_domain_prefix
+            detected = detect_domain_prefix(bug_file_path)
+            if detected:
+                bug_prefix = detected
+
+        new_bug_id, _ = next_sequential_requirement_id(
+            domain_files,
+            bug_prefix,
+            id_prefixes=effective_prefixes,
+        )
+
+        bug_template = f"""
+### {new_bug_id}: {bug_title}
+- **Status:** 💡 Proposed
+- **Type:** bug
+- **Priority:** 🟠 P1 - High
+
+#### Description
+As a user, I encountered [problem] so that [impact].
+
+#### Steps to Reproduce
+1. 
+2. 
+
+#### Expected Behavior
+- 
+
+#### Actual Behavior
+- 
+
+#### Root Cause
+- 
+
+#### Acceptance Criteria
+- [ ] Bug is fixed
+- [ ] Regression test added
+"""
+        # Append to file
+        current_content = bug_file_path.read_text(encoding="utf-8")
+        if not current_content.endswith("\n"):
+             current_content += "\n"
+        bug_file_path.write_text(current_content + bug_template, encoding="utf-8")
+
+        # Run summary update
+        process_file(bug_file_path, check_only=False)
+
+        # Calculate line number for VS Code handoff: find the start of the new requirement
+        updated_lines = bug_file_path.read_text(encoding="utf-8").splitlines()
+        target_line = len(updated_lines)
+        for i, line in enumerate(updated_lines):
+            if line.startswith(f"### {new_bug_id}:"):
+                target_line = i + 1
+                break
+
+        if json_output:
+            _emit_json_payload({
+                "mode": "bug",
+                "id": new_bug_id,
+                "file": format_path_display(bug_file_path, repo_root),
+                "line": target_line,
+                "title": bug_title,
+            })
+        else:
+            click.echo(f"Created bug {new_bug_id} in {format_path_display(bug_file_path, repo_root)}")
+            # Shell out to VS Code if available
+            import shutil
+            import subprocess
+            if shutil.which("code"):
+                subprocess.run(["code", "--goto", f"{bug_file_path}:{target_line}"], check=False)
+
+        raise SystemExit(0)
 
     if positional_init_requested:
         if (

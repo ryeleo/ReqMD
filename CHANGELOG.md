@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<a id="v0-2-3"></a>
+## [0.2.3] - 2026-04-09
+
 ### Added
 
 - CLI `bug` command (`rqmd bug "title"`) to quickly generate a bug requirement boilerplate, append it to `docs/requirements/bugs.md`, and open VS Code at the new requirement (`RQMD-AI-061`).
 - Improved `/bug` prompt for agents that leverages the `rqmd bug` CLI for reliable ID allocation and file creation, followed by drafting the bug body from chat context (`RQMD-AI-060`).
+- New requirement proposals: domain-aware `rqmd bug <domain> "title"` with positional domain argument and tab completion (`RQMD-AI-063`); interactive `b` key for inline bug filing from the interactive session (`RQMD-INTERACTIVE-034`).
+
+### Changed
+
+- Primary agent renamed from `rqmd-dev` to `rqmd` across bundled agent file, all bundled prompts, both `agents/README.md` files, and telemetry skill examples (`RQMD-AI-056`). The old name implied a secondary tool; `rqmd` is the obvious default.
+- Anti-hallucination rule added to all `rqmd.agent.md` variants: agents must never invent or calculate requirement IDs — always read `next_id` from `rqmd --json` output.
 
 <a id="v0-2-2"></a>
 ## [0.2.2] - 2026-04-09

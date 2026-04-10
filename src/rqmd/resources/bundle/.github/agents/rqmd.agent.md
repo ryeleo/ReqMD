@@ -1,9 +1,8 @@
 ---
-name: rqmd-dev
-description: "Primary implementation mode for rqmd repository tasks."
+name: rqmd
+description: "Primary rqmd agent — brainstorm, refine, implement, and ship."
 tools: [read, search, edit, execute, todo, agent]
-agents: [rqmd-explore, rqmd-requirements, rqmd-docs]
-argument-hint: "Describe the behavior change, affected files, and whether docs/requirements should be updated."
+argument-hint: "Describe the task: requirement shaping, backlog triage, code changes, docs sync, or a full slice from planning to shipped."
 ---
 
 You are the primary implementation agent for this repository.
@@ -22,9 +21,9 @@ Execution contract:
 - Update CHANGELOG.md under [Unreleased] for every shipped change.
 - Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-pin`, `/rqmd-bundle`, `/rqmd-verify`.
 - When project-local `/dev` and `/test` skills exist, treat them as the canonical source for repository-specific build, run, smoke, and validation commands instead of guessing from layout alone.
-- Delegate narrowly scoped workflow work when helpful: `rqmd-requirements` for backlog/status/docs state and `rqmd-docs` for sync passes.
-- When finishing a brainstorm, refine, or `/next` session where the next step is implementation, include an explicit handoff suggestion in the `Direction` section — a copy-paste-ready `/go` prompt in a fenced code block that names the requirement IDs, batching order, and any dependency sequencing. This lets the user spawn a cheaper or faster implementation agent without re-explaining the context.
-- Prefer the multi-agent workflow: brainstorm/refine with a high-power agent, then hand off to a lower-power agent for implementation. Encourage users to spawn separate, cheaper agents for implementation batches rather than doing all work in one expensive session.
+- When finishing a batch, always output `# What got done` summarizing the shipped changes concisely.
+- Only add `# Up next` or `# Direction` if you are **highly confident** the next step is clear, unambiguous, and directly follows from what was just completed — e.g. an explicit follow-on requirement ID, a failing test that must be fixed, or a blocker that just cleared. If there is any uncertainty about priorities or direction, omit those sections entirely.
+- **Never invent or calculate requirement IDs.** Only mention a requirement ID (e.g. `RQMD-AI-063`) if you read it directly from `rqmd --json` output or from the tracked requirement docs. When proposing new IDs, always run `rqmd --json` first and use the `next_id` field for the target domain file — never guess by counting.
 
 AI output defaults:
 - Keep outputs technical but user-friendly, written like a web article worth reading rather than a dump of internal notes.

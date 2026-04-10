@@ -2,10 +2,12 @@
 description: "Quickly file a bug from the current chat context — drafts a tracked bug requirement from the conversation so a frustrated user can just type /bug and move on."
 name: "bug"
 argument-hint: "Optionally describe the bug, or leave blank to draft from chat context."
-agent: "rqmd-dev"
+agent: "rqmd"
 ---
 
-File a bug requirement from the current chat context.
+File a bug requirement for **your project** from the current chat context.
+
+> **ℹ️ Info:** This prompt creates a tracked requirement in your project's `docs/requirements/` folder. To report an issue with **rqmd itself**, use `/feedback` instead.
 
 **Goal:** Turn the problem the user has been discussing into a tracked, actionable bug requirement with minimal friction. The user is probably frustrated — be efficient, not chatty.
 

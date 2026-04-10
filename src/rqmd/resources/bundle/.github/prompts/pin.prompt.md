@@ -2,7 +2,7 @@
 description: "Capture durable context, decisions, or quick-reference notes in a maintainable pinned note instead of leaving them in chat history."
 name: "pin"
 argument-hint: "Describe what should be pinned and, if known, where it should live."
-agent: "rqmd-dev"
+agent: "rqmd"
 ---
 
 Capture something worth keeping in a durable repository note.

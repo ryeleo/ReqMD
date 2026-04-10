@@ -48,6 +48,43 @@ Before cutting a stable release or release candidate:
 5. Wait for `.github/workflows/publish-pypi.yml` to finish successfully.
 6. Verify the new version appears on PyPI and that `pip install rqmd==<version>` succeeds.
 
+## Canonical release-note links (both products)
+
+For every release (stable or rc), publish release notes that link to the canonical changelog entry on `main` for **both** products:
+
+- rqmd CLI changelog entry: `https://github.com/ryeleo/rqmd/blob/main/CHANGELOG.md#vX-Y-Z`
+- rqmd VS Code changelog entry: `https://github.com/ryeleo/rqmd-vscode/blob/main/CHANGELOG.md#vX-Y-Z`
+
+Anchor format:
+
+- Version `v0.2.1` maps to `#v0-2-1`
+- Version `v0.2.1rc1` maps to base anchor `#v0-2-1`
+
+This keeps release notes deterministic and cross-linked without chicken-and-egg problems, because both links target static changelog files on `main`.
+
+Example `gh` flow for releasing both products together:
+
+```bash
+VERSION="0.2.1"
+ANCHOR="v${VERSION//./-}"
+
+NOTES="Canonical changelog entries:
+- rqmd CLI: https://github.com/ryeleo/rqmd/blob/main/CHANGELOG.md#${ANCHOR}
+- rqmd VS Code extension: https://github.com/ryeleo/rqmd-vscode/blob/main/CHANGELOG.md#${ANCHOR}
+
+These two products are released together for this version."
+
+gh release create "v${VERSION}" \
+   --repo ryeleo/rqmd \
+   --title "v${VERSION}" \
+   --notes "$NOTES"
+
+gh release create "v${VERSION}" \
+   --repo ryeleo/rqmd-vscode \
+   --title "v${VERSION}" \
+   --notes "$NOTES"
+```
+
 ## Notes
 
 - The publish workflow accepts stable releases and PEP 440 `rc` prereleases such as `0.1.0rcN`.

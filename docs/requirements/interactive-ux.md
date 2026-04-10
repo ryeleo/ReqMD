@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 9🔧 20✅ 0⚠️ 0⛔ 4🗑️
+Summary: 5💡 9🔧 20✅ 0⚠️ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -384,3 +384,32 @@ colors:
 - So that labels do not visually swallow following spaces or collapse adjacent columns in terminals such as VS Code's integrated terminal.
 - So that the right-hand preview column remains aligned even when emoji presentation selectors or font-specific rendering quirks are involved.
 - So that width calculations prefer a terminal-grapheme-aware model over brittle Unicode-range heuristics where practical.
+
+### RQMD-INTERACTIVE-033: Live requirement preview sync with VS Code
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a rqmd CLI user navigating requirements interactively
+- I want VS Code to automatically scroll to and highlight the currently focused requirement as I move through the CLI menu
+- So that I can see the full requirement body, related context, and make quick edits in the editor without manually searching for the file and line.
+- Given the user has VS Code open in the same workspace where rqmd CLI is running
+- When the user navigates to a different requirement in the interactive CLI
+- Then VS Code receives a signal (via socket, file watcher, or VS Code extension API) and scrolls to the corresponding requirement heading line
+- And the sync is optional and graceful — if VS Code is not open or the extension is not installed, the CLI continues to work normally
+- And the implementation may involve a lightweight VS Code extension or the existing `code --goto` invocation in a non-blocking manner.
+
+### RQMD-INTERACTIVE-034: "b" key in interactive mode for inline bug filing
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user browsing requirements interactively
+- I want to press `b` to file a quick bug without leaving the interactive session
+- So that filing a defect is one keystroke away, with no context switch to a separate terminal command.
+- So that the `b` key prompts for a short bug title inline (e.g. `Submit bug: `) and then scaffolds the bug requirement in the same way as `rqmd bug`, opening VS Code at the new heading on confirmation.
+- So that a domain argument is pre-populated from the currently focused domain file so the bug lands in the right file by default, with the user able to override it during the inline prompt if needed.
+- So that after the bug is written the interactive session resumes at the same position the user was navigating from, without requiring a restart.
+- Given the user is in interactive mode browsing `interactive-ux.md`
+- When the user presses `b`
+- Then the footer clears and shows an inline prompt `Submit bug [interactive]: ` where `interactive` is the current domain
+- And the user types a short title and presses Enter
+- Then rqmd appends a bug skeleton to the relevant domain file, prints the allocated ID and file path, and opens VS Code at the new line
+- And pressing Escape cancels without writing anything and returns to the previous interactive view
+- And `b` must not shadow any existing interactive key binding — confirmed free as of this writing.

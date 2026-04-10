@@ -2,10 +2,12 @@
 description: "Send improvement feedback about rqmd to the project's telemetry service. Works iteratively — submits telemetry on start, refines the payload through conversation, and finalizes on close."
 name: "feedback"
 argument-hint: "Describe the friction, missing feature, or idea you want to report, or leave blank to start interactively."
-agent: "rqmd-dev"
+agent: "rqmd"
 ---
 
-Start a user-driven rqmd improvement feedback session.
+Start a user-driven improvement feedback session for **rqmd itself**.
+
+> **ℹ️ Info:** This prompt sends feedback about the rqmd CLI and AI workflows to the rqmd developer. To file a bug for **your own project**, use `/bug` instead.
 
 **Before saying anything to the user:**
 - Resolve the telemetry endpoint and key using `resolve_telemetry_endpoint()` and `resolve_telemetry_api_key()` from `src/rqmd/telemetry.py`.

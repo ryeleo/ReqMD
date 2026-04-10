@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 7💡 48🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 8💡 50🔧 2✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -386,7 +386,7 @@ Summary: 7💡 48🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - **Priority:** 🟠 P1 - High
 - As a maintainer using the installed rqmd AI bundle in day-to-day work
 - I want rqmd to install focused prompt entrypoints such as `/go` alongside one primary implementation agent
-- So that the default user experience can stay centered on `rqmd-dev` instead of forcing users to choose among several agent variants up front.
+- So that the default user experience can stay centered on `rqmd` instead of forcing users to choose among several agent variants up front.
 - So that bundled prompt files are exported, detected, and installed as first-class definitions alongside instructions, skills, and agents.
 - So that specialized agent variants can remain available as advanced modes without becoming the main discovery surface for common implementation work.
 
@@ -396,7 +396,7 @@ Summary: 7💡 48🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - As a maintainer using the rqmd AI bundle day to day
 - I want rqmd to ship a visible suite of focused prompts for common actions such as go, next, brainstorm, docs passes, pinning, and ship checks
 - So that I can discover and invoke the most common rqmd workflows quickly without memorizing the lower-level skill names or choosing among multiple agents up front.
-- So that the installed prompts feel like ergonomic entrypoints layered on top of the primary `rqmd-dev` agent and the underlying rqmd workflow skills.
+- So that the installed prompts feel like ergonomic entrypoints layered on top of the primary `rqmd` agent and the underlying rqmd workflow skills.
 - So that the README and bundle docs list the installed prompt set clearly enough for users to browse the available shortcuts in one place.
 
 ### RQMD-AI-045: Count-aware go prompts and commit-per-slice variant
@@ -533,7 +533,7 @@ Summary: 7💡 48🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And if `gh` is not available or the user declines, the agent skips issue creation gracefully and notes it in the feedback payload as `detail.issue_skipped_reason`.
 
 ### RQMD-AI-056: Rename primary agent from `rqmd-dev` to `rqmd`
-- **Status:** 💡 Proposed
+- **Status:** � Implemented
 - **Priority:** 🟠 P1 - High
 - As an rqmd user
 - I want the primary agent to be named `rqmd` instead of `rqmd-dev`, since it is the agent I interact with 95% of the time and the `-dev` suffix makes it sound like a secondary internal tool
@@ -576,3 +576,46 @@ Summary: 7💡 48🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - Then the agent reviews conversation context, runs `rqmd-ai --json` to discover the next available ID and best-fit domain file, and writes a complete bug requirement using the Steps to Reproduce / Expected / Actual / Root Cause template with `type: bug` and an `affects:` cross-reference when identifiable.
 - And the agent appends the requirement directly to the domain file without asking for confirmation.
 - And the prompt file lives at `.github/prompts/bug.prompt.md` in the workspace and in the bundle at `src/rqmd/resources/bundle/.github/prompts/bug.prompt.md`.
+
+### RQMD-AI-061: CLI bug filing command with VS Code handoff
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a rqmd CLI user who discovers a defect while working in the terminal
+- I want to run `rqmd bug "short title"` and have the CLI generate a bug requirement boilerplate, append it to the appropriate domain file, and open VS Code at that location
+- So that I can file bugs quickly from the command line with minimal friction, then finish filling out the Steps/Expected/Actual fields in my editor.
+- Given the user runs `rqmd bug "Widget fails to render after config change"`
+- When the CLI processes the command
+- Then it discovers the appropriate domain file and next available ID via the same logic as `rqmd-ai --json`
+- And it appends a bug requirement skeleton with the supplied title, `Status: 💡 Proposed`, `Type: bug`, and placeholder sections for Steps to Reproduce / Expected / Actual / Root Cause
+- And it opens VS Code at the newly created requirement heading line (`code --goto file.md:line`)
+- And it prints a brief confirmation with the requirement ID and file path
+- And the command keeps CLI interaction short — no interactive prompts, no full editor experience in-terminal.
+
+### RQMD-AI-062: Feedback and telemetry are rqmd product features, not project skills
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a user reading rqmd documentation or skill descriptions
+- I want it to be immediately clear that `/feedback`, `/rqmd-feedback`, and `/rqmd-telemetry` exist to improve **rqmd itself** — not to track bugs or feedback about my own project
+- So that I understand the difference between:
+  - **Project bugs:** filed as requirements in `docs/requirements/` via `/bug` or `rqmd bug`
+  - **rqmd product feedback:** sent to the rqmd telemetry service to help the rqmd developer prioritize improvements
+- Given a user invokes `/feedback` or reads the `rqmd-telemetry` skill description
+- When they see the skill documentation
+- Then it explicitly states "This skill is for reporting issues with **rqmd itself**, not your project" or equivalent framing
+- And the `/bug` prompt documentation clarifies that bugs filed with `/bug` are **project requirements**, not rqmd product feedback
+- And copilot-instructions.md and related AI guidance repeat the distinction so agents do not conflate the two.
+
+### RQMD-AI-063: Domain-aware `rqmd bug` with positional domain argument and tab completion
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a CLI user filing a bug against a specific product area
+- I want to type `rqmd bug <domain> "title"` with a positional domain argument and tab completion
+- So that bugs land in the right domain file immediately without a post-hoc move step.
+- So that the domain argument can be a domain name prefix (e.g. `interactive`, `core`, `ai`) or full domain key (e.g. `RQMD-INTERACTIVE`) and rqmd resolves the best-matching file unambiguously.
+- So that tab completion surfaces available domain names so users do not need to memorize them.
+- So that when a domain argument is omitted the CLI falls back to the existing auto-detect behavior from RQMD-AI-061, keeping the no-argument form fully backward compatible.
+- Given the user types `rqmd bug interactive "Menu freezes on resize"`
+- When the CLI processes the command
+- Then it resolves `interactive` to `docs/requirements/interactive-ux.md` (or equivalent), allocates the next ID in that file, appends the bug skeleton, and opens VS Code at the new heading line
+- And when the domain argument is ambiguous or matches no file it prints clear options and exits with a non-zero status without writing anything
+- And shell completion for `rqmd bug` offers the list of known domain names as the first positional completion candidate.

@@ -9,8 +9,8 @@ Legacy equivalent:
 `rqmd-ai --install-agent-bundle`
 
 Presets:
-- full (default): `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, the bundled prompt suite under `.github/prompts/`, the rqmd workflow skills under `.github/skills/`, specialized full-preset agents under `.github/agents/`, and this README
-- minimal: `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, the bundled prompt suite under `.github/prompts/`, and the rqmd workflow skills under `.github/skills/`
+- full (default): `.github/copilot-instructions.md`, `.github/agents/rqmd.agent.md`, the bundled prompt suite under `.github/prompts/`, the rqmd workflow skills under `.github/skills/`, specialized full-preset agents under `.github/agents/`, and this README
+- minimal: `.github/copilot-instructions.md`, `.github/agents/rqmd.agent.md`, the bundled prompt suite under `.github/prompts/`, and the rqmd workflow skills under `.github/skills/`
 
 Operational notes:
 - Re-run is idempotent.
@@ -25,7 +25,7 @@ Useful commands:
 - `rqmd-ai --install-agent-bundle --bundle-preset minimal`
 
 Installed prompts:
-- `/go`: start or continue the standard rqmd implementation loop through `rqmd-dev`
+- `/go`: start or continue the standard rqmd implementation loop through `rqmd`
 - `/commit`: commit the current work with a well-structured git message
 - `/commit-and-go`: keep going through one or more validated slices and create a clean git commit after each slice
 - `/next`: pick the next highest-priority feasible rqmd slice and work it through validation
@@ -53,7 +53,7 @@ Installed workflow skills:
 - `/rqmd-feedback`
 
 Installed agents in the full preset:
-- `rqmd-dev`: primary implementation and orchestration agent
+- `rqmd`: primary implementation and orchestration agent
 - `rqmd-dev-longrunning`: priority-first implementation agent that keeps working through feasible backlog slices until it reaches a real stop condition
 - `rqmd-dev-easy`: conservative implementation agent that prefers low-risk, high-confidence backlog wins first
 - `rqmd-explore`: read-only codebase and requirement discovery agent

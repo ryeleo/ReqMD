@@ -2,7 +2,7 @@
 description: "Start or continue the implementation loop. A numeric argument such as /go 10 means work through up to 10 validated slices before stopping."
 name: "go"
 argument-hint: "Describe the task, or provide a count such as '10' to keep going for up to that many validated slices."
-agent: "rqmd-dev"
+agent: "rqmd"
 ---
 
 Use the standard implementation loop for this task.

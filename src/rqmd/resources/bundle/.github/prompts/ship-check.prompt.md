@@ -2,7 +2,7 @@
 description: "Run a release or handoff readiness pass covering verification, docs state, changelog quality, and remaining blockers."
 name: "ship-check"
 argument-hint: "Describe what is about to ship, or say what kind of final verification you want."
-agent: "rqmd-dev"
+agent: "rqmd"
 ---
 
 Release-readiness check — verify the work is ready to ship.

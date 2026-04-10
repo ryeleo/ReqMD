@@ -1,5 +1,111 @@
 # Brainstorm
 
+## Short Versions of requirements
+
+The AI Agent suggested the following requirements, which are SO elegant and concise and easy to read.
+
+---
+
+Two requirements added:
+
+docs/requirements/ai-cli.md — summary updated to 9💡 49🔧 2✅
+
+RQMD-AI-063: Domain-aware rqmd bug with positional domain argument and tab completion
+💡 Proposed · 🟠 P1 - High
+rqmd bug <domain> "title" — positional domain name/prefix, tab-completed from known domain files, fallback to auto-detect when omitted
+docs/requirements/interactive-ux.md — summary updated to 5💡 9🔧 20✅
+
+RQMD-INTERACTIVE-034: "b" key in interactive mode for inline bug filing
+💡 Proposed · 🟠 P1 - High
+Press b → inline Submit bug [<current-domain>]: prompt → scaffold + open VS Code → resume session; Escape cancels cleanly
+
+---
+
+These are the "user stories" I wanted! The "so that" is in the title, the user intent and result is clear.
+
+
+And then I go read the full requirements and they are WALLS of text! And it is 2 copies of the same "Given When Then" format but turned into "as a...", "I want...", "so that..." -- this 'user story' format is not useful at all!
+
+I would like to replace the idea of having "user stories" with just having a "summary" field in the requirement metadata that is a concise one-line description of the requirement. Then the body of the requirement can be more free-form and include all the details and the "Given, When, Then" format, but the summary is what gets shown in dashboards, lists, and at the top of the requirement doc. This way we get the best of both worlds — concise summaries for scanning and navigation, and detailed descriptions for implementation!
+
+
+## RQMD Diagram Feedback
+
+### Short node labels
+
+If you want, next pass can go one step further and replace some long node labels with ultra-short verb phrases (2-4 words each) while keeping richer detail only in page text.
+
+
+### tmp files
+
+Three fixes applied:
+
+Root cause — mmdc always writes SVGs next to the input file, not to CWD. pushd was irrelevant.
+
+.gitignore — changed docs/*.md-*.svg → docs/**/*.md-*.svg to cover subdirectories.
+
+Skill — replaced pushd $(mktemp -d) with mmdc -i <file> -o /tmp/mermaid-validate.svg; added a warning explicitly calling out that the pushd trick doesn't work.
+
+### Skill Updates
+
+Updated in ​.github/skills/rqmd-diagrams/SKILL.md.
+
+How I added the convention:
+
+Added a workflow step in frontmatter so node IDs are part of the default authoring flow.
+Added a new required syntax section: “Node IDs for discussion (required)”.
+Added concrete prefix patterns (STR, MEN, RGD, PMO/PMT/PMA) and examples.
+Added explicit rules:
+unique per document
+short format (ABC-12)
+placed at end of node labels on their own <br> line
+avoid putting IDs on edge labels by default
+Added a checklist item so ID coverage is verified every time.
+If you want to copy-paste the exact content delta into your open rqmd docs/source, this is the inserted/updated text:
+
+#### Metadata
+
+metadata:
+  guide:
+    workflow:
+      - Assign a short unique ID to every node label (for example `RGD-1`, `TP-12`, `PMA-4`).
+      - Author the diagram following the syntax rules below.
+      - Run `mmdc -i <file.md>` to validate. Fix any parse errors and re-run until all charts show ✅.
+      - Treat mmdc as the authoritative linter — VS Code's renderer is stricter than the CLI, so CLI passes are necessary but not always sufficient.
+
+#### Workflow checklist
+
+- [ ] Every node has a short unique ID tag (for example `RGD-1`)
+- [ ] `<br>` used for all label line breaks (no `\n`)
+- [ ] No double quotes inside node label brackets
+- [ ] No second `:` inside `stateDiagram-v2` transition labels
+- [ ] `mmdc -i <file>` exits 0 with all charts showing ✅
+- [ ] Diagrams render without errors in the VS Code Mermaid preview
+
+#### Node IDs for discussion (required)
+Every node should include a short unique ID at the end of its label so developers can
+refer to exact points during debugging and reviews.
+
+Use section-scoped prefixes and incrementing numbers:
+
+STR-1, STR-2 ...      (string flow)
+MEN-1, MEN-2 ...      (menu flow)
+RGD-1, RGD-2 ...      (rogue ghost duel)
+PMO-1, PMT-1, PMA-1   (pause open/tab/action)
+
+Recommended formatting inside labels:
+
+✅  A([Player fires first shot<br>ShotTimer.OnStarted fires<br>RGD-1])
+✅  UT{Either side<br>at 5 wins?<br>RGD-9}
+
+Rules:
+- IDs must be unique within the document.
+- Keep IDs short (3-4 letter prefix + number).
+- Put IDs at the end of the node label on their own `<br>` line.
+- Do not add IDs to edge labels unless there is a specific reason.
+
+
+
 ## Systems Analysis Skill
 
 Oh man, "systems analysis" would be awesome skill to make part of rqmd.

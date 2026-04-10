@@ -20,6 +20,8 @@ metadata:
 
 Use this skill to run a structured user-driven feedback session for improving rqmd.
 
+> **⚠️ Note:** This skill is for reporting issues with **rqmd itself** — friction, missing features, or bugs in the rqmd CLI and AI workflows. To file a bug for **your own project**, use `/bug` instead, which creates a tracked requirement in your `docs/requirements/` folder.
+
 ## When to use this skill
 
 Invoke this skill when the user explicitly asks to give feedback on rqmd — not for autonomous agent friction (use `rqmd-telemetry` for that). This skill is for *human-intentional* improvement feedback submitted through `/feedback`.
