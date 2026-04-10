@@ -1,3 +1,5 @@
+> **🚨 Warning:** This requirement domain document is currently deprecated and pending archival.
+
 # Time Machine Requirement
 
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.

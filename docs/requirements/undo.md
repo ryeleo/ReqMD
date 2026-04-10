@@ -1,3 +1,5 @@
+> **🚨 Warning:** This requirement domain document is currently deprecated and pending archival.
+
 # Undo / History Requirement
 
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
