@@ -2,7 +2,7 @@
 
 This document comprehensively specifies the markdown/data structures, parsing rules, and metadata contracts used by rqmd.
 
-> **ℹ️ Info:** This page is primarily about the rqmd requirement-markdown and parsed-data contract. The machine-readable JSON API is a separate contract and already carries a top-level `schema_version` field, currently `1.0.0`.
+> **ℹ️ Info:** This page is primarily about the rqmd requirement-markdown and parsed-data contract. The machine-readable JSON API is a separate contract and already carries a top-level `schema_version` field, currently `1.1.0`.
 
 ## Table of Contents
 1. [Requirement (Criterion) Object](#requirement-criterion-object)
@@ -32,6 +32,8 @@ Each parsed requirement is represented as a dictionary with the following fields
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
+| `summary` | string \| null | `null` | Optional one-line description of what the requirement achieves. Parsed from `- **Summary:** ...` |
+| `summary_line` | int \| null | `null` | Line number of summary line. |
 | `priority` | string \| null | `null` | Optional priority level (e.g., `🔴 P0 - Critical`). Parsed from `- **Priority:** ...` |
 | `priority_line` | int \| null | `null` | Line number of priority line. |
 | `blocked_reason` | string \| null | `null` | Free-text reason if status is Blocked. Parsed from `**Blocked:** <reason>`. |
@@ -110,6 +112,7 @@ Details about this subsection go here (optional).
 ### AC-001: Retrieve user by ID
 - **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
+- **Summary:** Returns the full user object for a validated ID within the SLA response-time budget.
 - **Flagged:** false
 - **Links:**
   - [GitHub Issue](https://github.com/org/repo/issues/42)
@@ -218,7 +221,7 @@ When `--json` is used, top-level keys are stable by mode:
 ```json
 {
   "mode": "filter-sub-domain",
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "sub_domain": "query",
   "requirements_dir": "docs/requirements",
   "total": 2,

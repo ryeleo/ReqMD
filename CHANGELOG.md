@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `- **Summary:**` field: requirements now carry an optional one-line summary parsed by the requirement engine and included in JSON exports. Pattern: `- **Summary:** <description>`.
+- `SUMMARY_PATTERN` added to `constants.py`; `summary` and `summary_line` keys added to all parsed requirement dicts.
+- `JSON_SCHEMA_VERSION` bumped to `1.1.0` — new `summary`/`summary_line` fields added to the requirement object schema (backward-compatible; existing requirements without a summary field parse with `summary: null`).
+
 ### Changed
 
-- Added a dedicated `docs/requirements/bug-tracking.md` requirements domain and moved `RQMD-BUG-001` and `RQMD-BUG-002` into it so bug-tracking behavior is a first-class domain.
-- Repurposed `docs/requirements/bugs.md` as the runtime bug backlog file for filed bug instances (separate from behavior requirements).
+- All 16 requirement files (14 in rqmd-cli, 2 in rqmd-vscode) migrated from verbose `- As a... / - I want... / - So that...` user-story format to a single `- **Summary:** <description>` bullet. Given/When/Then acceptance criteria are preserved unchanged.
+- `docs/schema.md` updated: `summary` and `summary_line` added to the Optional Metadata Fields table; full requirement example updated; schema version reference bumped to `1.1.0`.
+- Brainstorm entry "Summary field instead of user stories" promoted and removed from `docs/brainstorm.md`.
+
 
 <a id="v0-2-4"></a>
 ## [0.2.4] - 2026-04-09

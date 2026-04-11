@@ -2,27 +2,6 @@
 
 Active ideas and untracked nuggets. Items move out once promoted to `docs/requirements/` or shipped.
 
----
-
-## Architecture
-
-### Split rqmd-cli requirements into rqmd-vscode?
-
-**Status:** Analyzed, ready to execute.
-
-**What moves:** Only 2 files need splitting (rest is clearly rqmd-cli):
-- `ai-cli.md` (63 reqs) — prompt/skill/agent/bundle reqs → rqmd-vscode; CLI query flags stay
-- `packaging.md` (19 reqs) — RQMD-PACKAGING-013–019 (extension) → rqmd-vscode; 001–012 (PyPI/CLI) stay
-- `telemetry.md` — keep in rqmd-cli (server infra lives here)
-
-**Open decisions:**
-- New ID prefix for extension reqs? `RQMD-EXT-*` would be cleaner than `RQMD-AI-*` in a different repo
-- Renumber on move or keep original IDs with cross-repo note?
-
-**Steps:** `rqmd init` in rqmd-vscode → copy extension reqs → remove from rqmd-cli → update summaries
-
----
-
 ## New Prompts
 
 ### /fix — Quick bug fix without ceremony
@@ -35,15 +14,6 @@ Proposed: `/fix <description>` tries to fix immediately AND files a bug report t
 
 ## Requirement Format
 
-### Summary field instead of user stories
-
-The verbose "As a... I want... So that..." format is not scannable. Replace with:
-- **Summary:** one-line description shown in dashboards and lists
-- **Body:** free-form detail + Given/When/Then for implementation
-
-The AI-generated summaries like `"rqmd bug <domain> 'title' — positional domain, tab-completed"` are much better than wall-of-text user stories.
-
----
 
 ## Skills
 

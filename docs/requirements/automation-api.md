@@ -90,242 +90,143 @@ Summary: 0💡 29🔧 10✅ 0⚠️ 0⛔ 0🗑️
 ### RQMD-AUTOMATION-011: Empty filter JSON result
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a CI user
-- I want `--json` filter queries with no matches to return `total: 0` and `files: []`
-- So that zero-match runs are handled as valid outcomes without brittle parsing.
+- **Summary:** `--json` filter queries with no matches to return `total: 0` and `files: []` so that zero-match runs are handled as valid outcomes without brittle parsing.
 
 ### RQMD-AUTOMATION-012: Stable JSON schema contract
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As an API consumer
-- I want documented required JSON keys and value types per mode
-- So that integrations are predictable and versioned when schema changes.
+- **Summary:** Documented required JSON keys and value types per mode so that integrations are predictable and versioned when schema changes.
 
 ### RQMD-AUTOMATION-013: Deterministic JSON ordering
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a build engineer
-- I want JSON arrays emitted in deterministic order
-- So that repeated runs on unchanged inputs produce stable diffs.
+- **Summary:** JSON arrays emitted in deterministic order so that repeated runs on unchanged inputs produce stable diffs.
 
 ### RQMD-AUTOMATION-014: Dry-run for mutation commands
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As an automation user
-- I want dry-run behavior for write commands (`--update`, `--update-file`, `--update-priority`, `--seed-priorities`)
-- So that I can preview exact changes before applying them.
+- **Summary:** Dry-run behavior for write commands (`--update`, `--update-file`, `--update-priority`, `--seed-priorities`) so that I can preview exact changes before applying them.
 
 ### RQMD-AUTOMATION-015: Batch partial-failure report model
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a CI maintainer
-- I want per-row success/failure results in JSON and text batch modes
-- So that retry logic can target only failed rows.
+- **Summary:** Per-row success/failure results in JSON and text batch modes so that retry logic can target only failed rows.
 
 ### RQMD-AUTOMATION-016: Exit code matrix
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a pipeline author
-- I want explicit documented exit codes by outcome type
-- So that pipeline control flow remains unambiguous.
+- **Summary:** Explicit documented exit codes by outcome type so that pipeline control flow remains unambiguous.
 
 ### RQMD-AUTOMATION-017: Prompt suppression guarantee
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a headless runner
-- I want non-interactive and JSON modes to never prompt
-- So that jobs never hang waiting for input.
+- **Summary:** Non-interactive and JSON modes to never prompt so that jobs never hang waiting for input.
 
 ### RQMD-AUTOMATION-018: Migration mode automation contract
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a migration operator
-- I want `init --scaffold --force-yes` and `--seed-priorities` to be idempotent, deterministic, and JSON-reportable
-- So that migration steps are reliable in CI/CD workflows.
+- **Summary:** `init --scaffold --force-yes` and `--seed-priorities` to be idempotent, deterministic, and JSON-reportable so that migration steps are reliable in CI/CD workflows.
 
 ### RQMD-AUTOMATION-019: Unique-prefix argument/value abbreviations
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a CLI user
-- I want unique minimal prefixes for long option names and enumerated values to be accepted (for example, `--filt V` -> `--status Verified`)
-- So that fast terminal usage is supported without sacrificing determinism.
-- So that ambiguous prefixes fail with a clear disambiguation error listing valid matches.
+- **Summary:** Unique minimal prefixes for long option names and enumerated values to be accepted (for example, `--filt V` -> `--status Verified`) so that fast terminal usage is supported without sacrificing determinism.
 - **Note:** The enumerated-value prefix half (e.g. `V` → `Verified`) is already implemented and tested. The option-name abbreviation half (e.g. `--stat` → `--status`) via single-character shortcode is a reasonable approach, but is explicitly deferred to **absolute lowest priority** — implement this last, only after the JSON API contract is fully stable and no further breaking changes are expected. Adding abbreviation resolution to a large option set risks surfacing ambiguity regressions during active development.
 
 ### RQMD-AUTOMATION-020: Ambiguous option-prefix error contract
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a CLI user
-- I want ambiguous long-option prefixes to fail deterministically
-- So that the error output lists candidate option names and recommended full invocations.
+- **Summary:** Ambiguous long-option prefixes to fail deterministically so that the error output lists candidate option names and recommended full invocations.
 
 ### RQMD-AUTOMATION-021: Ambiguous value-prefix error contract
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a CLI user
-- I want ambiguous enumerated value prefixes (for example status values) to fail deterministically
-- So that the error output lists candidate canonical values and recommended full values.
+- **Summary:** Ambiguous enumerated value prefixes (for example status values) to fail deterministically so that the error output lists candidate canonical values and recommended full values.
 
 ### RQMD-AUTOMATION-022: JSON-formatted ambiguity errors
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As an automation user
-- I want ambiguity failures in `--json` mode to return a stable machine-readable error payload
-- So that tools can branch on error type, inspect candidates, and auto-remediate input expansion.
+- **Summary:** Ambiguity failures in `--json` mode to return a stable machine-readable error payload so that tools can branch on error type, inspect candidates, and auto-remediate input expansion.
 
 ### RQMD-AUTOMATION-023: Filter flagged requirements
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As an automation user
-- I want a `--flagged` mode for non-interactive workflows
-- So that flagged requirements can be listed, walked, or exported without relying on status changes.
+- **Summary:** A `--flagged` mode for non-interactive workflows so that flagged requirements can be listed, walked, or exported without relying on status changes.
 
 ### RQMD-AUTOMATION-024: JSON output for flagged items
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As an automation user
-- I want `--flagged --json` to return flagged requirements in the same stable grouped structure used by other filter modes
-- So that bots and scripts can consume focus lists consistently.
+- **Summary:** `--flagged --json` to return flagged requirements in the same stable grouped structure used by other filter modes so that bots and scripts can consume focus lists consistently.
 
 ### RQMD-AUTOMATION-025: Direct flagged-state mutation
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As an automation user
-- I want to set flagged state directly with `--update-flagged REQUIREMENT-ID=true|false`
-- So that workflows can mutate flagged state deterministically without requiring interactive mode.
-- So that batch and CI jobs can manage flagged triage state using the same validation, ambiguity handling, and file-scope guardrails used by other mutation commands.
-- So that `--update-file` rows can also include flagged-state mutation values with the same canonical true/false normalization and row-level error reporting guarantees.
-- So that `--json` mutation runs return structured success/failure results for flagged updates consistent with the existing batch partial-failure model.
+- **Summary:** To set flagged state directly with `--update-flagged REQUIREMENT-ID=true|false` so that workflows can mutate flagged state deterministically without requiring interactive mode.
 
 ### RQMD-AUTOMATION-026: Full domain-document JSON contract
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As an automation user when consuming `--json` outputs for domain-level workflows
-- I want each domain entry to include all domain-document sections needed to reconstruct context, including `scope` and domain-level `body` aligned to RQMD-CORE-019
-- So that machine consumers do not need to re-parse markdown to recover domain context beyond requirement rows.
-- So that `--json` responses expose deterministic keys/order for domain metadata and preserve domain `body` content verbatim when present.
+- **Summary:** Each domain entry to include all domain-document sections needed to reconstruct context, including `scope` and domain-level `body` aligned to RQMD-CORE-019 so that machine consumers do not need to re-parse markdown to recover domain context beyond requirement rows.
 
 ### RQMD-AUTOMATION-027: ReqID list input mode
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a rqmd user when I want to target an explicit set of requirements
-- I want a non-interactive/selection mode that accepts a CLI token list of requirement IDs and/or domain identifiers
-- So that filtering and downstream operations can be scoped to exact IDs or whole domains instead of status or priority filters.
-- So that domain tokens (filename, stem, or display name) are expanded deterministically to requirement IDs.
-- So that list ordering is deterministic and duplicates are handled predictably.
+- **Summary:** A non-interactive/selection mode that accepts a CLI token list of requirement IDs and/or domain identifiers so that filtering and downstream operations can be scoped to exact IDs or whole domains instead of status or priority filters.
 
 ### RQMD-AUTOMATION-028: ReqID list file parsing and comment support
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a rqmd user when managing a reusable requirement worklist
-- I want rqmd to accept a simple `.txt`/`.conf`/`.md` list file where requirement IDs, domain tokens, and subsection tokens may appear one-per-line or as comma/whitespace-separated tokens on any line
-- So that teams can maintain lightweight worklists without strict CSV/JSONL schema overhead.
-- So that `#` comment syntax is supported (line comments and trailing comments), and parsing ignores commented segments deterministically.
-- So that this file-parser behavior is identical to positional/CLI token parsing for token forms, expansion, ordering, duplicate handling, and validation.
-- So that subsection tokens are recognized by exact or case-insensitive prefix match and expand deterministically to all requirements in those subsections.
+- **Summary:** Rqmd to accept a simple `.txt`/`.conf`/`.md` list file where requirement IDs, domain tokens, and subsection tokens may appear one-per-line or as comma/whitespace-separated tokens on any line so that teams can maintain lightweight worklists without strict CSV/JSONL schema overhead.
 
 ### RQMD-AUTOMATION-029: Filtered query by subsection
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As an automation user when filtering requirements within subsections
-- I want a `--sub-domain <NAME>` flag to filter results by subsection
-- So that similar to `--status`, only requirements matching the subsection name are included
-- So that matching is case-insensitive prefix-based (e.g., `--sub-domain api` matches "API", "api-v1", etc.)
-- So that subsection filtering works with `--as-tree`, `--json`, `--non-interactive`, and `--as-list` output modes
-- So that in `--json` mode, filter context metadata includes the active `sub_domain` filter
-- So that empty results are handled consistently with other filter modes.
+- **Summary:** A `--sub-domain <NAME>` flag to filter results by subsection so that similar to `--status`, only requirements matching the subsection name are included.
 
 ### RQMD-AUTOMATION-030: Sub-domain metadata in JSON output
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As an automation consumer when processing JSON output
-- I want each requirement entry to include a `sub_domain` field (string or null)
-- So that metadata consumers can understand and reconstruct subsection structure
-- So that domain-level JSON includes an optional `sub_sections` array listing available H2 section names and their requirement counts
-- So that `--sub-domain` metadata in JSON output includes the filter name and matching count
-- So that schema documentation clearly specifies the null-vs-absent distinction for `sub_domain` and `sub_sections`.
+- **Summary:** Each requirement entry to include a `sub_domain` field (string or null) so that metadata consumers can understand and reconstruct subsection structure.
 
 ### RQMD-AUTOMATION-031: Minimal differentiable token matching for CLI args and values
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a rqmd user when typing commands quickly
-- I want all CLI argument values that support enumerations/aliases to accept their smallest differentiable tokens and shortcodes
-- So that canonical labels are tokenized by whitespace-separated units and each unit is eligible for deterministic matching
-- So that `🟡 P2 - Medium` is treated as exactly 4 tokens:
+- **Summary:** All CLI argument values that support enumerations/aliases to accept their smallest differentiable tokens and shortcodes so that canonical labels are tokenized by whitespace-separated units and each unit is eligible for deterministic matching.
 - `🟡`
 - `P2`
 - `-`
 - `Medium`
-- So that inputs like `--priority P2` resolve to the canonical configured priority label (for example `🟡 P2 - Medium`)
-- So that inputs like `--priority M` resolve to the canonical configured priority label (for example `🟡 P2 - Medium`)
-- So that inputs like `--priority H` resolve to the canonical configured priority label (for example `P1 - High`)
-- So that inputs like `--status Ver` resolve to the canonical configured status label (for example `✅ Verified`)
-- So that resolution is deterministic: unique prefixes are accepted, ambiguous prefixes fail with candidate lists, and unknown tokens return clear validation errors.
+- **Summary:** Inputs like `--priority P2` resolve to the canonical configured priority label (for example `🟡 P2 - Medium`).
 
 ### RQMD-AUTOMATION-032: Link-based filtering with `--has-link` and `--no-link`
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a rqmd user when managing requirements with external links (GitHub, Jira, etc.)
-- I want to filter requirements by link presence
-- So that `--has-link` returns only requirements with one or more links configured
-- So that `--no-link` returns only requirements without any links
-- So that these filters combine with other filter modes using the same OR-across-flags, AND-within-flag semantics
-- So that JSON output includes a `links` summary field indicating whether links are present
-- So that filtering on link presence works in both interactive and non-interactive modes (tree, JSON, list).
+- **Summary:** To filter requirements by link presence so that `--has-link` returns only requirements with one or more links configured.
 
 ### RQMD-AUTOMATION-033: Schema versioning in JSON contract
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As an API consumer when integrating with rqmd JSON output
-- I want the JSON contract to include a schema version field
-- So that breaking changes to the JSON structure are explicitly versioned
-- So that all JSON payloads (summary, filter, mutation, etc.) include a top-level or metadata-section `schema_version` field
-- So that version numbering follows semver (major.minor.patch) with major bumps for breaking changes
-- So that version is documented alongside the stable JSON key contract in README and test fixtures
-- So that automated tools can detect and adapt to schema versions across tools and environments.
+- **Summary:** The JSON contract to include a schema version field so that breaking changes to the JSON structure are explicitly versioned.
 
 ### RQMD-AUTOMATION-034: Inverse flagged filter with `--no-flag`
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a rqmd user when triaging requirements that are not currently flagged
-- I want an inverse flagged filter mode
-- So that `--no-flag` returns only requirements with `Flagged: false` or no flagged metadata
-- So that `--flagged` and `--no-flag` are mutually exclusive in a single invocation with clear validation errors
-- So that `--no-flag` works with `--as-tree`, `--as-list`, `--json`, and interactive focused walk modes
-- So that `--no-flag` composes with other filters using the same OR-across-flags, AND-within-flag semantics.
+- **Summary:** An inverse flagged filter mode so that `--no-flag` returns only requirements with `Flagged: false` or no flagged metadata.
 
 ### RQMD-AUTOMATION-035: Positional filter-token precedence and flexible matching
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a rqmd user when I invoke rqmd with bare positional tokens such as `P1 Proposed` or `Prop P1`
-- I want rqmd to recognize status and priority filter tokens positionally before attempting requirement-ID or domain-token resolution
-- So that fast ad hoc filter launches do not require explicit `--status` or `--priority` flags.
-- So that positional filter-token resolution accepts the same minimal differentiable matching, aliases, shortcodes, and case-insensitive normalization already supported for explicit `--status` and `--priority` values.
-- So that token order is irrelevant for mixed positional filters (`rqmd P1 Proposed` and `rqmd Prop P1` resolve identically).
-- So that if a positional token could resolve both as a filter value and as a requirement/domain token, the filter interpretation wins deterministically.
-- So that ambiguous positional filter tokens fail with the same candidate-list error contract used by existing ambiguous value-prefix handling.
-- So that requirement IDs, domain identifiers, and subsection tokens continue to support minimal deterministic matching after positional filter tokens are resolved, rather than requiring exact full strings.
-- So that mixed positional input can still combine filter tokens with target tokens deterministically, with a documented precedence order of: status/priority filter tokens first, then exact-or-minimally-matching requirement IDs, then exact-or-minimally-matching domain identifiers and subsection tokens.
-- So that mixed invocations such as `rqmd P1 core-engine`, `rqmd Proposed api`, or `rqmd Prop P1 core` are interpreted as filter-plus-target workflows rather than as alternate ID/domain-only lookups.
-- So that when a mixed invocation contains both positional filters and target tokens, rqmd first resolves the filters, then scopes the resulting requirement set by the remaining target tokens, and only then decides whether to launch a focused walk, tree/list output, or direct single-requirement action.
-- So that mixed positional status and priority filters narrow results across filter families, allowing `rqmd P1 Proposed` to return only requirements that match both `P1` and `Proposed`.
+- **Summary:** Rqmd to recognize status and priority filter tokens positionally before attempting requirement-ID or domain-token resolution so that fast ad hoc filter launches do not require explicit `--status` or `--priority` flags.
 
 ### RQMD-AUTOMATION-036: Positional `all` target for newest-first overview
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a rqmd user when I want a quick overview of the whole tracked requirement set
-- I want `rqmd all` to resolve as a special positional target
-- So that rqmd selects all requirements regardless of status without needing a separate flag.
-- So that the resulting requirement set is ordered by newest ID first using descending numeric ID semantics for sequential IDs such as `REQ-001`, `REQ-010`, and `REQ-1000`.
-- So that `rqmd all` can drive the same JSON, tree/list, and focused interactive target workflows already used by explicit target tokens.
-- So that `all` is exposed in shell completion as a special positional target.
+- **Summary:** `rqmd all` to resolve as a special positional target so that rqmd selects all requirements regardless of status without needing a separate flag.
 
 ### RQMD-AUTOMATION-037: Canonical machine-readable validation entry point
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
-- As a maintainer or AI agent when validating a planned change before closing a batch
-- I want one canonical validation entry point, ideally exposed as a `validate` subcommand on the same agent workflow surface used for preflight
-- So that validation does not fragment into ad hoc shell snippets that other tools have to scrape and reinterpret.
+- **Summary:** One canonical validation entry point, ideally exposed as a `validate` subcommand on the same agent workflow surface used for preflight so that validation does not fragment into ad hoc shell snippets that other tools have to scrape and reinterpret.
 - Given a developer or AI agent needs to validate a planned change before closing a batch
 - When they run the repository's canonical validation entry point
 - Then it should orchestrate the approved compile, focused test, broader test, and rqmd verification steps for that batch
@@ -337,19 +238,9 @@ Summary: 0💡 29🔧 10✅ 0⚠️ 0⛔ 0🗑️
 ### RQMD-AUTOMATION-038: Multi-query batch mode for rqmd-ai
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As an AI agent when a single workflow step needs several rqmd-ai queries (e.g., dump status, dump specific IDs, verify summaries)
-- I want rqmd-ai to accept multiple queries in one invocation so that startup, import, and catalog-parse costs are paid once instead of N times
-- So that an AI workflow that currently runs 5-15 separate rqmd-ai commands per step can collapse those into one or two batch invocations.
-- So that the batch input format is a simple JSON array of query objects on stdin or a repeated flag, keeping the contract easy for agents to construct.
-- So that each query in the batch produces a separate keyed result in the JSON output so agents can correlate responses to requests.
-- So that errors in one query do not abort the entire batch; per-query success/failure is reported consistently with the existing partial-failure model.
-- So that the batch path reuses the already-parsed and optionally cached catalog (RQMD-CORE-038) rather than re-parsing per query.
+- **Summary:** Rqmd-ai to accept multiple queries in one invocation so that startup, import, and catalog-parse costs are paid once instead of N times so that an AI workflow that currently runs 5-15 separate rqmd-ai commands per step can collapse those into one or two batch invocations.
 
 ### RQMD-AUTOMATION-039: `--dump-type` filter for rqmd-ai
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As an AI agent or user who needs to see only bugs or only features from the catalog
-- I want `rqmd-ai` to accept a `--dump-type bug` (or `--dump-type feature`) flag that filters output by the `type` metadata field introduced in RQMD-CORE-041
-- So that `--dump-type` composes with existing filters like `--dump-status`, enabling queries such as `--dump-type bug --dump-status proposed` (open unfixed bugs) or `--dump-type feature --dump-status proposed` (net-new feature proposals).
-- So that when `--dump-type` is omitted, all types are included (preserving backwards compatibility).
-- So that the `--json` export includes the `type` field in each requirement object regardless of whether `--dump-type` is used.
+- **Summary:** `rqmd-ai` to accept a `--dump-type bug` (or `--dump-type feature`) flag that filters output by the `type` metadata field introduced in RQMD-CORE-041 so that `--dump-type` composes with existing filters like `--dump-status`, enabling queries such as `--dump-type bug --dump-status proposed` (open unfixed bugs) or `--dump-type feature --dump-status proposed` (net-new feature proposals).

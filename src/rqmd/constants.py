@@ -10,7 +10,7 @@ SUMMARY_END = "<!-- acceptance-status-summary:end -->"
 DEFAULT_ID_PREFIXES = ("AC", "R", "RQMD")
 DEFAULT_REQUIREMENTS_DIR = "docs/requirements"
 REQUIREMENTS_INDEX_NAME = "README.md"
-JSON_SCHEMA_VERSION = "1.0.0"
+JSON_SCHEMA_VERSION = "1.1.0"
 
 
 def _catalog_entry_label(entry: dict[str, str]) -> str:
@@ -101,6 +101,9 @@ MENU_PAGE_SIZE = 9
 # Matches: ## Some Subsection Title
 H2_SUBSECTION_PATTERN = re.compile(r"^##\s+(?P<section_title>.+?)\s*$", re.MULTILINE)
 
+SUMMARY_PATTERN = re.compile(
+    r"^- \*\*Summary:\*\* (?P<summary>.+?)\s*$", re.MULTILINE
+)
 STATUS_PATTERN = re.compile(r"^- \*\*Status:\*\* (?P<status>.+?)\s*$", re.MULTILINE)
 PRIORITY_PATTERN = re.compile(
     r"^- \*\*Priority:\*\* (?P<priority>.+?)\s*$", re.MULTILINE

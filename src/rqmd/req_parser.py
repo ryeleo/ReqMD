@@ -24,7 +24,7 @@ from .constants import (AFFECTS_PATTERN, BLOCKED_REASON_PATTERN,
                         LINK_ITEM_PATTERN, LINKS_HEADER_PATTERN,
                         MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
                         REQUIREMENT_TYPES, REQUIREMENTS_INDEX_NAME,
-                        STATUS_PATTERN, TYPE_PATTERN)
+                        STATUS_PATTERN, SUMMARY_PATTERN, TYPE_PATTERN)
 from .priority_model import coerce_priority_label
 from .status_model import coerce_status_label
 
@@ -445,8 +445,8 @@ def parse_requirements(
         id_prefixes: Allowed ID prefixes for matching headers.
 
     Returns:
-        List of requirement dictionaries with keys: id, title, status, status_line,
-        priority, priority_line, blocked_reason, blocked_reason_line,
+        List of requirement dictionaries with keys: id, title, summary, summary_line,
+        status, status_line, priority, priority_line, blocked_reason, blocked_reason_line,
         deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
         Only requirements with a status_line are included.
     """
@@ -473,6 +473,8 @@ def parse_requirements(
             current = {
                 "id": header_match.group("id"),
                 "title": header_match.group("title"),
+                "summary": None,
+                "summary_line": None,
                 "status": None,
                 "header_line": index,
                 "status_line": None,
@@ -493,6 +495,12 @@ def parse_requirements(
                 "sub_domain": current_subsection,  # Assign current subsection if present
             }
             requirements.append(current)
+            continue
+
+        summary_match = SUMMARY_PATTERN.match(line)
+        if summary_match and current and current["summary_line"] is None:
+            current["summary"] = summary_match.group("summary").strip()
+            current["summary_line"] = index
             continue
 
         status_match = STATUS_PATTERN.match(line)

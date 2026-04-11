@@ -8,6 +8,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from rqmd import cli
+from rqmd.constants import JSON_SCHEMA_VERSION
 from rqmd.markdown_io import scope_and_body_from_file
 from rqmd.req_parser import (collect_sub_sections, detect_domain_prefix,
                              next_domain_requirement_id)
@@ -754,7 +755,7 @@ def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(
     assert "Generated from resources/init/README.md." in readme_text
     assert "## Project Tooling Metadata" in readme_text
     assert "- `rqmd_version`: `" in readme_text
-    assert "- `json_schema_version`: `1.0.0`" in readme_text
+    assert f"- `json_schema_version`: `{JSON_SCHEMA_VERSION}`" in readme_text
     assert "- `⚠️ Janky`" in readme_text
 
 
@@ -1023,7 +1024,7 @@ def test_RQMD_core_033a_sync_index_metadata_adds_project_tooling_block(
     updated_text = index_path.read_text(encoding="utf-8")
     assert "## Project Tooling Metadata" in updated_text
     assert "- `rqmd_version`: `9.9.9`" in updated_text
-    assert "- `json_schema_version`: `1.0.0`" in updated_text
+    assert f"- `json_schema_version`: `{JSON_SCHEMA_VERSION}`" in updated_text
 
 
 def test_RQMD_core_033b_warns_when_requirements_index_metadata_mismatches(

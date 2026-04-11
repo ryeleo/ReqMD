@@ -15,18 +15,12 @@ Summary: 0💡 2🔧 0✅ 0⚠️ 0⛔ 0🗑️
 ### RQMD-BUG-001: Dedicated bug-tracking requirement domain
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a maintainer, I want bug-tracking behavior to live in its own requirement domain
-- So that bug workflow capability is discoverable without scanning unrelated domains.
-- So that bug behavior requirements are separated from runtime bug instances filed during project work.
-- So that the requirements index includes an explicit bug-tracking domain entry and ID prefix mapping.
+- **Summary:** Bug workflow capability is discoverable without scanning unrelated domains.
 
 ### RQMD-BUG-002: Runtime bug backlog separated from behavior requirements
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a maintainer, I want `docs/requirements/bugs.md` to be a runtime bug backlog
-- So that filed bug instances have a dedicated place to accumulate without mixing with behavior contracts.
-- So that bug-tracking behavior requirements stay stable in `bug-tracking.md` while `bugs.md` remains an operational queue.
-- So that the documentation makes this split explicit to users and agents.
+- **Summary:** Filed bug instances have a dedicated place to accumulate without mixing with behavior contracts.
 
 ## Boundary Rule
 

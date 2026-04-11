@@ -9,9 +9,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-001: Local telemetry development stack
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a developer working on rqmd telemetry features locally
-- I want a Docker Compose stack with Postgres, MinIO, a telemetry gateway, and admin tooling
-- So that the full telemetry pipeline can run on a single machine without external service dependencies.
+- **Summary:** A Docker Compose stack with Postgres, MinIO, a telemetry gateway, and admin tooling so that the full telemetry pipeline can run on a single machine without external service dependencies.
 - Given a developer runs `docker compose -f docker-compose.telemetry.yml up`
 - When all services reach healthy status
 - Then a Postgres database is available for structured telemetry events, a MinIO bucket exists for larger artifacts such as session logs and prompt snapshots, and a gateway accepts HTTP posts on a non-standard dev port
@@ -20,9 +18,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-002: Telemetry event schema
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a developer querying telemetry data to understand agent behavior
-- I want a structured event schema that captures session identity, event type, severity, agent context, and freeform detail
-- So that telemetry data is queryable, filterable, and useful for diagnosing patterns across many agent sessions.
+- **Summary:** A structured event schema that captures session identity, event type, severity, agent context, and freeform detail so that telemetry data is queryable, filterable, and useful for diagnosing patterns across many agent sessions.
 - Given an AI agent submits a telemetry event
 - When the event is stored
 - Then it includes at minimum: event_id, session_id, timestamp, agent_name, event_type (struggle | suggestion | error | success | workflow_step), severity, summary text, and optional structured detail JSON
@@ -31,9 +27,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-003: Telemetry HTTP gateway
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As an AI agent running inside a chat session that encounters friction with rqmd
-- I want a simple HTTP endpoint I can POST structured telemetry events to
-- So that telemetry capture does not require database drivers, SDK dependencies, or complex client setup inside the agent environment.
+- **Summary:** A simple HTTP endpoint I can POST structured telemetry events to so that telemetry capture does not require database drivers, SDK dependencies, or complex client setup inside the agent environment.
 - Given an agent has a telemetry endpoint URL configured
 - When it POSTs a JSON event body to the gateway
 - Then the gateway validates the payload against the event schema, stores the structured event in Postgres, and optionally stores referenced artifacts in MinIO
@@ -42,9 +36,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-004: rqmd-telemetry bundle skill
 - **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
-- As a maintainer who installs the rqmd AI bundle into a repository
-- I want an `/rqmd-telemetry` skill that teaches AI agents how and when to submit telemetry
-- So that agents have clear instructions for reporting friction, errors, and improvement ideas without needing ad hoc prompting.
+- **Summary:** An `/rqmd-telemetry` skill that teaches AI agents how and when to submit telemetry so that agents have clear instructions for reporting friction, errors, and improvement ideas without needing ad hoc prompting.
 - Given an AI agent encounters a problem while running rqmd workflows
 - When the agent has the rqmd-telemetry skill loaded
 - Then it knows the telemetry endpoint, the event schema, and the expected submission protocol
@@ -54,9 +46,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-005: Agent struggle reporting
 - **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
-- As a developer reviewing telemetry to understand where rqmd agents fail
-- I want agents to report structured "I struggled because..." events when they encounter friction with rqmd workflows
-- So that recurring failure patterns surface as queryable data instead of disappearing into chat transcripts.
+- **Summary:** Agents to report structured "I struggled because..." events when they encounter friction with rqmd workflows so that recurring failure patterns surface as queryable data instead of disappearing into chat transcripts.
 - Given an AI agent tries to run an rqmd command, parse rqmd output, or follow rqmd workflow guidance and encounters unexpected behavior
 - When it recognizes that something went wrong or took significantly more effort than expected
 - Then it submits a telemetry event with event_type "struggle", a concise summary of what it was trying to do, what went wrong, any error output or unexpected state it observed, and which rqmd command or skill was involved
@@ -65,9 +55,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-006: Agent improvement suggestions
 - **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
-- As a developer who wants rqmd to get better informed by AI agent experience
-- I want agents to proactively submit "rqmd could be improved if..." suggestions based on their direct experience using rqmd
-- So that product improvement ideas come from the agents that actually use the tool day to day, not just from manually observed failures.
+- **Summary:** Agents to proactively submit "rqmd could be improved if..." suggestions based on their direct experience using rqmd so that product improvement ideas come from the agents that actually use the tool day to day, not just from manually observed failures.
 - Given an AI agent completes or partially completes an rqmd workflow
 - When it identifies friction that was not a hard failure but made the workflow harder, slower, or more confusing than it should have been
 - Then it submits a telemetry event with event_type "suggestion", a concise description of the observed friction, a proposed improvement or change, and an optional confidence level
@@ -76,9 +64,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-007: Telemetry opt-out and privacy controls
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a user who values privacy and does not want telemetry data sent to external services
-- I want a clear opt-out mechanism that disables all telemetry transmission
-- So that rqmd telemetry cannot become a trust liability.
+- **Summary:** A clear opt-out mechanism that disables all telemetry transmission so that rqmd telemetry cannot become a trust liability.
 - Given a repository has the rqmd AI bundle installed with the telemetry skill
 - When telemetry is enabled by default with built-in production defaults
 - Then agents can submit events without any manual configuration
@@ -89,9 +75,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-008: Agent telemetry configuration discovery
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As an AI agent that needs to submit telemetry events to a remote gateway
-- I want a single discovery mechanism that resolves both the telemetry endpoint URL and the API key from well-known configuration sources
-- So that I can authenticate with the gateway without ad-hoc credential handling or hard-coded secrets.
+- **Summary:** A single discovery mechanism that resolves both the telemetry endpoint URL and the API key from well-known configuration sources so that I can authenticate with the gateway without ad-hoc credential handling or hard-coded secrets.
 - Given an agent invokes the telemetry config discovery
 - When the `RQMD_TELEMETRY_ENDPOINT` environment variable is set
 - Then the endpoint URL is taken from that variable
@@ -106,9 +90,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-009: Agent struggling to run rqmd reporting
 - **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
-- As a developer who wants rqmd to be reliably invocable by AI agents
-- I want agents to report a specific telemetry event when they fail to invoke `rqmd` or `rqmd-ai` and fall back to directly reading or writing requirement files
-- So that command-resolution failures are tracked as a distinct, high-signal friction category rather than being lost in generic struggle reports.
+- **Summary:** Agents to report a specific telemetry event when they fail to invoke `rqmd` or `rqmd-ai` and fall back to directly reading or writing requirement files so that command-resolution failures are tracked as a distinct, high-signal friction category rather than being lost in generic struggle reports.
 - Given an AI agent attempts to run an rqmd or rqmd-ai command
 - When the command is not found, exits with a non-zero status due to invocation issues (wrong Python, missing entrypoint, missing extras), or the agent tries multiple invocation variants before succeeding
 - Then the agent submits a telemetry event with event_type "struggle", a new detail field `"category": "command_discovery"`, the exact commands attempted, and the fallback action taken
@@ -118,9 +100,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-010: Telemetry feedback loop — time-window review and proposals
 - **Status:** 💡 Proposed
 - **Priority:** 🟠 P1 - High
-- As a developer returning to the project after time away
-- I want to run a single command that fetches telemetry events from a given time window, clusters them by pattern, and produces actionable improvement proposals
-- So that accumulated agent friction turns into concrete changes instead of sitting unread in a database.
+- **Summary:** To run a single command that fetches telemetry events from a given time window, clusters them by pattern, and produces actionable improvement proposals so that accumulated agent friction turns into concrete changes instead of sitting unread in a database.
 - Given a developer runs a feedback-loop command with a time window (e.g. `rqmd-ai telemetry review --since 7d`)
 - When the command queries stored events from the gateway
 - Then it groups events by category, command, and recurrence count
@@ -130,9 +110,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-011: Automated weekly telemetry triage via GitHub Actions
 - **Status:** 💡 Proposed
 - **Priority:** 🟡 P2 - Medium
-- As a maintainer who wants telemetry insights to surface automatically
-- I want a scheduled GitHub Actions workflow that runs the telemetry feedback loop weekly and opens a PR when it finds worthwhile improvements
-- So that the project benefits from agent-reported friction even when no human actively checks the telemetry dashboard.
+- **Summary:** A scheduled GitHub Actions workflow that runs the telemetry feedback loop weekly and opens a PR when it finds worthwhile improvements so that the project benefits from agent-reported friction even when no human actively checks the telemetry dashboard.
 - Given a `telemetry-triage` workflow is scheduled to run weekly
 - When the workflow queries the previous week's telemetry events
 - Then it runs the feedback-loop review, filters for proposals above a configurable confidence threshold, and applies accepted patches to a new branch
@@ -142,9 +120,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-012: Short-lived session tokens via gateway exchange
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a maintainer who ships rqmd as a public package
-- I want the telemetry client to authenticate via short-lived tokens fetched at runtime from the gateway instead of shipping a long-lived plaintext API key in the source code
-- So that credential exposure in the published package cannot be used to spam or poison the telemetry database indefinitely.
+- **Summary:** The telemetry client to authenticate via short-lived tokens fetched at runtime from the gateway instead of shipping a long-lived plaintext API key in the source code so that credential exposure in the published package cannot be used to spam or poison the telemetry database indefinitely.
 - Given the rqmd client starts a telemetry session
 - When it needs to submit its first event
 - Then it calls `POST /api/v1/token` on the gateway with a package-embedded client identifier (public, non-secret)
@@ -157,9 +133,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-013: Gateway rate limiting
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a gateway operator who wants to protect the telemetry database from abuse and misconfigured agents
-- I want per-client and global rate limits enforced at the gateway layer
-- So that no single source can flood the database, whether through malice or misconfiguration.
+- **Summary:** Per-client and global rate limits enforced at the gateway layer so that no single source can flood the database, whether through malice or misconfiguration.
 - Given the telemetry gateway is running
 - When a client submits events faster than the configured rate limit
 - Then the gateway responds with `429 Too Many Requests` and a `Retry-After` header
@@ -177,9 +151,7 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 ### RQMD-TELEMETRY-015: `feedback` event type for user-driven improvement telemetry
 - **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
-- As a developer reviewing telemetry to prioritize rqmd improvements
-- I want a dedicated `feedback` event type that captures user-driven improvement feedback separately from autonomous agent reports
-- So that feedback submitted through `/feedback` sessions is distinguishable from autonomous struggle and suggestion events, enabling focused triage of human-intentional input.
+- **Summary:** A dedicated `feedback` event type that captures user-driven improvement feedback separately from autonomous agent reports so that feedback submitted through `/feedback` sessions is distinguishable from autonomous struggle and suggestion events, enabling focused triage of human-intentional input.
 - Given `EventType` in `src/rqmd/telemetry.py` currently defines `"struggle" | "suggestion" | "error" | "success" | "workflow_step"`
 - When the `feedback` event type is added
 - Then `EventType` includes `"feedback"` as a valid literal value
