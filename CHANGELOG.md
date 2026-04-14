@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- `src/rqmd/ai_cli.py` (5 200+ lines): AI-guided init chat/interview flow, JSON context export (`--dump-status`, `--dump-id`, `--dump-type`, `--dump-file`), batch stdin query mode (`--batch`), AI plan/apply update mode (`--write --update`), and bundle install/management. All VS Code agent/skill/prompt bundle content has moved to the `rqmd-vscode` extension repo.
+- CLI flags removed: `--batch`, `--dump-status`, `--dump-type`, `--dump-id`, `--dump-file`, `--include-requirement-body`/`--no-requirement-body`, `--include-domain-markdown`, `--max-domain-markdown-chars`, `--write`.
+- `src/rqmd/resources/bundle/` directory and all shipped agent/skill/prompt/template files. Bundle content is now distributed exclusively via the `rqmd-vscode` VS Code extension.
+- `pyproject.toml` `package-data` entries for `resources/bundle/**`.
+
 <a id="v0-2-4"></a>
 ## [0.2.4] - 2026-04-10
 

@@ -58,14 +58,6 @@ rqmd = [
   "resources/init/*.md",
   "resources/init/*.yml",
   "resources/catalogs/*.yml",
-  "resources/bundle/minimal.txt",
-  "resources/bundle/full.txt",
-  "resources/bundle/templates/*.md",
-  "resources/bundle/templates/*.sh",
-  "resources/bundle/.github/copilot-instructions.md",
-  "resources/bundle/.github/prompts/*.prompt.md",
-  "resources/bundle/.github/agents/*.md",
-  "resources/bundle/.github/skills/*/SKILL.md"
 ]
 
 [tool.pytest.ini_options]

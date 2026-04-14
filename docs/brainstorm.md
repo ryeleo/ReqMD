@@ -85,6 +85,44 @@ Link requirements to GH issues. When issue closes, auto-PR a status update via `
 
 ---
 
+## Single Smart Agent Workflow (rqmd-vscode bundle)
+
+> Context: The dumb-vs-smart cost split is irrelevant. Handoffs are always to a capable fork of the same smart agent. Refactor the whole bundle to reflect this.
+
+### Collapse `rqmd-dev-easy` + `rqmd-dev-longrunning` into `/go` arguments
+
+Two separate agent files exist entirely because users "picked the cheaper agent." With no cost concern, `/go easy-win` and `/go 10` already cover the UX. Delete the files; fold the unique behavior into the primary `rqmd` agent's `argument-hint`.
+
+### Thin agent files — one shared contract in `copilot-instructions.md`
+
+The AI output defaults block (15+ lines) and the full skill list are duplicated verbatim in `rqmd.agent.md`, `rqmd-dev-easy.agent.md`, and `rqmd-dev-longrunning.agent.md`. This duplication existed so each file was self-contained for a possibly-dumb receiver. Promote the shared contract to `copilot-instructions.md`; agent files become: name, description, tools, and the 1-2 lines unique to that agent.
+
+### Skills as focus contracts, not instruction manuals
+
+`rqmd-implement` opens with `Start: rqmd-ai --json --workflow-mode implement` — bootstrapping a cold agent. A smart fork already knows the domain. Skills → single-screen focus declaration: narrowed charter + done-when criteria + any non-obvious edge cases. Remove command rehearsals.
+
+### "Complete and concise" as an explicit handoff standard
+
+Define the quality indicator: **Complete** = receiver can make correct decisions without re-reading history. **Concise** = fits in a few lines, everything else omitted. Apply to `# Up next` and all skill handoff sections. Target: 3 bullets max, ID + one-line state + open question if any.
+
+### Sub-agents as lenses, not dumb helpers
+
+`rqmd-explore`, `rqmd-requirements`, `rqmd-docs` — reframe from "delegate to a simpler helper" to "invoke the same smart agent with a narrowed charter." Affects agent file language and handoff verbosity; not behavior.
+
+### Init handoff: short brief instead of structured interview JSON
+
+`rqmd-ai init --json` produces an elaborate interview protocol designed for a dumb receiver (see `RQMD-EXT-022`). With a smart fork: emit a short brief paragraph (repo context + 3-4 open questions). Preserve the schema for machine-readable validation, but shrink the prose payload by ~80%.
+
+### Drop the "paste this into AI chat" init ceremony
+
+The "print a prompt you paste into a new chat window" init gateway (`RQMD-EXT-014`/`015`) was designed for explicit session handoffs to a fresh/dumb agent. With smart forks: init continues in the same session. `rqmd init` → agent reads output → asks questions → writes files. No copy-paste checkpoint.
+
+### Reconsider `RQMD-EXT-047` — brainstorm resisting implementation
+
+"Brainstorm mode should resist code changes and defer to a cheaper implementation agent" encodes the dumb/smart split. Replace with: the agent self-disciplines within one session (tracks ideas → promotes to requirements → implements when ready), but no hard session boundary or deferral to a "cheaper" agent is assumed.
+
+---
+
 ## Reference: Recently Tracked
 
 Items promoted from this file — see `docs/requirements/` for details:

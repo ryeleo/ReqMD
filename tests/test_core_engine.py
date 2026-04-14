@@ -699,31 +699,6 @@ def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(
     assert "### REQ-HELLO-001: Replace this starter requirement" in starter
 
 
-def test_RQMD_core_009g_positional_init_emits_chat_handoff_payload(
-    tmp_path: Path,
-) -> None:
-    repo = tmp_path / "repo"
-    repo.mkdir(parents=True)
-    runner = CliRunner()
-
-    result = runner.invoke(
-        cli.main,
-        [
-            "--project-root",
-            str(repo),
-            "--json",
-            "init",
-        ],
-    )
-
-    assert result.exit_code == 0, result.output
-    payload = json.loads(result.output)
-    assert payload["mode"] == "init-chat"
-    assert payload["workflow_mode"] == "init"
-    assert payload["strategy"]["selected"] == "starter-scaffold"
-    assert payload["handoff_prompt"]
-
-
 def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(
     tmp_path: Path,
 ) -> None:

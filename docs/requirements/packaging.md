@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 4🔧 10✅ 0⚠️ 0⛔ 0🗑️
+Summary: 0💡 5🔧 10✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -85,5 +85,16 @@ Summary: 0💡 4🔧 10✅ 0⚠️ 0⛔ 0🗑️
 - When the deprecation period is active
 - Then the command still works but prints a stderr warning: "rqmd-ai is deprecated. Use `rqmd --json` instead."
 - And after the removal version, the `rqmd-ai` entrypoint is no longer registered in the package.
+
+### RQMD-PACKAGING-017: Register @rqmd chat participant for unified command surface
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- **Blocked by:** RQMD-PACKAGING-013
+- As a user invoking rqmd workflows in Copilot Chat
+- **Summary:** `@rqmd` chat participant registered in the VS Code extension with subcommands `brainstorm`, `triage`, `go`, `next`, `refine`, `commit`, `verify`, `pin`, `feedback`, and `docs`. Each subcommand loads its skill or prompt file as system instructions and forwards the request to the Copilot-selected model. Users see `@rqmd` in autocomplete like `@terminal`.
+- Given a user who types `@rqmd ` in Copilot Chat
+- When autocomplete appears
+- Then subcommands like `brainstorm`, `go`, `next`, `commit`, `refine` are shown.
+- And invoking `@rqmd brainstorm` loads the `rqmd-brainstorm` skill internally and runs the workflow.
 
 

@@ -1286,12 +1286,6 @@ def _filter_timeline_nodes(
     help="Preview mutation changes without writing files (applies to --update/--update-file/--update-priority/--update-flagged/--seed-priorities).",
 )
 @click.option(
-    "--write",
-    "apply_write",
-    is_flag=True,
-    help="Apply planned --update changes when used with --json. Without --write, --json --update shows a plan only.",
-)
-@click.option(
     "--rename-id-prefix",
     "rename_id_prefix",
     type=str,
@@ -1455,60 +1449,6 @@ def _filter_timeline_nodes(
     help="Print machine-readable JSON output for non-interactive workflows.",
 )
 @click.option(
-    "--batch",
-    "batch_mode",
-    is_flag=True,
-    help="Read a JSON array of query objects from stdin and run all queries in one invocation.",
-)
-@click.option(
-    "--include-requirement-body/--no-requirement-body",
-    "include_body",
-    default=True,
-    help="With --json --status: include full requirement body and line metadata (disable with --no-requirement-body).",
-)
-@click.option(
-    "--dump-status",
-    "export_status",
-    type=str,
-    default=None,
-    help="Export context filtered by status label or slug (implies --json --non-interactive).",
-)
-@click.option(
-    "--dump-type",
-    "export_type",
-    type=str,
-    default=None,
-    help="Export context filtered by requirement type, e.g. 'bug' or 'feature' (implies --json --non-interactive).",
-)
-@click.option(
-    "--dump-id",
-    "export_ids",
-    multiple=True,
-    default=(),
-    help="Export requirement context for one or more IDs (implies --json --non-interactive).",
-)
-@click.option(
-    "--dump-file",
-    "export_files",
-    multiple=True,
-    default=(),
-    help="Export context only from one or more domain files (implies --json --non-interactive).",
-)
-@click.option(
-    "--include-domain-markdown/--no-include-domain-markdown",
-    "include_domain_body",
-    default=False,
-    help="Include optional domain-level body content in JSON export payloads.",
-)
-@click.option(
-    "--max-domain-markdown-chars",
-    "max_domain_body_chars",
-    type=click.IntRange(min=1),
-    default=4000,
-    show_default=True,
-    help="Maximum characters per exported domain-body markdown block.",
-)
-@click.option(
     "--resume-walk/--no-resume-walk",
     "resume_filter",
     default=True,
@@ -1628,7 +1568,6 @@ def main(
     set_status: str | None,
     set_updates: tuple[str, ...],
     dry_run: bool,
-    apply_write: bool,
     set_file_input: str | None,
     rename_id_prefix: str | None,
     set_file: str | None,
@@ -1655,14 +1594,6 @@ def main(
     rollup_map_entries: tuple[str, ...],
     rollup_config: str | None,
     json_output: bool,
-    batch_mode: bool,
-    include_body: bool,
-    export_status: str | None,
-    export_type: str | None,
-    export_ids: tuple[str, ...],
-    export_files: tuple[str, ...],
-    include_domain_body: bool,
-    max_domain_body_chars: int,
     resume_filter: bool,
     strip_status_emojis: bool,
     restore_status_emojis: bool,
@@ -1683,27 +1614,7 @@ def main(
 ) -> None:
     # --summary implies --non-interactive
     interactive = not (non_interactive or summary_table)
-
-    # Dump/export flags imply --json --non-interactive
-    if export_status or export_type or export_ids or export_files:
-        json_output = True
-        interactive = False
-
-    # RQMD-PACKAGING-014: --batch reads JSON queries from stdin and exits early
-    if batch_mode:
-        from .ai_cli import _handle_batch
-
-        _batch_repo_root = repo_root.resolve()
-        payload = _handle_batch(
-            repo_root=_batch_repo_root,
-            requirements_dir_input=requirements_dir,
-            id_prefixes_input=id_prefixes,
-            include_body=include_body,
-            include_domain_body=include_domain_body,
-            max_domain_body_chars=max_domain_body_chars,
-        )
-        _emit_json_payload(payload)
-        raise SystemExit(0)
+    include_body = True  # always include requirement body in JSON output
 
     repo_root_source = ctx.get_parameter_source("repo_root")
     repo_root_explicit = repo_root_source != click.core.ParameterSource.DEFAULT
@@ -2005,31 +1916,11 @@ As a user, I encountered [problem] so that [impact].
             _emit_scaffold_result(created, repo_root)
             raise SystemExit(0)
 
-        normalized_init_prefixes = (
-            normalize_id_prefixes(id_prefixes) if id_prefixes else ()
+        raise click.ClickException(
+            "AI-guided init is no longer part of the CLI. "
+            "Use `rqmd init --scaffold` to create a starter requirements scaffold, "
+            "or use the rqmd VS Code extension for AI-assisted setup."
         )
-        from .ai_cli import _build_or_apply_init_payload
-
-        payload = _build_or_apply_init_payload(
-            repo_root=repo_root,
-            requirements_dir_input=requirements_dir,
-            id_prefixes=normalized_init_prefixes,
-            apply=False,
-            chat_mode=True,
-            interview_answers=(),
-            force_legacy=False,
-        )
-        if json_output:
-            _emit_json_payload(payload)
-        else:
-            click.echo(render_startup_message("chat-init-notice.md").rstrip())
-            click.echo("")
-            click.echo(render_startup_message("chat-handoff-heading.md").rstrip())
-            click.echo("")
-            click.echo(
-                str(payload.get("handoff_prompt") or "Run `rqmd init --chat --json`.")
-            )
-        raise SystemExit(0)
 
     if init_scaffold:
         if (
@@ -2244,52 +2135,6 @@ As a user, I encountered [problem] so that [impact].
     validate_files_readable(domain_files, repo_root)
 
     include_status_emojis = infer_include_status_emojis(domain_files)
-
-    # RQMD-PACKAGING-014: dump/export context (rqmd-ai query flags folded into rqmd)
-    _has_dump_flags = bool(
-        export_status or export_type or export_ids or export_files
-    )
-    if _has_dump_flags:
-        _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)
-        from .ai_cli import _export_context
-
-        payload = _export_context(
-            repo_root=repo_root,
-            requirements_dir=resolved_criteria_dir,
-            domain_files=domain_files,
-            id_prefixes=id_prefixes,
-            export_ids=export_ids,
-            export_files=export_files,
-            export_status=export_status,
-            include_body=include_body,
-            include_domain_body=include_domain_body,
-            max_domain_body_chars=max_domain_body_chars,
-            export_type=export_type,
-        )
-        _emit_json_payload(payload)
-        raise SystemExit(0)
-
-    # RQMD-PACKAGING-014: --write + --update triggers rqmd-ai style plan/apply flow
-    if apply_write and set_updates:
-        _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)
-        from .ai_cli import _plan_or_apply_updates
-
-        payload = _plan_or_apply_updates(
-            repo_root=repo_root,
-            requirements_dir=resolved_criteria_dir,
-            domain_files=domain_files,
-            id_prefixes=id_prefixes,
-            set_entries=set_updates,
-            apply=not dry_run,
-            file_scope=set_file,
-        )
-        _emit_json_payload(payload)
-        raise SystemExit(0)
-
-    if apply_write and not set_updates:
-        raise click.ClickException(
-            "--write requires at least one --update ID=STATUS entry."
-        )
 
     if next_id:
         _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)

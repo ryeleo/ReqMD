@@ -1,10 +1,8 @@
 """Tests for RQMD-CORE-022: Enhanced blocking with linked requirements."""
 
-import json
 from pathlib import Path
 
 import pytest
-from click.testing import CliRunner
 
 from rqmd.req_parser import extract_blocking_id
 
@@ -65,97 +63,3 @@ class TestExtractBlockingId:
     def test_custom_prefix_registered(self):
         result = extract_blocking_id("waiting for MYPROJ-007", id_prefixes=("MYPROJ",))
         assert result == "MYPROJ-007"
-
-
-class TestBlockingIdInJSONExport:
-    def test_blocking_id_in_ai_export(self, tmp_path: Path):
-        from rqmd.cli import main as rqmd_main
-
-        req_dir = tmp_path / "docs" / "requirements"
-        req_dir.mkdir(parents=True)
-        (req_dir / "README.md").write_text("# Index\n")
-        (req_dir / "domain.md").write_text(
-            "# Domain\n\n"
-            "### RQMD-DOM-001: Blocked req\n"
-            "- **Status:** ⛔ Blocked\n"
-            "**Blocked:** Waiting for RQMD-DOM-002 to be implemented\n\n"
-            "### RQMD-DOM-002: Dependency\n"
-            "- **Status:** 💡 Proposed\n"
-        )
-        runner = CliRunner()
-        result = runner.invoke(
-            rqmd_main,
-            [
-                "--project-root",
-                str(tmp_path),
-                "--docs-dir",
-                "docs/requirements",
-                "--dump-status",
-                "blocked",
-            ],
-        )
-        assert result.exit_code == 0, result.output
-        payload = json.loads(result.output)
-        reqs = payload["files"][0]["requirements"]
-        assert reqs[0]["id"] == "RQMD-DOM-001"
-        assert reqs[0]["blocking_id"] == "RQMD-DOM-002"
-        assert reqs[0]["blocked_reason"] == "Waiting for RQMD-DOM-002 to be implemented"
-
-    def test_no_blocking_id_for_freeform_reason(self, tmp_path: Path):
-        from rqmd.cli import main as rqmd_main
-
-        req_dir = tmp_path / "docs" / "requirements"
-        req_dir.mkdir(parents=True)
-        (req_dir / "README.md").write_text("# Index\n")
-        (req_dir / "domain.md").write_text(
-            "# Domain\n\n"
-            "### RQMD-DOM-001: Blocked req\n"
-            "- **Status:** ⛔ Blocked\n"
-            "**Blocked:** Awaiting technical design review\n"
-        )
-        runner = CliRunner()
-        result = runner.invoke(
-            rqmd_main,
-            [
-                "--project-root",
-                str(tmp_path),
-                "--docs-dir",
-                "docs/requirements",
-                "--dump-status",
-                "blocked",
-            ],
-        )
-        assert result.exit_code == 0, result.output
-        payload = json.loads(result.output)
-        reqs = payload["files"][0]["requirements"]
-        assert "blocking_id" not in reqs[0]
-        assert reqs[0]["blocked_reason"] == "Awaiting technical design review"
-
-    def test_blocking_id_with_markdown_link(self, tmp_path: Path):
-        from rqmd.cli import main as rqmd_main
-
-        req_dir = tmp_path / "docs" / "requirements"
-        req_dir.mkdir(parents=True)
-        (req_dir / "README.md").write_text("# Index\n")
-        (req_dir / "domain.md").write_text(
-            "# Domain\n\n"
-            "### RQMD-DOM-001: Blocked req\n"
-            "- **Status:** ⛔ Blocked\n"
-            "**Blocked:** See [RQMD-DOM-003](domain.md#rqmd-dom-003)\n"
-        )
-        runner = CliRunner()
-        result = runner.invoke(
-            rqmd_main,
-            [
-                "--project-root",
-                str(tmp_path),
-                "--docs-dir",
-                "docs/requirements",
-                "--dump-status",
-                "blocked",
-            ],
-        )
-        assert result.exit_code == 0, result.output
-        payload = json.loads(result.output)
-        reqs = payload["files"][0]["requirements"]
-        assert reqs[0]["blocking_id"] == "RQMD-DOM-003"

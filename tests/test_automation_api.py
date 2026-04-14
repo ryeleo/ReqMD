@@ -734,7 +734,7 @@ def test_RQMD_automation_008e_filtered_json_output_for_proposed(
     assert isinstance(body["lines"]["status"], int)
 
 
-def test_RQMD_automation_008e_filtered_json_output_supports_no_body(
+def test_RQMD_automation_008e_filtered_json_output_includes_body(
     two_file_repo: Path,
 ) -> None:
     runner = CliRunner()
@@ -748,7 +748,6 @@ def test_RQMD_automation_008e_filtered_json_output_supports_no_body(
             "--status",
             "proposed",
             "--as-json",
-            "--no-requirement-body",
             "--non-interactive",
         ],
     )
@@ -757,7 +756,7 @@ def test_RQMD_automation_008e_filtered_json_output_supports_no_body(
     payload = json.loads(result.output)
     requirement = payload["files"][0]["requirements"][0]
     assert requirement["id"] == "AC-OVERLAP-001"
-    assert "body" not in requirement
+    assert "body" in requirement
 
 
 def test_RQMD_automation_008f_json_summary_output_without_filter_status(
