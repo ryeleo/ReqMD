@@ -25,6 +25,7 @@ export RQMD_AGENT_WORKFLOW_DATA="$(cat <<'JSON'
     ".github/agents/rqmd-dev.agent.md",
     ".github/skills/dev/SKILL.md",
     ".github/skills/test/SKILL.md",
+    ".github/skills/release/SKILL.md",
     "agent-workflow.sh"
   ],
   "preflight_commands": [

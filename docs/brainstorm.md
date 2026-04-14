@@ -1,6 +1,77 @@
 # Brainstorm
 
-Active ideas and untracked nuggets. Items move out once promoted to `docs/requirements/` or shipped.
+Active ideas and untracked nuggets. Items move out once 
+promoted to `docs/requirements/` or shipped.
+
+## New Prompt
+
+/refine-or-go: Could be a nice shortcut to either refine a requirement or proceed to implementation based on its current state.
+
+> /refine "agent shaping" one more time if needed. o/w, gimme a "/go"!
+
+
+## A key insight: Heirarchy
+
+Remember that the human developer's brain is small, much smaller than the AI.
+
+So the whole requirements system should be heirarchical in many regards:
+- requirement domains and subdomains
+- requirement relationships (parent/child, related, etc.)
+- Make sure AI can step deeper into topics and remember how to step back up to the higher-level topic that drove them there. Remember the very begining, but also try to make a model of the path that got us there, so that it is easy to turn that path into a tree that can easily be navigated around with the developer as they refine requirements.
+
+So, we should leverage 
+
+## Requriements should be links to the docs  [→ promoted: RQMD-EXT-066–068]
+
+Ideally in preview mode even, so that the user can immediately click on the "REQUIREMENT-XXX-NNN" and it will be a hyperlink to the actual requirement in the markdown docs already rendered into preview mode and scrolled to the right requirement/bug.
+
+**Tracked:** DocumentLinkProvider (EXT-066), agent emits linked IDs in chat (EXT-067), stable anchor IDs on headings (EXT-068).
+
+## GitHub / Copilot First Class
+
+
+### Pull Request / Chat Agent
+
+Make it possible to use `rqmd` within GitHub App. Right now, my only choice of "agents" in my GitHub Account is "copilot".
+
+### Template Repo
+
+Make a template repo for rqmd projects to easily copy from!
+
+
+## Coach and Train the Developer to be a better dev with RQMD  [→ promoted: RQMD-EXT-061–065]
+
+I do need to get back in the habit of actually doing specification/requriemtns driven development -- doing 'prompt development' has been very vibe-codey for us recently, which has resulted in some good iterations, but we really do need to get back to making sure we know what we are building it, why we are building it, and HOW we are building it (Requirements Driven Development via`rqmd` is the HOW that we need to make sure is coming  across).
+
+**Tracked:** nudge on `/go` (EXT-061), brainstorm promotion status (EXT-062), `/refine` pre-fill (EXT-063), `/retro` prompt (EXT-064), session-start orientation (EXT-065).
+
+### Requirements coverage report  [raw idea]
+
+Like test coverage but for changes: "This commit touched 5 files. 3 changes map to tracked requirements. 2 are untracked." Could be a `rqmd --coverage` flag that cross-references `git diff` with requirement references in commit messages or changelogs. Larger effort — needs git integration.
+
+### `/what` and `/why` clarity-test prompts  [raw idea]
+
+Before `/go`, two quick prompts: `/what RQMD-XXX-NNN` drafts a one-paragraph "what are we building?" summary; `/why RQMD-XXX-NNN` drafts who benefits and what problem it solves. If the requirement is too vague to answer either, that's the signal to refine first. Lightweight alternative to full `/refine` when you just want a sanity check.
+
+### Auto-capture turning-point insights to `docs/insights/`  [raw idea]
+
+When the agent and user hit a turning point — a correction, a "wait actually...", a user story that reframes a requirement — the agent captures the moment as a small `docs/insights/<slug>.md` file. Each file records: date, model, what triggered the shift, what changed, linked requirement IDs, and a short transcript excerpt.
+
+Cost: near-zero to scan — even 50 files is ~25KB, and agents only need `ls docs/insights/` + read by title. The insight IS the audit trail for why a requirement is shaped the way it is.
+
+Related: could power `/retro` reviews ("these changes were motivated by these insights — did the build honor them?") and long-term pattern recognition ("most insights come from user stories, not from reading code").
+
+### User-story-driven `/refine`, `/retro`, and `/brainstorm`  [raw idea]
+
+The best requirement shaping happens when the developer tells a **first-person narrative** — "here's what happens to me when I try to do X." Every turning point in this session was triggered by the user describing actual friction, not by reading specs.
+
+Idea: `/refine`, `/retro`, and `/brainstorm` should all **actively invite** first-person stories: "Walk me through what happens to you right now when you try to do X." Make the narrative the shaping tool, not a side effect.
+
+Applies to bugs too: "Tell me what happened" > "Describe the expected behavior."
+
+### Developer wellness nudges  [raw idea]
+
+If the system clock says it's 2am and the developer is still in a `/go` loop... maybe gently suggest they get some sleep? Half-joke, half-serious. Rested developers write better requirements. Could be a light preference in agent instructions: "After midnight local time, the agent may gently note that rest improves both code quality and requirement clarity."
 
 ## New Prompts
 
@@ -131,6 +202,8 @@ Items promoted from this file — see `docs/requirements/` for details:
 |------|-----|
 | @rqmd chat participant | RQMD-EXT-053, 054 |
 | VS Code extension | RQMD-EXT-051, 052, 055 |
+| Developer coaching | RQMD-EXT-061–065 |
+| Clickable requirement IDs | RQMD-EXT-066–068 |
 | Self-healing bootstrap | RQMD-EXT-056–060 |
 | Performance | RQMD-CORE-037–040, RQMD-AUTOMATION-038 |
 | Bug tracking | RQMD-CORE-041–043, RQMD-AUTOMATION-039, RQMD-AI-059–060 |

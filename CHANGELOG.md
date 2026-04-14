@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<a id="v0-2-6"></a>
+## [0.2.6] - 2026-04-14
+
+### Added
+
+- `.github/skills/release/SKILL.md`: per-repo `/release` skill with preflight checklist, paired-release contract, and pre-1.0.0 autonomous release policy. Registered in `agent-workflow.sh`.
+
 ### Removed
 
 - `src/rqmd/ai_cli.py` (5 200+ lines): AI-guided init chat/interview flow, JSON context export (`--dump-status`, `--dump-id`, `--dump-type`, `--dump-file`), batch stdin query mode (`--batch`), AI plan/apply update mode (`--write --update`), and bundle install/management. All VS Code agent/skill/prompt bundle content has moved to the `rqmd-vscode` extension repo.
