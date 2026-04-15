@@ -26,6 +26,19 @@ Authorization, Authentication and Accounting (AAA)
 > from ["AAA Service Framework Overview" Juniper Networks Docs](https://www.juniper.net/documentation/en_US/junos/topics/concept/aaa-service-framework-overview.html)
 
 
+## Introduce Domain Terms Consistently
+
+When an rqmd domain term (see `docs/glossary.md`) appears for the first time on a page or in a conversation:
+
+1. **First use:** double-quoted Title Case — "Done-When", "Session Tree", "User Story"
+2. **Subsequent uses:** Title Case without quotes — Done-When, Session Tree, User Story
+3. **Multi-word terms** without a hyphen stay spaced Title Case: User Story, Smoke Path
+4. **Compound-modifier terms** stay hyphenated as a unit: Done-When, Session-Start
+5. **Headings** use Title Case without quotes: `#### Done-When Criteria`
+6. **CLI / JSON keys** remain snake_case: `done_when`, `session_tree`
+
+This convention applies to docs, requirement text, and agent chat output.
+
 ## Prefer Hyperlinks over URLs
 
 [Hyperlinks](https://en.wikipedia.org/wiki/Hyperlink) are a mechanism for embedding a URL into text. Much preferred over pasting a raw URL into documentation, because it is more readable and easier to understand the context of the link.
