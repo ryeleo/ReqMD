@@ -3,6 +3,23 @@
 Active ideas and untracked nuggets. Items move out once 
 promoted to `docs/requirements/` or shipped.
 
+## Catchup should also check remotes
+
+When doing a /catchup, it is prudent to make sure to run a "git fetch" and make sure that your local branches are up to date with their remote counterparts or upstream branches.
+
+
+## TODO
+
+I LOVE EDGE CASES that you provided! OMG! That is genius that generative AI would be amazing at imagining edge cases that I'm too lazy to think up!!!
+
+Unfortunately, I should probably stop, since I am now totally vibe coding unfortunately. Reminder that tomorrow we should make sure to prioritize the concept of detecting and advising when the primary user (myself) is vibe coding 
+
+
+
+## Requirement Polishing
+
+/reqs-polish: Polish requirements so that they are properly formatted, well organized into correct repo/domain/subdomain, and easy for both humans and AI to navigate and understand!
+
 ## New Prompt
 
 /refine-or-go: Could be a nice shortcut to either refine a requirement or proceed to implementation based on its current state.
@@ -204,6 +221,7 @@ Items promoted from this file — see `docs/requirements/` for details:
 | VS Code extension | RQMD-EXT-051, 052, 055 |
 | Developer coaching | RQMD-EXT-061–065 |
 | Clickable requirement IDs | RQMD-EXT-066–068 |
+| Retro, catchup, session tree | RQMD-EXT-071–075 |\n| Domain term convention | RQMD-EXT-076 |\n| Inbox capture | RQMD-EXT-077, RQMD-EXT-078, RQMD-CORE-044 |
 | Self-healing bootstrap | RQMD-EXT-056–060 |
 | Performance | RQMD-CORE-037–040, RQMD-AUTOMATION-038 |
 | Bug tracking | RQMD-CORE-041–043, RQMD-AUTOMATION-039, RQMD-AI-059–060 |

@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 6💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -223,3 +223,14 @@ Summary: 5💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - **Summary:** Rqmd to offer a Steps to Reproduce / Expected / Actual / Root Cause template when creating a bug, since the user-story + Given/When/Then shape does not fit defect reports naturally so that `rqmd init --scaffold` includes an example bug entry alongside the feature example.
+
+### RQMD-CORE-044: `rqmd --inbox` CLI append command
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- **Summary:** As a developer working in a terminal, I want `rqmd --inbox "my idea"` to append a `- my idea` line to `docs/inbox.md` (creating the file with a `# Inbox` header if absent) so that I can capture ideas from any shell without opening an editor or chat panel.
+- Given the developer runs `rqmd --inbox "some idea"`
+- When the command executes
+- Then it appends `- some idea` to `docs/inbox.md` relative to the project root
+- And if `docs/inbox.md` does not exist, it creates it with `# Inbox\n\n- some idea\n`
+- And it prints a confirmation: `📥 Added to inbox (N items)`
+- And multiple arguments are joined: `rqmd --inbox one-liner about capybaras` works without quotes
