@@ -10,14 +10,18 @@ Summary: 2💡 0🔧 1✅ 0⚠️ 0⛔ 0🗑️
 
 This subsection covers read-only operations.
 
+
 ### RQMD-TEST-001: Simple query
+
 - **Status:** ✅ Verified
 - **Priority:** 🟢 P3 - Low
 - Given a simple query
 - When executed
 - Then results are returned.
 
+
 ### RQMD-TEST-002: Complex query
+
 - **Status:** 💡 Proposed
 - **Priority:** 🟢 P3 - Low
 - Given a complex query with joins
@@ -28,7 +32,9 @@ This subsection covers read-only operations.
 
 This subsection covers write operations.
 
+
 ### RQMD-TEST-003: Create operation
+
 - **Status:** 💡 Proposed
 - **Priority:** 🟢 P3 - Low
 - Given valid input

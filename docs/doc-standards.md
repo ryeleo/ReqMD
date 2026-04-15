@@ -1,18 +1,22 @@
 # Documentation Standards
+
 We write technical but user-friendly documentation.
 Lots of headings to make it quick to navigate.
 Split documents when they get too long into smaller helpful chunks.
 Think about writing documentation as if it were a web article that you would actually want to read yourself -- this helps keep things concise, clear, and engaging enough to not fall asleep while reading it.
 
 ## No Secrets in git repos docs (or code)
+
 There should not be any secrets in git repositories! Keep them in your own key / secret vault instead!
 
 
 ## Prefer Many-Smaller-Pages Over One-Large-Page 
+
 Pages can get hard to read when they get too long. A good strategy when a page starts getting to long is to create an Index Page (discussed below), then split the document into many child pages.
 
 
 ## Introduce and Explain Acronyms / Jargon 
+
 Whenever an acronym or jargon is first used in any page:
 
 Spell out the acronym, and put the acronym in parenthesis after it
@@ -35,6 +39,7 @@ When an rqmd domain term (see `docs/glossary.md`) appears for the first time on 
 3. **Multi-word terms** without a hyphen stay spaced Title Case: User Story, Smoke Path
 4. **Compound-modifier terms** stay hyphenated as a unit: Done-When, Session-Start
 5. **Headings** use Title Case without quotes: `#### Done-When Criteria`
+
 6. **CLI / JSON keys** remain snake_case: `done_when`, `session_tree`
 
 This convention applies to docs, requirement text, and agent chat output.
@@ -44,12 +49,15 @@ This convention applies to docs, requirement text, and agent chat output.
 [Hyperlinks](https://en.wikipedia.org/wiki/Hyperlink) are a mechanism for embedding a URL into text. Much preferred over pasting a raw URL into documentation, because it is more readable and easier to understand the context of the link.
 
 ## Use Headings
+
 Rules for using headings:
 
 1. Start from h1,
 2. Never skip heading levels (don't go from h1→ h3, make sure there is an h2 in the middle)
+3. **Always leave a blank line before and after every heading.** Without surrounding blank lines, markdown parsers may treat the heading as a paragraph continuation instead of a block element.
 
 ## Use Ordered/Unordered Lists
+
 It can be very helpful to break up information into a list, when it would otherwise be a long paragraph.
 
 - Use unordered lists when the order of items does not matter.
@@ -62,6 +70,7 @@ Sometimes, it is useful to turn long unordered lists into ordered lists. Why? It
 4. This fact comes after the prior fact.
 
 ## Use "Info", "Note", and "Warning" block quotes
+
 These three macros should be used where they help make the document easier to read!
 Do not add them in excess, but do not be afraid to use them when they can help make the document easier to read and understand.
 
@@ -105,6 +114,7 @@ Add the Table of Contents at (or near) the top of pages if it might help readabi
 
 
 ## Use Index Pages
+
 When you have a lot of documentation, it can be helpful to create an index page that links to all the other pages. This can help readers find the information they are looking for more easily.
 
 Optional: Add a sentence or two at the very top of the page to discuss the index page's purpose.

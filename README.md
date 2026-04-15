@@ -67,6 +67,7 @@ rqmd --version
 - When `--docs-dir` is omitted, auto-detects the nearest viable requirement index from the current working path.
 - Normalizes `- **Status:** ...` lines to the built-in standard status labels that rqmd writes back to disk.
 - Parses requirement headers such as `### RQ-001: Title` or `### FOOBAR-001: Title`.
+
 - Regenerates per-file summary blocks:
 
 ```md
@@ -164,7 +165,9 @@ Default priority levels:
 Example requirement with priority:
 
 ```md
+
 ### RQ-001: Core API endpoint
+
 - **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 ```
@@ -172,6 +175,7 @@ Example requirement with priority:
 Rendered:
 
 > ### RQ-001: Core API endpoint
+
 > - **Status:** 🔧 Implemented
 > - **Priority:** 🔴 P0 - Critical
 
@@ -721,7 +725,9 @@ rqmd --totals --totals-config rqmd.yml --json --non-interactive
 Example project config for a repo that defines a custom status catalog and wants RQMD-ROLLUP-007 roll-up buckets:
 
 ```yaml
+
 # rqmd.yml
+
 statuses:
 	- name: Proposed
 		shortcode: P
@@ -892,6 +898,7 @@ CLI flags always override config file values. When `rqmd.yml` (or `rqmd.yaml` / 
 1. Keep an index doc at `docs/requirements/README.md` or `requirements/README.md`.
 2. Keep domain files in that same directory.
 3. Ensure each requirement has exactly one status line directly under the `### <PREFIX>-...` header.
+
 4. Run `rqmd --verify-summaries` in CI to prevent stale summary blocks.
 5. Use non-interactive `--update`/`--update-file` in automation.
 

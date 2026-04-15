@@ -1,9 +1,11 @@
 # TODO
 
 ## 0.1.0
+
 - [ ] Get 0.1.0 released!
 
 ## 0.1.1
+
 - [ ] Refine AI install process for some new projects, and some existing projects
 - [ ] Refine AI update process for some new projects, and some existing projects
 - [ ] Refine AI uninstall process for some new projects, and some existing projects

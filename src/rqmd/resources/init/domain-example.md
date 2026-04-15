@@ -7,6 +7,7 @@ Scope: starter bootstrap content.
 This section demonstrates basic requirement structure. You can delete this subsection and the requirements below once you understand the format.
 
 ### {{STARTER_PREFIX}}-HELLO-001: Replace this starter requirement
+
 - **Status:** Proposed
 - As a team adopting a newly initialized requirements catalog
 - I want a starter requirement that demonstrates both intent and acceptance detail
@@ -17,11 +18,13 @@ This section demonstrates basic requirement structure. You can delete this subse
 - And this file content is sourced from resources/init/domain-example.md.
 
 ### {{STARTER_PREFIX}}-HELLO-002: Second example with optional metadata
+
 - **Status:** Proposed
 - **Priority:** 🟡 P2 - Medium
 - This shows how optional Priority and Flagged fields work.
 
 ### {{STARTER_PREFIX}}-HELLO-003: Example with detailed requirements
+
 - **Status:** Proposed
 - Given a requirement with multiple requirements
 - When using Given/When/Then format
@@ -36,10 +39,12 @@ You can organize requirements under H2 headers (subsections). This subsection de
 - Enabling `--sub-domain` filtering and tab-completion by subsection name
 
 ### {{STARTER_PREFIX}}-HELLO-004: First requirement in subsection
+
 - **Status:** Proposed
 - This requirement is within the "Optional Subsections" subsection.
 - Subsections are discoverable in JSON output and can be filtered interactively.
 
 ### {{STARTER_PREFIX}}-HELLO-005: Second requirement in subsection
+
 - **Status:** Proposed
 - Also in "Optional Subsections" — see `--sub-domain Optional` to list only these.

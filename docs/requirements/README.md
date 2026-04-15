@@ -3,10 +3,6 @@
 This document is the source-of-truth index for rqmd requirements.
 
 
-
-
-
-
 ## Project Tooling Metadata
 
 This section records the rqmd tooling versions currently expected by this repository.
@@ -16,10 +12,6 @@ Refresh it after upgrading rqmd by running `rqmd --sync-index-metadata --force-y
 - `rqmd_version`: `0.2.4`
 - `json_schema_version`: `1.1.0`
 <!-- rqmd-project-metadata:end -->
-
-
-
-
 
 
 ## How To Use
@@ -47,6 +39,7 @@ Each requirement document can represent a domain, user story, feature area, or a
 Bug note: [Bug Tracking](bug-tracking.md) is for meta-requirements about how bug tracking works; [Bugs](bugs.md) is the live backlog of concrete rqmd defects to fix.
 
 ### AC CLI
+
 - [Core Engine](core-engine.md) - parsing, normalization, summaries, requirements extraction
 - [Interactive UX](interactive-ux.md) - keyboard-driven status update flows
 - [Automation API](automation-api.md) - shared non-interactive set/set-file/filter/json contracts for machine and CI usage

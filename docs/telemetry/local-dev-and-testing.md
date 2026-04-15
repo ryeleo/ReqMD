@@ -5,7 +5,9 @@ How to run the telemetry stack locally, inspect the data, and send test events.
 ## Quick start
 
 ```bash
+
 # From the repo root
+
 docker compose -f docker-compose.telemetry.yml up -d
 ```
 
@@ -235,10 +237,13 @@ After sending test events, open [http://localhost:8080](http://localhost:8080), 
 ## Verify auth is enforced
 
 ```bash
+
 # No auth header — should get 401
+
 curl -s -o /dev/null -w "%{http_code}" http://localhost:18080/api/v1/events
 
 # Wrong key — should get 401
+
 curl -s -o /dev/null -w "%{http_code}" \
   -H "Authorization: Bearer wrong-key" \
   http://localhost:18080/api/v1/events
@@ -283,7 +288,9 @@ The remote Postgres and MinIO are bound to `127.0.0.1` on the VM and are not pub
 
 ```bash
 ./scripts/telemetry-tunnel.sh <vm-public-ip>
+
 # or with explicit user and key:
+
 ./scripts/telemetry-tunnel.sh <vm-public-ip> azureuser ~/.ssh/id_ed25519
 ```
 
@@ -332,5 +339,7 @@ With the tunnels open, VS Code database extensions connect to `localhost:55432` 
 
 ```bash
 docker compose -f docker-compose.telemetry-admin.yml down
+
 # Then Ctrl+C in the tunnel terminal
+
 ```

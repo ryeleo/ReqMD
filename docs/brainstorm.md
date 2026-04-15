@@ -15,7 +15,6 @@ I LOVE EDGE CASES that you provided! OMG! That is genius that generative AI woul
 Unfortunately, I should probably stop, since I am now totally vibe coding unfortunately. Reminder that tomorrow we should make sure to prioritize the concept of detecting and advising when the primary user (myself) is vibe coding 
 
 
-
 ## Requirement Polishing
 
 /reqs-polish: Polish requirements so that they are properly formatted, well organized into correct repo/domain/subdomain, and easy for both humans and AI to navigate and understand!
@@ -127,6 +126,7 @@ AI loves `head`/`tail` but it breaks `--json` output. Add:
 ```python
 except BrokenPipeError:
     pass  # normal when piping to head/tail/less
+
 ```
 
 ### 🤖 AI Verified status

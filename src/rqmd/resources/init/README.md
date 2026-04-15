@@ -28,20 +28,25 @@ Requirement docs can use **H2 headers** (`##`) to organize requirements into log
 - Example structure:
   ```markdown
   ## Query API
+
   Handles read-only data retrieval and projection.
   
   ### AC-001: Simple query retrieval
+
   - **Status:** ✅ Verified
   ...
   
   ### AC-002: Complex query filtering
+
   - **Status:** 💡 Proposed
   ...
   
   ## Mutation API
+
   Handles write operations and side effects.
   
   ### AC-003: Create operation
+
   - **Status:** ✅ Verified
   ...
   ```
@@ -88,9 +93,11 @@ Optional metadata fields:
 Expected requirement shape:
 
 ```markdown
+
 ## Optional Subsection Name
 
 ### AC-001: Requirement title
+
 - **Status:** 💡 Proposed
 - **Priority:** 🟡 P2 - Medium
 - **Flagged:** true

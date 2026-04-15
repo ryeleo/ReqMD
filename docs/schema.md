@@ -5,6 +5,7 @@ This document comprehensively specifies the markdown/data structures, parsing ru
 > **ℹ️ Info:** This page is primarily about the rqmd requirement-markdown and parsed-data contract. The machine-readable JSON API is a separate contract and already carries a top-level `schema_version` field, currently `1.1.0`.
 
 ## Table of Contents
+
 1. [Requirement (Criterion) Object](#requirement-criterion-object)
 2. [Subsection (H2) Structure](#subsection-h2-structure)
 3. [Markdown Syntax](#markdown-syntax)
@@ -60,21 +61,25 @@ Each parsed requirement is represented as a dictionary with the following fields
 ### Syntax
 
 ```markdown
+
 ## Subsection Name Here
 
 Optional body text describing the subsection scope, design rationale, or implementation notes.
 
 ### AC-001: First requirement in subsection
+
 - **Status:** ✅ Verified
 ...
 
 ### AC-002: Second requirement in subsection
+
 - **Status:** 💡 Proposed
 ...
 
 ## Another Subsection
 
 ### AC-003: Requirement in different subsection
+
 - **Status:** ✅ Verified
 ...
 ```
@@ -83,6 +88,7 @@ Optional body text describing the subsection scope, design rationale, or impleme
 
 - H2 header **must** be detected before H3 requirement headers to assign subsection membership.
 - Pattern: `^##\s+(?P<section_title>.+?)\s*$` (matches `## Subsection Name`)
+
 - Subsection name is **extracted as verbatim text** (preserve casing, internal whitespace).
 - When parsing encounters an H2, it becomes the `current_subsection` for all subsequent H3 requirements until another H2 is found.
 - Resetting subsection: parsing next H2 overwrites `current_subsection`; there is **no** explicit "end of subsection" marker.
@@ -92,10 +98,15 @@ Optional body text describing the subsection scope, design rationale, or impleme
 
 ```
 Line 5:  ## Query API                     ← current_subsection = "Query API"
+
 Line 7:  ### AC-001: Get user           ← parsed with sub_domain = "Query API"
+
 Line 12: ### AC-002: Search items       ← parsed with sub_domain = "Query API"
+
 Line 18: ## Mutation API                ← current_subsection = "Mutation API"
+
 Line 20: ### AC-003: Create entity      ← parsed with sub_domain = "Mutation API"
+
 ```
 
 ---
@@ -105,11 +116,13 @@ Line 20: ### AC-003: Create entity      ← parsed with sub_domain = "Mutation A
 ### Full Requirement Example (All Optional Fields)
 
 ```markdown
+
 ## Query API
 
 Details about this subsection go here (optional).
 
 ### AC-001: Retrieve user by ID
+
 - **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - **Summary:** Returns the full user object for a validated ID within the SLA response-time budget.
@@ -127,6 +140,7 @@ Details about this subsection go here (optional).
 ## Mutation API
 
 ### AC-002: Update user profile
+
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - Given a user with edit permissions
@@ -141,9 +155,11 @@ Details about this subsection go here (optional).
 ```python
 if status_match and current and current["status"] is None:
     # Parse and normalize
+
     current["status"] = coerce_status_label(status_match.group("status"))
     current["status_line"] = index
     continue  # Subsequent matches ignored
+
 ```
 
 **Reason lines** can appear on consecutive lines:
@@ -153,6 +169,7 @@ if blocked_match and current and current["status_line"] is not None:
     current["blocked_reason"] = blocked_match.group(1).strip()
     current["blocked_reason_line"] = index
     # Does NOT continue; allows multiple reason lines
+
 ```
 
 ---
@@ -236,6 +253,7 @@ When `--json` is used, top-level keys are stable by mode:
           "flagged": false,
           "body": {
             "markdown": "### AC-DEMO-001: Get record\\n- **Status:** ✅ Verified",
+
             "lines": {
               "header": 9,
               "status": 10,
@@ -317,7 +335,9 @@ Override with `--id-namespace AC,R` (comma-separated list).
 rqmd supports optional `rqmd.yml` or `rqmd.json` for custom status/priority catalogs:
 
 ```yaml
+
 # rqmd.yml
+
 statuses:
   - name: Proposed
     shortcode: P

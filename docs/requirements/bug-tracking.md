@@ -12,12 +12,16 @@ Use this file for **meta-requirements about bug tracking itself**.
 Summary: 0💡 2🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
+
 ### RQMD-BUG-001: Dedicated bug-tracking requirement domain
+
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - **Summary:** Bug workflow capability is discoverable without scanning unrelated domains.
 
+
 ### RQMD-BUG-002: Runtime bug backlog separated from behavior requirements
+
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - **Summary:** Filed bug instances have a dedicated place to accumulate without mixing with behavior contracts.

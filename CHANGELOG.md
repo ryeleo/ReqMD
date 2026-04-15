@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 <a id="v0-2-6"></a>
+
 ## [0.2.6] - 2026-04-14
 
 ### Added
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pyproject.toml` `package-data` entries for `resources/bundle/**`.
 
 <a id="v0-2-4"></a>
+
 ## [0.2.4] - 2026-04-10
 
 ### Added
@@ -46,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `rqmd-ai` and `reqmd-ai` console-script entrypoints from `pyproject.toml`; `rqmd --json` remains the canonical machine-readable workflow surface.
 
 <a id="v0-2-3"></a>
+
 ## [0.2.3] - 2026-04-09
 
 ### Added
@@ -60,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Anti-hallucination rule added to all `rqmd.agent.md` variants: agents must never invent or calculate requirement IDs — always read `next_id` from `rqmd --json` output.
 
 <a id="v0-2-2"></a>
+
 ## [0.2.2] - 2026-04-09
 
 ### Changed
@@ -68,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stable release runs still enforce that `CHANGELOG.md` already contains a matching `## [x.y.z]` section before publish.
 
 <a id="v0-2-1"></a>
+
 ## [0.2.1] - 2026-04-09
 
 ### Added
@@ -91,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `rqmd-ai` entrypoint now emits a `DeprecationWarning` on every invocation: *"rqmd-ai is deprecated. Use `rqmd --json` instead."* (`RQMD-PACKAGING-015`). The entrypoint still executes normally; the warning is informational only.
 
 <a id="v0-2-0"></a>
+
 ## [0.2.0] - 2026-04-08
 
 ### Added

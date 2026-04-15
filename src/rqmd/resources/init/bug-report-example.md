@@ -1,4 +1,5 @@
 ### {{PREFIX}}-BUG-001: Short description of the defect
+
 - **Status:** 💡 Proposed
 - **Type:** bug
 - **Affects:** {{PREFIX}}-XXX
