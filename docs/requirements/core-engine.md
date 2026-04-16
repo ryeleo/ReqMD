@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 6💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 9💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -324,3 +324,57 @@ Summary: 6💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 
 - And it prints a confirmation: `📥 Added to inbox (N items)`
 - And multiple arguments are joined: `rqmd --inbox one-liner about capybaras` works without quotes
+
+<a id="rqmd-core-045"></a>
+
+### RQMD-CORE-045: `rqmd --staleness` — per-requirement staleness scoring
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- **Summary:** As a developer or AI agent wanting to prioritize tech-debt cleanup, I want `rqmd --staleness` to produce a per-requirement staleness report with a normalized 0–100 composite score based on git history and code cross-references so that the most impactful cleanup targets surface automatically.
+
+- Given the developer runs `rqmd --staleness` in a tracked project
+- When the command executes
+- Then it outputs a table (or `--json` structured data) with one row per requirement showing:
+  - **ID, title, status**
+  - **Last status change** — date from `git blame` on the status line
+  - **Code cross-refs** — count of source files referencing the requirement ID (grep-based)
+  - **Code freshness** — most recent commit date touching files that reference the ID
+  - **Staleness score** — a normalized 0–100 composite, higher = more stale / more likely debt
+- And the composite score is computed from named, weighted signals with documented defaults (e.g., `status_age_weight=0.3`, `xref_count_weight=0.3`, `code_freshness_weight=0.2`, `status_flag_weight=0.2`)
+- And all signal weights are documented in `--staleness --explain` output and adjustable per-project via `.rqmd/config.toml` `[staleness]` section
+- And 🗑️ Deprecated requirements with code cross-ref count > 0 are flagged as **"deprecated but alive"** (automatic score boost to near-100)
+- And 🔧 Implemented requirements with zero code cross-refs are flagged as **"implemented but unreferenced"** (possible orphan)
+- And the output is sorted by staleness score descending
+- And `--staleness --json` produces machine-readable output consumable by prompts/skills
+- And `--staleness --deprecated-only` filters to 🗑️ Deprecated requirements with live code cross-refs, reports ID/file/line/content grouped by requirement ID, and exits non-zero when matches are found (useful for CI)
+
+<a id="rqmd-core-046"></a>
+
+### RQMD-CORE-046: Exclude `archived/` from default requirement processing
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- **Summary:** As a developer who archives deprecated requirement docs, I want `rqmd` to skip `docs/requirements/archived/` by default so that archived specs don't inflate summary counts or appear in `--json` output.
+
+- Given `docs/requirements/archived/` contains moved requirement files
+- When `rqmd` runs in any mode (summary, `--json`, `--verify-summaries`, `--staleness`)
+- Then files under `archived/` are excluded from processing by default
+- And a `--include-archived` flag re-includes them for audit/migration use
+- And `rqmd --json` includes an `"archived_files"` count in metadata so agents know archived docs exist
+- And the `docs/requirements/README.md` index does not list archived files (but a footnote mentions the archived count)
+
+<a id="rqmd-core-047"></a>
+
+### RQMD-CORE-047: Configurable decay curve for staleness time-based signals
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟢 P3 - Low
+- **Summary:** As a project maintainer tuning staleness scoring for my codebase's evolution patterns, I want time-based staleness signals (status age, code freshness) to support configurable decay curves so that projects with different development cadences can weight recency appropriately.
+
+- Given `rqmd --staleness` computes time-based signals
+- When a decay curve is configured in `.rqmd/config.toml` `[staleness]` section (e.g., `decay_curve = "logarithmic"`)
+- Then that curve is applied to status age and code freshness before the composite score
+- And the default is `linear` for simplicity
+- And supported options are `linear`, `logarithmic`, `exponential`
+- And `--staleness --explain` documents the active curve and its effect on scoring

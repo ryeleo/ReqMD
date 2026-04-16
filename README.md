@@ -1,6 +1,8 @@
 # rqmd
 
-`rqmd` is a CLI tool for Requirements Driven Development (RDD).
+`rqmd` is a *local-first* CLI tool for Requirements Driven Development (RDD).
+
+> See also [Local-First Software: You Own Your Data, in spite of the Cloud](https://martin.kleppmann.com/papers/local-first.pdf)
 
 Works great with AI assisted workflows, but also fully functional as a standalone CLI for teams who want to keep AI out of their requirements process.
 
