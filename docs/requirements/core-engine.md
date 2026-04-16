@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 11💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 13💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -410,3 +410,34 @@ Summary: 11💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - And when metadata matches (or no index exists), the `"metadata_mismatch"` key is absent (not null — absent)
 - And the existing stderr warning for non-JSON mode is preserved unchanged
 - And agents can check for the key's presence as a simple `if "metadata_mismatch" in data:` gate
+
+<a id="rqmd-core-050"></a>
+
+### RQMD-CORE-050: `rqmd init` README template includes install breadcrumb
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- **Summary:** As a developer browsing a requirements index for the first time, I want a lightweight human-readable note that tells me the index is managed by rqmd so that I know what tool to install without needing to ask a teammate or search the repo.
+
+- Given a developer runs `rqmd init` to bootstrap a new requirements directory
+- When the generated `README.md` is written
+- Then the file includes a brief info callout near the top (after the title), such as: `> **ℹ️ Info:** This index is managed by [rqmd](https://pypi.org/project/rqmd/) — a lightweight requirements tracker for AI-assisted development.`
+- And the callout is a single Markdown blockquote line — not a section header, not instructions
+- And the callout does not duplicate the Schema Reference or How To Use content already in the template
+- And existing projects that already ran `rqmd init` can pick up the breadcrumb by running `rqmd --sync-index-metadata --force-yes` or by manually adding the line (it is not a metadata field — it is static template content)
+
+<a id="rqmd-core-051"></a>
+
+### RQMD-CORE-051: Dogfood — refresh rqmd-cli requirements index from current template
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- **Summary:** As the rqmd maintainer, I want the rqmd-cli project's own `docs/requirements/README.md` to reflect the current `rqmd init` template so that the project eats its own dogfood and the README serves as a living example of best practice.
+
+- Given the `rqmd init` template (`src/rqmd/resources/init/README.md`) has evolved since this project's requirements README was originally written
+- When this requirement is implemented
+- Then the project's `docs/requirements/README.md` is updated to include all template sections: **Requirement Structure**, **Subsection Organization**, **File Organization**, **Status Workflow**, **Schema Reference** (Requirement Entry Fields, Supported Markdown Structure, JSON Output Contract)
+- And project-specific content that is not in the template (Requirement Documents listing, ID Prefixes table, Verification section, Archived section, Tracking Rule) is preserved and positioned after the template-derived sections
+- And the `## How To Use` section uses the template's subsection structure (H3 headers for Requirement Structure, Subsection Organization, File Organization) instead of the current flat bullet list
+- And the metadata block and any project-specific callouts remain unchanged
+- And the refresh is a one-time manual merge — not an automated `rqmd init --refresh` command (that would be a separate proposal)

@@ -1,7 +1,7 @@
 # Bugs
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 0🔧 0✅ 0⚠️ 0⛔ 0🗑️
+Summary: 4💡 0🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -52,3 +52,78 @@ rqmd processes `rqmd-cli/docs/requirements/` because Python's `Path(".")` resolv
 #### Possible Fix
 
 Document the gotcha (use absolute paths with `--project-root "$PWD"` instead of `.`) and/or resolve `--project-root` relative to an env var like `RQMD_CALLER_CWD` that callers can set before `uv run --directory` changes cwd.
+
+### RQMD-BUG-004: sync-index-metadata adds blank lines on repeat runs
+- **Status:** 💡 Proposed
+- **Type:** bug
+- **Priority:** 🟠 P1 - High
+
+#### Description
+As a user, I encountered [problem] so that [impact].
+
+#### Steps to Reproduce
+1. 
+2. 
+
+#### Expected Behavior
+- 
+
+#### Actual Behavior
+- 
+
+#### Root Cause
+- 
+
+#### Acceptance Criteria
+- [ ] Bug is fixed
+- [ ] Regression test added
+
+### RQMD-BUG-005: sync-index-metadata adds blank lines on repeat runs
+- **Status:** 💡 Proposed
+- **Type:** bug
+- **Priority:** 🟠 P1 - High
+
+#### Description
+As a user, I encountered [problem] so that [impact].
+
+#### Steps to Reproduce
+1. 
+2. 
+
+#### Expected Behavior
+- 
+
+#### Actual Behavior
+- 
+
+#### Root Cause
+- 
+
+#### Acceptance Criteria
+- [ ] Bug is fixed
+- [ ] Regression test added
+
+### RQMD-BUG-006: sync-index-metadata adds blank lines on repeat runs
+- **Status:** 💡 Proposed
+- **Type:** bug
+- **Priority:** 🟠 P1 - High
+
+#### Description
+As a user, I encountered [problem] so that [impact].
+
+#### Steps to Reproduce
+1. 
+2. 
+
+#### Expected Behavior
+- 
+
+#### Actual Behavior
+- 
+
+#### Root Cause
+- 
+
+#### Acceptance Criteria
+- [ ] Bug is fixed
+- [ ] Regression test added
