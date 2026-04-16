@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Archived fully-deprecated requirement domains: `undo.md` (11 RQMD-UNDO-*) and `time-machine.md` (10 RQMD-TIME-*) to `docs/requirements/archived/`. Updated README index and CHANGELOG cross-references.
+
 <a id="v0-2-7"></a>
 
 ## [0.2.7] - 2026-04-15
@@ -210,4 +214,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Promoted and tracked the next backlog slice for long-running and easy-first development agents, requirement-schema follow-up, duplicate-ID repair, `rqmd ranked`, grapheme-safe alignment, and local schema guidance through [RQMD-AI-036](docs/requirements/ai-cli.md#rqmd-ai-036), [RQMD-AI-037](docs/requirements/ai-cli.md#rqmd-ai-037), [RQMD-AI-038](docs/requirements/ai-cli.md#rqmd-ai-038), [RQMD-CORE-033](docs/requirements/core-engine.md#rqmd-core-033), [RQMD-CORE-034](docs/requirements/core-engine.md#rqmd-core-034), [RQMD-CORE-035](docs/requirements/core-engine.md#rqmd-core-035), [RQMD-SORTING-016](docs/requirements/sorting.md#rqmd-sorting-016), and [RQMD-INTERACTIVE-032](docs/requirements/interactive-ux.md#rqmd-interactive-032).
 - Refined the shipped AI authoring guidance around requirement-first implementation, dual user-story plus Given/When/Then drafting, concise closeouts, and explicit interview contracts through [RQMD-AI-013](docs/requirements/ai-cli.md#rqmd-ai-013), [RQMD-AI-014](docs/requirements/ai-cli.md#rqmd-ai-014), [RQMD-AI-015](docs/requirements/ai-cli.md#rqmd-ai-015), [RQMD-AI-031](docs/requirements/ai-cli.md#rqmd-ai-031), [RQMD-AI-032](docs/requirements/ai-cli.md#rqmd-ai-032), [RQMD-AI-033](docs/requirements/ai-cli.md#rqmd-ai-033), [RQMD-AI-034](docs/requirements/ai-cli.md#rqmd-ai-034), and [RQMD-AI-035](docs/requirements/ai-cli.md#rqmd-ai-035).
 - Consolidated bundle and init assets under packaged resources so more of the shipped onboarding and bundle experience is editable without code changes.
-- Deepened verification and implementation coverage for history, undo, interactive navigation, portability, and README sync, including delivered history-surface work such as [RQMD-UNDO-007](docs/requirements/undo.md#rqmd-undo-007) and [RQMD-UNDO-008](docs/requirements/undo.md#rqmd-undo-008).
+- Deepened verification and implementation coverage for history, undo, interactive navigation, portability, and README sync, including delivered history-surface work such as [RQMD-UNDO-007](docs/requirements/archived/undo.md#rqmd-undo-007) and [RQMD-UNDO-008](docs/requirements/archived/undo.md#rqmd-undo-008).

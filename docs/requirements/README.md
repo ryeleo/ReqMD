@@ -57,6 +57,13 @@ Bug note: [Bug Tracking](bug-tracking.md) is for meta-requirements about how bug
 - [Bug Tracking (meta-requirements)](bug-tracking.md) - first-class bug tracking requirements, metadata, templates, and workflow behavior
 - [Bugs (rqmd bugs themselves)](bugs.md) - runtime bug backlog and filed bug instances
 
+### Archived
+
+Fully-deprecated domain documents moved to `archived/` — retained for git history, excluded from active processing.
+
+- [Undo / History](archived/undo.md) - 11 RQMD-UNDO-* (undo/redo semantics) — all 🗑️ Deprecated
+- [Time Machine](archived/time-machine.md) - 10 RQMD-TIME-* (temporal navigation) — all 🗑️ Deprecated
+
 ## Verification
 
 - [Testing](../testing.md) - pytest suite coverage map for implemented requirements
