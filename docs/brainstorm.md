@@ -5,6 +5,7 @@ promoted to `docs/requirements/` or shipped.
 
 ## Inbox
 
+- next_id should return 1 if there is no existing objects. (bugs, reqs)
 - /cathcup command should mostly repeat prior message but,  with added context of the discussion that lead to that prior message!
 
 ## Catchup should also check remotes

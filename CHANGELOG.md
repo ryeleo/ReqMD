@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pyproject.toml`: updated package description to match the CLI-only positioning.
 - Archived fully-deprecated requirement domains: `undo.md` (11 RQMD-UNDO-*) and `time-machine.md` (10 RQMD-TIME-*) to `docs/requirements/archived/`. Updated README index and CHANGELOG cross-references.
 - Pinned full history/undo removal scope (`docs/pins/history-removal-scope.md`) and seeded `docs/inbox.md` with `[tech-debt]` item for `/tech-debt-sweep` to consume.
+- `.github/skills/release/SKILL.md`: added preflight step to bump prompt description versions via `rqmd-vscode/scripts/bump-prompt-versions.sh`.
 
 <a id="v0-2-7"></a>
 

@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 9💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 11💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -378,3 +378,35 @@ Summary: 9💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - And the default is `linear` for simplicity
 - And supported options are `linear`, `logarithmic`, `exponential`
 - And `--staleness --explain` documents the active curve and its effect on scoring
+
+<a id="rqmd-core-048"></a>
+
+### RQMD-CORE-048: Interactive metadata sync prompt on version mismatch
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- **Summary:** As a developer who just upgraded rqmd, I want the CLI to prompt me to sync the requirements index metadata when it detects a version mismatch so that the metadata stays current without requiring me to remember the `--sync-index-metadata` incantation.
+
+- Given the developer runs `rqmd` (any subcommand) in interactive mode
+- When the requirements index exists and its recorded `rqmd_version` or `json_schema_version` does not match the running tool
+- Then rqmd prompts: `"rqmd version changed (0.2.6 → 0.2.7). Update requirements/README.md metadata? [Y/n]"`
+- And on `Y` (or Enter for default), rqmd applies the metadata sync inline before continuing normal processing and prints: `"ℹ️ Updated requirements index metadata (rqmd 0.2.6 → 0.2.7)"`
+- And on `n`, rqmd continues with a one-line reminder: `"Skipped — run \`rqmd --sync-index-metadata --force-yes\` when ready."`
+- And the prompt is suppressed when `--non-interactive`, `--json`, or `--force-yes` is active (these modes already have their own contracts)
+- And when `--force-yes` is active without `--non-interactive`, the sync is applied automatically without prompting (consistent with `--force-yes` semantics elsewhere)
+- And the prompt fires at most once per invocation (before any other processing)
+
+<a id="rqmd-core-049"></a>
+
+### RQMD-CORE-049: `--json` output includes metadata mismatch info
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- **Summary:** As an AI agent or automation consumer parsing `rqmd --json` output, I want the JSON payload to include metadata mismatch info when the recorded index metadata doesn't match the running tool so that agents can detect and fix version drift programmatically without parsing stderr warnings.
+
+- Given the developer or agent runs `rqmd --json` in any mode (summary, filter, check, etc.)
+- When the requirements index exists and its recorded metadata does not match the running tool
+- Then the top-level JSON payload includes a `"metadata_mismatch"` object with `"recorded_rqmd_version"`, `"recorded_schema_version"`, `"running_rqmd_version"`, `"running_schema_version"`, and `"sync_command": "rqmd --sync-index-metadata --force-yes --non-interactive"`
+- And when metadata matches (or no index exists), the `"metadata_mismatch"` key is absent (not null — absent)
+- And the existing stderr warning for non-JSON mode is preserved unchanged
+- And agents can check for the key's presence as a simple `if "metadata_mismatch" in data:` gate

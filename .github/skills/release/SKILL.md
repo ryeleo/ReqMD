@@ -23,8 +23,12 @@ Use this skill when it is time to cut a release. Both rqmd-cli and rqmd-vscode m
    - `pyproject.toml` (rqmd-cli)
    - `package.json` (rqmd-vscode)
    - `CHANGELOG.md` — `[Unreleased]` renamed to `[x.y.z] - YYYY-MM-DD` in both repos
-2. Run validation: `bash ./agent-workflow.sh validate --profile quick`
-3. Confirm both repos are on `main` with a clean `git status`
+2. Bump prompt description versions in rqmd-vscode:
+   ```
+   bash rqmd-vscode/scripts/bump-prompt-versions.sh <version>
+   ```
+3. Run validation: `bash ./agent-workflow.sh validate --profile quick`
+4. Confirm both repos are on `main` with a clean `git status`
 
 ## Tag and push
 
