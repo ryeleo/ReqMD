@@ -3,6 +3,10 @@
 Active ideas and untracked nuggets. Items move out once 
 promoted to `docs/requirements/` or shipped.
 
+## Inbox
+
+- /cathcup command should mostly repeat prior message but,  with added context of the discussion that lead to that prior message!
+
 ## Catchup should also check remotes
 
 When doing a /catchup, it is prudent to make sure to run a "git fetch" and make sure that your local branches are up to date with their remote counterparts or upstream branches.
