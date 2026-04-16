@@ -7,8 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Filed [RQMD-BUG-003](docs/requirements/bugs.md#rqmd-bug-003): `--project-root .` resolves relative to `uv --directory` target instead of shell cwd, causing silent wrong-project processing in multi-root workspaces.
+
+<a id="v0-2-8"></a>
+
+## [0.2.8] - 2026-04-16
+
 ### Changed
 
+- `README.md`: removed all AI/agent/Copilot/bundle references. README now describes rqmd strictly as a CLI tool; AI workflow integration is the domain of the rqmd VS Code extension.
+- `pyproject.toml`: updated package description to match the CLI-only positioning.
 - Archived fully-deprecated requirement domains: `undo.md` (11 RQMD-UNDO-*) and `time-machine.md` (10 RQMD-TIME-*) to `docs/requirements/archived/`. Updated README index and CHANGELOG cross-references.
 - Pinned full history/undo removal scope (`docs/pins/history-removal-scope.md`) and seeded `docs/inbox.md` with `[tech-debt]` item for `/tech-debt-sweep` to consume.
 
