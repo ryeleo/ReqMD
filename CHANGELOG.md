@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<a id="v0-2-7"></a>
+
+## [0.2.7] - 2026-04-15
+
 ### Added
 
 - `docs/requirements/core-engine.md`: 💡 Proposed RQMD-CORE-045 (`rqmd --staleness`), RQMD-CORE-046 (exclude `archived/`), RQMD-CORE-047 (configurable decay curves).
