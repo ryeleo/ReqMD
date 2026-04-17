@@ -27,12 +27,8 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (
-    DEFAULT_PRIORITY_CATALOG,
-    DEFAULT_STATUS_CATALOG,
-    JSON_SCHEMA_VERSION,
-    REQUIREMENTS_INDEX_NAME,
-)
+from .constants import (DEFAULT_PRIORITY_CATALOG, DEFAULT_STATUS_CATALOG,
+                        JSON_SCHEMA_VERSION, REQUIREMENTS_INDEX_NAME)
 from .summary import process_file
 
 _INIT_RESOURCE_ROOT = ("resources", "init")
