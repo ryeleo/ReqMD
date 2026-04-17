@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 13💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 11💡 24🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -415,7 +415,7 @@ Summary: 13💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 
 ### RQMD-CORE-050: `rqmd init` README template includes install breadcrumb
 
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - **Summary:** As a developer browsing a requirements index for the first time, I want a lightweight human-readable note that tells me the index is managed by rqmd so that I know what tool to install without needing to ask a teammate or search the repo.
 
@@ -430,7 +430,7 @@ Summary: 13💡 22🔧 16✅ 0⚠️ 0⛔ 0🗑️
 
 ### RQMD-CORE-051: Dogfood — refresh rqmd-cli requirements index from current template
 
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - **Summary:** As the rqmd maintainer, I want the rqmd-cli project's own `docs/requirements/README.md` to reflect the current `rqmd init` template so that the project eats its own dogfood and the README serves as a living example of best practice.
 

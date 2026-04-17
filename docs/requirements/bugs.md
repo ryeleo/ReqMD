@@ -1,7 +1,7 @@
 # Bugs
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 0🔧 0✅ 0⚠️ 0⛔ 0🗑️
+Summary: 1💡 1🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -54,76 +54,30 @@ rqmd processes `rqmd-cli/docs/requirements/` because Python's `Path(".")` resolv
 Document the gotcha (use absolute paths with `--project-root "$PWD"` instead of `.`) and/or resolve `--project-root` relative to an env var like `RQMD_CALLER_CWD` that callers can set before `uv run --directory` changes cwd.
 
 ### RQMD-BUG-004: sync-index-metadata adds blank lines on repeat runs
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Type:** bug
-- **Priority:** 🟠 P1 - High
-
-#### Description
-As a user, I encountered [problem] so that [impact].
+- **Priority:** � P2 - Medium
+- **Affects:** RQMD-CORE-033
 
 #### Steps to Reproduce
-1. 
-2. 
+
+1. Have a requirements index with an existing `## Project Tooling Metadata` section
+2. Run `rqmd --sync-index-metadata --force-yes`
+3. Run it again — observe blank lines growing around the metadata section
+4. Repeat — each invocation adds more vertical whitespace
 
 #### Expected Behavior
-- 
+
+Running `--sync-index-metadata` repeatedly with no substantive changes should be idempotent — the file should not change at all after the first successful sync.
 
 #### Actual Behavior
-- 
+
+Each run adds extra blank lines above and/or below the `## Project Tooling Metadata` section. The whitespace accumulates with every invocation.
 
 #### Root Cause
-- 
+
+In `sync_requirements_index_tooling_metadata()` ([markdown_io.py](../../src/rqmd/markdown_io.py)), the regex pattern uses `\n?` anchors (consuming at most one newline) but the replacement string injects `\n\n...\n\n` (two newlines on each side). On each run the pattern under-consumes surrounding newlines while the replacement over-produces them, causing a net gain of blank lines per invocation.
 
 #### Acceptance Criteria
-- [ ] Bug is fixed
-- [ ] Regression test added
-
-### RQMD-BUG-005: sync-index-metadata adds blank lines on repeat runs
-- **Status:** 💡 Proposed
-- **Type:** bug
-- **Priority:** 🟠 P1 - High
-
-#### Description
-As a user, I encountered [problem] so that [impact].
-
-#### Steps to Reproduce
-1. 
-2. 
-
-#### Expected Behavior
-- 
-
-#### Actual Behavior
-- 
-
-#### Root Cause
-- 
-
-#### Acceptance Criteria
-- [ ] Bug is fixed
-- [ ] Regression test added
-
-### RQMD-BUG-006: sync-index-metadata adds blank lines on repeat runs
-- **Status:** 💡 Proposed
-- **Type:** bug
-- **Priority:** 🟠 P1 - High
-
-#### Description
-As a user, I encountered [problem] so that [impact].
-
-#### Steps to Reproduce
-1. 
-2. 
-
-#### Expected Behavior
-- 
-
-#### Actual Behavior
-- 
-
-#### Root Cause
-- 
-
-#### Acceptance Criteria
-- [ ] Bug is fixed
-- [ ] Regression test added
+- [ ] Running `--sync-index-metadata` twice in a row produces identical output
+- [ ] Regression test asserts idempotency (run sync, run again, assert no diff)

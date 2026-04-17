@@ -3,6 +3,22 @@
 Active ideas and untracked nuggets. Items move out once 
 promoted to `docs/requirements/` or shipped.
 
+## Multiuser support
+
+- Most cross-device sync services also store a copy of the
+data on a server, which provides a convenient off-site backup
+for the data. These solutions work quite well as long as each
+file is only edited by one person at a time. If several people
+edit the same file at the same time, conflicts may arise, which
+we discuss in Section 2.4 from https://dl.acm.org/doi/pdf/10.1145/3359591.3359737
+- Moreover, we expect that local-first apps can support various workflows for collaboration. Besides having several
+people edit the same document in real-time, it is sometimes
+useful for one person to tentatively propose changes that
+can be reviewed and selectively applied by someone else.
+Google Docs supports this workflow with its suggesting
+mode (Figure 5, [69]), and pull requests serve this purpose
+in Git (Figure 6, [61]).
+
 ## Inbox
 
 - next_id should return 1 if there is no existing objects. (bugs, reqs)

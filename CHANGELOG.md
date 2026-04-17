@@ -7,9 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<a id="v0-2-9"></a>
+
+## [0.2.9] - 2026-04-16
+
+### Fixed
+
+- [RQMD-BUG-004](docs/requirements/bugs.md#rqmd-bug-004): `--sync-index-metadata` is now idempotent — repeated runs no longer risk growing blank lines around the metadata section. Regex simplified to replace section content in-place without consuming surrounding whitespace.
+
 ### Added
 
+- [RQMD-CORE-051](docs/requirements/core-engine.md#rqmd-core-051): Refreshed `docs/requirements/README.md` from the current `rqmd init` template — adds structured How To Use subsections, Schema Reference, install breadcrumb, and JSON contract docs.
+- [RQMD-CORE-050](docs/requirements/core-engine.md#rqmd-core-050): `rqmd init` template now includes an install breadcrumb: `> **ℹ️ Info:** This index is managed by rqmd…`
 - Filed [RQMD-BUG-003](docs/requirements/bugs.md#rqmd-bug-003): `--project-root .` resolves relative to `uv --directory` target instead of shell cwd, causing silent wrong-project processing in multi-root workspaces.
+
+### Changed
+
+- `.github/skills/release/SKILL.md`: rewrote preflight as explicit ordered steps; CHANGELOG stamping is now Step 1 with a hard-fail warning — tag must always land on the commit that contains the stamped changelog entry.
 
 <a id="v0-2-8"></a>
 

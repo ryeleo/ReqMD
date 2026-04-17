@@ -1002,6 +1002,60 @@ def test_RQMD_core_033a_sync_index_metadata_adds_project_tooling_block(
     assert f"- `json_schema_version`: `{JSON_SCHEMA_VERSION}`" in updated_text
 
 
+def test_RQMD_BUG_004_sync_index_metadata_idempotent(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Running --sync-index-metadata twice must not add extra blank lines."""
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    index_path = criteria_dir / "README.md"
+    index_path.write_text(
+        "# Requirements\n\nThis document is the source-of-truth index for rqmd requirements.\n\n## Requirement Documents\n\n- [Demo](demo.md)\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "demo.md").write_text(
+        "# Demo\n\nScope: demo.\n\n### RQMD-DEMO-001: First\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+    monkeypatch.setattr(cli.importlib_metadata, "version", lambda _name: "9.9.9")
+    monkeypatch.setattr(
+        "rqmd.markdown_io.importlib_metadata.version", lambda _name: "9.9.9"
+    )
+
+    cli_args = [
+        "--project-root",
+        str(repo),
+        "--docs-dir",
+        "docs/requirements",
+        "--sync-index-metadata",
+        "--force-yes",
+    ]
+
+    # First run – creates the metadata block
+    result1 = runner.invoke(cli.main, cli_args)
+    assert result1.exit_code == 0
+    text_after_first = index_path.read_text(encoding="utf-8")
+
+    # Second run – must be idempotent (no whitespace growth)
+    result2 = runner.invoke(cli.main, cli_args)
+    assert result2.exit_code == 0
+    text_after_second = index_path.read_text(encoding="utf-8")
+
+    assert text_after_first == text_after_second, (
+        "sync-index-metadata is not idempotent; diff between runs:\n"
+        f"--- first run ---\n{text_after_first!r}\n"
+        f"--- second run ---\n{text_after_second!r}"
+    )
+
+    # Third run – still idempotent
+    result3 = runner.invoke(cli.main, cli_args)
+    assert result3.exit_code == 0
+    text_after_third = index_path.read_text(encoding="utf-8")
+    assert text_after_second == text_after_third
+
+
 def test_RQMD_core_033b_warns_when_requirements_index_metadata_mismatches(
     tmp_path: Path, monkeypatch
 ) -> None:

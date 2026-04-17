@@ -96,12 +96,10 @@ def sync_requirements_index_tooling_metadata(index_text: str) -> tuple[str, bool
 
     if existing is not None:
         pattern = re.compile(
-            rf"\n?## Project Tooling Metadata\n.*?{re.escape(_RQMD_PROJECT_METADATA_START)}\n.*?\n{re.escape(_RQMD_PROJECT_METADATA_END)}\n?",
+            rf"## Project Tooling Metadata\n.*?{re.escape(_RQMD_PROJECT_METADATA_START)}\n.*?\n{re.escape(_RQMD_PROJECT_METADATA_END)}",
             re.DOTALL,
         )
-        updated_text, count = pattern.subn(
-            f"\n\n{section_text}\n\n", index_text, count=1
-        )
+        updated_text, count = pattern.subn(section_text, index_text, count=1)
         if count == 0:
             updated_text = index_text
         normalized = updated_text.strip() + "\n"
@@ -116,7 +114,10 @@ def sync_requirements_index_tooling_metadata(index_text: str) -> tuple[str, bool
     else:
         insert_at = len(lines)
 
-    updated_lines = lines[:insert_at] + ["", section_text, ""] + lines[insert_at:]
+    before = lines[:insert_at]
+    while before and before[-1] == "":
+        before.pop()
+    updated_lines = before + ["", section_text, ""] + lines[insert_at:]
     normalized = "\n".join(updated_lines).strip() + "\n"
     return normalized, normalized != index_text
 

@@ -1,5 +1,7 @@
 # Requirements
 
+> **ℹ️ Info:** This index is managed by [rqmd](https://pypi.org/project/rqmd/) — a lightweight requirements tracker for AI-assisted development.
+
 This document is the source-of-truth index for rqmd requirements.
 Generated from resources/init/README.md.
 
