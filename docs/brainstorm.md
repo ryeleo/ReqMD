@@ -3,6 +3,11 @@
 Active ideas and untracked nuggets. Items move out once 
 promoted to `docs/requirements/` or shipped.
 
+## rqmd should have configuration to know whether to do pushes automatically or give the user git push commands instead
+
+- rqmd should not do a  `git push --force` without explicit acknowledgement from teh user. This is a risky operation!
+- Right now, rqmd agents love pushing things immediately! I love this a lot for a lot of my work as a single developer.... and it might be good for XP too even... BUT, my current workplace is definitely more 
+
 ## Multiuser support
 
 - Most cross-device sync services also store a copy of the

@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 15💡 24🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 13💡 26🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -329,7 +329,7 @@ Summary: 15💡 24🔧 16✅ 0⚠️ 0⛔ 0🗑️
 
 ### RQMD-CORE-045: `rqmd --staleness` — per-requirement staleness scoring
 
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - **Summary:** As a developer or AI agent wanting to prioritize tech-debt cleanup, I want `rqmd --staleness` to produce a per-requirement staleness report with a normalized 0–100 composite score based on git history and code cross-references so that the most impactful cleanup targets surface automatically.
 
@@ -446,7 +446,7 @@ Summary: 15💡 24🔧 16✅ 0⚠️ 0⛔ 0🗑️
 
 ### RQMD-CORE-052: `rqmd release --preflight` — machine-readable release readiness check
 
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - **Summary:** As a developer preparing a release, I want a single CLI command that checks whether my CHANGELOG is stamped, version strings agree across configured files, and the working tree is clean, so that I catch release blockers before tagging.
 

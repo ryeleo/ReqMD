@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <a id="v0-2-9"></a>
 
-## [0.2.9] - 2026-04-16
+## [0.2.9] - 2026-04-17
 
 ### Fixed
 
@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [RQMD-CORE-045](docs/requirements/core-engine.md#rqmd-core-045): `rqmd --staleness` — per-requirement staleness scoring based on git blame, grep cross-references, and configurable weighted signals. Includes `--staleness --json`, `--staleness --deprecated-only` (CI-friendly, exits non-zero), and `--staleness --explain`.
+- [RQMD-CORE-052](docs/requirements/core-engine.md#rqmd-core-052): `rqmd --release-preflight` — machine-readable release readiness check. Validates CHANGELOG stamp, version-source agreement (auto-discovers `pyproject.toml`, `package.json`, etc.), and clean git working tree. Structured JSON output with `--json`; exit 0 on pass, 1 on fail.
 - [RQMD-CORE-051](docs/requirements/core-engine.md#rqmd-core-051): Refreshed `docs/requirements/README.md` from the current `rqmd init` template — adds structured How To Use subsections, Schema Reference, install breadcrumb, and JSON contract docs.
 - [RQMD-CORE-050](docs/requirements/core-engine.md#rqmd-core-050): `rqmd init` template now includes an install breadcrumb: `> **ℹ️ Info:** This index is managed by rqmd…`
 - Filed [RQMD-BUG-003](docs/requirements/bugs.md#rqmd-bug-003): `--project-root .` resolves relative to `uv --directory` target instead of shell cwd, causing silent wrong-project processing in multi-root workspaces.

@@ -1449,6 +1449,30 @@ def _filter_timeline_nodes(
     help="Print machine-readable JSON output for non-interactive workflows.",
 )
 @click.option(
+    "--staleness",
+    "staleness",
+    is_flag=True,
+    help="Produce a per-requirement staleness report based on git history and code cross-references.",
+)
+@click.option(
+    "--deprecated-only",
+    "staleness_deprecated_only",
+    is_flag=True,
+    help="With --staleness: filter to deprecated requirements with live code cross-refs. Exits non-zero when matches found.",
+)
+@click.option(
+    "--explain",
+    "staleness_explain",
+    is_flag=True,
+    help="With --staleness: describe scoring signals, weights, and configuration.",
+)
+@click.option(
+    "--release-preflight",
+    "release_preflight",
+    is_flag=True,
+    help="Run release readiness checks: CHANGELOG stamp, version agreement, clean working tree. JSON output with --json.",
+)
+@click.option(
     "--resume-walk/--no-resume-walk",
     "resume_filter",
     default=True,
@@ -1594,6 +1618,10 @@ def main(
     rollup_map_entries: tuple[str, ...],
     rollup_config: str | None,
     json_output: bool,
+    staleness: bool,
+    staleness_deprecated_only: bool,
+    staleness_explain: bool,
+    release_preflight: bool,
     resume_filter: bool,
     strip_status_emojis: bool,
     restore_status_emojis: bool,
@@ -1669,6 +1697,17 @@ def main(
         sort_strategy = config["sort_strategy"]
     if state_dir == "system-temp" and "state_dir" in config:
         state_dir = config["state_dir"]
+
+    # --release-preflight: early exit with structured readiness checks
+    if release_preflight:
+        from .release import format_preflight_table, run_preflight
+
+        result = run_preflight(repo_root, config)
+        if json_output:
+            _emit_json_payload(result)
+        else:
+            click.echo(format_preflight_table(result))
+        raise SystemExit(0 if result["ok"] else 1)
 
     # Resolve screen-write mode precedence: CLI > project config > user config > TTY default.
     user_config = load_user_config()
@@ -2194,6 +2233,56 @@ As a user, I encountered [problem] so that [impact].
             )
         else:
             click.echo(requirement_id)
+        raise SystemExit(0)
+
+    if staleness or staleness_deprecated_only or staleness_explain:
+        from .staleness import (
+            build_staleness_report,
+            format_deprecated_report,
+            format_explain_text,
+            format_staleness_table,
+        )
+
+        staleness_weights = config.get("staleness") if isinstance(config.get("staleness"), dict) else None
+
+        if staleness_explain:
+            if json_output:
+                from .staleness import DEFAULT_WEIGHTS
+                w = {**DEFAULT_WEIGHTS, **(staleness_weights or {})}
+                _emit_json_payload({
+                    "mode": "staleness-explain",
+                    "weights": w,
+                })
+            else:
+                click.echo(format_explain_text(staleness_weights))
+            raise SystemExit(0)
+
+        try:
+            rows = build_staleness_report(
+                repo_root,
+                domain_files,
+                id_prefixes=id_prefixes,
+                weights=staleness_weights,
+                deprecated_only=staleness_deprecated_only,
+                requirements_dir=resolved_requirements_dir_input,
+            )
+        except RuntimeError as exc:
+            raise click.ClickException(str(exc)) from exc
+
+        if json_output:
+            _emit_json_payload({
+                "mode": "staleness-deprecated" if staleness_deprecated_only else "staleness",
+                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "requirement_count": len(rows),
+                "requirements": rows,
+            })
+        elif staleness_deprecated_only:
+            click.echo(format_deprecated_report(rows, repo_root))
+        else:
+            click.echo(format_staleness_table(rows))
+
+        if staleness_deprecated_only and rows:
+            raise SystemExit(1)
         raise SystemExit(0)
 
     if rename_id_prefix:
