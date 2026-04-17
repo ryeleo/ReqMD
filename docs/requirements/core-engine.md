@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 11💡 24🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 15💡 24🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -441,3 +441,122 @@ Summary: 11💡 24🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - And the `## How To Use` section uses the template's subsection structure (H3 headers for Requirement Structure, Subsection Organization, File Organization) instead of the current flat bullet list
 - And the metadata block and any project-specific callouts remain unchanged
 - And the refresh is a one-time manual merge — not an automated `rqmd init --refresh` command (that would be a separate proposal)
+
+<a id="rqmd-core-052"></a>
+
+### RQMD-CORE-052: `rqmd release --preflight` — machine-readable release readiness check
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- **Summary:** As a developer preparing a release, I want a single CLI command that checks whether my CHANGELOG is stamped, version strings agree across configured files, and the working tree is clean, so that I catch release blockers before tagging.
+
+- Given a project has `rqmd.yml` (or equivalent) with configured version files
+- When the user runs `rqmd release --preflight`
+- Then rqmd checks that `CHANGELOG.md` contains a `## [x.y.z]` entry matching the project version
+- And rqmd verifies all configured version-source files contain the same version string
+- And rqmd reports whether the git working tree is clean
+- And the output is structured JSON (with `"ok": true/false` and per-check detail) so agents and CI can parse it
+- And the exit code is 0 when all checks pass, 1 when any check fails
+
+<a id="rqmd-core-053"></a>
+
+### RQMD-CORE-053: `rqmd release --stamp` — roll changelog and bump versions in one shot
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- **Summary:** As a developer cutting a release, I want a single command that renames `[Unreleased]` to `[x.y.z] - YYYY-MM-DD` in my CHANGELOG and updates all configured version-source files, so that I don't forget a file or mis-stamp the date.
+
+- Given a project has version-source files configured (or auto-discovered)
+- When the user runs `rqmd release --stamp 0.3.0`
+- Then rqmd renames the `[Unreleased]` section in `CHANGELOG.md` to `[0.3.0] - <today>` and inserts a fresh empty `[Unreleased]` above it
+- And rqmd updates the version string in every configured version-source file (`pyproject.toml`, `package.json`, etc.)
+- And the command is preview-first: without `--write`, it shows a dry-run diff of what would change
+- And the command fails with a clear message if `[Unreleased]` is empty (no entries to release)
+
+<a id="rqmd-core-054"></a>
+
+### RQMD-CORE-054: Auto-discover version-source files on first run
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- **Summary:** As a developer setting up rqmd in a new project, I want rqmd to discover every place the current version string appears — both well-known package files and unexpected locations like prompt descriptions, badge URLs, or docker tags — and confirm which ones to track, so that nothing drifts silently across releases.
+
+#### Phase 1 — structural scan (well-known files)
+
+- Given a project has no `version_sources` configured in `rqmd.yml`
+- When the user runs `rqmd release --preflight` or `rqmd release --stamp` for the first time
+- Then rqmd scans the project root for well-known version-source file patterns (`pyproject.toml`, `package.json`, `Cargo.toml`, `setup.cfg`, `version.txt`, etc.)
+- And for each discovered file, rqmd extracts the current version string and reports it
+
+#### Phase 2 — broad grep (version string search)
+
+- Given Phase 1 has identified at least one authoritative version string (e.g. `0.2.9`)
+- When discovery runs (or when the user runs `rqmd release --discover`)
+- Then rqmd greps the project tree for literal occurrences of that version string, respecting `.gitignore` (skips `.git/`, docker volume mounts, `node_modules/`, build artifacts, etc.) and skipping binary files
+- And the exclusion layers are applied in order (cheapest first) so the scan stays fast even in workspaces with large bound volumes
+- And each hit is reported with file path, line number, and a context snippet
+- And hits already covered by Phase 1 are grouped under their well-known source (not duplicated)
+- And remaining hits are listed as **"unexpected version references"** for the user to review
+- And **CHANGELOG version headers are excluded from bump targets** — `## [0.2.8] - 2026-04-10` is a historical record, not a version source to rewrite
+
+> **Counterexample — what NOT to bump:**
+> ```markdown
+> ## [0.2.8] - 2026-04-10    ← historical changelog entry, NEVER rewrite
+> ## [0.2.9] - 2026-04-17    ← the *current* release stamp (written by --stamp, not --discover)
+> ```
+
+#### Confirmation and persistence
+
+- Then rqmd presents all discovered locations (both phases) and prompts the user to confirm which to track: `"Track this location? [Y/n]"` per group
+- And confirmed locations are saved to `rqmd.yml` under a `version_sources` key, each with `file` and `line` (the line number where the version was found at discovery time)
+- And on subsequent runs, rqmd re-greps each tracked file for the old version string to relocate the line (lines shift as files are edited) — if the old version string is not found in the file, rqmd warns and skips that source
+- And `rqmd release --discover` re-runs both phases on demand (e.g. after adding new files) and highlights new/missing locations vs. the saved config
+- And in `--non-interactive` mode, Phase 1 sources are auto-accepted and Phase 2 sources are reported but not auto-tracked (requires explicit confirmation)
+
+> **Example `rqmd.yml` after first discovery:**
+> ```yaml
+> version_sources:
+>   - file: pyproject.toml
+>     line: 7           # version = "0.2.9"
+>   - file: package.json
+>     line: 3           # "version": "0.2.9"
+>   - file: prompts/go.prompt.md
+>     line: 2           # description: "... rqmd (v0.2.9) ..."
+>   - file: README.md
+>     line: 12          # ![version](https://img.shields.io/badge/v0.2.9)
+> ```
+>
+> On `rqmd release --stamp 0.3.0`, rqmd greps each file for `0.2.9` to find the current line, then replaces `0.2.9` → `0.3.0` in that occurrence. If `0.2.9` is not found in a tracked file, rqmd warns: `"⚠️ Could not find '0.2.9' in prompts/go.prompt.md — skipped."` and the developer decides whether to remove or fix the entry.
+
+<a id="rqmd-core-055"></a>
+
+### RQMD-CORE-055: Release version-source drift warning across releases
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟢 P3 - Low
+- **Summary:** As a developer who has added or removed version-source files since the last release, I want rqmd to warn me if a previously-bumped file is missing or a new version file appeared that isn't tracked, so that version strings don't silently drift.
+
+- Given a project has released at least once with `rqmd release --stamp`
+- When the user runs `rqmd release --preflight` for the next release
+- Then rqmd re-runs Phase 2 discovery (broad grep for the current version string) and compares results against the `version_sources` saved in `rqmd.yml`
+- And if a tracked file no longer contains the expected version string, rqmd emits: `"⚠️ version source prompts/go.prompt.md was bumped in 0.2.9 but '0.2.9' not found now — file deleted or version edited manually?"`
+- And if a new file containing the version string is discovered that isn't in `version_sources`, rqmd emits: `"ℹ️ new version reference in docker-compose.yml:5 — consider adding to version_sources"`
+- And **CHANGELOG entries are excluded from drift warnings** (same exclusion as RQMD-CORE-054 Phase 2)
+- And the stored `version_sources` in `rqmd.yml` is the sole source of truth — no separate git-tag state needed
+
+> **Example — drift warning in action:**
+> ```yaml
+> # rqmd.yml (saved during 0.2.9 release)
+> version_sources:
+>   - file: pyproject.toml
+>     line: 7
+>   - file: prompts/go.prompt.md
+>     line: 2
+> ```
+>
+> Before 0.3.0 release, the developer added a `docker-compose.yml` with `image: rqmd:0.2.9` and deleted `prompts/go.prompt.md`:
+> ```
+> ⚠️ version source prompts/go.prompt.md — file not found (tracked since 0.2.9)
+> ℹ️ new version reference in docker-compose.yml:3 — consider adding to version_sources
+> ✅ pyproject.toml:7 — '0.2.9' found, ready to bump
+> ```
