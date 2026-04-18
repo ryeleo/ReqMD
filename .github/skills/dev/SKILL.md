@@ -39,6 +39,11 @@ Run commands:
 Smoke commands:
 - `./scripts/local-smoke.sh`
 
+Playtest (dogfood) commands:
+- `./scripts/playtest.sh` — build and install **both** rqmd-cli and rqmd-vscode from local source. Run after any implementation change to eat your own dog food.
+- `./scripts/playtest.sh cli` — refresh only the global `rqmd` CLI.
+- `./scripts/playtest.sh vscode` — rebuild and install only the VS Code extension.
+
 Notes:
 - Smoke coverage was detected under the development skill; keep `/test` focused on repeatable automated checks.
 - Review the generated commands and tighten them to the repository's canonical workflows before relying on them in automation.

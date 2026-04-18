@@ -1,4 +1,15 @@
 # Inbox
 
+
+- You are a VS Code Agent. So you should use VS Code tooling as much as you can. That means:
+    - run tests in VS Code test explorer directly if possible! (pytest, vitest, etc...). -- and then LEARN THAT as part of /test skill going forward!
+    - If the user asks you to "run XYZ" and there is a matching launch.json entry maybe like "debugger attach XYZ" or anytihng that might be a match, suggest to run that instead of shelling out to the CLI -- and then LEARN THAT as part of /dev skill going forward!
+- When providing a list of instructions, often times it is possible to embed a 'start page' hyperlink if the instructions start with "login here" or "go to this page" or "open this page" -- we can hyperlink the page in the instruction text. That way, when a user follows the instructions, the first instruction will have an actionable link that will get them started in the rigth place instead of having to figure out "where are the GitHub Actions for this repo..?"
+- Is the fact that inbox.md is only temporarially holding items mean that it is gonna be an issue on multiuser repos where lots of ppl might churn through the inbox? As long as each item is a line item, git is quite good at merging line-item churn, so maybe not? Maybe we just need to make sure to keep items small and atomic so that they can be easily merged if multiple people are adding items at the same time?
+-  "Agent Context File" is a term maybe??
+- Brainstorm.md, inbox.md, and any other md files we depend on should have some basic boilerplate/discussion of purpose at the top and instructison on hwo to use it as if it were just a MD doc (but also still nudge them towards using it as an agent context file)... 
+- When upgrading the rqmd VS Code extension, VS Code should try to install the newest version of rqmd CLI tool at the same time! OBVIOUS! Hopefully vscode extension marketplace supports this kind of paired release.
 - Get rid of `reqmd` entirely -- we shouldn't have an extra name for our tool, just `rqmd`!
-- [tech-debt] Remove old undo/redo/history feature code (`history.py`, 975 lines) and all integration points in `cli.py`, `workflows.py`, `status_update.py`, and related tests. The RQMD-UNDO-* and RQMD-TIME-* requirements are already archived. See `docs/pins/history-removal-scope.md` for the full inventory.
+- rqmd should not do a  `git push --force` without explicit acknowledgement from teh user. This is a risky operation!
+- Add a custom icon for the rqmd VS Code extension (`package.json` top-level `icon` field, 128×128 PNG). Currently shows as generic in the chat mode picker. Agent/Ask/Plan icons are VS Code built-ins — track whether `chatAgents` gains per-agent icon support in future API.
+- UX pain: After updating/reinstalling the rqmd extension, VS Code silently deselects "rqmd" mode and falls back to "Agent" — the user doesn't notice and starts chatting without rqmd context. Need a way to detect this and/or persist mode selection across extension updates. Could be: (1) extension activation checks if rqmd was the last mode and re-selects it, (2) a visual cue when running in non-rqmd mode in an rqmd workspace, or (3) VS Code API for sticky mode selection.

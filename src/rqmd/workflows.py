@@ -27,7 +27,6 @@ from .constants import (
     STATUS_ORDER,
     STATUS_PATTERN,
 )
-from .history import HistoryManager
 from .markdown_io import (
     display_name_from_h1,
     format_path_display,
@@ -387,7 +386,7 @@ def _build_requirement_action_footer(
         if shortcut_legend:
             base += f" | {shortcut_legend}"
     base += (
-        " | v=code | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+        " | v=code | o=refs | u=up | t=toggle | q=quit"
     )
     if not allow_nav:
         return base
@@ -403,7 +402,7 @@ def _build_requirement_action_footer(
             nav += f" | {shortcut_legend}"
     return (
         nav
-        + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | v=code | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+        + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | v=code | o=refs | u=up | t=toggle | q=quit"
     )
 
 
@@ -425,403 +424,6 @@ def _build_requirement_action_compact_footer(
     return (
         base + " | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
     )
-
-
-def _build_history_browser_compact_footer() -> str:
-    return "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
-
-
-def _infer_requirements_dir(repo_root: Path, domain_files: list[Path]) -> Path:
-    if not domain_files:
-        return Path("docs/requirements")
-    common_parent = Path(
-        os.path.commonpath([str(path.parent) for path in domain_files])
-    ).resolve()
-    try:
-        return common_parent.relative_to(repo_root)
-    except ValueError:
-        return common_parent
-
-
-def _history_entry_menu_row(entry: dict[str, object]) -> str:
-    return _history_entry_git_like_row(entry)
-
-
-def _format_history_timestamp(timestamp_raw: str | None) -> str:
-    if not timestamp_raw:
-        return "-"
-    try:
-        normalized = timestamp_raw.replace("Z", "+00:00")
-        parsed = datetime.fromisoformat(normalized)
-    except ValueError:
-        return timestamp_raw
-    return parsed.strftime("%Y-%m-%d %H:%M")
-
-
-def _build_history_decorations(
-    branches: dict[str, dict[str, object]],
-    current_branch: str,
-) -> dict[str, str]:
-    commit_to_labels: dict[str, list[str]] = {}
-    for branch_name, branch_info in branches.items():
-        head_commit = str(branch_info.get("head") or "")
-        if not head_commit:
-            continue
-        labels = commit_to_labels.setdefault(head_commit, [])
-        if branch_name == current_branch:
-            labels.append(f"HEAD -> {branch_name}")
-        else:
-            labels.append(branch_name)
-
-    decorations: dict[str, str] = {}
-    for commit, labels in commit_to_labels.items():
-        decorations[commit] = f" ({', '.join(labels)})" if labels else ""
-    return decorations
-
-
-def _history_entry_git_like_row(entry: dict[str, object]) -> str:
-    command = str(entry.get("command") or "unknown")
-    reason = str(entry.get("reason") or "").strip()
-    commit = str(entry.get("commit") or "")[:8] or "--------"
-    decorations = str(entry.get("git_decorations") or "")
-    if reason:
-        summary = f"{command}: {reason}"
-    else:
-        summary = command
-    return truncate_text(f"* {commit}{decorations} {summary}", 72)
-
-
-def _history_entry_right_label(entry: dict[str, object]) -> str:
-    delta = entry.get("delta") if isinstance(entry.get("delta"), dict) else {}
-    additions = int(delta.get("additions", 0)) if isinstance(delta, dict) else 0
-    deletions = int(delta.get("deletions", 0)) if isinstance(delta, dict) else 0
-    files_changed = int(delta.get("files_changed", 0)) if isinstance(delta, dict) else 0
-    timestamp = _format_history_timestamp(str(entry.get("timestamp") or ""))
-    return f"{timestamp} +{additions}/-{deletions} {files_changed}f"
-
-
-def _history_entry_detail_text(entry: dict[str, object]) -> str:
-    delta = entry.get("delta") if isinstance(entry.get("delta"), dict) else {}
-    additions = int(delta.get("additions", 0)) if isinstance(delta, dict) else 0
-    deletions = int(delta.get("deletions", 0)) if isinstance(delta, dict) else 0
-    files_changed = int(delta.get("files_changed", 0)) if isinstance(delta, dict) else 0
-    reason = str(entry.get("reason") or "").strip() or "-"
-    files = list(entry.get("files") or [])
-    files_text = ", ".join(files[:3]) if files else "-"
-    if len(files) > 3:
-        files_text += ", ..."
-    return "\n".join(
-        [
-            "",
-            click.style(
-                f"History #{entry.get('entry_index', '?')}: {entry.get('command', 'unknown')}",
-                bold=True,
-            ),
-            f"Branch: {entry.get('branch', 'main')}",
-            f"Commit: {entry.get('commit', '-')}",
-            f"Timestamp: {entry.get('timestamp', '-')}",
-            f"Reason: {reason}",
-            f"Delta: +{additions} / -{deletions} across {files_changed} file(s)",
-            f"Files: {files_text}",
-        ]
-    )
-
-
-def _current_history_branch_name(history_manager: HistoryManager) -> str:
-    branches = history_manager.get_branches()
-    return next(
-        (name for name, info in branches.items() if bool(info.get("is_current"))),
-        "main",
-    )
-
-
-def _build_history_browser_state(
-    history_manager: HistoryManager,
-) -> tuple[list[dict[str, object]], int | None, str, str]:
-    entries = [
-        dict(entry, entry_index=index)
-        for index, entry in enumerate(history_manager.list_entries())
-    ]
-    display_entries = list(reversed(entries))
-    current_head = history_manager.get_current_head()
-    selected_index = next(
-        (
-            index
-            for index, entry in enumerate(display_entries)
-            if str(entry.get("commit") or "") == str(current_head or "")
-        ),
-        None,
-    )
-
-    branches = history_manager.get_branches()
-    current_branch = next(
-        (name for name, info in branches.items() if bool(info.get("is_current"))),
-        "main",
-    )
-    decorations = _build_history_decorations(branches, current_branch)
-    for entry in display_entries:
-        entry["git_decorations"] = decorations.get(str(entry.get("commit") or ""), "")
-
-    prefix_text = (
-        "\n"
-        + click.style("History browser (git-style)", bold=True)
-        + "\n"
-        + click.style(
-            f"branch={current_branch} | entries={len(entries)} | can_undo={str(history_manager.can_undo()).lower()} | can_redo={str(history_manager.can_redo()).lower()}",
-            dim=True,
-        )
-    )
-    return display_entries, selected_index, prefix_text, current_branch
-
-
-def _prompt_for_history_entry_action(
-    entry: dict[str, object],
-    history_manager: HistoryManager,
-) -> str:
-    entry_branch = str(entry.get("branch") or "main")
-    current_branch = _current_history_branch_name(history_manager)
-    commit_hash = str(entry.get("commit") or "")
-
-    while True:
-        click.echo(_history_entry_detail_text(entry))
-        click.echo(
-            click.style(
-                f"Current branch: {current_branch} | entry branch: {entry_branch}",
-                dim=True,
-            )
-        )
-        click.echo(
-            "keys: Enter/u=back | c=checkout-branch | l=label-branch | x=discard-branch | p=cherry-pick-commit | r=replay-entry-branch | g=gc | G=prune-now | q=quit"
-        )
-        click.echo("choice: ", nl=False)
-        raw_choice = click.getchar()
-        choice = raw_choice.strip()
-        click.echo(choice if choice else "Enter")
-
-        if not choice or choice.lower() == "u":
-            return "back"
-        if choice == "\x03":
-            raise click.Abort()
-        if choice.lower() == "q":
-            return "quit"
-        if choice.lower() == "c":
-            if entry_branch == current_branch:
-                click.echo(f"History branch '{entry_branch}' is already checked out.")
-                continue
-            checked_out = history_manager.checkout_branch(entry_branch)
-            if checked_out is None:
-                click.echo(
-                    f"No checkout performed for history branch '{entry_branch}'."
-                )
-            else:
-                click.echo(
-                    f"Checked out history branch '{entry_branch}' at {checked_out}."
-                )
-            return "refresh"
-        if choice.lower() == "l":
-            label = click.prompt(
-                f"Label for history branch '{entry_branch}'",
-                default=entry_branch,
-                show_default=True,
-            ).strip()
-            if not label:
-                click.echo("Branch labeling cancelled.")
-                continue
-            if not history_manager.label_branch(entry_branch, label):
-                click.echo(f"No label updated for history branch '{entry_branch}'.")
-            else:
-                click.echo(f"Labeled history branch '{entry_branch}' as '{label}'.")
-            return "refresh"
-        if choice.lower() == "x":
-            if entry_branch == "main":
-                click.echo("Main history branch cannot be discarded.")
-                continue
-            save_label = click.confirm(
-                f"Save a named snapshot label for '{entry_branch}' before discarding it?",
-                default=False,
-                show_default=True,
-            )
-            if save_label:
-                label = click.prompt(
-                    f"Snapshot label for history branch '{entry_branch}'",
-                    default=entry_branch,
-                    show_default=True,
-                ).strip()
-                if label:
-                    history_manager.label_branch(entry_branch, label)
-                    click.echo(
-                        f"Saved snapshot label '{label}' for history branch '{entry_branch}'."
-                    )
-            confirmed = click.confirm(
-                (
-                    f"Discard history branch '{entry_branch}'? "
-                    "This removes branch navigation for that alternate timeline."
-                ),
-                default=False,
-                show_default=True,
-            )
-            if not confirmed:
-                click.echo("Branch discard cancelled.")
-                continue
-            discarded = history_manager.discard_branch(entry_branch)
-            if discarded:
-                click.echo(f"Discarded history branch '{entry_branch}'.")
-            else:
-                click.echo(f"No branch discarded for '{entry_branch}'.")
-            return "refresh"
-        if choice.lower() == "p":
-            confirmed = click.confirm(
-                f"Cherry-pick {commit_hash[:8] or commit_hash} onto '{current_branch}'?",
-                default=False,
-                show_default=True,
-            )
-            if not confirmed:
-                click.echo("Cherry-pick cancelled.")
-                continue
-            new_commit = history_manager.cherry_pick(
-                commit_hash, target_branch=current_branch
-            )
-            if new_commit is None:
-                click.echo(f"No cherry-pick applied for history commit {commit_hash}.")
-            else:
-                click.echo(
-                    f"Cherry-picked history commit {commit_hash[:8]} onto '{current_branch}' as {new_commit}."
-                )
-            return "refresh"
-        if choice.lower() == "r":
-            if entry_branch == current_branch:
-                click.echo(
-                    f"History entry is already on the current branch '{current_branch}'; replay skipped."
-                )
-                continue
-            confirmed = click.confirm(
-                f"Replay branch '{entry_branch}' onto '{current_branch}'?",
-                default=False,
-                show_default=True,
-            )
-            if not confirmed:
-                click.echo("Branch replay cancelled.")
-                continue
-            replayed_commits = history_manager.replay_branch(
-                entry_branch, onto_branch=current_branch
-            )
-            if not replayed_commits:
-                click.echo(f"No replay applied from history branch '{entry_branch}'.")
-            else:
-                click.echo(
-                    f"Replayed {len(replayed_commits)} history commit(s) from '{entry_branch}' onto '{current_branch}'."
-                )
-            return "refresh"
-        if choice in {"g", "G"}:
-            prune_now = choice == "G"
-            stats = history_manager.get_storage_stats()
-            prune_label = " with immediate prune" if prune_now else ""
-            save_label = click.confirm(
-                f"Save a named snapshot label for '{current_branch}' before history gc{prune_label}?",
-                default=False,
-                show_default=True,
-            )
-            if save_label:
-                label = click.prompt(
-                    f"Snapshot label for history branch '{current_branch}'",
-                    default=current_branch,
-                    show_default=True,
-                ).strip()
-                if label:
-                    history_manager.label_branch(current_branch, label)
-                    click.echo(
-                        f"Saved snapshot label '{label}' for history branch '{current_branch}'."
-                    )
-            confirmed = click.confirm(
-                (
-                    f"Run history garbage collection{prune_label}? "
-                    f"Current loose objects: {stats.get('count', 0)}, packs: {stats.get('packs', 0)}."
-                ),
-                default=False,
-                show_default=True,
-            )
-            if not confirmed:
-                click.echo("History garbage collection cancelled.")
-                continue
-            gc_result = history_manager.garbage_collect(prune_now=prune_now)
-            before = gc_result.get("before") if isinstance(gc_result, dict) else {}
-            after = gc_result.get("after") if isinstance(gc_result, dict) else {}
-            before_count = before.get("count", 0) if isinstance(before, dict) else 0
-            after_count = after.get("count", 0) if isinstance(after, dict) else 0
-            before_packs = before.get("packs", 0) if isinstance(before, dict) else 0
-            after_packs = after.get("packs", 0) if isinstance(after, dict) else 0
-            click.echo(
-                "History gc completed "
-                f"(loose objects: {before_count} -> {after_count}, packs: {before_packs} -> {after_packs})."
-            )
-            return "refresh"
-
-        click.echo("Invalid input. Use Enter/u/c/l/x/p/r/g/G/q.")
-
-
-def _show_history_browser(
-    repo_root: Path,
-    domain_files: list[Path],
-    select_from_menu_fn=select_from_menu,
-) -> None:
-    history_manager = HistoryManager(
-        repo_root=repo_root,
-        requirements_dir=_infer_requirements_dir(repo_root, domain_files),
-    )
-    if not history_manager.list_entries():
-        click.echo("No history entries recorded yet.")
-        return
-
-    while True:
-        display_entries, selected_index, prefix_text, _current_branch = (
-            _build_history_browser_state(history_manager)
-        )
-        choice = select_from_menu_fn(
-            "History entries",
-            [_history_entry_menu_row(entry) for entry in display_entries],
-            allow_paging_nav=True,
-            option_right_labels=[
-                _history_entry_right_label(entry) for entry in display_entries
-            ],
-            selected_option_index=selected_index,
-            footer_legend="keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | q=quit",
-            compact_footer=_build_history_browser_compact_footer(),
-            prefix_text=prefix_text,
-        )
-        if choice is None or choice == "up":
-            return
-
-        entry = display_entries[int(choice)]
-        action = _prompt_for_history_entry_action(entry, history_manager)
-        if action == "quit":
-            return
-
-
-def _handle_requirement_history_action(
-    action: str,
-    repo_root: Path,
-    domain_files: list[Path],
-    select_from_menu_fn=select_from_menu,
-) -> bool:
-    if action == "history":
-        _show_history_browser(
-            repo_root, domain_files, select_from_menu_fn=select_from_menu_fn
-        )
-        return True
-    if action not in {"undo", "redo"}:
-        return False
-
-    history_manager = HistoryManager(
-        repo_root=repo_root,
-        requirements_dir=_infer_requirements_dir(repo_root, domain_files),
-    )
-    commit_hash = history_manager.undo() if action == "undo" else history_manager.redo()
-    if commit_hash is None:
-        click.echo(f"No {action} history available.")
-    else:
-        verb = "Undid" if action == "undo" else "Redid"
-        click.echo(f"{verb} catalog to history commit {commit_hash}.")
-    return True
 
 
 def _file_sort_value(counts: dict[str, int], sort_key: str) -> int | str:
@@ -1308,8 +910,6 @@ def _prompt_for_requirement_action(
     )
     extra_keys = {"t": "toggle-field", "v": "open-vscode", "o": "open-linked"}
     extra_keys_help = {"t": "toggle", "v": "code", "o": "refs"}
-    extra_keys.update({"z": "undo", "y": "redo", "h": "history"})
-    extra_keys_help.update({"z": "undo", "y": "redo", "h": "history"})
     if include_priority_shortcuts:
         extra_keys.update(
             {
@@ -1357,9 +957,6 @@ def _prompt_for_requirement_action(
         "toggle-field",
         "open-vscode",
         "open-linked",
-        "undo",
-        "redo",
-        "history",
     }:
         return choice, None
     if isinstance(choice, str) and choice.startswith("priority-shortcut:"):
@@ -1856,14 +1453,6 @@ def focused_target_interactive_loop(
             )
             save_current(flat_list, index)
             continue
-        if _handle_requirement_history_action(
-            action,
-            repo_root,
-            domain_files,
-            select_from_menu_fn=select_from_menu_fn,
-        ):
-            save_current(flat_list, index)
-            continue
         if action == "nav-prev":
             if index > 0:
                 index -= 1
@@ -2342,13 +1931,6 @@ def interactive_update_loop(
                     include_priority_summary=include_priority_summary,
                 )
                 continue
-            if _handle_requirement_history_action(
-                action,
-                repo_root,
-                domain_files,
-                select_from_menu_fn=select_from_menu_fn,
-            ):
-                continue
             if action == "nav-prev":
                 if history_pos > 0:
                     history_pos -= 1
@@ -2658,14 +2240,6 @@ def filtered_interactive_loop(
             )
             save_current(flat_list, index)
             continue
-        if _handle_requirement_history_action(
-            action,
-            repo_root,
-            domain_files,
-            select_from_menu_fn=select_from_menu_fn,
-        ):
-            save_current(flat_list, index)
-            continue
         if action == "nav-prev":
             if index > 0:
                 index -= 1
@@ -2939,14 +2513,6 @@ def filtered_priority_interactive_loop(
             )
             save_current(flat_list, index)
             continue
-        if _handle_requirement_history_action(
-            action,
-            repo_root,
-            domain_files,
-            select_from_menu_fn=select_from_menu_fn,
-        ):
-            save_current(flat_list, index)
-            continue
         if action == "nav-prev":
             if index > 0:
                 index -= 1
@@ -3122,13 +2688,6 @@ def lookup_criterion_interactive(
                 priority_mode=(current_entry_field == "priority"),
                 include_priority_summary=include_priority_summary,
             )
-            continue
-        if _handle_requirement_history_action(
-            action,
-            repo_root,
-            domain_files,
-            select_from_menu_fn=select_from_menu_fn,
-        ):
             continue
 
         target_entry_field = _resolve_action_entry_field(current_entry_field, action)

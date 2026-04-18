@@ -72,6 +72,16 @@ Confirm `git status` is clean and `git log --oneline -1` shows the release commi
 
 Creates paired releases on `ryeleo/rqmd` and `ryeleo/rqmd-vscode` with links to the canonical CHANGELOG entries. Requires `gh` CLI authenticated (`gh auth login`).
 
+## Step 7 — Playtest (dogfood)
+
+After the release is live, install from local source and verify the new version works end-to-end:
+
+```bash
+./scripts/playtest.sh
+```
+
+Confirm `rqmd --version` reports the released version.
+
 ## Notes
 
 - Paired release contract: rqmd-cli and rqmd-vscode share a version number and are always released together. Never tag one without the other.

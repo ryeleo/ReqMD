@@ -22,7 +22,6 @@ except ImportError:
     sys.exit(1)
 
 from .constants import DEFAULT_ID_PREFIXES, LINK_ITEM_PATTERN
-from .history import HistoryManager
 from .markdown_io import scope_and_body_from_file
 from .priority_model import coerce_priority_label
 from .req_parser import extract_requirement_block, find_requirement_by_id
@@ -521,18 +520,6 @@ def apply_status_change_by_id(
         apply_changes=False,
     )
 
-    history_manager: HistoryManager | None = None
-    if changed and not dry_run:
-        history_manager = HistoryManager(
-            repo_root=repo_root, requirements_dir=path.parent
-        )
-        if not history_manager.list_entries():
-            history_manager.capture(
-                command="baseline",
-                actor="rqmd",
-                reason="Initial snapshot before first rqmd mutation.",
-            )
-
     changed = update_criterion_status(
         path,
         requirement,
@@ -550,31 +537,6 @@ def apply_status_change_by_id(
             include_status_emojis=include_status_emojis,
             include_priority_summary=include_priority_summary,
         )
-        if changed and history_manager is not None:
-            operation = "update-requirement"
-            if (
-                new_status_input is not None
-                and new_priority_input is None
-                and new_flagged_value is None
-            ):
-                operation = "set-status"
-            elif (
-                new_priority_input is not None
-                and new_status_input is None
-                and new_flagged_value is None
-            ):
-                operation = "set-priority"
-            elif (
-                new_flagged_value is not None
-                and new_status_input is None
-                and new_priority_input is None
-            ):
-                operation = "set-flagged"
-            history_manager.capture(
-                command=operation,
-                actor="rqmd",
-                reason=f"{requirement_id} updated",
-            )
 
     if emit_output:
         updates: list[str] = []

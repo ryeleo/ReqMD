@@ -1,6 +1,6 @@
 # History/Undo Feature Removal Scope
 
-Status: active
+Status: completed (2026-04-17)
 
 ## Why this is pinned
 

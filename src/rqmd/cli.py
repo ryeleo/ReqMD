@@ -90,7 +90,6 @@ from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
                         ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, PRIORITY_ORDER,
                         REQUIREMENTS_INDEX_NAME, STATUS_ORDER, STATUS_PATTERN,
                         SUMMARY_END, SUMMARY_START)
-from .history import HistoryManager, merge_retention_policies
 from .json_speedups import dumps_json
 from .markdown_io import (auto_detect_requirements_dir,
                           build_requirements_index_tooling_metadata,
@@ -347,20 +346,6 @@ def _with_schema_version(payload: dict[str, object]) -> dict[str, object]:
 
 def _emit_json_payload(payload: dict[str, object]) -> None:
     click.echo(dumps_json(_with_schema_version(payload), indent=2))
-
-
-def _resolve_history_retention_policy(
-    project_config: dict[str, object],
-    user_config: dict[str, object],
-) -> dict[str, int | None]:
-    return merge_retention_policies(
-        user_config.get("history_retention")
-        if isinstance(user_config.get("history_retention"), dict)
-        else None,
-        project_config.get("history_retention")
-        if isinstance(project_config.get("history_retention"), dict)
-        else None,
-    )
 
 
 def _emit_json_ambiguity_error(mode: str, exc: click.ClickException) -> bool:
@@ -1029,171 +1014,6 @@ def _handle_version_option(
         return
     click.echo(_build_version_output())
     ctx.exit()
-
-
-def _build_snapshot_status_map(
-    history_manager: HistoryManager,
-    commit_hash: str,
-    id_prefixes: tuple[str, ...],
-) -> dict[str, str | None]:
-    tempdir = history_manager.materialize_snapshot_tempdir(commit_hash)
-    try:
-        root = Path(tempdir.name)
-        domain_files = iter_domain_files(
-            root, history_manager.requirements_dir.as_posix()
-        )
-        mapping: dict[str, str | None] = {}
-        for path in domain_files:
-            for requirement in parse_requirements(path, id_prefixes=id_prefixes):
-                req_id = str(requirement.get("id") or "")
-                if req_id:
-                    mapping[req_id] = requirement.get("status")
-        return mapping
-    finally:
-        tempdir.cleanup()
-
-
-def _enrich_timeline_nodes_with_change_metadata(
-    history_manager: HistoryManager,
-    timeline_nodes: dict[str, dict[str, object]],
-    id_prefixes: tuple[str, ...],
-) -> None:
-    status_cache: dict[str, dict[str, str | None]] = {}
-
-    def _status_map(commit_hash: str) -> dict[str, str | None]:
-        if commit_hash not in status_cache:
-            status_cache[commit_hash] = _build_snapshot_status_map(
-                history_manager, commit_hash, id_prefixes
-            )
-        return status_cache[commit_hash]
-
-    ordered_items = sorted(
-        timeline_nodes.items(),
-        key=lambda item: int(item[1].get("entry_index", -1)),
-    )
-
-    for commit_hash, node in ordered_items:
-        parent_commit = str(node.get("parent_commit") or "")
-        if not parent_commit:
-            node["changed_requirement_ids"] = []
-            node["status_transitions"] = []
-            continue
-
-        current_map = _status_map(commit_hash)
-        parent_map = _status_map(parent_commit)
-
-        changed_ids: list[str] = []
-        transitions: list[dict[str, object]] = []
-        for req_id in sorted(set(current_map).union(parent_map)):
-            before_status = parent_map.get(req_id)
-            after_status = current_map.get(req_id)
-            if before_status == after_status:
-                continue
-            changed_ids.append(req_id)
-            transitions.append(
-                {
-                    "id": req_id,
-                    "before_status": before_status,
-                    "after_status": after_status,
-                }
-            )
-
-        node["changed_requirement_ids"] = changed_ids
-        node["status_transitions"] = transitions
-
-
-def _filter_timeline_nodes(
-    timeline_nodes: dict[str, dict[str, object]],
-    branch_filter: str | None,
-    actor_filter: str | None,
-    command_filter: str | None,
-    file_filter: str | None,
-    requirement_id_filter: str | None,
-    transition_filter: str | None,
-    from_filter: datetime | None,
-    to_filter: datetime | None,
-) -> dict[str, dict[str, object]]:
-    def _contains_casefold(haystack: str | None, needle: str | None) -> bool:
-        if not needle:
-            return True
-        if haystack is None:
-            return False
-        return needle.casefold() in haystack.casefold()
-
-    before_filter: str | None = None
-    after_filter: str | None = None
-    if transition_filter:
-        if "->" in transition_filter:
-            before_raw, after_raw = transition_filter.split("->", 1)
-            before_filter = before_raw.strip() or None
-            after_filter = after_raw.strip() or None
-        else:
-            before_filter = transition_filter.strip() or None
-
-    filtered: dict[str, dict[str, object]] = {}
-    for commit_hash, node in timeline_nodes.items():
-        if branch_filter and not _contains_casefold(
-            str(node.get("branch") or ""), branch_filter
-        ):
-            continue
-        if actor_filter and not _contains_casefold(
-            str(node.get("actor") or ""), actor_filter
-        ):
-            continue
-        if command_filter and not _contains_casefold(
-            str(node.get("command") or ""), command_filter
-        ):
-            continue
-
-        files = [str(item) for item in (node.get("files") or [])]
-        if file_filter and not any(
-            file_filter.casefold() in value.casefold() for value in files
-        ):
-            continue
-
-        changed_ids = [
-            str(item) for item in (node.get("changed_requirement_ids") or [])
-        ]
-        if requirement_id_filter and not any(
-            requirement_id_filter.casefold() == value.casefold()
-            for value in changed_ids
-        ):
-            continue
-
-        transitions = node.get("status_transitions") or []
-        if before_filter or after_filter:
-            matched_transition = False
-            for transition in transitions:
-                if not isinstance(transition, dict):
-                    continue
-                before_value = str(transition.get("before_status") or "")
-                after_value = str(transition.get("after_status") or "")
-                if before_filter and not _contains_casefold(
-                    before_value, before_filter
-                ):
-                    continue
-                if after_filter and not _contains_casefold(after_value, after_filter):
-                    continue
-                matched_transition = True
-                break
-            if not matched_transition:
-                continue
-
-        timestamp_raw = str(node.get("timestamp") or "")
-        if (from_filter or to_filter) and timestamp_raw:
-            timestamp_value = _parse_iso8601_filter(
-                timestamp_raw, "timeline node timestamp"
-            )
-            if from_filter and timestamp_value < from_filter:
-                continue
-            if to_filter and timestamp_value > to_filter:
-                continue
-        elif from_filter or to_filter:
-            continue
-
-        filtered[commit_hash] = node
-
-    return filtered
 
 
 @click.command(

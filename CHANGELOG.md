@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Deleted `history.py` (975 lines) and all undo/redo/history integration points across `cli.py`, `workflows.py`, `status_update.py`, and 11 related tests. The RQMD-UNDO-* and RQMD-TIME-* features were already archived; this cleans up the dead code.
+
 <a id="v0-2-9"></a>
 
 ## [0.2.9] - 2026-04-17
