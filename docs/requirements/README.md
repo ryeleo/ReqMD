@@ -161,7 +161,6 @@ Bug note: [Bug Tracking](bug-tracking.md) is for meta-requirements about how bug
 - [Core Engine](core-engine.md) - parsing, normalization, summaries, requirements extraction
 - [Interactive UX](interactive-ux.md) - keyboard-driven status update flows
 - [Automation API](automation-api.md) - shared non-interactive set/set-file/filter/json contracts for machine and CI usage
-- [AI CLI](ai-cli.md) - `rqmd-ai`-specific prompt export, guarded apply flows, onboarding guidance, and auditability requirements
 - [Sorting](sorting.md) - ordering rules, toggles, deterministic ranking behavior
 - [Roll-up](roll-up.md) - summary counts, bucket rendering, and visual roll-up output
 - [Screen-Write UI](screen-write.md) - full-screen renderer mode, terminal capability fallback, and redraw ergonomics
@@ -177,6 +176,7 @@ Fully-deprecated domain documents moved to `archived/` — retained for git hist
 
 - [Undo / History](archived/undo.md) - 11 RQMD-UNDO-* (undo/redo semantics) — all 🗑️ Deprecated
 - [Time Machine](archived/time-machine.md) - 10 RQMD-TIME-* (temporal navigation) — all 🗑️ Deprecated
+- [AI CLI](archived/ai-cli.md) - 11 RQMD-AI-001..011 (AI entrypoint, prompt export, guarded apply) — all 🗑️ Deprecated; RQMD-AI-061/063 (`rqmd bug`) relocated to [Bug Tracking](bug-tracking.md)
 
 ## Verification
 
@@ -189,7 +189,7 @@ Fully-deprecated domain documents moved to `archived/` — retained for git hist
 | RQMD-CORE-* | Core Engine |
 | RQMD-INTERACTIVE-* | Interactive UX |
 | RQMD-AUTOMATION-* | Automation API |
-| RQMD-AI-* | AI CLI |
+| RQMD-AI-* | AI CLI (archived) / Bug Tracking |
 | RQMD-SORTING-* | Sorting |
 | RQMD-ROLLUP-* | Roll-up |
 | RQMD-UI-* | Screen-Write UI |

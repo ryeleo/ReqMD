@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 13💡 26🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 14💡 26🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -213,11 +213,11 @@ Summary: 13💡 26🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - **Summary:** The public CLI to standardize on `init` as the primary initialization term so that the command surface is simpler, more conventional, and easier to remember than a long-term mix of `init` and `bootstrap` wording.
 
 
-### RQMD-CORE-030: Chat-first default onboarding from rqmd init
+### RQMD-CORE-030: Scaffold-first default onboarding from rqmd init
 
 - **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
-- **Summary:** `rqmd init` to default to the AI-guided chat onboarding flow rather than dropping me into lower-level manual setup details so that the first-run experience leads users through the strongest supported path with minimal decision overhead.
+- **Summary:** `rqmd init` (no flags) runs the scaffold flow directly, creating starter requirement docs without requiring `--scaffold`. The AI-guided path was removed from the CLI; onboarding is now scaffold-first, with AI-assisted setup available via the VS Code extension.
 
 
 ### RQMD-CORE-031: First-class user-story and Given/When/Then blocks
@@ -544,19 +544,20 @@ Summary: 13💡 26🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - And **CHANGELOG entries are excluded from drift warnings** (same exclusion as RQMD-CORE-054 Phase 2)
 - And the stored `version_sources` in `rqmd.yml` is the sole source of truth — no separate git-tag state needed
 
-> **Example — drift warning in action:**
-> ```yaml
-> # rqmd.yml (saved during 0.2.9 release)
-> version_sources:
->   - file: pyproject.toml
->     line: 7
->   - file: prompts/go.prompt.md
->     line: 2
-> ```
->
-> Before 0.3.0 release, the developer added a `docker-compose.yml` with `image: rqmd:0.2.9` and deleted `prompts/go.prompt.md`:
-> ```
-> ⚠️ version source prompts/go.prompt.md — file not found (tracked since 0.2.9)
-> ℹ️ new version reference in docker-compose.yml:3 — consider adding to version_sources
-> ✅ pyproject.toml:7 — '0.2.9' found, ready to bump
-> ```
+
+<a id="rqmd-core-056"></a>
+
+### RQMD-CORE-056: Staleness distinguishes "unannotated" from "orphaned" requirements
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- **Summary:** As a developer running `rqmd --staleness`, I want the tool to distinguish between genuinely orphaned requirements (no living code at all) and unannotated requirements (code exists but lacks a `# RQMD-*` cross-reference comment), so that the report recommends annotation for the common case instead of suggesting deprecation.
+
+- Given a requirement has `Status: 🔧 Implemented` or `Status: ✅ Verified`
+- When `--staleness` computes the cross-reference signal and finds zero grep hits for the requirement ID
+- Then the report classifies the requirement as **"unannotated"** (default assumption for non-deprecated statuses with zero xrefs) rather than the current `"implemented-but-unreferenced"` label
+- And the recommendation text says `"Add # RQMD-CORE-NNN annotation to the implementing test/source"` instead of `"Consider deprecating"`
+- And `--staleness --json` includes `"flag": "unannotated"` (replacing `"implemented-but-unreferenced"`) so that tooling and `/tech-debt` can render the bucket distinctly
+- And `--staleness` summary output shows a separate count line: `"N implemented reqs missing xref annotations (unannotated)"` beneath the deprecated-alive count
+- And the existing `"deprecated-but-alive"` flag and behavior are unchanged
+- And a future heuristic pass (title-keyword grep, test-name fuzzy match) could further split "unannotated" into confirmed-unannotated vs. likely-orphaned — but that is out of scope for this requirement

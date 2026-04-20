@@ -1743,43 +1743,36 @@ As a user, I encountered [problem] so that [impact].
                 "rqmd init is an onboarding surface and cannot be combined with verify/filter/update/tree or rollup options."
             )
 
-        if init_scaffold:
-            try:
-                if requested_init_prefix:
-                    starter_prefix = requested_init_prefix
-                elif confirm_yes:
-                    starter_prefix = "REQ"
-                else:
-                    starter_prefix = prompt_for_init_prefix(default_prefix="REQ")
-            except ValueError as exc:
-                raise click.ClickException(str(exc)) from exc
+        try:
+            if requested_init_prefix:
+                starter_prefix = requested_init_prefix
+            elif confirm_yes:
+                starter_prefix = "REQ"
+            else:
+                starter_prefix = prompt_for_init_prefix(default_prefix="REQ")
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
 
-            created = initialize_requirements_scaffold(
-                repo_root,
-                requirements_dir or DEFAULT_REQUIREMENTS_DIR,
-                starter_prefix=starter_prefix,
-            )
-            if json_output:
-                payload = {
-                    "mode": "init",
-                    "requirements_dir": requirements_dir or DEFAULT_REQUIREMENTS_DIR,
-                    "starter_prefix": starter_prefix,
-                    "created_files": [
-                        format_path_display(path, repo_root) for path in created
-                    ],
-                    "created_count": len(created),
-                }
-                _emit_json_payload(payload)
-                raise SystemExit(0)
-
-            _emit_scaffold_result(created, repo_root)
+        created = initialize_requirements_scaffold(
+            repo_root,
+            requirements_dir or DEFAULT_REQUIREMENTS_DIR,
+            starter_prefix=starter_prefix,
+        )
+        if json_output:
+            payload = {
+                "mode": "init",
+                "requirements_dir": requirements_dir or DEFAULT_REQUIREMENTS_DIR,
+                "starter_prefix": starter_prefix,
+                "created_files": [
+                    format_path_display(path, repo_root) for path in created
+                ],
+                "created_count": len(created),
+            }
+            _emit_json_payload(payload)
             raise SystemExit(0)
 
-        raise click.ClickException(
-            "AI-guided init is no longer part of the CLI. "
-            "Use `rqmd init --scaffold` to create a starter requirements scaffold, "
-            "or use the rqmd VS Code extension for AI-assisted setup."
-        )
+        _emit_scaffold_result(created, repo_root)
+        raise SystemExit(0)
 
     if init_scaffold:
         if (
@@ -2056,12 +2049,9 @@ As a user, I encountered [problem] so that [impact].
         raise SystemExit(0)
 
     if staleness or staleness_deprecated_only or staleness_explain:
-        from .staleness import (
-            build_staleness_report,
-            format_deprecated_report,
-            format_explain_text,
-            format_staleness_table,
-        )
+        from .staleness import (build_staleness_report,
+                                format_deprecated_report, format_explain_text,
+                                format_staleness_table)
 
         staleness_weights = config.get("staleness") if isinstance(config.get("staleness"), dict) else None
 

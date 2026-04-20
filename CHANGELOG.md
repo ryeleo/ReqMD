@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<a id="v0-2-10"></a>
+
+## [0.2.10] - 2026-04-19
+
+### Fixed
+
+- [RQMD-BUG-005](docs/requirements/bugs.md#rqmd-bug-005): `rqmd init` (no flags) now runs the scaffold flow directly — no longer errors with "AI-guided init is no longer part of the CLI". Bare `rqmd init` is now identical to `rqmd init --scaffold`. Updated startup guidance messages to remove stale AI-driven onboarding references.
+- [RQMD-BUG-006](docs/requirements/bugs.md#rqmd-bug-006): VS Code extension auto-install failure now captures subprocess stdout/stderr and logs it to the "rqmd bootstrap" output channel. The error notification includes a "Show Logs" button and references the channel for details, replacing the previous generic unactionable message.
+
 ### Removed
 
 - Deleted `history.py` (975 lines) and all undo/redo/history integration points across `cli.py`, `workflows.py`, `status_update.py`, and 11 related tests. The RQMD-UNDO-* and RQMD-TIME-* features were already archived; this cleans up the dead code.
+- Deprecated all RQMD-AI-001..011 requirements — the `rqmd-ai` entrypoint was never built; AI-facing capabilities are delivered via the rqmd VS Code extension's skill-based workflow. Archived `ai-cli.md` to `docs/requirements/archived/`. Relocated RQMD-AI-061/063 (`rqmd bug` features) to `bug-tracking.md`.
 
 <a id="v0-2-9"></a>
 

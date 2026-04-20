@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import click
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli, menus
 from rqmd.priority_model import configure_priority_catalog
 

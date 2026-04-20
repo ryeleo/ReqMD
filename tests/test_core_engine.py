@@ -573,8 +573,8 @@ def test_RQMD_core_009_missing_domain_docs_handling(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "No requirement markdown files found under" in result.output
-    assert "default chat-first setup flow" in result.output
     assert "rqmd init" in result.output
+    assert "scaffold" in result.output
 
 
 def test_RQMD_core_009_missing_requirements_index_shows_first_time_setup_guidance(
@@ -633,7 +633,7 @@ def test_RQMD_core_013_verify_index_missing_index_uses_shared_startup_guidance(
     assert (
         "No requirements index found at: docs/requirements/README.md" in result.output
     )
-    assert "guided setup flow" in result.output
+    assert "rqmd init" in result.output
     assert "rqmd init --scaffold" in result.output
 
 
@@ -697,6 +697,32 @@ def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(
         encoding="utf-8"
     )
     assert "### REQ-HELLO-001: Replace this starter requirement" in starter
+
+
+def test_RQMD_BUG_005_bare_init_without_scaffold_flag_runs_scaffold(
+    tmp_path: Path,
+) -> None:
+    """RQMD-BUG-005: `rqmd init` (no --scaffold) must scaffold directly."""
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "init",
+            "--force-yes",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Initialized requirement scaffold:" in result.output
+    assert (repo / "docs" / "requirements" / "README.md").exists()
+    assert (repo / "docs" / "requirements" / "starter.md").exists()
 
 
 def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(

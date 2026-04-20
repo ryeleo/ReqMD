@@ -1,6 +1,6 @@
 # Inbox
 
-
+-  I have a full telemetry server set up that we haven't even used yet to ingest feedback from! 
 - You are a VS Code Agent. So you should use VS Code tooling as much as you can. That means:
     - run tests in VS Code test explorer directly if possible! (pytest, vitest, etc...). -- and then LEARN THAT as part of /test skill going forward!
     - If the user asks you to "run XYZ" and there is a matching launch.json entry maybe like "debugger attach XYZ" or anytihng that might be a match, suggest to run that instead of shelling out to the CLI -- and then LEARN THAT as part of /dev skill going forward!
@@ -13,3 +13,4 @@
 - rqmd should not do a  `git push --force` without explicit acknowledgement from teh user. This is a risky operation!
 - Add a custom icon for the rqmd VS Code extension (`package.json` top-level `icon` field, 128×128 PNG). Currently shows as generic in the chat mode picker. Agent/Ask/Plan icons are VS Code built-ins — track whether `chatAgents` gains per-agent icon support in future API.
 - UX pain: After updating/reinstalling the rqmd extension, VS Code silently deselects "rqmd" mode and falls back to "Agent" — the user doesn't notice and starts chatting without rqmd context. Need a way to detect this and/or persist mode selection across extension updates. Could be: (1) extension activation checks if rqmd was the last mode and re-selects it, (2) a visual cue when running in non-rqmd mode in an rqmd workspace, or (3) VS Code API for sticky mode selection.
+- [tech-debt] RQMD-EXT-087 refinement: when `/tech-debt` encounters "implemented-but-unreferenced" reqs, recommend "annotate tests/source with `# RQMD-*` xref comments" as a batch action instead of "consider deprecating." Depends on RQMD-CORE-056 adding `"reason": "xref_gap"` to `--staleness --json`.
