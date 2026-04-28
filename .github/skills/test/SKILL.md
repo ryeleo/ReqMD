@@ -18,6 +18,15 @@ metadata:
 
 Use this skill when work needs the repository's actual automated validation commands.
 
+## VS Code-native first (per RQMD-EXT-090)
+
+This project uses **pytest**, which Test Explorer discovers automatically:
+
+- **Prefer the `runTests` tool over `pytest -q` in a terminal** when running specific test files or test names. Test Explorer surfaces failures in the Problems panel and supports one-click rerun.
+- Pass `files=[...]` and `testNames=[...]` for focused runs — `runTests` is much faster than running the full suite when iterating.
+- Use `bash ./agent-workflow.sh validate` (or the raw `uv run --extra dev pytest -q` below) only for full-suite validation, CI-style checks, or when Test Explorer has not picked up new tests yet.
+- When you discover useful test-runner configuration (markers, custom args, slow-test selectors), record it here.
+
 Canonical validation entry point:
 - `bash ./agent-workflow.sh validate`
 - `bash ./agent-workflow.sh validate --profile test`

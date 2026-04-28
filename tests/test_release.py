@@ -7,15 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from rqmd.release import (
-    check_changelog_stamp,
-    check_clean_working_tree,
-    check_version_agreement,
-    discover_version_sources,
-    format_preflight_table,
-    run_preflight,
-)
-
+from rqmd.release import (check_changelog_stamp, check_clean_working_tree,
+                          check_version_agreement, discover_version_sources,
+                          format_preflight_table, run_preflight)
 
 # ---------------------------------------------------------------------------
 # Helpers

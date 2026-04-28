@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 14💡 26🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 14💡 27🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -561,3 +561,27 @@ Summary: 14💡 26🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - And `--staleness` summary output shows a separate count line: `"N implemented reqs missing xref annotations (unannotated)"` beneath the deprecated-alive count
 - And the existing `"deprecated-but-alive"` flag and behavior are unchanged
 - And a future heuristic pass (title-keyword grep, test-name fuzzy match) could further split "unannotated" into confirmed-unannotated vs. likely-orphaned — but that is out of scope for this requirement
+
+<a id="rqmd-core-057"></a>
+
+### RQMD-CORE-057: `rqmd --refresh-index` re-applies template boilerplate
+
+- **Status:** 🔧 Implemented
+- **Priority:** 🟡 P2 - Medium
+- **Summary:** `rqmd --refresh-index` re-applies the static boilerplate sections (install breadcrumb, How To Use, Schema Reference) from the current rqmd template into an existing `docs/requirements/README.md`. Custom intro text, tooling metadata block, extra sections, and the Requirement Documents listing are preserved.
+- Given a requirements index exists at `<docs-dir>/README.md` with stale boilerplate
+- When the developer runs `rqmd --refresh-index --force-yes`
+- Then rqmd replaces the breadcrumb callout, How To Use section, and Schema Reference section with the current template content
+- And all other content (H1 title, custom intro, tooling metadata, Requirement Documents) is preserved
+- And the command exits 0
+- Given the same index is already current
+- When the developer runs `rqmd --refresh-index --force-yes`
+- Then rqmd reports "already current" and makes no changes
+- Given `--dry-run` is passed
+- When the index contains stale boilerplate
+- Then rqmd reports "Would update \<sections\>" without writing the file
+- Given `--json` is passed
+- Then rqmd emits `{"mode": "refresh-index", "changed": true|false, "dry_run": true|false, "sections_updated": [...]}` and exits 0
+- Given no requirements index exists
+- When the developer runs `rqmd --refresh-index`
+- Then rqmd exits 1 with an actionable error message

@@ -1,9 +1,99 @@
 # Inbox
 
+- It would be nice to have rqmd-docs have a skill to check for dead links:
+    - First check for local links being broken (lightning fast)
+    - Then check for external links being broken (slower, do asyncronously)
+    - Script that did this in a different project:
+
+```
+python3 - << 'PYEOF'
+import re, os
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import urllib.request, urllib.error
+
+LINK_RE = re.compile(r'\[([^\]]*)\]\(([^)\s]+)\)')
+
+# Directories to skip
+SKIP_DIRS = {'node_modules', '.venv', '.venv3.12', 'build', 'dist', '.git', 'cassettes'}
+
+md_files = []
+for root, dirs, files in os.walk('.'):
+    dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+    for f in files:
+        if f.endswith('.md'):
+            md_files.append(os.path.join(root, f))
+
+broken_internal = []
+all_external = {}  # url -> [(src, text)]
+
+for md_file in sorted(md_files):
+    with open(md_file, 'r', encoding='utf-8', errors='replace') as fh:
+        content = fh.read()
+    base_dir = os.path.dirname(md_file)
+    for match in LINK_RE.finditer(content):
+        text, url = match.group(1), match.group(2)
+        url_no_frag = url.split('#')[0]
+        if url.startswith('http://') or url.startswith('https://'):
+            if url_no_frag:
+                all_external.setdefault(url_no_frag, []).append((md_file, text, url))
+        elif not url.startswith('mailto:') and url_no_frag:
+            target = os.path.normpath(os.path.join(base_dir, url_no_frag))
+            if not os.path.exists(target):
+                broken_internal.append((md_file, text, url, target))
+
+print("=== BROKEN INTERNAL LINKS ===")
+if broken_internal:
+    for src, text, url, target in broken_internal:
+        print(f"  {src}: [{text}]({url})")
+else:
+    print("  (none)")
+
+print(f"\nChecking {len(all_external)} unique external URLs...")
+
+def check_url(url):
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'}, method='HEAD')
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            return url, resp.status
+    except urllib.error.HTTPError as e:
+        return url, e.code
+    except Exception as e:
+        return url, str(e)
+
+results = {}
+with ThreadPoolExecutor(max_workers=8) as ex:
+    futs = {ex.submit(check_url, u): u for u in all_external}
+    for fut in as_completed(futs):
+        url, status = fut.result()
+        results[url] = status
+
+print("\n=== EXTERNAL 4XX ===")
+found_4xx = False
+for url, status in sorted(results.items(), key=lambda x: str(x[1])):
+    if isinstance(status, int) and 400 <= status < 500:
+        found_4xx = True
+        for src, text, orig_url in all_external[url]:
+            print(f"  HTTP {status}  {src}: [{text}]({orig_url})")
+if not found_4xx:
+    print("  (none)")
+
+print("\n=== OTHER ERRORS (5xx / connection failures) ===")
+found_other = False
+for url, status in sorted(results.items(), key=lambda x: str(x[1])):
+    if not isinstance(status, int) or status >= 500:
+        found_other = True
+        for src, text, orig_url in all_external[url]:
+            print(f"  {status}  {src}: [{text}]({orig_url})")
+if not found_other:
+    print("  (none)")
+
+print("\n=== ALL EXTERNAL STATUSES ===")
+for url, status in sorted(results.items()):
+    print(f"  {status}  {url}")
+PYEOF
+```
+
 -  I have a full telemetry server set up that we haven't even used yet to ingest feedback from! 
-- You are a VS Code Agent. So you should use VS Code tooling as much as you can. That means:
-    - run tests in VS Code test explorer directly if possible! (pytest, vitest, etc...). -- and then LEARN THAT as part of /test skill going forward!
-    - If the user asks you to "run XYZ" and there is a matching launch.json entry maybe like "debugger attach XYZ" or anytihng that might be a match, suggest to run that instead of shelling out to the CLI -- and then LEARN THAT as part of /dev skill going forward!
 - When providing a list of instructions, often times it is possible to embed a 'start page' hyperlink if the instructions start with "login here" or "go to this page" or "open this page" -- we can hyperlink the page in the instruction text. That way, when a user follows the instructions, the first instruction will have an actionable link that will get them started in the rigth place instead of having to figure out "where are the GitHub Actions for this repo..?"
 - Is the fact that inbox.md is only temporarially holding items mean that it is gonna be an issue on multiuser repos where lots of ppl might churn through the inbox? As long as each item is a line item, git is quite good at merging line-item churn, so maybe not? Maybe we just need to make sure to keep items small and atomic so that they can be easily merged if multiple people are adding items at the same time?
 -  "Agent Context File" is a term maybe??

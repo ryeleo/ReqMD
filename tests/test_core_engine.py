@@ -1082,6 +1082,198 @@ def test_RQMD_BUG_004_sync_index_metadata_idempotent(
     assert text_after_second == text_after_third
 
 
+def test_RQMD_core_057_refresh_index_replaces_stale_boilerplate(
+    tmp_path: Path,
+) -> None:
+    """--refresh-index replaces a stale How To Use section from the current template."""
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    index_path = criteria_dir / "README.md"
+    index_path.write_text(
+        "# Requirements\n\n"
+        "> **ℹ️ Info:** OLD breadcrumb text that is out of date.\n\n"
+        "## How To Use\n\nOld how-to content that is stale.\n\n"
+        "## Schema Reference\n\nOld schema content.\n\n"
+        "## Requirement Documents\n\n### Demo\n- [Demo](demo.md) - demo\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "demo.md").write_text(
+        "# Demo\n\nScope: demo.\n\n### RQMD-DEMO-001: First\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--refresh-index",
+            "--force-yes",
+        ],
+    )
+
+    assert result.exit_code == 0
+    updated = index_path.read_text(encoding="utf-8")
+    # Stale boilerplate is gone
+    assert "OLD breadcrumb text" not in updated
+    assert "Old how-to content" not in updated
+    assert "Old schema content" not in updated
+    # Current boilerplate is present
+    assert "This index is managed by [rqmd]" in updated
+    assert "## How To Use" in updated
+    assert "## Schema Reference" in updated
+    # Project-specific content preserved
+    assert "# Requirements" in updated
+    assert "## Requirement Documents" in updated
+
+
+def test_RQMD_core_057_refresh_index_idempotent(tmp_path: Path) -> None:
+    """Running --refresh-index on an up-to-date index makes no changes."""
+    from rqmd.markdown_io import refresh_requirements_index
+
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    index_path = criteria_dir / "README.md"
+
+    runner = CliRunner()
+
+    # First: scaffold to get a proper index
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--scaffold",
+            "--force-yes",
+        ],
+    )
+    assert result.exit_code == 0
+    assert index_path.exists()
+    original = index_path.read_text(encoding="utf-8")
+
+    # Second: refresh — should be a no-op
+    result2 = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--refresh-index",
+            "--force-yes",
+        ],
+    )
+    assert result2.exit_code == 0
+    assert "already current" in result2.output
+    assert index_path.read_text(encoding="utf-8") == original
+
+
+def test_RQMD_core_057_refresh_index_dry_run_does_not_write(tmp_path: Path) -> None:
+    """--refresh-index without --force-yes (dry run) reports change but does not write."""
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    index_path = criteria_dir / "README.md"
+    stale_content = (
+        "# Requirements\n\n"
+        "> **ℹ️ Info:** STALE breadcrumb.\n\n"
+        "## How To Use\n\nStale content.\n\n"
+        "## Requirement Documents\n\n### Demo\n- [Demo](demo.md) - demo\n"
+    )
+    index_path.write_text(stale_content, encoding="utf-8")
+    (criteria_dir / "demo.md").write_text(
+        "# Demo\n\nScope: demo.\n\n### RQMD-DEMO-001: First\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--refresh-index",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Would update" in result.output
+    # File was not modified
+    assert index_path.read_text(encoding="utf-8") == stale_content
+
+
+def test_RQMD_core_057_refresh_index_json_output(tmp_path: Path) -> None:
+    """--refresh-index --json returns structured payload."""
+    import json
+
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    index_path = criteria_dir / "README.md"
+    index_path.write_text(
+        "# Requirements\n\n"
+        "## How To Use\n\nStale.\n\n"
+        "## Requirement Documents\n\n### Demo\n- [Demo](demo.md) - demo\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "demo.md").write_text(
+        "# Demo\n\nScope: demo.\n\n### RQMD-DEMO-001: First\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--refresh-index",
+            "--json",
+            "--dry-run",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "refresh-index"
+    assert payload["changed"] is True
+    assert payload["dry_run"] is True
+    assert isinstance(payload["sections_updated"], list)
+    assert "How To Use" in payload["sections_updated"]
+
+
+def test_RQMD_core_057_refresh_index_missing_index_exits_1(tmp_path: Path) -> None:
+    """--refresh-index exits 1 and prints an error when no index exists."""
+    repo = tmp_path / "repo"
+    (repo / "docs" / "requirements").mkdir(parents=True)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--refresh-index",
+        ],
+    )
+
+    assert result.exit_code == 1
+
+
 def test_RQMD_core_033b_warns_when_requirements_index_metadata_mismatches(
     tmp_path: Path, monkeypatch
 ) -> None:

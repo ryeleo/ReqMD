@@ -18,6 +18,17 @@ metadata:
 
 Use this skill when implementation work needs the repository's actual development commands.
 
+## VS Code-native first (per RQMD-EXT-090)
+
+This is a VS Code workspace — prefer native execution surfaces over raw shell:
+
+- **Use `run_task` for tasks.json labels** before falling back to `run_in_terminal`. Discovered labels in `.vscode/tasks.json`:
+  - `Tunnel to Az TeleVM` — runs `./scripts/telemetry-tunnel.sh 20.94.227.192` (background)
+  - `Start Remote Admin Tools` — `docker compose -f docker-compose.telemetry-admin.yml up -d`
+  - `SSH to Az TeleVM` — `ssh azureuser@20.94.227.192` (background)
+- **No `launch.json` exists yet.** When the user says "run XYZ" and no matching task exists, fall back to the canonical agent-workflow entry point or the raw commands below — and call out the fallback in one short line.
+- When you discover a useful new VS Code-native surface, record it here so the next session does not re-discover it.
+
 Canonical agent workflow entry point:
 - `bash ./agent-workflow.sh preflight`
 - `bash ./agent-workflow.sh validate --profile build`

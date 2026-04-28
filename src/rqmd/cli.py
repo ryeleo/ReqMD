@@ -99,6 +99,7 @@ from .markdown_io import (auto_detect_requirements_dir,
                           initialize_requirements_scaffold, iter_domain_files,
                           iter_requirements_search_roots, parse_index_links,
                           parse_requirements_index_tooling_metadata,
+                          refresh_requirements_index,
                           render_startup_message, resolve_requirements_dir,
                           sync_requirements_index_tooling_metadata,
                           validate_files_readable)
@@ -1331,6 +1332,12 @@ def _handle_version_option(
     help="Add or refresh the rqmd tooling metadata block in the requirements index README.",
 )
 @click.option(
+    "--refresh-index",
+    "refresh_index",
+    is_flag=True,
+    help="Re-apply static boilerplate sections (breadcrumb, How To Use, Schema Reference) from the current rqmd template into the requirements index README. Preserves custom intro text, tooling metadata, extra sections, and the Requirement Documents listing.",
+)
+@click.option(
     "--session-state-dir",
     "state_dir",
     type=str,
@@ -1448,6 +1455,7 @@ def main(
     init_priorities: bool,
     default_priority: str,
     sync_index_metadata: bool,
+    refresh_index: bool,
     state_dir: str,
     repo_root: Path,
     requirements_dir: str | None,
@@ -1882,6 +1890,50 @@ As a user, I encountered [problem] so that [impact].
             click.echo(
                 f"Requirements index metadata already current in {format_path_display(index_path, repo_root)}."
             )
+        raise SystemExit(0)
+
+    if refresh_index:
+        if not index_path.exists():
+            click.echo(
+                f"Error: requirements index not found at {format_path_display(index_path, repo_root)}. "
+                "Run `rqmd --scaffold --force-yes` to create it.",
+                err=True,
+            )
+            raise SystemExit(1)
+
+        original_text = index_path.read_text(encoding="utf-8")
+        index_display = format_path_display(index_path, repo_root)
+        criteria_dir_display = format_path_display(resolved_criteria_dir, repo_root)
+        updated_text, changed, sections_updated = refresh_requirements_index(
+            original_text,
+            index_display=index_display,
+            criteria_dir_display=criteria_dir_display,
+        )
+
+        if json_output:
+            payload = {
+                "mode": "refresh-index",
+                "requirements_dir": criteria_dir_display,
+                "index_path": index_display,
+                "dry_run": dry_run,
+                "changed": changed,
+                "sections_updated": sections_updated,
+            }
+            _emit_json_payload(payload)
+            raise SystemExit(0)
+
+        if changed:
+            if not dry_run:
+                index_path.write_text(updated_text, encoding="utf-8")
+                click.echo(
+                    f"Updated {', '.join(sections_updated)} in {index_display}."
+                )
+            else:
+                click.echo(
+                    f"Would update {', '.join(sections_updated)} in {index_display}."
+                )
+        else:
+            click.echo(f"{index_display} already current.")
         raise SystemExit(0)
 
     if index_path.exists() and not json_output:

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<a id="v0-2-11"></a>
+
+## [0.2.11] - 2026-04-28
+
+### Added
+
+- [RQMD-CORE-057](docs/requirements/core-engine.md): `rqmd --refresh-index` — re-applies static boilerplate sections (install breadcrumb, How To Use, Schema Reference) from the current `init` template into an existing `docs/requirements/README.md`. Custom intro text, tooling metadata, extra sections, and the Requirement Documents listing are preserved. Supports `--dry-run`. Backed by new `refresh_requirements_index()` in `markdown_io.py` with sentinel-heading-based section detection. Covered by `tests/test_core_engine.py::test_RQMD_core_057_refresh_index_*`.
+
+### Changed
+
+- `.github/skills/dev/SKILL.md`: now leads with VS Code-native preference (per RQMD-EXT-090) — surfaces discovered `.vscode/tasks.json` labels (`Tunnel to Az TeleVM`, `Start Remote Admin Tools`, `SSH to Az TeleVM`) so the agent prefers `run_task` over raw shell when a label matches.
+- `.github/skills/test/SKILL.md`: now leads with VS Code-native preference (per RQMD-EXT-090) — instructs the agent to prefer the `runTests` tool (Test Explorer) over `pytest -q` for focused runs, and reserves the canonical agent-workflow validate path for full-suite checks.
+- `tests/test_release.py`, `tests/test_staleness.py`: import statements reformatted (no behavior change).
+
 <a id="v0-2-10"></a>
 
 ## [0.2.10] - 2026-04-19

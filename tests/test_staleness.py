@@ -7,17 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from rqmd.staleness import (
-    DEFAULT_WEIGHTS,
-    build_staleness_report,
-    compute_staleness,
-    format_deprecated_report,
-    format_explain_text,
-    format_staleness_table,
-    grep_xrefs,
-    staleness_flags,
-)
-
+from rqmd.staleness import (DEFAULT_WEIGHTS, build_staleness_report,
+                            compute_staleness, format_deprecated_report,
+                            format_explain_text, format_staleness_table,
+                            grep_xrefs, staleness_flags)
 
 # ---------------------------------------------------------------------------
 # Unit tests for scoring functions

@@ -118,6 +118,120 @@ def sync_requirements_index_tooling_metadata(index_text: str) -> tuple[str, bool
     return normalized, normalized != index_text
 
 
+def _extract_boilerplate_sections(
+    index_display: str,
+    criteria_dir_display: str,
+) -> dict[str, str]:
+    """Extract static boilerplate sections from the current README template."""
+    template = _load_init_template("README.md")
+    template = template.replace("{{INDEX_DISPLAY}}", index_display)
+    template = template.replace("{{CRITERIA_DIR_DISPLAY}}", criteria_dir_display)
+
+    sections: dict[str, str] = {}
+
+    # Breadcrumb: first > **ℹ️ Info:** line
+    m = re.search(r"^> \*\*ℹ️ Info:\*\*.*$", template, re.MULTILINE)
+    if m:
+        sections["breadcrumb"] = m.group(0)
+
+    # How To Use: from ## How To Use through (not including) the next ## heading
+    m = re.search(r"^## How To Use\n.*?(?=\n## |\Z)", template, re.MULTILINE | re.DOTALL)
+    if m:
+        sections["how_to_use"] = m.group(0).rstrip()
+
+    # Schema Reference: through (not including) {{INDEX_EXTRA_SECTIONS}} or next ## heading
+    m = re.search(
+        r"^## Schema Reference\n.*?(?=\{\{INDEX_EXTRA_SECTIONS\}\}|\n## |\Z)",
+        template,
+        re.MULTILINE | re.DOTALL,
+    )
+    if m:
+        sections["schema_reference"] = m.group(0).rstrip()
+
+    return sections
+
+
+def refresh_requirements_index(
+    index_text: str,
+    *,
+    index_display: str,
+    criteria_dir_display: str,
+) -> tuple[str, bool, list[str]]:
+    """Re-apply static boilerplate sections from the current template into an existing index.
+
+    Replaces the install breadcrumb callout, How To Use, and Schema Reference
+    sections from the current template. Leaves the H1 title, custom intro text,
+    tooling metadata block, extra sections, and Requirement Documents untouched.
+
+    .. note::
+        This function locates boilerplate sections by heading sentinel (e.g.
+        ``## How To Use``, ``## Schema Reference``). If a future rqmd version
+        renames or restructures those headings significantly, simple sentinel
+        matching will no longer be sufficient and a full index migration
+        (scaffold + manual merge) may be required instead.
+
+    Returns:
+        (updated_text, changed, sections_updated) where sections_updated is a
+        list of section names that were modified or added.
+    """
+    boilerplate = _extract_boilerplate_sections(index_display, criteria_dir_display)
+    sections_updated: list[str] = []
+    updated = index_text
+
+    # 1. Breadcrumb callout
+    if "breadcrumb" in boilerplate:
+        new_bc = boilerplate["breadcrumb"]
+        existing_bc_pat = re.compile(r"^> \*\*ℹ️ Info:\*\*.*$", re.MULTILINE)
+        m = existing_bc_pat.search(updated)
+        if m:
+            if m.group(0) != new_bc:
+                updated = updated[: m.start()] + new_bc + updated[m.end() :]
+                sections_updated.append("breadcrumb")
+        else:
+            # Add after H1 title, before the first non-blank line
+            h1 = re.search(r"^# .+$", updated, re.MULTILINE)
+            if h1:
+                pos = updated.find("\n", h1.end()) + 1
+                while pos < len(updated) and updated[pos] == "\n":
+                    pos += 1
+                updated = updated[:pos] + new_bc + "\n\n" + updated[pos:]
+                sections_updated.append("breadcrumb (added)")
+
+    # 2. How To Use section
+    if "how_to_use" in boilerplate:
+        new_section = boilerplate["how_to_use"]
+        pat = re.compile(r"^## How To Use\n.*?(?=\n## |\Z)", re.MULTILINE | re.DOTALL)
+        m = pat.search(updated)
+        if m:
+            if m.group(0).rstrip() != new_section:
+                updated = (
+                    updated[: m.start()]
+                    + new_section
+                    + "\n\n"
+                    + updated[m.end() :].lstrip("\n")
+                )
+                sections_updated.append("How To Use")
+
+    # 3. Schema Reference section
+    if "schema_reference" in boilerplate:
+        new_section = boilerplate["schema_reference"]
+        pat = re.compile(r"^## Schema Reference\n.*?(?=\n## |\Z)", re.MULTILINE | re.DOTALL)
+        m = pat.search(updated)
+        if m:
+            if m.group(0).rstrip() != new_section:
+                updated = (
+                    updated[: m.start()]
+                    + new_section
+                    + "\n\n"
+                    + updated[m.end() :].lstrip("\n")
+                )
+                sections_updated.append("Schema Reference")
+
+    normalized = updated.strip() + "\n"
+    changed = normalized != index_text.strip() + "\n"
+    return normalized, changed, sections_updated
+
+
 def format_path_display(path: Path, repo_root: Path) -> str:
     """Format a path for user display, relative to repo root if possible.
 
