@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 29🔧 10✅ 0⚠️ 0⛔ 0🗑️
+Summary: 1💡 29🔧 10✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -322,3 +322,18 @@ Summary: 0💡 29🔧 10✅ 0⚠️ 0⛔ 0🗑️
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - **Summary:** `rqmd-ai` to accept a `--dump-type bug` (or `--dump-type feature`) flag that filters output by the `type` metadata field introduced in RQMD-CORE-041 so that `--dump-type` composes with existing filters like `--dump-status`, enabling queries such as `--dump-type bug --dump-status proposed` (open unfixed bugs) or `--dump-type feature --dump-status proposed` (net-new feature proposals).
+
+
+### RQMD-AUTOMATION-040: `--verify-summaries` per-file failure reporting
+
+<!-- sourced from telemetry cluster, query window: 2026-04-21 to 2026-05-05, event_count: 2 -->
+
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- **Summary:** `--verify-summaries` to print the name of each file whose summary block is stale when it exits non-zero so that agents and developers know exactly which file to fix without needing a follow-up scan.
+- Given a developer or AI agent runs `rqmd --verify-summaries --non-interactive`
+- When one or more requirement files have an out-of-date summary block
+- Then the exit code is non-zero (existing behaviour)
+- And each failing file path is printed to stdout or stderr, one per line, alongside its current and expected summary counts
+- And the final line summarises the total count: `N file(s) need summary updates`
+- And when all summaries are current the output is silent and the exit code is 0 (existing behaviour unchanged).

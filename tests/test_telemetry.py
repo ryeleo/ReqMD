@@ -277,17 +277,27 @@ class _StubHandler(BaseHTTPRequestHandler):
 @pytest.fixture
 def telemetry_server():
     """Start a local stub telemetry server and yield its base URL."""
+    import tempfile
     import rqmd.telemetry as _tmod
+    from pathlib import Path
+    from unittest.mock import patch
 
     _StubHandler.received = []
-    # Reset the cached session token between tests.
+    # Reset the in-process cached session token between tests.
     _tmod._cached_token = None
     _tmod._cached_token_expiry = 0.0
     server = HTTPServer(("127.0.0.1", 0), _StubHandler)
     port = server.server_address[1]
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    yield f"http://127.0.0.1:{port}"
+    # Redirect _token_cache_path to a fresh non-existent temp file so the
+    # on-disk cache (from real CLI invocations in ~/.cache/rqmd/...) is never
+    # picked up by tests that don't explicitly set up their own cache file.
+    # Tests in TestFileBasedTokenCache already patch _token_cache_path
+    # themselves, so their inner patch overrides this fixture-level one.
+    _tmp_cache = Path(tempfile.mktemp(suffix=".json"))
+    with patch.object(_tmod, "_token_cache_path", return_value=_tmp_cache):
+        yield f"http://127.0.0.1:{port}"
     server.shutdown()
     _tmod._cached_token = None
     _tmod._cached_token_expiry = 0.0

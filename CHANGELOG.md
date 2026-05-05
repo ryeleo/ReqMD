@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<a id="v0-2-12"></a>
+
+## [0.2.12] - 2026-05-05
+
 ### Added
 
+- `.github/prompts/telemetry-review.prompt.md`: New `/telemetry-review` developer prompt — queries the telemetry Postgres DB (via tunnel), clusters events of ≥ 2 by category/root-cause, deduplicates against open requirements, and drafts accepted clusters as 💡 Proposed entries with a back-reference comment (RQMD-AI-FEEDBACK-006 [spec](../rqmd-vscode/docs/requirements/feedback.md#L86))
 - [RQMD-TELEMETRY-016](docs/requirements/telemetry.md#L195): Client-side secrets and PII scrubbing before telemetry submission. All `send_event` / `submit_event` calls now pass freeform string fields through a three-layer pipeline — home-path normalisation pre-pass → `detect-secrets` (secret patterns) → `gitleaks stdin` (optional subprocess, best-effort) → `scrubadub` (PII redaction) — before the payload is serialised or transmitted. Any layer that raises is skipped with a WARNING; a total pipeline failure drops the event and logs ERROR rather than transmitting raw data. New module: `src/rqmd/scrubbing.py`. New dependencies: `detect-secrets>=1.4.0`, `scrubadub>=2.0.0`. Tests: `tests/test_telemetry_scrubbing.py`.
+- [RQMD-AUTOMATION-040](docs/requirements/automation-api.md#L327): 💡 Proposed — `--verify-summaries` per-file failure reporting. Sourced from telemetry: 2 struggle events (severity: medium) in which the agent could not determine which file to fix after `--verify-summaries` exited non-zero with only "1 file(s) need updates".
 
 <a id="v0-2-11"></a>
 

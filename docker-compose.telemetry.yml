@@ -27,7 +27,7 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin_dev_pw
     ports:
       - "19000:9000"
-      - "127.0.0.1:9001:9001"
+      - "127.0.0.1:19001:9001"
     volumes:
       - ./.minio-data:/data
     healthcheck:
