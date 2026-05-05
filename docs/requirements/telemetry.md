@@ -3,7 +3,7 @@
 Scope: agent-facing telemetry infrastructure for capturing AI workflow friction, improvement suggestions, and session diagnostics — enabling rqmd's own AI agents to report how rqmd can be improved.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
+Summary: 2💡 13🔧 0✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -190,3 +190,21 @@ Summary: 2💡 12🔧 0✅ 0⚠️ 0⛔ 1🗑️
 - And feedback events include a `detail.category` field with one of: `ux_friction`, `missing_feature`, `docs_gap`, `workflow_confusion`, `performance`, `other`
 - And feedback events optionally include `detail.suggested_improvement` as a freeform text field describing what the user thinks should change
 - And the gateway accepts `feedback` events without requiring a schema migration (the event_type column is already extensible per RQMD-TELEMETRY-002).
+
+
+### RQMD-TELEMETRY-016: Client-side secrets and PII scrubbing before telemetry submission
+
+- **Status:** 🔧 Implemented
+- **Priority:** 🔴 P0 - Critical
+- **Summary:** All telemetry payloads pass through a three-layer scrubbing pipeline before leaving the client process — `detect-secrets` (secret patterns), `gitleaks` subprocess (comprehensive ruleset, best-effort), then `scrubadub` (PII redaction) — so that API keys, tokens, emails, home-directory paths, and other sensitive data in `summary`, `detail`, and `stderr_snippet` fields are never transmitted to the telemetry service.
+- Given `src/rqmd/telemetry.py` builds a telemetry event payload
+- When `send_event()` is called with any `detail` dict or `summary` string
+- Then each freeform string field (`summary`, `detail.stderr_snippet`, `detail.command`, and all other string-valued detail fields) is passed through the following pipeline in order before serialization:
+  1. **`detect-secrets` layer** (required pip dep): scan the string using `SecretsCollection`; for each finding, replace the detected span with `{{REDACTED_SECRET}}`. `detect-secrets` is listed in `pyproject.toml` under `[project.dependencies]`.
+  2. **`gitleaks` layer** (optional subprocess): if `gitleaks` is found in `PATH`, pipe the string to `gitleaks stdin --report-format json --report-path - --no-banner` and replace each reported `Secret` field value with `{{REDACTED_GITLEAKS}}`. Exit code 0 means no findings; exit code 1 means findings were reported; other exit codes are treated as errors. If `gitleaks` is absent, log a one-time `DEBUG` warning and skip this layer — do not fail.
+  3. **`scrubadub` layer** (required pip dep): call `scrubadub.Scrubber().clean(text)` on the output of the previous layers to redact PII (emails, names, addresses, phone numbers). `scrubadub` is listed in `pyproject.toml` under `[project.dependencies]`.
+- And if any layer raises an exception, that layer is skipped with a `WARNING` log and the pipeline continues with the previous layer's output — a scrubbing layer failure never propagates to the caller or transmits raw data
+- And if the entire pipeline fails, `send_event` logs `ERROR`, drops the affected event, and returns without raising
+- And the scrubbing module lives at `src/rqmd/scrubbing.py` and is imported by `telemetry.py`
+- And `tests/test_telemetry_scrubbing.py` contains a parametrized test verifying each layer independently and the full pipeline on a synthetic payload containing: a fake AWS key (`AKIA...`), a GitHub token (`ghp_...`), an email address, and a `~/.ssh/` path reference
+- And home-directory paths (`~/`, `/home/<user>/`, `/Users/<user>/`) are normalised to `{{REDACTED_PATH}}` as a pre-pass before the pipeline, using `os.path.expanduser` to detect the current user prefix.

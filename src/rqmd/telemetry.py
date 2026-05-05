@@ -280,6 +280,22 @@ def submit_event(
     if not endpoint:
         return None
 
+    # Scrub secrets and PII from all freeform string fields before transmission.
+    try:
+        from .scrubbing import scrub_payload_strings, scrub_text
+
+        summary = scrub_text(summary)
+        if detail is not None:
+            detail = scrub_payload_strings(detail)
+    except Exception:
+        import logging as _logging
+
+        _logging.getLogger(__name__).error(
+            "rqmd-telemetry: scrubbing pipeline failed entirely, dropping event",
+            exc_info=True,
+        )
+        return None
+
     url = f"{endpoint}/api/v1/events"
     payload: dict[str, Any] = {
         "session_id": session_id or str(uuid4()),

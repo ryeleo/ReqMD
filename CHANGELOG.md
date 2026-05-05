@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [RQMD-TELEMETRY-016](docs/requirements/telemetry.md#L195): Client-side secrets and PII scrubbing before telemetry submission. All `send_event` / `submit_event` calls now pass freeform string fields through a three-layer pipeline — home-path normalisation pre-pass → `detect-secrets` (secret patterns) → `gitleaks stdin` (optional subprocess, best-effort) → `scrubadub` (PII redaction) — before the payload is serialised or transmitted. Any layer that raises is skipped with a WARNING; a total pipeline failure drops the event and logs ERROR rather than transmitting raw data. New module: `src/rqmd/scrubbing.py`. New dependencies: `detect-secrets>=1.4.0`, `scrubadub>=2.0.0`. Tests: `tests/test_telemetry_scrubbing.py`.
+
 <a id="v0-2-11"></a>
 
 ## [0.2.11] - 2026-04-28
