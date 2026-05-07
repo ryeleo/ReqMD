@@ -96,12 +96,14 @@ CREATE TABLE IF NOT EXISTS telemetry_events (
     agent_name      TEXT,
     event_type      TEXT NOT NULL
                     CHECK (event_type IN (
-                        'struggle', 'suggestion', 'error', 'success', 'workflow_step'
+                        'struggle', 'suggestion', 'error', 'success', 'workflow_step',
+                        'feedback'
                     )),
     severity        TEXT NOT NULL
                     CHECK (severity IN ('low', 'medium', 'high', 'critical')),
     summary         TEXT NOT NULL,
     detail          JSONB,
+    model_id        TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -109,6 +111,13 @@ CREATE INDEX IF NOT EXISTS idx_events_session  ON telemetry_events (session_id);
 CREATE INDEX IF NOT EXISTS idx_events_type     ON telemetry_events (event_type);
 CREATE INDEX IF NOT EXISTS idx_events_severity ON telemetry_events (severity);
 CREATE INDEX IF NOT EXISTS idx_events_ts       ON telemetry_events (timestamp);
+CREATE INDEX IF NOT EXISTS idx_events_model    ON telemetry_events (model_id);
+
+-- Migrations for existing databases (idempotent)
+ALTER TABLE telemetry_events ADD COLUMN IF NOT EXISTS model_id TEXT;
+ALTER TABLE telemetry_events DROP CONSTRAINT IF EXISTS telemetry_events_event_type_check;
+ALTER TABLE telemetry_events ADD CONSTRAINT telemetry_events_event_type_check
+    CHECK (event_type IN ('struggle', 'suggestion', 'error', 'success', 'workflow_step', 'feedback'));
 
 CREATE TABLE IF NOT EXISTS telemetry_artifacts (
     artifact_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -143,11 +152,12 @@ CREATE INDEX IF NOT EXISTS idx_tokens_expires ON session_tokens (expires_at);
 class EventCreate(BaseModel):
     session_id: str = Field(description="UUID or unique session identifier")
     agent_name: str | None = Field(default=None, description="Agent name")
-    event_type: Literal["struggle", "suggestion", "error", "success", "workflow_step"]
+    event_type: Literal["struggle", "suggestion", "error", "success", "workflow_step", "feedback"]
     severity: Literal["low", "medium", "high", "critical"]
     summary: str = Field(max_length=500, description="Concise event summary")
     detail: dict[str, Any] | None = Field(default=None, description="Structured detail")
     timestamp: str | None = Field(default=None, description="ISO-8601 timestamp")
+    model_id: str | None = Field(default=None, description="AI model identifier (e.g. gpt-4o, claude-sonnet-4-5)")
 
 
 class EventResponse(BaseModel):
@@ -381,8 +391,8 @@ async def create_event(event: EventCreate, _: None = Depends(_verify_api_key)):
         row = await conn.fetchrow(
             """
             INSERT INTO telemetry_events
-                (session_id, timestamp, agent_name, event_type, severity, summary, detail)
-            VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
+                (session_id, timestamp, agent_name, event_type, severity, summary, detail, model_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8)
             RETURNING event_id
             """,
             session_uuid,
@@ -392,6 +402,7 @@ async def create_event(event: EventCreate, _: None = Depends(_verify_api_key)):
             event.severity,
             event.summary[:500],
             detail_json,
+            event.model_id,
         )
 
     return EventResponse(
@@ -501,7 +512,7 @@ async def list_events(
     params.extend([limit, offset])
     query = f"""
         SELECT event_id, session_id, timestamp, agent_name, event_type,
-               severity, summary, detail, created_at
+               severity, summary, detail, model_id, created_at
         FROM telemetry_events
         {where}
         ORDER BY timestamp DESC
@@ -521,6 +532,7 @@ async def list_events(
             "severity": r["severity"],
             "summary": r["summary"],
             "detail": r["detail"],
+            "model_id": r["model_id"],
             "created_at": r["created_at"].isoformat(),
         }
         for r in rows

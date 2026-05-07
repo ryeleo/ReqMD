@@ -90,7 +90,7 @@ Rendered:
 ### Tree output is fast to scan during triage
 
 ```text
-$ rqmd --status implemented --as-tree --non-interactive
+$ rqmd --status implemented --as-tree -y
 core-engine.md
 	RQMD-CORE-001: Domain file discovery
 	RQMD-CORE-011: Project scaffold initialization
@@ -366,7 +366,7 @@ Use positional filters for fast narrowing without explicit flags:
 
 ```bash
 rqmd all
-rqmd P1 Proposed --json --non-interactive
+rqmd P1 Proposed --json -y
 rqmd Proposed core-engine
 ```
 
@@ -395,21 +395,21 @@ From the same detail panel, press `v` to open the current requirement in VS Code
 Regenerate summary blocks with priority aggregates included:
 
 ```bash
-rqmd --priority-rollup --non-interactive
+rqmd --priority-rollup -y
 ```
 
 Filter by priority in tree, JSON, or interactive walk modes:
 
 ```bash
 rqmd --priority critical --as-tree
-rqmd --priority p1 --json --non-interactive
+rqmd --priority p1 --json -y
 ```
 
 Filter by subsection name with case-insensitive prefix matching:
 
 ```bash
 rqmd --sub-domain query --as-tree
-rqmd --sub-domain api --json --non-interactive
+rqmd --sub-domain api --json -y
 ```
 
 Combine filters for slicing/dicing requirements:
@@ -419,17 +419,17 @@ Combine filters for slicing/dicing requirements:
 
 ```bash
 rqmd --status proposed --priority p0 --as-tree
-rqmd --no-flag --json --non-interactive
-rqmd --has-link --json --non-interactive
-rqmd --status proposed --status implemented --json --non-interactive
-rqmd --sub-domain query --sub-domain api --json --non-interactive
+rqmd --no-flag --json -y
+rqmd --has-link --json -y
+rqmd --status proposed --status implemented --json -y
+rqmd --sub-domain query --sub-domain api --json -y
 ```
 
 Target an explicit worklist from CLI tokens or a reusable file:
 
 ```bash
 rqmd demo "Query API"
-rqmd --targets-file tmp/focus.txt --json --non-interactive
+rqmd --targets-file tmp/focus.txt --json -y
 ```
 
 `--targets-file` accepts `.txt`, `.conf`, or `.md` files with one-per-line or whitespace/comma-separated tokens, and supports `#` comments.
@@ -573,10 +573,10 @@ rqmd --status proposed --json --no-requirement-body
 Summary/check/set JSON examples:
 
 ```bash
-rqmd --json --non-interactive
-rqmd --verify-summaries --json --non-interactive
+rqmd --json -y
+rqmd --verify-summaries --json -y
 rqmd --update-id RQ-001 --update-status verified --json
-rqmd --totals --json --non-interactive
+rqmd --totals --json -y
 ```
 
 ### JSON contract (stable keys)
@@ -614,19 +614,19 @@ RQMD uses this exit-code matrix for automation:
 Explicit global roll-up totals (combined totals from multiple statuses):
 
 ```bash
-rqmd --totals --non-interactive
+rqmd --totals -y
 ```
 
 Custom roll-up columns from CLI equations:
 
 ```bash
-rqmd --totals --totals-map "C1=I+V" --totals-map "C2=P" --non-interactive
+rqmd --totals --totals-map "C1=I+V" --totals-map "C2=P" -y
 ```
 
 Custom roll-up columns from config (`.json`, `.yml`, `.yaml`):
 
 ```bash
-rqmd --totals --totals-config rqmd.yml --json --non-interactive
+rqmd --totals --totals-config rqmd.yml --json -y
 ```
 
 Example project config for a repo that defines a custom status catalog and wants RQMD-ROLLUP-007 roll-up buckets:

@@ -579,7 +579,7 @@ def check_files_writable(domain_files: list[Path], repo_root: Path) -> None:
         for f in not_writable:
             click.echo(f"  {format_path_display(f, repo_root)}", err=True)
         click.echo(
-            "  Hint: check file permissions (chmod u+w <file>) or run in non-interactive mode (--non-interactive).",
+            "  Hint: check file permissions (chmod u+w <file>) or run in non-interactive mode (-y / --non-interactive).",
             err=True,
         )
         raise SystemExit(1)

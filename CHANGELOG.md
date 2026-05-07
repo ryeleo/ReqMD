@@ -7,15 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-<a id="v0-2-12"></a>
-
-## [0.2.12] - 2026-05-05
-
 ### Added
+
+- [RQMD-TELEMETRY-017](docs/requirements/telemetry.md#L213): AI model identifier in telemetry events. `submit_event()` and `send_event()` now accept an optional `model_id: str | None` parameter. When provided, it is included as a top-level `model_id` field in the event payload so recurring friction patterns (e.g. hard-wrapping violations) can be correlated with specific models. Gateway: `model_id TEXT` column added to `telemetry_events` with a `CREATE INDEX` on the column; idempotent `ALTER TABLE ADD COLUMN IF NOT EXISTS` migration ensures existing databases are updated on next gateway restart. Gateway `EventCreate` model extended with `model_id` field; `feedback` added to the `event_type` Literal and DB CHECK constraint (fixing a silent schema gap from RQMD-TELEMETRY-015). `GET /api/v1/events` now returns `model_id` in each event record.
+- `.github/skills/telemetry/SKILL.md` (rqmd-vscode): `model_id` added to the event field reference table with guidance on populating it from the agent's own system prompt or VS Code model context. Basic code example updated to show `model_id` usage.
 
 - `.github/prompts/telemetry-review.prompt.md`: New `/telemetry-review` developer prompt — queries the telemetry Postgres DB (via tunnel), clusters events of ≥ 2 by category/root-cause, deduplicates against open requirements, and drafts accepted clusters as 💡 Proposed entries with a back-reference comment (RQMD-AI-FEEDBACK-006 [spec](../rqmd-vscode/docs/requirements/feedback.md#L86))
 - [RQMD-TELEMETRY-016](docs/requirements/telemetry.md#L195): Client-side secrets and PII scrubbing before telemetry submission. All `send_event` / `submit_event` calls now pass freeform string fields through a three-layer pipeline — home-path normalisation pre-pass → `detect-secrets` (secret patterns) → `gitleaks stdin` (optional subprocess, best-effort) → `scrubadub` (PII redaction) — before the payload is serialised or transmitted. Any layer that raises is skipped with a WARNING; a total pipeline failure drops the event and logs ERROR rather than transmitting raw data. New module: `src/rqmd/scrubbing.py`. New dependencies: `detect-secrets>=1.4.0`, `scrubadub>=2.0.0`. Tests: `tests/test_telemetry_scrubbing.py`.
-- [RQMD-AUTOMATION-040](docs/requirements/automation-api.md#L327): 💡 Proposed — `--verify-summaries` per-file failure reporting. Sourced from telemetry: 2 struggle events (severity: medium) in which the agent could not determine which file to fix after `--verify-summaries` exited non-zero with only "1 file(s) need updates".
 
 <a id="v0-2-11"></a>
 

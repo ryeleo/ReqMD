@@ -3,7 +3,7 @@
 Scope: agent-facing telemetry infrastructure for capturing AI workflow friction, improvement suggestions, and session diagnostics — enabling rqmd's own AI agents to report how rqmd can be improved.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 13🔧 0✅ 0⚠️ 0⛔ 1🗑️
+Summary: 2💡 14🔧 0✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -208,3 +208,19 @@ Summary: 2💡 13🔧 0✅ 0⚠️ 0⛔ 1🗑️
 - And the scrubbing module lives at `src/rqmd/scrubbing.py` and is imported by `telemetry.py`
 - And `tests/test_telemetry_scrubbing.py` contains a parametrized test verifying each layer independently and the full pipeline on a synthetic payload containing: a fake AWS key (`AKIA...`), a GitHub token (`ghp_...`), an email address, and a `~/.ssh/` path reference
 - And home-directory paths (`~/`, `/home/<user>/`, `/Users/<user>/`) are normalised to `{{REDACTED_PATH}}` as a pre-pass before the pipeline, using `os.path.expanduser` to detect the current user prefix.
+
+
+### RQMD-TELEMETRY-017: AI model identifier in telemetry events
+
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- **Summary:** Every telemetry event to carry the identifier of the AI model that produced the session so that recurring friction patterns (e.g. hard-wrapping violations, incorrect command invocations) can be correlated with specific models and prioritised for targeted skill or prompt fixes.
+- Given `src/rqmd/telemetry.py` builds a telemetry event
+- When `send_event()` is called
+- Then the event payload includes a top-level `model_id` field containing the identifier string of the active model (e.g. `"gpt-4o"`, `"claude-sonnet-4-5"`, `"gemini-1.5-pro"`)
+- And when no model identifier is available (CLI context, non-agent caller, or the environment does not expose the model name), `model_id` is omitted or `null` — it is never fabricated
+- And the `rqmd-telemetry` skill instructs agents to populate `model_id` from the VS Code chat model context (`copilot.model.id` or the value reported by the agent's own system prompt) before calling `send_event()`
+- And RQMD-TELEMETRY-002 is amended: `model_id` is added to the minimum required event fields alongside `agent_name`
+- And the gateway stores `model_id` in a queryable column so telemetry reviews can group events by model
+- And `model_id` is treated as a plain identifier string and passes through the scrubbing pipeline defined in RQMD-TELEMETRY-016 without special handling (no redaction expected for model names).
+- **Related:** RQMD-AI-FEEDBACK-007 [spec](../../rqmd-vscode/docs/requirements/feedback.md) — hard-wrap complaint telemetry uses `model_id` to attribute style violations to specific models.

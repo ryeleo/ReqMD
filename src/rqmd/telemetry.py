@@ -271,6 +271,7 @@ def submit_event(
     agent_name: str | None = None,
     detail: dict[str, Any] | None = None,
     api_key: str | None = None,
+    model_id: str | None = None,
 ) -> dict[str, Any] | None:
     """Submit a telemetry event to the gateway.
 
@@ -306,6 +307,8 @@ def submit_event(
     }
     if agent_name:
         payload["agent_name"] = agent_name
+    if model_id:
+        payload["model_id"] = model_id
 
     if detail:
         # Truncate known large text fields in detail.
@@ -350,6 +353,7 @@ def send_event(
     agent_name: str | None = None,
     detail: dict[str, Any] | None = None,
     repo_root: Path | None = None,
+    model_id: str | None = None,
 ) -> dict[str, Any] | None:
     """High-level convenience wrapper that resolves endpoint and auth automatically.
 
@@ -371,6 +375,7 @@ def send_event(
         agent_name=agent_name,
         detail=detail,
         api_key=api_key,
+        model_id=model_id,
     )
 
 
