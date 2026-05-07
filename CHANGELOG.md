@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-07
+
 ### Added
 
 - [RQMD-TELEMETRY-017](docs/requirements/telemetry.md#L213): AI model identifier in telemetry events. `submit_event()` and `send_event()` now accept an optional `model_id: str | None` parameter. When provided, it is included as a top-level `model_id` field in the event payload so recurring friction patterns (e.g. hard-wrapping violations) can be correlated with specific models. Gateway: `model_id TEXT` column added to `telemetry_events` with a `CREATE INDEX` on the column; idempotent `ALTER TABLE ADD COLUMN IF NOT EXISTS` migration ensures existing databases are updated on next gateway restart. Gateway `EventCreate` model extended with `model_id` field; `feedback` added to the `event_type` Literal and DB CHECK constraint (fixing a silent schema gap from RQMD-TELEMETRY-015). `GET /api/v1/events` now returns `model_id` in each event record.
